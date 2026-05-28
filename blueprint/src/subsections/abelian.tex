@@ -78,9 +78,53 @@ original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
   $j \to \infty$: each factor tends to $1$.
 \end{proof}
 
+\begin{lemma}\label{lem:liminf-ratio-ge-inv-card-G}
+  \lean{Chebotarev.liminf_ratio_ge_inv_card_G}
+  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
+  For every $\sigma\in G$,
+  $\delta_{\mathrm{inf}}\bigl(\setof{\fp}{\sigma_\fp = \sigma}\bigr)
+  \ge 1/\abs{G}$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
+  Take the limit of the per-$m$ bound
+  \cref{lem:density-S-sigma-tau} as $m \to \infty$ along
+  $m \equiv 1\pmod{\abs{G}^k}$, where $\abs{H_n}/\abs{H}\to 1$ by
+  \cref{lem:H-n-over-H-tends-one}.
+\end{proof}
+
+\begin{lemma}\label{lem:ratiosum-fibres-tendsto-one}
+  \lean{Chebotarev.ratioSum_frobeniusFibres_tendsto_one}
+  \uses{def:frobenius-class, lem:finite-ramified-primes}
+  As $s\downarrow 1$, the sum over $\sigma\in G$ of the density ratios
+  of the fibres $\setof{\fp}{\sigma_\fp=\sigma}$ tends to $1$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:finite-ramified-primes}
+  The fibres partition the unramified primes; the ramified primes are
+  finite (\cref{lem:finite-ramified-primes}) hence contribute density
+  $0$, so the partial sums of the fibre ratios equal the ratio for the
+  unramified primes, which $\to 1$.
+\end{proof}
+
+\begin{lemma}\label{lem:pigeonhole-density}
+  \lean{Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one}
+  Let $g_i$ ($i$ in a finite index set of size $N$) be real functions
+  with $\liminf_{s\downarrow 1} g_i \ge 1/N$ for each $i$, and
+  $\sum_i g_i(s) \to 1$ as $s\downarrow 1$. Then $g_i(s) \to 1/N$ for
+  every $i$.
+\end{lemma}
+
+\begin{proof}
+  Pure real analysis: the lower bounds and the sum-limit pin every
+  $g_i$ to $1/N$ by a $\liminf$/$\limsup$ pigeonhole.
+\end{proof}
+
 \begin{theorem}\label{thm:chebotarev-abelian}
   \lean{Chebotarev.chebotarev_abelian}
-  \uses{def:dirichlet-density, def:frobenius-class, lem:density-S-sigma-tau, lem:H-n-over-H-tends-one, lem:finite-ramified-primes}
+  \uses{def:dirichlet-density, def:frobenius-class, lem:liminf-ratio-ge-inv-card-G, lem:ratiosum-fibres-tendsto-one, lem:pigeonhole-density}
   For a finite abelian Galois extension $L/K$ of number fields with
   $G=\Gal{L/K}$ and every $\sigma\in G$,
   \[
@@ -90,17 +134,11 @@ original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
 \end{theorem}
 
 \begin{proof}
-  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
-  Choose $m \equiv 1 \pmod{\abs{G}^k}$ for large $k$ (Dirichlet's
-  theorem on primes in arithmetic progressions, mathlib's
-  \texttt{Nat.infinite\_setOf\_prime\_and\_eq\_mod}). For each
-  $\tau \in H$ with $\abs{G}\mid\mathrm{ord}(\tau)$,
-  \cref{lem:density-S-sigma-tau} gives the per-$(\sigma,\tau)$ density
-  $1/(\abs{G}\cdot\abs{H})$; summing over such $\tau$ yields
-  $\delta_{\mathrm{inf}}(\setof{\fp}{\sigma_\fp = \sigma})
-  \ge \abs{H_n}/(\abs{G}\cdot\abs{H})$.
-  By \cref{lem:H-n-over-H-tends-one}, this tends to $1/\abs{G}$.
-  Summing this lower bound over $\sigma\in G$ gives $\ge 1$;
-  combined with $\delta\le 1$ (\cref{lem:finite-ramified-primes}), each
-  $\sigma$ contributes exactly $1/\abs{G}$.
+  \uses{lem:liminf-ratio-ge-inv-card-G, lem:ratiosum-fibres-tendsto-one, lem:pigeonhole-density}
+  \leanok
+  The $\abs{G}$ fibres each have $\liminf \ge 1/\abs{G}$
+  (\cref{lem:liminf-ratio-ge-inv-card-G}) and their density ratios sum
+  to $1$ (\cref{lem:ratiosum-fibres-tendsto-one}); the pigeonhole glue
+  \cref{lem:pigeonhole-density} forces each fibre's ratio to the limit
+  $1/\abs{G}$.
 \end{proof}

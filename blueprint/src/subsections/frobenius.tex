@@ -64,15 +64,37 @@ $x\mapsto x^{N\fp}$ (mathlib's
 \texttt{FiniteField.frobeniusAlgEquivOfAlgebraic}). Hence $D_\fP$ has a
 distinguished element.
 
+\begin{lemma}\label{lem:exists-unique-frobenius-inertia-trivial}
+  \lean{Chebotarev.exists_unique_frobeniusAt_of_inertia_trivial}
+  \uses{def:decomposition-group, def:inertia-group}
+  Let $\fP$ be a nonzero prime of $\Ocirc_L$ with trivial inertia group
+  $I_\fP = \{1\}$. There is a unique $\sigma\in D_\fP$ such that
+  $\sigma(x)\equiv x^{N\fp}\pmod\fP$ for every $x\in\Ocirc_L$.
+\end{lemma}
+
+\begin{proof}
+  With $I_\fP$ trivial, the surjection $D_\fP\to\Gal{\kappa(\fP)/\kappa(\fp)}$
+  is an isomorphism, and the residue Galois group is cyclic with
+  distinguished generator the absolute Frobenius; pull it back.
+\end{proof}
+
 \begin{theorem}\label{thm:exists-unique-frobenius}
   \lean{Chebotarev.exists_unique_frobeniusAt}
-  \uses{def:decomposition-group, lem:inertia-trivial-unramified}
+  \uses{lem:inertia-trivial-unramified, lem:exists-unique-frobenius-inertia-trivial}
   Let $\fP$ be a nonzero prime of $\Ocirc_L$ lying over the unramified
   $\fp$. There is a unique $\sigma\in D_\fP$ such that
   \[
     \sigma(x)\equiv x^{N\fp}\pmod\fP \qquad\text{for every }x\in\Ocirc_L.
   \]
 \end{theorem}
+
+\begin{proof}
+  \uses{lem:inertia-trivial-unramified, lem:exists-unique-frobenius-inertia-trivial}
+  \leanok
+  Unramifiedness gives $I_\fP = \{1\}$
+  (\cref{lem:inertia-trivial-unramified}); apply
+  \cref{lem:exists-unique-frobenius-inertia-trivial}.
+\end{proof}
 
 \begin{definition}\label{def:frobenius-at}
   \lean{Chebotarev.frobeniusAt}

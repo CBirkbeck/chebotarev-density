@@ -97,10 +97,12 @@ theorem count_primes_above_with_frobenius_eq_sigma
     [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
     (σ : L ≃ₐ[K] L) (C : ConjClasses (L ≃ₐ[K] L)) (_hσ : ConjClasses.mk σ = C)
     (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
-    (_hunr : UnramifiedIn K L 𝔭) (_hCfrob : frobeniusClass K L 𝔭 = C) :
-    Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (hp : 𝔓.IsPrime) (_ : 𝔓.LiesOver 𝔭)
+    (hunr : UnramifiedIn K L 𝔭) (_hCfrob : frobeniusClass K L 𝔭 = C) :
+    Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (hp : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (hnz : 𝔓 ≠ ⊥),
-        frobeniusAt K L 𝔓 hp hnz (by sorry) = σ}
+        frobeniusAt K L 𝔓 hp hnz
+            (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hp hP)
+          = σ}
       * orderOf σ * Nat.card C.carrier
       = Nat.card (L ≃ₐ[K] L) := by
   sorry

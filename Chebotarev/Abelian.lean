@@ -150,11 +150,65 @@ theorem H_n_over_H_tends_to_one
       Filter.atTop (𝓝 1) := by
   sorry
 
+/-- Per-`σ` lower bound `δ_inf(S_σ) ≥ 1/|G|`, the limit of the per-`m`
+bound `liminf_density_S_sigma_ge_card_H_n_div_GH` as `m → ∞` along
+`m ≡ 1 mod n^k` using `H_n_over_H_tends_to_one` (so `|H_n|/|H| → 1`).
+This is the lower half of Sharifi 7.2.2 Step 2 (p. 144). -/
+theorem liminf_ratio_ge_inv_card_G
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
+    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
+    (σ : L ≃ₐ[K] L) :
+    (Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹
+      ≤ Filter.liminf
+          (fun s : ℝ ↦
+            primeIdealZetaSum K
+                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+                  frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
+              / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
+          (𝓝[>] 1) := by
+  sorry
+
+/-- The density ratios of the `|G|` Frobenius-fibres `S_σ` (over
+`σ ∈ Gal(L/K)`) sum to the ratio for the unramified primes, which tends
+to `1` as `s ↓ 1` since the ramified primes are finite
+(`finite_ramifiedIn`, density `0`). Sharifi 7.2.2 Step 2: the `S_σ`
+partition the unramified primes. -/
+theorem ratioSum_frobeniusFibres_tendsto_one
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
+    [Algebra K L] [IsGalois K L] [FiniteDimensional K L] :
+    Filter.Tendsto
+      (fun s : ℝ ↦ ∑ σ : L ≃ₐ[K] L,
+        primeIdealZetaSum K
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+              frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
+          / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
+      (𝓝[>] 1) (𝓝 1) := by
+  sorry
+
+/-- Pure real-analysis glue: a finite family `gᵢ` of functions, each with
+`liminf gᵢ ≥ 1/N` (where `N` is the family size), whose sum tends to `1`,
+must each tend to `1/N`. (The lower bounds and the sum-limit pin every
+`gᵢ` to `1/N` by a pigeonhole on `liminf`/`limsup`.) -/
+theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
+    {ι : Type*} [Fintype ι] (g : ι → ℝ → ℝ)
+    (hlo : ∀ i, (Fintype.card ι : ℝ)⁻¹ ≤ Filter.liminf (g i) (𝓝[>] (1 : ℝ)))
+    (hsum : Filter.Tendsto (fun s ↦ ∑ i, g i s) (𝓝[>] (1 : ℝ)) (𝓝 1))
+    (i₀ : ι) :
+    Filter.Tendsto (g i₀) (𝓝[>] (1 : ℝ)) (𝓝 (Fintype.card ι : ℝ)⁻¹) := by
+  sorry
+
 /-- **Chebotarev's theorem, abelian case** (Sharifi 7.2.2 Step 2).
 
 For an abelian Galois extension `L/K` of number fields and any
 `σ ∈ Gal(L/K)`, the Dirichlet density of primes `𝔭` of `𝓞 K` unramified in
-`L` whose Frobenius equals `σ` is `1 / |Gal(L/K)|`. -/
+`L` whose Frobenius equals `σ` is `1 / |Gal(L/K)|`.
+
+**Composition**: the `|G|` fibres `S_σ` each have `liminf ≥ 1/|G|`
+(`liminf_ratio_ge_inv_card_G`) and their density ratios sum to `1`
+(`ratioSum_frobeniusFibres_tendsto_one`); the pigeonhole glue
+`tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one` forces each to the
+limit `1/|G|`. -/
 theorem chebotarev_abelian
     [FiniteDimensional K L]
     [hAb : IsMulCommutative (L ≃ₐ[K] L)]
@@ -163,7 +217,18 @@ theorem chebotarev_abelian
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) := by
-  sorry
+  have hcard : (Nat.card (L ≃ₐ[K] L) : ℝ) = (Fintype.card (L ≃ₐ[K] L) : ℝ) := by
+    rw [Nat.card_eq_fintype_card]
+  rw [HasDirichletDensity, hcard]
+  refine tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
+    (fun τ s ↦
+      primeIdealZetaSum K
+          {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+            frobeniusClass K L 𝔭 = ConjClasses.mk τ} s
+        / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
+    (fun τ ↦ ?_) ?_ σ
+  · rw [← hcard]; exact liminf_ratio_ge_inv_card_G K L τ
+  · exact ratioSum_frobeniusFibres_tendsto_one K L
 
 /-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` obtained from a single
 choice of cyclotomic crossing modulus `m`, before passing to the limit. This
@@ -181,17 +246,5 @@ theorem chebotarev_abelian_lowerDensity_per_m
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
   (chebotarev_abelian K L σ).hasLower
-
-/-- The auxiliary fact `|H_n|/|H| → 1` as `m` varies through residues `m ≡ 1
-mod n^k`. This is the analytic input from Dirichlet's theorem
-(`Nat.infinite_setOf_prime_and_eq_mod`) used at the end of Sharifi 7.2.2
-Step 2. -/
-theorem ratio_order_divisible_tendsto_one (n : ℕ) (hn : 1 ≤ n) :
-    Filter.Tendsto
-      (fun k : ℕ ↦
-        (Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} : ℝ) /
-          Nat.card (ZMod (n ^ k))ˣ)
-      Filter.atTop (nhds 1) := by
-  sorry
 
 end Chebotarev

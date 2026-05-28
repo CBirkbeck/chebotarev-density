@@ -10,3 +10,10 @@ blueprint/print/*.out
 blueprint/print/*.synctex.gz
 blueprint/print/*.toc
 blueprint/web/
+blueprint/lean_decls
+blueprint/src/*.paux
+blueprint/src/*.pdf
+blueprint/src/*.aux
+blueprint/src/*.log
+blueprint/src/*.out
+blueprint/src/*.toc
