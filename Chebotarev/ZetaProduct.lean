@@ -133,11 +133,45 @@ theorem character_sum_geometry_of_numbers_bound
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   sorry
 
+/-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
+Combining the geometry-of-numbers bound
+`character_sum_geometry_of_numbers_bound`
+with Sharifi Lemma 7.1.5 (p. 138, a generic Dirichlet-series
+convergence criterion given a polynomial bound on partial sums), the
+Dirichlet series `L(χ,s) = Σ_𝔞 χ(𝔞) N𝔞^{-s}` converges absolutely and
+uniformly on every compact subset of `Z(1 - 1/[K:ℚ])`, defining an
+analytic extension of `L(χ,·)` from `Re s > 1` to that half-plane.
+
+Source quote (verbatim, p. 142):
+> "By Lemma 7.1.5, we therefore have that `Σ_𝔞⊂𝓞_K χ(𝔞) N𝔞^{-s}`
+> converges absolutely and uniformly on every compact subset of
+> `Z(1 - d^{-1})`."
+
+Mathlib analogue of Sharifi Lemma 7.1.5:
+`LSeries.summable_of_partial_sums_le_const_mul_rpow` (or the
+`LSeries.tendsto_neg_logDerivLSeries_eq_*` machinery in
+`Mathlib.NumberTheory.LSeries.*`). -/
+theorem artinLSeries_analytic_extension
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
+    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
+    (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    ∃ Lf : ℂ → ℂ,
+      AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} ∧
+      (∀ s : ℂ, 1 < s.re →
+        Lf s =
+          ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+            (χ (frobeniusClass K L 𝔞.1).out : ℂ) *
+              (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) := by
+  sorry
+
 /-- Sharifi 7.1.19 step 2 (p. 142): non-vanishing of `L(χ,1)` for
 nontrivial `χ`. Source argument: if any `L(χ,1) = 0`, the
 `log ζ_L = Σ_χ log L(χ,·)` decomposition leads to a sub-asymptotic
 strictly weaker than the simple pole `log ζ_L ~ log(1/(s-1))`, a
-contradiction. -/
+contradiction. Uses `artinLSeries_analytic_extension` so that
+"`L(χ, 1)` is defined" makes sense — the extension brings `s = 1` into
+the analyticity domain. -/
 theorem artinLSeries_one_ne_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
     [Algebra K L] [IsGalois K L] [FiniteDimensional K L]

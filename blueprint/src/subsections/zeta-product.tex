@@ -65,11 +65,35 @@ the analytic engine of the cyclotomic case of Chebotarev.
   $\sum_\zeta \zeta = 0$.
 \end{proof}
 
+\begin{lemma}\label{lem:artin-analytic-extension}
+  \lean{Chebotarev.artinLSeries_analytic_extension}
+  \uses{lem:artin-euler-product-abelian, lem:character-sum-geom-numbers}
+  For every nontrivial character $\chi: G \to \C^\times$, the
+  Dirichlet series
+  $L(\chi, s) = \sum_{\mathfrak{a}} \chi(\mathfrak{a})\Norm{\mathfrak{a}}^{-s}$
+  extends to a function analytic on $\re(s) > 1 - 1/[K:\Q]$, agreeing
+  with the Euler product on $\re(s) > 1$. In particular, $L(\chi, 1)$
+  is well-defined.
+\end{lemma}
+
+\begin{proof}
+  Combine \cref{lem:character-sum-geom-numbers} (Sharifi 7.1.19 step 1a)
+  with Sharifi Lemma 7.1.5 (p.~138, a generic Dirichlet-series
+  convergence criterion from a polynomial bound on partial sums):
+  given $\bigl|\sum_{n\le N}a_n\bigr|\le CN^{u}$, the Dirichlet series
+  $\sum_n a_n n^{-s}$ converges absolutely and uniformly on every
+  compact subset of $\re(s) > u$. Applied to
+  $a_{\mathfrak{a}} = \chi(\mathfrak{a})$ with $u = 1 - 1/[K:\Q]$, the
+  series defines an analytic function on
+  $\re(s) > 1 - 1/[K:\Q]$.
+\end{proof}
+
 \begin{lemma}\label{lem:artin-one-ne-zero}
   \lean{Chebotarev.artinLSeries_one_ne_zero}
-  \uses{lem:artin-euler-product-abelian, lem:character-sum-geom-numbers}
+  \uses{lem:artin-analytic-extension}
   For every nontrivial character $\chi: G \to \C^\times$,
-  $L(\chi, 1) \ne 0$.
+  $L(\chi, 1) \ne 0$. (Here $L(\chi, 1)$ refers to the analytic
+  extension of \cref{lem:artin-analytic-extension}.)
 \end{lemma}
 
 \begin{proof}
