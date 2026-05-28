@@ -1,0 +1,24 @@
+% PDF entry point.
+
+\documentclass[a4paper]{report}
+
+\usepackage{amssymb, amsthm, amsmath}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{etex}
+\usepackage{expl3}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+\input{macros/common}
+\input{macros/print}
+
+\title{Chebotarev density theorem}
+\author{Chris Birkbeck}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\maketitle
+\clearpage
+\hypersetup{pageanchor=true}
+\input{content}
+\end{document}

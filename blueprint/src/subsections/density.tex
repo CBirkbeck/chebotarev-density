@@ -1,0 +1,98 @@
+\section{Dirichlet density of a set of prime ideals}
+
+Throughout, $K$ denotes a number field, $\OK$ its ring of integers, and
+$\fp$ ranges over nonzero prime ideals of $\OK$ with absolute norm
+$N\fp=[\OK:\fp]$.
+
+\begin{definition}\label{def:dirichlet-density}
+  \lean{Chebotarev.HasDirichletDensity}
+  \leanok
+  A set $S$ of nonzero prime ideals of $\OK$ has \emph{Dirichlet
+  density} $\delta\in\R$, written $\delta(S)=\delta$, if
+  \[
+    \lim_{s\to 1^+}
+    \frac{\displaystyle\sum_{\fp\in S} N\fp^{-s}}
+         {\displaystyle\sum_{\fp} N\fp^{-s}}
+    = \delta,
+  \]
+  where the denominator sum runs over all nonzero prime ideals of
+  $\OK$.
+\end{definition}
+
+The denominator is asymptotically $\log\bigl(1/(s-1)\bigr)$ as
+$s\downarrow 1$ (Sharifi Prop.~7.1.12, p.~140); the lemmas below break
+out the analytic ingredients.
+
+\begin{lemma}\label{lem:prime-zeta-higher-tail-bounded}
+  \lean{Chebotarev.primeIdealZetaHigherTail_bounded}
+  The higher-power tail of the log-Euler-product
+  $\sum_{\fp,k\ge 2}\frac{N\fp^{-2s}}{1-N\fp^{-s}}$ is bounded on a
+  right neighbourhood of $s=1$.
+\end{lemma}
+
+\begin{lemma}\label{lem:prime-zeta-le-finrank-riemann}
+  \lean{Chebotarev.primeIdealZetaSum_le_finrank_smul_riemannPrimeSum}
+  \uses{def:dirichlet-density}
+  For $s>1$ in a right neighbourhood of $1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \;\le\; [K:\Q]\sum_{p\text{ rational prime}} p^{-s}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  At most $[K:\Q]$ primes of $\OK$ lie above any rational prime $p$
+  (the identity
+  $\sum_{\fp\mid p}e(\fp\mid p)f(\fp\mid p)=[K:\Q]$ in mathlib's
+  \texttt{Ideal.sum\_ramification\_inertia}), and the norm of such a
+  prime is at least $p$, so the bound follows by absolute convergence on
+  $\re(s)>1$.
+\end{proof}
+
+\begin{lemma}\label{lem:riemann-prime-sum-asymp}
+  \lean{Chebotarev.riemannPrimeSum_asymp_log}
+  As $s\downarrow 1$,
+  \[
+    \sum_{p\text{ rational prime}} p^{-s} \sim \log\frac{1}{s-1}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  The case $K=\Q$ of \cref{lem:prime-ideal-sum-log} below: combine the
+  Euler product
+  $\zeta(s)=\prod_p(1-p^{-s})^{-1}$ with the simple pole of $\zeta$ at
+  $s=1$.
+\end{proof}
+
+\begin{lemma}\label{lem:prime-zeta-ge-log-minus-bounded}
+  \lean{Chebotarev.primeIdealZetaSum_ge_log_minus_bounded}
+  \uses{def:dirichlet-density}
+  There is a constant $C$ such that, for $s>1$ in a right neighbourhood
+  of $1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \;\ge\; \log\frac{1}{s-1} - C.
+  \]
+\end{lemma}
+
+\begin{proof}
+  From the simple pole of the Dedekind zeta function at $s=1$
+  (mathlib's \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT})
+  and positivity of the Euler-product summands.
+\end{proof}
+
+\begin{lemma}\label{lem:prime-ideal-sum-log}
+  \lean{Chebotarev.primeIdealZetaSum_univ_tendsto_log}
+  \uses{lem:prime-zeta-higher-tail-bounded, lem:prime-zeta-le-finrank-riemann, lem:riemann-prime-sum-asymp, lem:prime-zeta-ge-log-minus-bounded}
+  As $s\downarrow 1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \sim \log\frac{1}{s-1}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  Combine the upper bound \cref{lem:prime-zeta-le-finrank-riemann} with
+  \cref{lem:riemann-prime-sum-asymp} to bound from above, and the lower
+  bound \cref{lem:prime-zeta-ge-log-minus-bounded} to bound from below.
+  Both bounds equal $\log\bigl(1/(s-1)\bigr)$ to leading order, sharper
+  than \cref{lem:prime-zeta-le-finrank-riemann}'s factor $[K:\Q]$
+  thanks to \cref{lem:prime-zeta-higher-tail-bounded}.
+\end{proof}

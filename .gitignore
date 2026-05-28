@@ -1,0 +1,12 @@
+.lake/
+build/
+.DS_Store
+blueprint/print/*.pdf
+blueprint/print/*.aux
+blueprint/print/*.fdb_latexmk
+blueprint/print/*.fls
+blueprint/print/*.log
+blueprint/print/*.out
+blueprint/print/*.synctex.gz
+blueprint/print/*.toc
+blueprint/web/

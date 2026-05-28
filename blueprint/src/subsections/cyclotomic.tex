@@ -1,0 +1,109 @@
+\section{Chebotarev: cyclotomic case}
+
+For a cyclotomic extension $L = K(\zeta_m)$, Chebotarev's theorem
+reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
+(pp.~142--143).
+
+\begin{lemma}\label{lem:cyclotomic-frobenius-norm-power}
+  \lean{Chebotarev.cyclotomic_frobenius_acts_as_norm_power}
+  \uses{def:frobenius-at}
+  Let $L = K(\zeta_m)$, $\fp$ a nonzero prime of $\OK$ unramified in
+  $L$, and $\fP$ a prime of $\Ocirc_L$ above $\fp$. Then for every
+  primitive $m$-th root of unity $\zeta \in L$,
+  \[
+    \Frob_\fP(\zeta) \;=\; \zeta^{N\fp}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  By the defining property of $\Frob_\fP$ (acts as $N\fp$-power on
+  $\Ocirc_L/\fP$) combined with the fact that $\zeta_m$ lifts
+  isomorphically from the residue field for $\fp\nmid m$.
+\end{proof}
+
+\begin{lemma}\label{lem:log-artin-asymp-character-sum}
+  \lean{Chebotarev.log_artinLSeries_asymp_character_sum}
+  \uses{thm:dedekind-zeta-factorisation, def:frobenius-class}
+  For every character $\chi$ of $G$, the partial sum
+  $\sum_\fp \chi(\Frob_\fp) N\fp^{-s}$ over $\fp$ unramified in $L$ is
+  bounded by $C\log(1/(s-1)) + C$ for some constant $C$, in a right
+  neighbourhood of $s = 1$.
+\end{lemma}
+
+\begin{proof}
+  Expand $\log L(\chi, s)$ via the Euler product
+  \cref{lem:artin-euler-product-abelian}; the higher-power tail is
+  bounded analogously to \cref{lem:prime-zeta-higher-tail-bounded}.
+\end{proof}
+
+\begin{lemma}\label{lem:character-orthogonality-eq}
+  \lean{Chebotarev.character_orthogonality_cyclotomic_eq}
+  \uses{def:galois-character, def:frobenius-class}
+  Let $L = K(\zeta_m)$, $\sigma \in G$, and $\fp$ a nonzero prime of
+  $\OK$ unramified in $L$ with $\sigma_\fp$ the conjugacy class of
+  $\sigma$. Then
+  \[
+    \sum_{\chi\in\widehat G} \chi(\sigma)\chi(\Frob_\fp)^{-1}
+    \;=\; \abs{G}.
+  \]
+\end{lemma}
+
+\begin{lemma}\label{lem:character-orthogonality-ne}
+  \lean{Chebotarev.character_orthogonality_cyclotomic_ne}
+  \uses{def:galois-character, def:frobenius-class}
+  Let $L = K(\zeta_m)$, $\sigma \in G$, and $\fp$ a nonzero prime of
+  $\OK$ unramified in $L$ whose Frobenius class is not the conjugacy
+  class of $\sigma$. Then
+  \[
+    \sum_{\chi\in\widehat G} \chi(\sigma)\chi(\Frob_\fp)^{-1} \;=\; 0.
+  \]
+\end{lemma}
+
+\begin{proof}
+  Standard finite-group character orthogonality for the dual of $G$
+  (Sharifi 7.2.1 step at p.~142). Under the isomorphism
+  $G\cong(\Z/m\Z)^\times$ from \cref{lem:cyclotomic-frobenius-norm-power},
+  $\chi(\Frob_\fp)$ depends only on $N\fp\bmod m$, and the sum reduces to
+  the orthogonality relation on the cyclic group $(\Z/m\Z)^\times$.
+\end{proof}
+
+\begin{lemma}\label{lem:cyclotomic-density-two-sided}
+  \lean{Chebotarev.cyclotomic_density_from_two_sided_asymp}
+  \uses{lem:log-artin-asymp-character-sum, lem:character-orthogonality-eq, lem:character-orthogonality-ne, lem:prime-ideal-sum-log}
+  Let $L = K(\zeta_m)$ and $\sigma \in G$. Then
+  \[
+    \lim_{s\downarrow 1}
+    \frac{\sum_{\fp:\,\sigma_\fp = \sigma} N\fp^{-s}}
+         {\sum_\fp N\fp^{-s}}
+    \;=\; \frac{1}{\abs{G}}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  Multiply $\log L(\chi, s)$ by $\chi(\sigma)^{-1}$ and sum over $\chi$:
+  the orthogonality relations
+  (\cref{lem:character-orthogonality-eq,lem:character-orthogonality-ne})
+  pick out the primes with Frobenius $\sigma$,
+  giving
+  \[
+    \sum_\chi \chi(\sigma)^{-1}\log L(\chi, s)
+    \;\sim\;\abs{G}\!\!\!\sum_{\fp:\,\sigma_\fp=\sigma}\!\!\!N\fp^{-s}.
+  \]
+  On the other hand
+  $\sum_\chi \chi(\sigma)^{-1}\log L(\chi, s) \sim \log\zeta_K(s)
+  \sim \log(1/(s-1))$ (using
+  \cref{lem:artin-one-ne-zero}). Dividing by
+  $\sum_\fp N\fp^{-s} \sim \log(1/(s-1))$
+  (\cref{lem:prime-ideal-sum-log}) yields $1/\abs{G}$.
+\end{proof}
+
+\begin{theorem}\label{thm:chebotarev-cyclotomic}
+  \lean{Chebotarev.chebotarev_cyclotomic}
+  \uses{def:dirichlet-density, def:frobenius-class, lem:cyclotomic-density-two-sided}
+  For $K$ a number field, $m\ge 1$, $L=K(\zeta_m)$, and every
+  $\sigma \in G = \Gal{L/K}$,
+  \[
+    \delta\bigl(\setof{\fp\subset\OK}{\sigma_\fp = \sigma}\bigr)
+    \;=\; \frac{1}{\abs{G}}.
+  \]
+\end{theorem}

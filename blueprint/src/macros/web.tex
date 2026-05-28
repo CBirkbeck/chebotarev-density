@@ -1,0 +1,14 @@
+% Web-only macros. plasTeX-specific workarounds.
+
+% plasTeX does not know about `\color` by default; ignore it. (Use
+% \providecommand so this does not clash with xcolor when latexmk compiles
+% the web entry point alongside print.)
+\providecommand{\color}[1]{}
+
+% Work around a plasTeX issue with `amsmath`'s `\notag`/`\nonumber`.
+\def\notag{}
+\def\nonumber{}
+
+% Pagination hooks used by the shared content file.
+\newcommand{\blueprintfrontmatter}{}
+\newcommand{\blueprintmainmatter}{}

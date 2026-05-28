@@ -1,0 +1,101 @@
+\section{Chebotarev: abelian case via cyclotomic crossing}
+
+The abelian case is reduced to the cyclotomic case by Chebotarev's
+original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
+
+\begin{lemma}\label{lem:cyclic-subgroup-trivial-meet}
+  \lean{Chebotarev.cyclic_subgroup_meets_G_times_one_trivially}
+  Let $G, H$ be finite groups, $\sigma \in G$, $\tau \in H$. If
+  $\abs{G}\mid\mathrm{ord}(\tau)$, then
+  $\ang{(\sigma,\tau)}\cap (G\times\{1\}) = \{1\}$.
+\end{lemma}
+
+\begin{proof}
+  Pure group theory. If $(\sigma^k, \tau^k) \in G\times\{1\}$ then
+  $\tau^k = 1$, so $\mathrm{ord}(\tau)\mid k$, hence
+  $\abs{G}\mid k$, hence $\sigma^k = 1$.
+\end{proof}
+
+\begin{lemma}\label{lem:density-S-sigma-tau}
+  \lean{Chebotarev.density_S_sigma_tau_eq_inv_card_GH}
+  \uses{lem:cyclic-subgroup-trivial-meet, thm:chebotarev-cyclotomic}
+  Let $L/K$ be a finite abelian Galois extension with $G=\Gal{L/K}$,
+  $\sigma\in G$, and $m\ge 1$ coprime to the discriminant of $L$, so
+  that $\Gal{L(\zeta_m)/K}\cong G\times H$ with
+  $H=\Gal{K(\zeta_m)/K}\subseteq(\Z/m\Z)^\times$.
+  Then
+  \[
+    \delta\bigl(\setof{\fp\subset\OK}{
+      \fp \text{ has Frobenius } (\sigma, \tau)\in G\times H}\bigr)
+    \;=\; \frac{1}{\abs{G}\cdot\abs{H}}
+  \]
+  for every $\tau\in H$ with $\abs{G}\mid\mathrm{ord}(\tau)$.
+\end{lemma}
+
+\begin{proof}
+  By \cref{lem:cyclic-subgroup-trivial-meet}, the fixed field
+  $F = L(\zeta_m)^{\ang{(\sigma,\tau)}}$ satisfies
+  $F(\zeta_m) = L(\zeta_m)$, so the extension $L(\zeta_m)/F$ is
+  cyclotomic. Apply the cyclotomic case
+  \cref{thm:chebotarev-cyclotomic} to $L(\zeta_m)/F$ to obtain
+  $\delta_F = 1/\abs{\ang{(\sigma,\tau)}}$. The conjugacy-class
+  reduction (\cref{thm:chebotarev-density} below, Step~1's counting)
+  lifts this to a $K$-density of $1/(\abs{G}\cdot\abs{H})$.
+\end{proof}
+
+\begin{lemma}\label{lem:H-n-over-H-formula}
+  \lean{Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation}
+  Let $n = p_1^{k_1}\cdots p_r^{k_r}$ with $p_i$ distinct primes,
+  $k_i\ge 1$. For an integer $m \ge 1$ with $m \equiv 1 \pmod{n^j}$,
+  setting $j_i = v_{p_i}(m-1) \ge j$ and
+  $H_n = \setof{\tau\in(\Z/m\Z)^\times}{n\mid\mathrm{ord}(\tau)}$,
+  \[
+    \frac{\abs{H_n}}{\abs{(\Z/m\Z)^\times}}
+    \;=\; \prod_{i=1}^r\!\biggl(1-\frac{p_i^{k_i-1}}{p_i^{j_i k_i}}\biggr)
+    \;\ge\; \prod_{i=1}^r\!\biggl(1-\frac{1}{p_i^{(j-1)k_i+1}}\biggr).
+  \]
+\end{lemma}
+
+\begin{proof}
+  Direct combinatorial computation on $(\Z/m\Z)^\times$ using CRT and
+  the prime-power factorisation of $n$ (Sharifi p.~144).
+\end{proof}
+
+\begin{lemma}\label{lem:H-n-over-H-tends-one}
+  \lean{Chebotarev.H_n_over_H_tends_to_one}
+  \uses{lem:H-n-over-H-formula}
+  As $k \to \infty$,
+  $\abs{H_n}/\abs{(\Z/n^k\Z)^\times} \to 1$.
+\end{lemma}
+
+\begin{proof}
+  Limit of the product formula \cref{lem:H-n-over-H-formula} as
+  $j \to \infty$: each factor tends to $1$.
+\end{proof}
+
+\begin{theorem}\label{thm:chebotarev-abelian}
+  \lean{Chebotarev.chebotarev_abelian}
+  \uses{def:dirichlet-density, def:frobenius-class, lem:density-S-sigma-tau, lem:H-n-over-H-tends-one, lem:finite-ramified-primes}
+  For a finite abelian Galois extension $L/K$ of number fields with
+  $G=\Gal{L/K}$ and every $\sigma\in G$,
+  \[
+    \delta\bigl(\setof{\fp\subset\OK}{\sigma_\fp = \sigma}\bigr)
+    \;=\; \frac{1}{\abs{G}}.
+  \]
+\end{theorem}
+
+\begin{proof}
+  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
+  Choose $m \equiv 1 \pmod{\abs{G}^k}$ for large $k$ (Dirichlet's
+  theorem on primes in arithmetic progressions, mathlib's
+  \texttt{Nat.infinite\_setOf\_prime\_and\_eq\_mod}). For each
+  $\tau \in H$ with $\abs{G}\mid\mathrm{ord}(\tau)$,
+  \cref{lem:density-S-sigma-tau} gives the per-$(\sigma,\tau)$ density
+  $1/(\abs{G}\cdot\abs{H})$; summing over such $\tau$ yields
+  $\delta_\inf(\setof{\fp}{\sigma_\fp = \sigma})
+  \ge \abs{H_n}/(\abs{G}\cdot\abs{H})$.
+  By \cref{lem:H-n-over-H-tends-one}, this tends to $1/\abs{G}$.
+  Summing this lower bound over $\sigma\in G$ gives $\ge 1$;
+  combined with $\delta\le 1$ (\cref{lem:finite-ramified-primes}), each
+  $\sigma$ contributes exactly $1/\abs{G}$.
+\end{proof}
