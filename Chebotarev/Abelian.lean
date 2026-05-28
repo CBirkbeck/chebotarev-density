@@ -89,20 +89,42 @@ theorem cyclic_subgroup_meets_G_times_one_trivially
         ((⊤ : Subgroup G).prod (⊥ : Subgroup H)) = ⊥ := by
   sorry
 
-/-- Sharifi 7.2.2 Step 2 sub-lemma (ii) — for `n | ord(τ)`, the
-cyclotomic case at `F(μ_m)/F` combined with Step 1's lifting yields the
-per-`(σ,τ)` density. Source quote: "δ(S_{σ,τ}) exists and equals
-1/|G||H|". The hypothesis `n | ord(τ)` (where `n = |G|`) is needed by
-`cyclic_subgroup_meets_G_times_one_trivially` above. -/
-theorem density_S_sigma_tau_eq_inv_card_GH
+/-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)`
+coming from one choice of cyclotomic crossing modulus `m`. Source quote
+(p. 144): "δ_inf(S_σ) ≥ |H_n|/(|G|·|H|)".
+
+Sketch: for each `τ ∈ H_n` (i.e., `|G| ∣ ord(τ)`), apply the cyclotomic
+case to `L(μ_m)/F` where `F = K(μ_m)^{⟨(σ,τ)⟩}`; this yields density
+`1/(|G|·|H|)` of primes of `K` whose Frobenius in `Gal(L(μ_m)/K) = G×H`
+equals `(σ,τ)`. Each such prime contributes to `S_σ` (the
+`K`-projection drops the `τ` component to `σ`), and the contributions
+from distinct `τ` are disjoint. Summing over `τ ∈ H_n` gives the
+lower bound.
+
+**Previous form** (corrected 2026-05-28): the earlier statement claimed
+`δ(S_σ) = 1/(|G|·|H|)` with the set `S_σ` (= primes with Frobenius `σ`
+in `Gal(L/K)`), which was mathematically wrong — that set has density
+`1/|G|` (Chebotarev abelian), not `1/(|G|·|H|)`. The actual sub-step
+Sharifi uses is the per-`m` lower bound on `δ_inf(S_σ)`, captured by
+the present statement.
+
+Without `L(μ_m)` explicitly in scope, we state the conclusion of the
+per-`m` summation step directly: a lower bound `|H_n(m)|/(|G|·|H(m)|)`
+on the `liminf` of the density ratio for `S_σ` in `K`. -/
+theorem liminf_density_S_sigma_ge_card_H_n_div_GH
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
     [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
     [hAb : IsMulCommutative (L ≃ₐ[K] L)]
     (σ : L ≃ₐ[K] L) (m : ℕ) (_hm : 1 ≤ m) :
-    HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
-        frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹) := by
+    (Nat.card {τ : (ZMod m)ˣ // Nat.card (L ≃ₐ[K] L) ∣ orderOf τ} : ℝ)
+        / (Nat.card (L ≃ₐ[K] L) * Nat.card ((ZMod m)ˣ))
+      ≤ Filter.liminf
+          (fun s : ℝ ↦
+            primeIdealZetaSum K
+                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+                  frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
+              / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
+          (𝓝[>] 1) := by
   sorry
 
 /-- Sharifi 7.2.2 Step 2 sub-lemma (iv) — explicit lower bound on

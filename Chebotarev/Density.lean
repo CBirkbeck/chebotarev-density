@@ -61,7 +61,20 @@ def HasDirichletDensity
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) (𝓝 δ)
 
-/-- Upper Dirichlet density. -/
+/-- Upper Dirichlet density (`limsup` of the ratio).
+
+**Convention note.** This uses the standard mathematical convention:
+upper = `limsup`. Sharifi *Algebraic Number Theory* §7.1.13 (p. 140)
+labels the `limsup` form "lower Dirichlet density" and the `liminf` form
+"upper Dirichlet density" — a non-standard labelling. We follow the
+standard convention, so:
+
+* this `HasUpperDirichletDensity` (= `limsup`) is what Sharifi calls
+  "lower Dirichlet density" and notates `δ_sup`;
+* `HasLowerDirichletDensity` (= `liminf`) is what Sharifi calls
+  "upper Dirichlet density" and notates `δ_inf`.
+
+When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
 def HasUpperDirichletDensity
     (K : Type*) [Field K] [NumberField K]
     (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
@@ -69,7 +82,10 @@ def HasUpperDirichletDensity
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
 
-/-- Lower Dirichlet density. -/
+/-- Lower Dirichlet density (`liminf` of the ratio). See
+`HasUpperDirichletDensity` for the convention note: this matches
+Sharifi's `δ_inf` notation despite Sharifi's labelling
+inversion. -/
 def HasLowerDirichletDensity
     (K : Type*) [Field K] [NumberField K]
     (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
