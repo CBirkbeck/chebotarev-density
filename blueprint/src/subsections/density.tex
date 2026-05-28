@@ -63,9 +63,36 @@ out the analytic ingredients.
   $s=1$.
 \end{proof}
 
+\begin{lemma}\label{lem:logzeta-eq-primesum-bounded}
+  \lean{Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded}
+  \uses{lem:prime-zeta-higher-tail-bounded}
+  Euler-product-log identity:
+  $\bigl|\log\zeta_K(s) - \sum_\fp N\fp^{-s}\bigr| \le C$ on a right
+  neighbourhood of $1$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:prime-zeta-higher-tail-bounded}
+  $\log\zeta_K(s) = \sum_\fp N\fp^{-s} +
+  \sum_{\fp,k\ge2} N\fp^{-ks}/k$; the tail is bounded by
+  \cref{lem:prime-zeta-higher-tail-bounded}.
+\end{proof}
+
+\begin{lemma}\label{lem:logzeta-eq-loginv-bounded}
+  \lean{Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded}
+  Simple-pole identity:
+  $\bigl|\log\zeta_K(s) - \log(1/(s-1))\bigr| \le C$ on a right
+  neighbourhood of $1$.
+\end{lemma}
+
+\begin{proof}
+  From the simple pole of $\zeta_K$ at $s=1$ (mathlib's
+  \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT}).
+\end{proof}
+
 \begin{lemma}\label{lem:prime-zeta-ge-log-minus-bounded}
   \lean{Chebotarev.primeIdealZetaSum_ge_log_minus_bounded}
-  \uses{def:dirichlet-density}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
   There is a constant $C$ such that, for $s>1$ in a right neighbourhood
   of $1$,
   \[
@@ -74,14 +101,16 @@ out the analytic ingredients.
 \end{lemma}
 
 \begin{proof}
-  From the simple pole of the Dedekind zeta function at $s=1$
-  (mathlib's \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT})
-  and positivity of the Euler-product summands.
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  \leanok
+  Chain the two identities
+  \cref{lem:logzeta-eq-primesum-bounded,lem:logzeta-eq-loginv-bounded}:
+  $\sum_\fp N\fp^{-s} \ge \log\zeta_K(s) - C_1 \ge \log(1/(s-1)) - C_1 - C_2$.
 \end{proof}
 
 \begin{lemma}\label{lem:prime-zeta-le-log-plus-bounded}
   \lean{Chebotarev.primeIdealZetaSum_le_log_plus_bounded}
-  \uses{def:dirichlet-density}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
   There is a constant $C'$ such that, for $s>1$ in a right neighbourhood
   of $1$,
   \[
@@ -90,13 +119,11 @@ out the analytic ingredients.
 \end{lemma}
 
 \begin{proof}
-  \uses{lem:prime-zeta-higher-tail-bounded}
-  By the higher-power tail bound \cref{lem:prime-zeta-higher-tail-bounded}
-  and the analytic-at-$1$ identity
-  $\log\zeta_K(s) = \sum_\fp N\fp^{-s} + O(1)$, the partial-sum
-  $\sum_\fp N\fp^{-s}$ differs from $\log\zeta_K(s)$ by a bounded
-  function. Since $\zeta_K$ has a simple pole at $s=1$,
-  $\log\zeta_K(s) \le \log\bigl(1/(s-1)\bigr) + O(1)$.
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  \leanok
+  Same two identities
+  \cref{lem:logzeta-eq-primesum-bounded,lem:logzeta-eq-loginv-bounded},
+  transposed.
 \end{proof}
 
 \begin{lemma}\label{lem:tendsto-ratio-one-of-log-pm-bounded}

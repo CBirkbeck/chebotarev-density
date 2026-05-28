@@ -67,9 +67,46 @@ reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
   the orthogonality relation on the cyclic group $(\Z/m\Z)^\times$.
 \end{proof}
 
+\begin{lemma}\label{lem:primesum-fibre-asymp}
+  \lean{Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp}
+  \uses{lem:log-artin-asymp-character-sum, lem:character-orthogonality-eq, lem:character-orthogonality-ne, lem:artin-one-ne-zero}
+  Let $L = K(\zeta_m)$ and $\sigma \in G$. The Frobenius-fibre prime sum
+  is asymptotic to $(1/\abs{G})\log(1/(s-1))$:
+  \[
+    \lim_{s\downarrow 1}
+    \frac{\sum_{\fp:\,\sigma_\fp = \sigma} N\fp^{-s}}{\log(1/(s-1))}
+    \;=\; \frac{1}{\abs{G}}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:character-orthogonality-eq, lem:character-orthogonality-ne, lem:artin-one-ne-zero}
+  Multiply $\log L(\chi, s)$ by $\chi(\sigma)^{-1}$ and sum over $\chi$:
+  the orthogonality relations
+  (\cref{lem:character-orthogonality-eq,lem:character-orthogonality-ne})
+  pick out the primes with Frobenius $\sigma$, giving
+  $\sum_\chi \chi(\sigma)^{-1}\log L(\chi, s) \sim
+  \abs{G}\sum_{\sigma_\fp=\sigma} N\fp^{-s}$; on the other hand it
+  $\sim \log\zeta_K(s) \sim \log(1/(s-1))$ (only $\chi=1$ contributes a
+  pole, by \cref{lem:artin-one-ne-zero}). Divide.
+\end{proof}
+
+\begin{lemma}\label{lem:ratio-glue-numerator}
+  \lean{Chebotarev.tendsto_ratio_of_log_asymp_numerator}
+  If $\mathrm{num}(s)/\log(1/(s-1)) \to c$ and
+  $\mathrm{den}(s)/\log(1/(s-1)) \to 1$ as $s\downarrow 1$, then
+  $\mathrm{num}(s)/\mathrm{den}(s) \to c$.
+\end{lemma}
+
+\begin{proof}
+  Write $\mathrm{num}/\mathrm{den} = (\mathrm{num}/L)/(\mathrm{den}/L)$
+  with $L = \log(1/(s-1)) \to \infty$ (eventually nonzero); apply the
+  quotient rule for limits.
+\end{proof}
+
 \begin{lemma}\label{lem:cyclotomic-density-two-sided}
   \lean{Chebotarev.cyclotomic_density_from_two_sided_asymp}
-  \uses{lem:log-artin-asymp-character-sum, lem:character-orthogonality-eq, lem:character-orthogonality-ne, lem:prime-ideal-sum-log}
+  \uses{lem:primesum-fibre-asymp, lem:prime-ideal-sum-log, lem:ratio-glue-numerator}
   Let $L = K(\zeta_m)$ and $\sigma \in G$. Then
   \[
     \lim_{s\downarrow 1}
@@ -80,21 +117,13 @@ reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
 \end{lemma}
 
 \begin{proof}
-  Multiply $\log L(\chi, s)$ by $\chi(\sigma)^{-1}$ and sum over $\chi$:
-  the orthogonality relations
-  (\cref{lem:character-orthogonality-eq,lem:character-orthogonality-ne})
-  pick out the primes with Frobenius $\sigma$,
-  giving
-  \[
-    \sum_\chi \chi(\sigma)^{-1}\log L(\chi, s)
-    \;\sim\;\abs{G}\!\!\!\sum_{\fp:\,\sigma_\fp=\sigma}\!\!\!N\fp^{-s}.
-  \]
-  On the other hand
-  $\sum_\chi \chi(\sigma)^{-1}\log L(\chi, s) \sim \log\zeta_K(s)
-  \sim \log(1/(s-1))$ (using
-  \cref{lem:artin-one-ne-zero}). Dividing by
-  $\sum_\fp N\fp^{-s} \sim \log(1/(s-1))$
-  (\cref{lem:prime-ideal-sum-log}) yields $1/\abs{G}$.
+  \uses{lem:primesum-fibre-asymp, lem:prime-ideal-sum-log, lem:ratio-glue-numerator}
+  \leanok
+  The numerator asymptotic \cref{lem:primesum-fibre-asymp}
+  ($\mathrm{num}\sim(1/\abs{G})\log(1/(s-1))$) and the denominator
+  asymptotic \cref{lem:prime-ideal-sum-log}
+  ($\mathrm{den}\sim\log(1/(s-1))$) feed the ratio glue
+  \cref{lem:ratio-glue-numerator}.
 \end{proof}
 
 \begin{theorem}\label{thm:chebotarev-cyclotomic}

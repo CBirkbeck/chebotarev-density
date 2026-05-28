@@ -196,27 +196,56 @@ theorem riemannPrimeSum_asymp_log :
       (𝓝[>] 1) (𝓝 1) := by
   sorry
 
-/-- Sharifi 7.1.12 proof (p. 140), lower bound: from the simple pole of
-`ζ_K` at `s=1`
-(`NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`) one extracts
-`Σ_𝔭 N𝔭^{-s} ≥ log(1/(s-1)) - C`. Pair with
-`primeIdealZetaSum_le_log_plus_bounded` for the sandwich. -/
+/-- Sharifi 7.1.12 proof (p. 140), Euler-product-log identity:
+`log ζ_K(s) = Σ_𝔭 N𝔭^{-s} + O(1)` as `s ↓ 1`. The `O(1)` is the
+higher-power tail `Σ_{𝔭,k≥2} N𝔭^{-ks}/k`, bounded by
+`primeIdealZetaHigherTail_bounded`. Source: "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
+theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
+    ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ),
+      |Real.log (dedekindZeta K (s : ℂ)).re
+        - primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s| ≤ C := by
+  sorry
+
+/-- Sharifi 7.1.12 proof (p. 140), simple-pole identity:
+`log ζ_K(s) = log(1/(s-1)) + O(1)` as `s ↓ 1`, from the simple pole of
+`ζ_K` at `s=1` (mathlib's
+`NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`). -/
+theorem logDedekindZeta_sub_log_inv_sub_one_bounded :
+    ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ),
+      |Real.log (dedekindZeta K (s : ℂ)).re - Real.log (1 / (s - 1))| ≤ C := by
+  sorry
+
+/-- Sharifi 7.1.12 proof (p. 140), lower bound: `Σ_𝔭 N𝔭^{-s} ≥
+log(1/(s-1)) - C`.
+
+**Composition**: chain the Euler-log identity
+`logDedekindZeta_sub_primeIdealZetaSum_bounded` and the simple-pole
+identity `logDedekindZeta_sub_log_inv_sub_one_bounded`. -/
 theorem primeIdealZetaSum_ge_log_minus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
         ≥ Real.log (1 / (s - 1)) - C := by
-  sorry
+  obtain ⟨C₁, h₁⟩ := logDedekindZeta_sub_primeIdealZetaSum_bounded K
+  obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
+  refine ⟨C₁ + C₂, ?_⟩
+  filter_upwards [h₁, h₂] with s hs₁ hs₂
+  rw [abs_le] at hs₁ hs₂
+  linarith [hs₁.1, hs₁.2, hs₂.1, hs₂.2]
 
-/-- Sharifi 7.1.12 proof (p. 140), upper bound: from the same simple pole
-+ the higher-power tail bound, one extracts
-`Σ_𝔭 N𝔭^{-s} ≤ log(1/(s-1)) + C'`. The proof is
-`log ζ_K = Σ_𝔭 N𝔭^{-s} + (bounded tail) = log(1/(s-1)) + (bounded)`,
-which by transposition gives the bound. -/
+/-- Sharifi 7.1.12 proof (p. 140), upper bound: `Σ_𝔭 N𝔭^{-s} ≤
+log(1/(s-1)) + C'`.
+
+**Composition**: same two identities as the lower bound, transposed. -/
 theorem primeIdealZetaSum_le_log_plus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
         ≤ Real.log (1 / (s - 1)) + C := by
-  sorry
+  obtain ⟨C₁, h₁⟩ := logDedekindZeta_sub_primeIdealZetaSum_bounded K
+  obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
+  refine ⟨C₁ + C₂, ?_⟩
+  filter_upwards [h₁, h₂] with s hs₁ hs₂
+  rw [abs_le] at hs₁ hs₂
+  linarith [hs₁.1, hs₁.2, hs₂.1, hs₂.2]
 
 /-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
 neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The

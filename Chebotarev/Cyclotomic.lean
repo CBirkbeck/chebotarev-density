@@ -134,10 +134,52 @@ theorem character_orthogonality_cyclotomic_ne
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹) = 0 := by
   sorry
 
+/-- Sharifi 7.2.1 step (iv-a) — the numerator asymptotic. The prime-sum
+over the Frobenius fibre `{σ_𝔭 = σ}` is asymptotic to
+`(1/|G|) log(1/(s-1))` as `s ↓ 1`. This packages the orthogonality
+relations (`character_orthogonality_cyclotomic_eq`/`_ne`) summed against
+the log-asymptotic of the Artin L-functions
+(`log_artinLSeries_asymp_character_sum`) with the simple pole of `ζ_K`
+(only `χ = 1` contributes a pole, by `artinLSeries_one_ne_zero`):
+`Σ_χ χ(σ)⁻¹ log L(χ,s) ~ |G| Σ_{σ_𝔭=σ} N𝔭^{-s}` on one side and
+`~ log ζ_K(s) ~ log(1/(s-1))` on the other. -/
+theorem primeIdealZetaSum_frobeniusFibre_asymp
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
+    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative (L ≃ₐ[K] L)] (σ : L ≃ₐ[K] L) :
+    Tendsto
+      (fun s : ℝ ↦
+        primeIdealZetaSum K
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+              frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
+          / Real.log (1 / (s - 1)))
+      (𝓝[>] 1) (𝓝 ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹)) := by
+  sorry
+
+/-- Pure real-analysis glue: if `num(s) ~ (1/N) log(1/(s-1))` and
+`den(s) ~ log(1/(s-1))` as `s ↓ 1` (both via the ratio against
+`log(1/(s-1))` tending to the stated constants), then
+`num(s)/den(s) → 1/N`. The proof writes `num/den = (num/L)/(den/L)`
+with `L = log(1/(s-1)) → ∞` (so eventually nonzero) and applies
+`Tendsto.div`. -/
+theorem tendsto_ratio_of_log_asymp_numerator
+    (num den : ℝ → ℝ) (c : ℝ)
+    (hnum : Tendsto (fun s : ℝ ↦ num s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 c))
+    (hden : Tendsto (fun s : ℝ ↦ den s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1)) :
+    Tendsto (fun s : ℝ ↦ num s / den s) (𝓝[>] 1) (𝓝 c) := by
+  sorry
+
 /-- Sharifi 7.2.1 step (iv) — two-sided log-asymptotic comparison (p. 142).
 Source: "on the one hand we have Σ_χ χ(σ)^{-1} log L(χ,s) ~ |G|
 Σ_{φ_𝔭=σ} N𝔭^{-s}, whereas on the other we have Σ_χ χ(σ)^{-1} log L(χ,s)
-~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`. -/
+~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`.
+
+**Composition**: the numerator asymptotic
+`primeIdealZetaSum_frobeniusFibre_asymp` (`num ~ (1/|G|) log(1/(s-1))`)
+and the denominator asymptotic `primeIdealZetaSum_univ_tendsto_log`
+(`den ~ log(1/(s-1))`) feed the ratio glue
+`tendsto_ratio_of_log_asymp_numerator`. -/
 theorem cyclotomic_density_from_two_sided_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
     [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
@@ -149,8 +191,10 @@ theorem cyclotomic_density_from_two_sided_asymp
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
-      (𝓝[>] 1) (𝓝 ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹)) := by
-  sorry
+      (𝓝[>] 1) (𝓝 ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹)) :=
+  tendsto_ratio_of_log_asymp_numerator _ _ _
+    (primeIdealZetaSum_frobeniusFibre_asymp K L m σ)
+    (primeIdealZetaSum_univ_tendsto_log K)
 
 /-- **Chebotarev's theorem, cyclotomic case** (Sharifi §7.2.1).
 
