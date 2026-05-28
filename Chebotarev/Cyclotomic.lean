@@ -156,28 +156,38 @@ theorem cyclotomic_density_from_two_sided_asymp
 
 For `K` a number field, `m ≥ 1`, and `L = K(μ_m)` the `m`-th cyclotomic
 extension of `K`, every `σ ∈ Gal(L/K)` is the Frobenius of a set of primes
-of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
+of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`.
+
+**Composition**: this is literally
+`cyclotomic_density_from_two_sided_asymp` packaged as a
+`HasDirichletDensity` claim. The two are definitionally the same
+(`HasDirichletDensity` unfolds to the same `Tendsto`). -/
 theorem chebotarev_cyclotomic
     (m : ℕ) [NeZero m]
     [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
     (σ : L ≃ₐ[K] L) :
     HasDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) := by
-  sorry
+      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+  cyclotomic_density_from_two_sided_asymp K L m σ
 
 /-- A variant of the cyclotomic-case theorem stated as a lower-density
 inequality. Used in the abelian case to feed into the
-`HasLowerDirichletDensity.mono` chain. -/
+`HasLowerDirichletDensity.mono` chain.
+
+**Composition**: extracts the lower density from the full density via
+`HasDirichletDensity.hasLower`. -/
 theorem chebotarev_cyclotomic_lowerDensity_ge
     (m : ℕ) [NeZero m]
     [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
     (σ : L ≃ₐ[K] L) :
     HasLowerDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) := by
-  sorry
+      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+  (chebotarev_cyclotomic K L m σ).hasLower
 
 end Chebotarev

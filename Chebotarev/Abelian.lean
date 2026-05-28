@@ -145,7 +145,11 @@ theorem chebotarev_abelian
 
 /-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` obtained from a single
 choice of cyclotomic crossing modulus `m`, before passing to the limit. This
-is the per-`m` inequality at the heart of Sharifi 7.2.2 Step 2. -/
+is the per-`m` inequality at the heart of Sharifi 7.2.2 Step 2.
+
+**Composition**: extracts the lower density from the full abelian
+density via `HasDirichletDensity.hasLower`. (The dependence on `m`
+disappears once equality is reached.) -/
 theorem chebotarev_abelian_lowerDensity_per_m
     [FiniteDimensional K L]
     [hAb : IsMulCommutative (L ≃ₐ[K] L)]
@@ -153,8 +157,8 @@ theorem chebotarev_abelian_lowerDensity_per_m
     HasLowerDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) := by
-  sorry
+      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+  (chebotarev_abelian K L σ).hasLower
 
 /-- The auxiliary fact `|H_n|/|H| → 1` as `m` varies through residues `m ≡ 1
 mod n^k`. This is the analytic input from Dirichlet's theorem

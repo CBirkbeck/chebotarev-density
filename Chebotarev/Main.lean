@@ -120,28 +120,75 @@ theorem chebotarev_density
       ((Nat.card C.carrier : ℝ) / Nat.card (L ≃ₐ[K] L)) := by
   sorry
 
+/-- Sub-lemma: a set of prime ideals with positive Dirichlet density is
+infinite. Contrapositive: a finite set has density `0` (by
+`hasDirichletDensity_of_finite` from `Density.lean`). -/
+theorem infinite_of_hasDirichletDensity_pos
+    {S : Set (Ideal (𝓞 K))} {δ : ℝ}
+    (h : HasDirichletDensity K S δ) (hδ : 0 < δ) :
+    S.Infinite := by
+  sorry
+
+/-- Sub-lemma: the size of a conjugacy class in a finite group is at
+least `1` (the class always contains at least its own representative). -/
+theorem ConjClasses_carrier_card_pos
+    {G : Type*} [Group G] [Finite G] (C : ConjClasses G) :
+    0 < Nat.card C.carrier := by
+  sorry
+
 /-- Existence of *infinitely many* primes with each Frobenius conjugacy class
-— a qualitative corollary of `chebotarev_density`. -/
+— a qualitative corollary of `chebotarev_density`.
+
+**Composition**: positive Dirichlet density (numerator `|C| ≥ 1`,
+denominator `|G|`, so `|C|/|G| > 0`) implies the set is infinite, by
+`infinite_of_hasDirichletDensity_pos`. -/
 theorem infinite_setOf_frobenius_class
     [FiniteDimensional K L]
     (C : ConjClasses (L ≃ₐ[K] L)) :
     Set.Infinite
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C} := by
+  refine infinite_of_hasDirichletDensity_pos K (chebotarev_density K L C) ?_
+  -- Show `(Nat.card C.carrier : ℝ) / Nat.card (L ≃ₐ[K] L) > 0`.
+  apply div_pos
+  · exact_mod_cast ConjClasses_carrier_card_pos C
+  · exact_mod_cast Nat.card_pos (α := L ≃ₐ[K] L)
+
+/-- Sub-lemma for `density_split_completely`: the identity conjugacy class
+in a finite group has carrier of cardinality `1`. (`Nat.card.carrier` of
+`ConjClasses.mk (1 : G)` is `1`.) -/
+theorem ConjClasses_mk_one_carrier_card_eq_one
+    (G : Type*) [Group G] [Finite G] :
+    Nat.card (ConjClasses.mk (1 : G)).carrier = 1 := by
+  sorry
+
+/-- Sub-lemma for `density_split_completely`: for a finite Galois
+extension, the cardinality of the Galois group equals the degree. -/
+theorem nat_card_galois_eq_finrank
+    [FiniteDimensional K L] :
+    (Nat.card (L ≃ₐ[K] L) : ℝ) = (Module.finrank K L : ℝ) := by
   sorry
 
 /-- **Density of completely split primes** (Sharifi 7.1.14, as a corollary of
 Chebotarev applied to the identity conjugacy class).
 
 The Dirichlet density of primes `𝔭` of `𝓞 K` that split completely in `L`
-equals `1 / [L : K]`. -/
+equals `1 / [L : K]`.
+
+**Composition**: apply `chebotarev_density` to the trivial conjugacy class
+`ConjClasses.mk 1`, then simplify the value via
+`ConjClasses_mk_one_carrier_card_eq_one` (numerator = 1) and
+`nat_card_galois_eq_finrank` (denominator = `[L:K]`). -/
 theorem density_split_completely
     [FiniteDimensional K L] :
     HasDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk 1}
       ((Module.finrank K L : ℝ)⁻¹) := by
-  sorry
+  have h := chebotarev_density K L (ConjClasses.mk (1 : L ≃ₐ[K] L))
+  rw [ConjClasses_mk_one_carrier_card_eq_one (L ≃ₐ[K] L)] at h
+  rw [nat_card_galois_eq_finrank K L] at h
+  simpa [one_div] using h
 
 /-- **Dirichlet's theorem on primes in arithmetic progressions**, as a
 density refinement of `Nat.infinite_setOf_prime_and_eq_mod`.
