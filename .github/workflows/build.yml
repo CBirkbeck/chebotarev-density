@@ -49,6 +49,6 @@ jobs:
       - name: Compile blueprint and homepage
         uses: dwrensha/docgen-action@a3f8189646977363717917b605e6de25f9704656
         with:
-          api-docs: false
+          api-docs: true
           blueprint: true
           homepage: home_page

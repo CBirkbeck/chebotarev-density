@@ -204,17 +204,26 @@ noncomputable def frobeniusClass
       ConjClasses.mk 1
 
 /-- `frobeniusClass K L 𝔭` is the conjugacy class of `frobeniusAt 𝔓` for any
-prime `𝔓` of `𝓞 L` above `𝔭`. -/
+prime `𝔓` of `𝓞 L` above `𝔭`.
+
+**Composition**: unfold the `if`-branch of `frobeniusClass` at the
+positive case (uses hypotheses `hpr`, `hnz_𝔭`, `hunr`), then apply
+`(exists_frobeniusClass ...).choose_spec` at the given `𝔓`. -/
 theorem frobeniusClass_eq_mk_frobeniusAt
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
     [Algebra K L] [IsGalois K L]
-    (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
+    (𝔭 : Ideal (𝓞 K)) (hpr : 𝔭.IsPrime) (hnz_𝔭 : 𝔭 ≠ ⊥)
     (hunr : UnramifiedIn K L 𝔭)
     (𝔓 : Ideal (𝓞 L)) (hp : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (hnz : 𝔓 ≠ ⊥) :
     frobeniusClass K L 𝔭 =
       ConjClasses.mk (frobeniusAt K L 𝔓 hp hnz
         (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hp hP)) := by
-  sorry
+  classical
+  show (if h : 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 then
+          (exists_frobeniusClass K L 𝔭 h.1 h.2.1 h.2.2).choose
+        else ConjClasses.mk 1) = _
+  rw [dif_pos ⟨hpr, hnz_𝔭, hunr⟩]
+  exact (exists_frobeniusClass K L 𝔭 hpr hnz_𝔭 hunr).choose_spec 𝔓 hp hP hnz
 
 /-- Only finitely many nonzero primes of `K` ramify in `L`. -/
 theorem finite_ramifiedIn

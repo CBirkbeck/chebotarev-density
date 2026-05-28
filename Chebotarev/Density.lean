@@ -183,13 +183,34 @@ theorem riemannPrimeSum_asymp_log :
 /-- Sharifi 7.1.12 proof (p. 140), lower bound: from the simple pole of
 `ζ_K` at `s=1`
 (`NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`) one extracts
-`Σ_𝔭 N𝔭^{-s} ≥ log(1/(s-1)) + bounded`. Together with the upper bound
-`primeIdealZetaSum_le_finrank_smul_riemannPrimeSum`, this pins down the
-asymptotic. -/
+`Σ_𝔭 N𝔭^{-s} ≥ log(1/(s-1)) - C`. Pair with
+`primeIdealZetaSum_le_log_plus_bounded` for the sandwich. -/
 theorem primeIdealZetaSum_ge_log_minus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
         ≥ Real.log (1 / (s - 1)) - C := by
+  sorry
+
+/-- Sharifi 7.1.12 proof (p. 140), upper bound: from the same simple pole
++ the higher-power tail bound, one extracts
+`Σ_𝔭 N𝔭^{-s} ≤ log(1/(s-1)) + C'`. The proof is
+`log ζ_K = Σ_𝔭 N𝔭^{-s} + (bounded tail) = log(1/(s-1)) + (bounded)`,
+which by transposition gives the bound. -/
+theorem primeIdealZetaSum_le_log_plus_bounded :
+    ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
+      primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
+        ≤ Real.log (1 / (s - 1)) + C := by
+  sorry
+
+/-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
+neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
+analytic content is just that `log(1/(s-1)) → ∞`, so the additive
+bounded term washes out under division. -/
+theorem tendsto_ratio_one_of_log_pm_bounded
+    (f : ℝ → ℝ)
+    (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
+    (h_ge : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≥ Real.log (1 / (s - 1)) - C) :
+    Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
   sorry
 
 /-- **Sharifi 7.1.12**, *Algebraic Number Theory*, p. 140.
@@ -199,15 +220,20 @@ This is the analytic ingredient that makes the Dirichlet-density
 definition robust under the L-function comparisons in the Chebotarev
 proof.
 
-The proof composes the sub-lemmas above: the bound
-`primeIdealZetaSum_higher_power_tail_bounded` shows the higher-power
-correction to `log ζ_K` is bounded; together with
-`log_dedekindZeta_asymp_log_one_over_sub_one` it gives the asymptotic. -/
+**Composition**: sandwich the two bounds. From
+`primeIdealZetaSum_ge_log_minus_bounded` and
+`primeIdealZetaSum_le_log_plus_bounded`,
+`Σ_𝔭 N𝔭^{-s} = log(1/(s-1)) + O(1)`; dividing by `log(1/(s-1))`
+(which → ∞ as `s ↓ 1`) gives a ratio that → 1 by
+`tendsto_ratio_one_of_log_pm_bounded`. -/
 theorem primeIdealZetaSum_univ_tendsto_log :
     Tendsto
       (fun s : ℝ ↦ primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
         / Real.log (1 / (s - 1)))
-      (𝓝[>] 1) (𝓝 1) := by
-  sorry
+      (𝓝[>] 1) (𝓝 1) :=
+  tendsto_ratio_one_of_log_pm_bounded
+    (primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))))
+    (primeIdealZetaSum_le_log_plus_bounded K)
+    (primeIdealZetaSum_ge_log_minus_bounded K)
 
 end Chebotarev

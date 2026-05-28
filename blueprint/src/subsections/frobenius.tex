@@ -97,6 +97,33 @@ distinguished element.
   of the choice of $\fP$.
 \end{definition}
 
+\begin{lemma}\label{lem:exists-frobenius-class}
+  \lean{Chebotarev.exists_frobeniusClass}
+  \uses{def:frobenius-at}
+  For a nonzero prime $\fp$ of $\OK$ unramified in $L$, there exists a
+  conjugacy class $C \subseteq \Gal{L/K}$ such that for every prime
+  $\fP$ of $\Ocirc_L$ above $\fp$, $C = [\Frob_\fP]$. (Equivalently, the
+  Frobenius elements above $\fp$ are all conjugate.)
+\end{lemma}
+
+\begin{lemma}\label{lem:frobenius-class-eq-mk}
+  \lean{Chebotarev.frobeniusClass_eq_mk_frobeniusAt}
+  \uses{def:frobenius-class, def:frobenius-at, lem:exists-frobenius-class}
+  For a nonzero prime $\fp$ of $\OK$ unramified in $L$, and any prime
+  $\fP$ of $\Ocirc_L$ above $\fp$,
+  \[
+    \sigma_\fp \;=\; [\Frob_\fP].
+  \]
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:exists-frobenius-class}
+  \leanok
+  Unfold $\sigma_\fp$ at the unramified positive case to expose the
+  $\mathrm{choose}$ from \cref{lem:exists-frobenius-class}; the witness
+  property of $\mathrm{choose\_spec}$ at $\fP$ closes the goal.
+\end{proof}
+
 \begin{lemma}\label{lem:finite-ramified-primes}
   \lean{Chebotarev.finite_ramifiedIn}
   \uses{def:unramified-in}

@@ -79,9 +79,43 @@ out the analytic ingredients.
   and positivity of the Euler-product summands.
 \end{proof}
 
+\begin{lemma}\label{lem:prime-zeta-le-log-plus-bounded}
+  \lean{Chebotarev.primeIdealZetaSum_le_log_plus_bounded}
+  \uses{def:dirichlet-density}
+  There is a constant $C'$ such that, for $s>1$ in a right neighbourhood
+  of $1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \;\le\; \log\frac{1}{s-1} + C'.
+  \]
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:prime-zeta-higher-tail-bounded}
+  By the higher-power tail bound \cref{lem:prime-zeta-higher-tail-bounded}
+  and the analytic-at-$1$ identity
+  $\log\zeta_K(s) = \sum_\fp N\fp^{-s} + O(1)$, the partial-sum
+  $\sum_\fp N\fp^{-s}$ differs from $\log\zeta_K(s)$ by a bounded
+  function. Since $\zeta_K$ has a simple pole at $s=1$,
+  $\log\zeta_K(s) \le \log\bigl(1/(s-1)\bigr) + O(1)$.
+\end{proof}
+
+\begin{lemma}\label{lem:tendsto-ratio-one-of-log-pm-bounded}
+  \lean{Chebotarev.tendsto_ratio_one_of_log_pm_bounded}
+  Let $f : (1,\infty) \to \R$. If $f$ is sandwiched as
+  $\log\bigl(1/(s-1)\bigr) - C \le f(s) \le \log\bigl(1/(s-1)\bigr) + C'$
+  on a right neighbourhood of $1$, then
+  $f(s)/\log\bigl(1/(s-1)\bigr) \to 1$ as $s \downarrow 1$.
+\end{lemma}
+
+\begin{proof}
+  Since $\log\bigl(1/(s-1)\bigr) \to \infty$ as $s \downarrow 1$, the
+  additive constants $C, C'$ wash out under division, and the squeeze
+  gives the limit $1$.
+\end{proof}
+
 \begin{lemma}\label{lem:prime-ideal-sum-log}
   \lean{Chebotarev.primeIdealZetaSum_univ_tendsto_log}
-  \uses{lem:prime-zeta-higher-tail-bounded, lem:prime-zeta-le-finrank-riemann, lem:riemann-prime-sum-asymp, lem:prime-zeta-ge-log-minus-bounded}
+  \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
   As $s\downarrow 1$,
   \[
     \sum_{\fp} N\fp^{-s} \sim \log\frac{1}{s-1}.
@@ -89,12 +123,12 @@ out the analytic ingredients.
 \end{lemma}
 
 \begin{proof}
-  Combine the upper bound \cref{lem:prime-zeta-le-finrank-riemann} with
-  \cref{lem:riemann-prime-sum-asymp} to bound from above, and the lower
-  bound \cref{lem:prime-zeta-ge-log-minus-bounded} to bound from below.
-  Both bounds equal $\log\bigl(1/(s-1)\bigr)$ to leading order, sharper
-  than \cref{lem:prime-zeta-le-finrank-riemann}'s factor $[K:\Q]$
-  thanks to \cref{lem:prime-zeta-higher-tail-bounded}.
+  \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
+  Combine the lower bound \cref{lem:prime-zeta-ge-log-minus-bounded} and
+  the upper bound \cref{lem:prime-zeta-le-log-plus-bounded} into a
+  two-sided $\log\bigl(1/(s-1)\bigr) \pm O(1)$ sandwich, then apply
+  \cref{lem:tendsto-ratio-one-of-log-pm-bounded} to extract the ratio
+  limit.
 \end{proof}
 
 \subsection*{Density API}
