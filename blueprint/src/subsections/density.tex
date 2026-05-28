@@ -96,3 +96,33 @@ out the analytic ingredients.
   than \cref{lem:prime-zeta-le-finrank-riemann}'s factor $[K:\Q]$
   thanks to \cref{lem:prime-zeta-higher-tail-bounded}.
 \end{proof}
+
+\subsection*{Density API}
+
+The following routine API lemmas are used by the proofs of the
+corollaries in \cref{ch:main}.
+
+\begin{lemma}\label{lem:has-density-finite}
+  \lean{Chebotarev.hasDirichletDensity_of_finite}
+  \uses{def:dirichlet-density}
+  A finite set of prime ideals has Dirichlet density $0$.
+\end{lemma}
+
+\begin{proof}
+  The numerator $\sum_{\fp\in S}\Norm{\fp}^{-s}$ is bounded as $s \to
+  1^+$ (a finite sum of bounded terms), while the denominator
+  $\sum_\fp \Norm{\fp}^{-s}\to\infty$ by
+  \cref{lem:prime-ideal-sum-log}; the ratio tends to $0$.
+\end{proof}
+
+\begin{lemma}\label{lem:density-implies-lower}
+  \lean{Chebotarev.HasDirichletDensity.hasLower}
+  \uses{def:dirichlet-density}
+  If $S$ has Dirichlet density $\delta$, then its lower Dirichlet
+  density is also $\delta$.
+\end{lemma}
+
+\begin{proof}
+  Convergence of the ratio implies the liminf and limsup coincide with
+  the limit; specifically the liminf equals $\delta$.
+\end{proof}

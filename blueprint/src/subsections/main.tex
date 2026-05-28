@@ -61,19 +61,73 @@ Step~1 (p.~143).
 
 \subsection*{Corollaries}
 
+The corollaries below are derived directly by composition from
+\cref{thm:chebotarev-density}. The Lean derivations use four small
+helper sub-lemmas captured here.
+
+\begin{lemma}\label{lem:conjclasses-mk-one-carrier-card-one}
+  \lean{Chebotarev.ConjClasses_mk_one_carrier_card_eq_one}
+  Let $G$ be a finite group. The conjugacy class of the identity has
+  cardinality $1$:
+  $\abs{(\mathrm{Conj}(G))_{\{1\}}} = 1$.
+\end{lemma}
+
+\begin{lemma}\label{lem:nat-card-galois-eq-finrank}
+  \lean{Chebotarev.nat_card_galois_eq_finrank}
+  For a finite-dimensional Galois extension $L/K$,
+  $\abs{\Gal{L/K}} = [L:K]$. (mathlib: \texttt{IsGalois.card\_aut\_eq\_finrank}
+  or its \texttt{Nat.card} variant.)
+\end{lemma}
+
+\begin{lemma}\label{lem:infinite-of-density-pos}
+  \lean{Chebotarev.infinite_of_hasDirichletDensity_pos}
+  A set $S$ of prime ideals with positive Dirichlet density is infinite.
+\end{lemma}
+
+\begin{proof}
+  Contrapositive: a finite set of primes has density $0$ by
+  \cref{lem:has-density-finite} (the finite case of
+  \cref{def:dirichlet-density}).
+\end{proof}
+
+\begin{lemma}\label{lem:conjclasses-carrier-card-pos}
+  \lean{Chebotarev.ConjClasses_carrier_card_pos}
+  Every conjugacy class in a finite group has cardinality at least $1$
+  (it contains at least its own representative).
+\end{lemma}
+
 \begin{corollary}\label{cor:density-split-completely}
   \lean{Chebotarev.density_split_completely}
-  \uses{thm:chebotarev-density}
+  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one, lem:nat-card-galois-eq-finrank}
   For a finite Galois extension $L/K$ of number fields, the Dirichlet
   density of primes of $\OK$ that split completely in $L$ equals
   $1/[L:K]$.
 \end{corollary}
 
 \begin{proof}
+  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one, lem:nat-card-galois-eq-finrank}
   A prime $\fp$ splits completely in $L$ iff every $\fP \mid \fp$ has
-  $\Frob_\fP = 1$. The conjugacy class $\{1\}$ has size $1$, and
-  $\abs{G}=[L:K]$, so \cref{thm:chebotarev-density} gives
-  $\delta = 1/[L:K]$.
+  $\Frob_\fP = 1$, i.e.\ the Frobenius conjugacy class is the trivial
+  class. Apply \cref{thm:chebotarev-density} at $C = \mathrm{Conj}(G)_{\{1\}}$;
+  by \cref{lem:conjclasses-mk-one-carrier-card-one} the numerator
+  $\abs{C} = 1$ and by \cref{lem:nat-card-galois-eq-finrank} the
+  denominator $\abs{G} = [L:K]$, so the density equals $1/[L:K]$.
+\end{proof}
+
+\begin{corollary}\label{cor:infinite-frobenius-class}
+  \lean{Chebotarev.infinite_setOf_frobenius_class}
+  \uses{thm:chebotarev-density, lem:infinite-of-density-pos, lem:conjclasses-carrier-card-pos}
+  For a finite Galois extension $L/K$ of number fields and any conjugacy
+  class $C \subseteq \Gal{L/K}$, the set of primes $\fp$ of $\OK$
+  unramified in $L$ with Frobenius conjugacy class $C$ is infinite.
+\end{corollary}
+
+\begin{proof}
+  \uses{thm:chebotarev-density, lem:infinite-of-density-pos, lem:conjclasses-carrier-card-pos}
+  \cref{thm:chebotarev-density} gives Dirichlet density
+  $\abs{C}/\abs{G}$, which is positive since $\abs{C} \ge 1$
+  (\cref{lem:conjclasses-carrier-card-pos}) and $\abs{G} \ge 1$. Apply
+  \cref{lem:infinite-of-density-pos}.
 \end{proof}
 
 \begin{corollary}[Dirichlet, density form]\label{cor:dirichlet-ap-density}
