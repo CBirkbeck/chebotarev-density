@@ -1,0 +1,146 @@
+\section{Chebotarev: abelian case via cyclotomic crossing}
+
+The abelian case is reduced to the cyclotomic case by Chebotarev's
+original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
+
+\begin{lemma}\label{lem:cyclic-subgroup-trivial-meet}
+  \lean{Chebotarev.cyclic_subgroup_meets_G_times_one_trivially}
+  \leanok
+  Let $G, H$ be finite groups, $\sigma \in G$, $\tau \in H$. If
+  $\abs{G}\mid\mathrm{ord}(\tau)$, then
+  $\ang{(\sigma,\tau)}\cap (G\times\{1\}) = \{1\}$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Pure group theory. If $(\sigma^k, \tau^k) \in G\times\{1\}$ then
+  $\tau^k = 1$, so $\mathrm{ord}(\tau)\mid k$, hence
+  $\abs{G}\mid k$, hence $\sigma^k = 1$.
+\end{proof}
+
+\begin{lemma}\label{lem:density-S-sigma-tau}
+  \lean{Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH}
+  \uses{lem:cyclic-subgroup-trivial-meet, thm:chebotarev-cyclotomic}
+  Let $L/K$ be a finite abelian Galois extension with $G=\Gal{L/K}$,
+  $\sigma\in G$, and $m\ge 1$ coprime to the discriminant of $L$, so
+  that $\Gal{L(\zeta_m)/K}\cong G\times H$ with
+  $H=\Gal{K(\zeta_m)/K}\subseteq(\Z/m\Z)^\times$. Set
+  $H_n = \setof{\tau\in H}{\abs{G}\mid\mathrm{ord}(\tau)}$. Then
+  \[
+    \delta_{\mathrm{inf}}\bigl(\setof{\fp\subset\OK}{
+      \sigma_\fp = \sigma}\bigr)
+    \;\ge\; \frac{\abs{H_n}}{\abs{G}\cdot\abs{H}}.
+  \]
+  \emph{Corrected.} An earlier draft of this lemma claimed
+  $\delta\bigl(\set{\fp : \sigma_\fp = \sigma}\bigr) = 1/(\abs{G}\cdot\abs{H})$
+  — that is mathematically wrong (the set $\set{\sigma_\fp = \sigma}$
+  has density $1/\abs{G}$, not $1/(\abs{G}\cdot\abs{H})$). The actual
+  per-$m$ step that feeds into the proof of $\delta(\sigma_\fp = \sigma)
+  = 1/\abs{G}$ is the $\liminf$ lower bound above (Sharifi p.~144).
+\end{lemma}
+
+\begin{proof}
+  By \cref{lem:cyclic-subgroup-trivial-meet}, the fixed field
+  $F = L(\zeta_m)^{\ang{(\sigma,\tau)}}$ satisfies
+  $F(\zeta_m) = L(\zeta_m)$, so the extension $L(\zeta_m)/F$ is
+  cyclotomic. Apply the cyclotomic case
+  \cref{thm:chebotarev-cyclotomic} to $L(\zeta_m)/F$ to obtain
+  $\delta_F = 1/\abs{\ang{(\sigma,\tau)}}$. The conjugacy-class
+  reduction (\cref{thm:chebotarev-density} below, Step~1's counting)
+  lifts this to a $K$-density of $1/(\abs{G}\cdot\abs{H})$.
+\end{proof}
+
+\begin{lemma}\label{lem:H-n-over-H-formula}
+  \lean{Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation}
+  Let $n = p_1^{k_1}\cdots p_r^{k_r}$ with $p_i$ distinct primes,
+  $k_i\ge 1$. For an integer $m \ge 1$ with $m \equiv 1 \pmod{n^j}$,
+  setting $j_i = v_{p_i}(m-1) \ge j$ and
+  $H_n = \setof{\tau\in(\Z/m\Z)^\times}{n\mid\mathrm{ord}(\tau)}$,
+  \[
+    \frac{\abs{H_n}}{\abs{(\Z/m\Z)^\times}}
+    \;=\; \prod_{i=1}^r\!\biggl(1-\frac{p_i^{k_i-1}}{p_i^{j_i k_i}}\biggr)
+    \;\ge\; \prod_{i=1}^r\!\biggl(1-\frac{1}{p_i^{(j-1)k_i+1}}\biggr).
+  \]
+\end{lemma}
+
+\begin{proof}
+  Direct combinatorial computation on $(\Z/m\Z)^\times$ using CRT and
+  the prime-power factorisation of $n$ (Sharifi p.~144).
+\end{proof}
+
+\begin{lemma}\label{lem:H-n-over-H-tends-one}
+  \lean{Chebotarev.H_n_over_H_tends_to_one}
+  \uses{lem:H-n-over-H-formula}
+  As $k \to \infty$,
+  $\abs{H_n}/\abs{(\Z/n^k\Z)^\times} \to 1$.
+\end{lemma}
+
+\begin{proof}
+  Limit of the product formula \cref{lem:H-n-over-H-formula} as
+  $j \to \infty$: each factor tends to $1$.
+\end{proof}
+
+\begin{lemma}\label{lem:liminf-ratio-ge-inv-card-G}
+  \lean{Chebotarev.liminf_ratio_ge_inv_card_G}
+  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
+  For every $\sigma\in G$,
+  $\delta_{\mathrm{inf}}\bigl(\setof{\fp}{\sigma_\fp = \sigma}\bigr)
+  \ge 1/\abs{G}$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:density-S-sigma-tau, lem:H-n-over-H-tends-one}
+  Take the limit of the per-$m$ bound
+  \cref{lem:density-S-sigma-tau} as $m \to \infty$ along
+  $m \equiv 1\pmod{\abs{G}^k}$, where $\abs{H_n}/\abs{H}\to 1$ by
+  \cref{lem:H-n-over-H-tends-one}.
+\end{proof}
+
+\begin{lemma}\label{lem:ratiosum-fibres-tendsto-one}
+  \lean{Chebotarev.ratioSum_frobeniusFibres_tendsto_one}
+  \uses{def:frobenius-class, lem:finite-ramified-primes}
+  As $s\downarrow 1$, the sum over $\sigma\in G$ of the density ratios
+  of the fibres $\setof{\fp}{\sigma_\fp=\sigma}$ tends to $1$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:finite-ramified-primes}
+  The fibres partition the unramified primes; the ramified primes are
+  finite (\cref{lem:finite-ramified-primes}) hence contribute density
+  $0$, so the partial sums of the fibre ratios equal the ratio for the
+  unramified primes, which $\to 1$.
+\end{proof}
+
+\begin{lemma}\label{lem:pigeonhole-density}
+  \lean{Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one}
+  Let $g_i$ ($i$ in a finite index set of size $N$) be real functions
+  with $\liminf_{s\downarrow 1} g_i \ge 1/N$ for each $i$, and
+  $\sum_i g_i(s) \to 1$ as $s\downarrow 1$. Then $g_i(s) \to 1/N$ for
+  every $i$.
+\end{lemma}
+
+\begin{proof}
+  Pure real analysis: the lower bounds and the sum-limit pin every
+  $g_i$ to $1/N$ by a $\liminf$/$\limsup$ pigeonhole.
+\end{proof}
+
+\begin{theorem}\label{thm:chebotarev-abelian}
+  \lean{Chebotarev.chebotarev_abelian}
+  \uses{def:dirichlet-density, def:frobenius-class, lem:liminf-ratio-ge-inv-card-G, lem:ratiosum-fibres-tendsto-one, lem:pigeonhole-density}
+  For a finite abelian Galois extension $L/K$ of number fields with
+  $G=\Gal{L/K}$ and every $\sigma\in G$,
+  \[
+    \delta\bigl(\setof{\fp\subset\OK}{\sigma_\fp = \sigma}\bigr)
+    \;=\; \frac{1}{\abs{G}}.
+  \]
+\end{theorem}
+
+\begin{proof}
+  \uses{lem:liminf-ratio-ge-inv-card-G, lem:ratiosum-fibres-tendsto-one, lem:pigeonhole-density}
+  \leanok
+  The $\abs{G}$ fibres each have $\liminf \ge 1/\abs{G}$
+  (\cref{lem:liminf-ratio-ge-inv-card-G}) and their density ratios sum
+  to $1$ (\cref{lem:ratiosum-fibres-tendsto-one}); the pigeonhole glue
+  \cref{lem:pigeonhole-density} forces each fibre's ratio to the limit
+  $1/\abs{G}$.
+\end{proof}
