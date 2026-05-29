@@ -1,0 +1,166 @@
+\section{Dirichlet density of a set of prime ideals}
+
+Throughout, $K$ denotes a number field, $\OK$ its ring of integers, and
+$\fp$ ranges over nonzero prime ideals of $\OK$ with absolute norm
+$N\fp=[\OK:\fp]$.
+
+\begin{definition}\label{def:dirichlet-density}
+  \lean{Chebotarev.HasDirichletDensity}
+  \leanok
+  A set $S$ of nonzero prime ideals of $\OK$ has \emph{Dirichlet
+  density} $\delta\in\R$, written $\delta(S)=\delta$, if
+  \[
+    \lim_{s\to 1^+}
+    \frac{\displaystyle\sum_{\fp\in S} N\fp^{-s}}
+         {\displaystyle\sum_{\fp} N\fp^{-s}}
+    = \delta,
+  \]
+  where the denominator sum runs over all nonzero prime ideals of
+  $\OK$.
+\end{definition}
+
+The denominator is asymptotically $\log\bigl(1/(s-1)\bigr)$ as
+$s\downarrow 1$ (Sharifi Prop.~7.1.12, p.~140); the lemmas below break
+out the analytic ingredients.
+
+\begin{lemma}\label{lem:prime-zeta-higher-tail-bounded}
+  \lean{Chebotarev.primeIdealZetaHigherTail_bounded}
+  The higher-power tail of the log-Euler-product
+  $\sum_{\fp,k\ge 2}\frac{N\fp^{-2s}}{1-N\fp^{-s}}$ is bounded on a
+  right neighbourhood of $s=1$.
+\end{lemma}
+
+\begin{lemma}\label{lem:logzeta-eq-primesum-bounded}
+  \lean{Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded}
+  \uses{lem:prime-zeta-higher-tail-bounded}
+  Euler-product-log identity:
+  $\bigl|\log\zeta_K(s) - \sum_\fp N\fp^{-s}\bigr| \le C$ on a right
+  neighbourhood of $1$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:prime-zeta-higher-tail-bounded}
+  $\log\zeta_K(s) = \sum_\fp N\fp^{-s} +
+  \sum_{\fp,k\ge2} N\fp^{-ks}/k$; the tail is bounded by
+  \cref{lem:prime-zeta-higher-tail-bounded}.
+\end{proof}
+
+\begin{lemma}\label{lem:logzeta-eq-loginv-bounded}
+  \lean{Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded}
+  \leanok
+  Simple-pole identity:
+  $\bigl|\log\zeta_K(s) - \log(1/(s-1))\bigr| \le C$ on a right
+  neighbourhood of $1$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  From the simple pole of $\zeta_K$ at $s=1$ (mathlib's
+  \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT}):
+  $(s-1)\zeta_K(s) \to r > 0$ (the residue,
+  \texttt{dedekindZeta\_residue\_pos}), so
+  $\log\zeta_K(s) - \log(1/(s-1)) = \log\bigl((s-1)\zeta_K(s)\bigr)$
+  converges to $\log r$ and is therefore bounded near $1$.
+\end{proof}
+
+\begin{lemma}\label{lem:prime-zeta-ge-log-minus-bounded}
+  \lean{Chebotarev.primeIdealZetaSum_ge_log_minus_bounded}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  There is a constant $C$ such that, for $s>1$ in a right neighbourhood
+  of $1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \;\ge\; \log\frac{1}{s-1} - C.
+  \]
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  \leanok
+  Chain the two identities
+  \cref{lem:logzeta-eq-primesum-bounded,lem:logzeta-eq-loginv-bounded}:
+  $\sum_\fp N\fp^{-s} \ge \log\zeta_K(s) - C_1 \ge \log(1/(s-1)) - C_1 - C_2$.
+\end{proof}
+
+\begin{lemma}\label{lem:prime-zeta-le-log-plus-bounded}
+  \lean{Chebotarev.primeIdealZetaSum_le_log_plus_bounded}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  There is a constant $C'$ such that, for $s>1$ in a right neighbourhood
+  of $1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \;\le\; \log\frac{1}{s-1} + C'.
+  \]
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:logzeta-eq-primesum-bounded, lem:logzeta-eq-loginv-bounded}
+  \leanok
+  Same two identities
+  \cref{lem:logzeta-eq-primesum-bounded,lem:logzeta-eq-loginv-bounded},
+  transposed.
+\end{proof}
+
+\begin{lemma}\label{lem:tendsto-ratio-one-of-log-pm-bounded}
+  \lean{Chebotarev.tendsto_ratio_one_of_log_pm_bounded}
+  \leanok
+  Let $f : (1,\infty) \to \R$. If $f$ is sandwiched as
+  $\log\bigl(1/(s-1)\bigr) - C \le f(s) \le \log\bigl(1/(s-1)\bigr) + C'$
+  on a right neighbourhood of $1$, then
+  $f(s)/\log\bigl(1/(s-1)\bigr) \to 1$ as $s \downarrow 1$.
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  Since $\log\bigl(1/(s-1)\bigr) \to \infty$ as $s \downarrow 1$, the
+  additive constants $C, C'$ wash out under division, and the squeeze
+  gives the limit $1$.
+\end{proof}
+
+\begin{lemma}\label{lem:prime-ideal-sum-log}
+  \lean{Chebotarev.primeIdealZetaSum_univ_tendsto_log}
+  \leanok
+  \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
+  As $s\downarrow 1$,
+  \[
+    \sum_{\fp} N\fp^{-s} \sim \log\frac{1}{s-1}.
+  \]
+\end{lemma}
+
+\begin{proof}
+  \leanok
+  \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
+  Combine the lower bound \cref{lem:prime-zeta-ge-log-minus-bounded} and
+  the upper bound \cref{lem:prime-zeta-le-log-plus-bounded} into a
+  two-sided $\log\bigl(1/(s-1)\bigr) \pm O(1)$ sandwich, then apply
+  \cref{lem:tendsto-ratio-one-of-log-pm-bounded} to extract the ratio
+  limit.
+\end{proof}
+
+\subsection*{Density API}
+
+The following routine API lemmas are used by the proofs of the
+corollaries in \cref{ch:main}.
+
+\begin{lemma}\label{lem:has-density-finite}
+  \lean{Chebotarev.hasDirichletDensity_of_finite}
+  \uses{def:dirichlet-density}
+  A finite set of prime ideals has Dirichlet density $0$.
+\end{lemma}
+
+\begin{proof}
+  The numerator $\sum_{\fp\in S}\Norm{\fp}^{-s}$ is bounded as $s \to
+  1^+$ (a finite sum of bounded terms), while the denominator
+  $\sum_\fp \Norm{\fp}^{-s}\to\infty$ by
+  \cref{lem:prime-ideal-sum-log}; the ratio tends to $0$.
+\end{proof}
+
+\begin{lemma}\label{lem:density-implies-lower}
+  \lean{Chebotarev.HasDirichletDensity.hasLower}
+  \uses{def:dirichlet-density}
+  If $S$ has Dirichlet density $\delta$, then its lower Dirichlet
+  density is also $\delta$.
+\end{lemma}
+
+\begin{proof}
+  Convergence of the ratio implies the liminf and limsup coincide with
+  the limit; specifically the liminf equals $\delta$.
+\end{proof}

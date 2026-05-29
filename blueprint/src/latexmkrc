@@ -1,0 +1,16 @@
+# This file configures the latexmk command you can use to compile
+# the pdf version of the blueprint.
+$pdf_mode = 1;
+$pdflatex = 'pdflatex -synctex=1 -interaction=nonstopmode -file-line-error';
+@default_files = ('print.tex');
+
+# Blueprint `\uses{...}` macros expand to `\vphantom\ref{...}` calls
+# (see macros/print.tex). Each label's `\ref{}` cross-reference needs
+# the .aux file from a prior pass; the dep-graph means a single
+# extra pass is rarely enough. Allow latexmk up to 5 passes.
+$max_repeat = 5;
+
+# Force latexmk to continue past warnings about unresolved \ref{},
+# so a PDF is still produced and the build doesn't fail on transient
+# cross-reference noise that resolves after the next pass.
+$force_mode = 1;
