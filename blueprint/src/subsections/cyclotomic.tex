@@ -93,15 +93,17 @@ reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
 
 \begin{lemma}\label{lem:ratio-glue-numerator}
   \lean{Chebotarev.tendsto_ratio_of_log_asymp_numerator}
+  \leanok
   If $\mathrm{num}(s)/\log(1/(s-1)) \to c$ and
   $\mathrm{den}(s)/\log(1/(s-1)) \to 1$ as $s\downarrow 1$, then
   $\mathrm{num}(s)/\mathrm{den}(s) \to c$.
 \end{lemma}
 
-\begin{proof}
+\begin{proof}\leanok
   Write $\mathrm{num}/\mathrm{den} = (\mathrm{num}/L)/(\mathrm{den}/L)$
-  with $L = \log(1/(s-1)) \to \infty$ (eventually nonzero); apply the
-  quotient rule for limits.
+  with $L = \log(1/(s-1))$, which is positive (hence nonzero) for
+  $s\in(1,2)$ since $1/(s-1) > 1$; apply the quotient rule for limits
+  and cancel $L$.
 \end{proof}
 
 \begin{lemma}\label{lem:cyclotomic-density-two-sided}

@@ -168,7 +168,20 @@ theorem tendsto_ratio_of_log_asymp_numerator
     (hnum : Tendsto (fun s : ℝ ↦ num s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 c))
     (hden : Tendsto (fun s : ℝ ↦ den s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1)) :
     Tendsto (fun s : ℝ ↦ num s / den s) (𝓝[>] 1) (𝓝 c) := by
-  sorry
+  have hL : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), Real.log (1 / (s - 1)) ≠ 0 := by
+    have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 :=
+      nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
+    filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
+    have hs1' : (1 : ℝ) < s := hs1
+    have hpos : (0 : ℝ) < s - 1 := by linarith
+    have : (1 : ℝ) < 1 / (s - 1) := by
+      rw [lt_div_iff₀ hpos]; linarith
+    exact (Real.log_pos this).ne'
+  have key := hnum.div hden one_ne_zero
+  rw [div_one] at key
+  refine key.congr' ?_
+  filter_upwards [hL] with s hs
+  exact div_div_div_cancel_right₀ hs (num s) (den s)
 
 /-- Sharifi 7.2.1 step (iv) — two-sided log-asymptotic comparison (p. 142).
 Source: "on the one hand we have Σ_χ χ(σ)^{-1} log L(χ,s) ~ |G|

@@ -122,6 +122,35 @@ theorem chebotarev_density
       ((Nat.card C.carrier : ℝ) / Nat.card (L ≃ₐ[K] L)) := by
   sorry
 
+/-- In a commutative finite group every conjugacy class is a singleton,
+so `|C| = 1`. (Uses `isConj_iff_eq`.) -/
+theorem ConjClasses_carrier_card_eq_one_of_comm
+    {G : Type*} [Group G] [IsMulCommutative G] [Finite G] (g : G) :
+    Nat.card (ConjClasses.mk g).carrier = 1 := by
+  letI : CommMonoid G := IsMulCommutative.instCommMonoid
+  have h : (ConjClasses.mk g).carrier = {g} := by
+    ext a
+    rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj,
+      Set.mem_singleton_iff]
+    exact isConj_iff_eq
+  rw [h, Nat.card_coe_set_eq, Set.ncard_singleton]
+
+/-- **Chebotarev's density theorem, abelian case** — a genuine top-down
+consequence of `chebotarev_abelian`. When `G = Gal(L/K)` is abelian,
+every conjugacy class `C` is a singleton `{σ}`, so the Frobenius-class
+condition `σ_𝔭 = C` is `σ_𝔭 = σ`, `|C| = 1`, and the density `|C|/|G| =
+1/|G|` is exactly the abelian-case value. -/
+theorem chebotarev_density_of_comm
+    [FiniteDimensional K L] [IsMulCommutative (L ≃ₐ[K] L)]
+    (C : ConjClasses (L ≃ₐ[K] L)) :
+    HasDirichletDensity K
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+        frobeniusClass K L 𝔭 = C}
+      ((Nat.card C.carrier : ℝ) / Nat.card (L ≃ₐ[K] L)) := by
+  obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
+  rw [ConjClasses_carrier_card_eq_one_of_comm σ, Nat.cast_one, one_div]
+  exact chebotarev_abelian K L σ
+
 /-- Sub-lemma: a set of prime ideals with positive Dirichlet density is
 infinite. Contrapositive: a finite set has density `0` (by
 `hasDirichletDensity_of_finite` from `Density.lean`). -/
@@ -136,7 +165,10 @@ least `1` (the class always contains at least its own representative). -/
 theorem ConjClasses_carrier_card_pos
     {G : Type*} [Group G] [Finite G] (C : ConjClasses G) :
     0 < Nat.card C.carrier := by
-  sorry
+  obtain ⟨a, ha⟩ := ConjClasses.mk_surjective C
+  have hmem : a ∈ C.carrier := ConjClasses.mem_carrier_iff_mk_eq.mpr ha
+  have : Nonempty C.carrier := ⟨⟨a, hmem⟩⟩
+  exact Nat.card_pos
 
 /-- Existence of *infinitely many* primes with each Frobenius conjugacy class
 — a qualitative corollary of `chebotarev_density`.
@@ -162,14 +194,19 @@ in a finite group has carrier of cardinality `1`. (`Nat.card.carrier` of
 theorem ConjClasses_mk_one_carrier_card_eq_one
     (G : Type*) [Group G] [Finite G] :
     Nat.card (ConjClasses.mk (1 : G)).carrier = 1 := by
-  sorry
+  have h : (ConjClasses.mk (1 : G)).carrier = {1} := by
+    ext a
+    simp only [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj,
+      isConj_one_left, Set.mem_singleton_iff]
+  rw [h, Nat.card_coe_set_eq, Set.ncard_singleton]
 
 /-- Sub-lemma for `density_split_completely`: for a finite Galois
-extension, the cardinality of the Galois group equals the degree. -/
+extension, the cardinality of the Galois group equals the degree.
+Direct from mathlib's `IsGalois.card_aut_eq_finrank`. -/
 theorem nat_card_galois_eq_finrank
     [FiniteDimensional K L] :
     (Nat.card (L ≃ₐ[K] L) : ℝ) = (Module.finrank K L : ℝ) := by
-  sorry
+  rw [IsGalois.card_aut_eq_finrank K L]
 
 /-- **Density of completely split primes** (Sharifi 7.1.14, as a corollary of
 Chebotarev applied to the identity conjugacy class).

@@ -59,6 +59,23 @@ Step~1 (p.~143).
   \]
 \end{proof}
 
+\begin{theorem}[Chebotarev, abelian case]\label{thm:chebotarev-density-comm}
+  \lean{Chebotarev.chebotarev_density_of_comm}
+  \uses{thm:chebotarev-abelian, lem:conjclasses-carrier-card-one-comm}
+  When $G = \Gal{L/K}$ is abelian, the Chebotarev density theorem holds:
+  for every conjugacy class $C$,
+  $\delta(\setof{\fp}{\sigma_\fp = C}) = \abs{C}/\abs{G}$.
+\end{theorem}
+
+\begin{proof}
+  \uses{thm:chebotarev-abelian, lem:conjclasses-carrier-card-one-comm}
+  \leanok
+  In an abelian group each class $C = [\sigma]$ is a singleton
+  (\cref{lem:conjclasses-carrier-card-one-comm}), so $\abs{C} = 1$ and
+  the target density is $1/\abs{G}$; this is exactly
+  \cref{thm:chebotarev-abelian} for the representative $\sigma$.
+\end{proof}
+
 \subsection*{Corollaries}
 
 The corollaries below are derived directly by composition from
@@ -67,17 +84,39 @@ helper sub-lemmas captured here.
 
 \begin{lemma}\label{lem:conjclasses-mk-one-carrier-card-one}
   \lean{Chebotarev.ConjClasses_mk_one_carrier_card_eq_one}
+  \leanok
   Let $G$ be a finite group. The conjugacy class of the identity has
   cardinality $1$:
   $\abs{(\mathrm{Conj}(G))_{\{1\}}} = 1$.
 \end{lemma}
 
+\begin{proof}\leanok
+  The carrier is $\{1\}$ (by \texttt{isConj\_one\_left}, $a$ conjugate to
+  $1$ iff $a = 1$); a singleton has cardinality $1$.
+\end{proof}
+
+\begin{lemma}\label{lem:conjclasses-carrier-card-one-comm}
+  \lean{Chebotarev.ConjClasses_carrier_card_eq_one_of_comm}
+  \leanok
+  In a commutative finite group, every conjugacy class is a singleton,
+  so has cardinality $1$.
+\end{lemma}
+
+\begin{proof}\leanok
+  By \texttt{isConj\_iff\_eq} (conjugacy is equality in a commutative
+  monoid), the carrier of $[g]$ is $\{g\}$.
+\end{proof}
+
 \begin{lemma}\label{lem:nat-card-galois-eq-finrank}
   \lean{Chebotarev.nat_card_galois_eq_finrank}
+  \leanok
   For a finite-dimensional Galois extension $L/K$,
-  $\abs{\Gal{L/K}} = [L:K]$. (mathlib: \texttt{IsGalois.card\_aut\_eq\_finrank}
-  or its \texttt{Nat.card} variant.)
+  $\abs{\Gal{L/K}} = [L:K]$.
 \end{lemma}
+
+\begin{proof}\leanok
+  Mathlib's \texttt{IsGalois.card\_aut\_eq\_finrank}.
+\end{proof}
 
 \begin{lemma}\label{lem:infinite-of-density-pos}
   \lean{Chebotarev.infinite_of_hasDirichletDensity_pos}
@@ -92,9 +131,17 @@ helper sub-lemmas captured here.
 
 \begin{lemma}\label{lem:conjclasses-carrier-card-pos}
   \lean{Chebotarev.ConjClasses_carrier_card_pos}
+  \leanok
   Every conjugacy class in a finite group has cardinality at least $1$
   (it contains at least its own representative).
 \end{lemma}
+
+\begin{proof}\leanok
+  A representative $a$ with $[a] = C$ lies in the carrier
+  (\texttt{ConjClasses.mk\_surjective} + \texttt{mem\_carrier\_iff\_mk\_eq}),
+  so the carrier is nonempty; a nonempty finite set has positive
+  cardinality.
+\end{proof}
 
 \begin{corollary}\label{cor:density-split-completely}
   \lean{Chebotarev.density_split_completely}
