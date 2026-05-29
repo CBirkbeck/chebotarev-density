@@ -30,39 +30,6 @@ out the analytic ingredients.
   right neighbourhood of $s=1$.
 \end{lemma}
 
-\begin{lemma}\label{lem:prime-zeta-le-finrank-riemann}
-  \lean{Chebotarev.primeIdealZetaSum_le_finrank_smul_riemannPrimeSum}
-  \uses{def:dirichlet-density}
-  For $s>1$ in a right neighbourhood of $1$,
-  \[
-    \sum_{\fp} N\fp^{-s} \;\le\; [K:\Q]\sum_{p\text{ rational prime}} p^{-s}.
-  \]
-\end{lemma}
-
-\begin{proof}
-  At most $[K:\Q]$ primes of $\OK$ lie above any rational prime $p$
-  (the identity
-  $\sum_{\fp\mid p}e(\fp\mid p)f(\fp\mid p)=[K:\Q]$ in mathlib's
-  \texttt{Ideal.sum\_ramification\_inertia}), and the norm of such a
-  prime is at least $p$, so the bound follows by absolute convergence on
-  $\re(s)>1$.
-\end{proof}
-
-\begin{lemma}\label{lem:riemann-prime-sum-asymp}
-  \lean{Chebotarev.riemannPrimeSum_asymp_log}
-  As $s\downarrow 1$,
-  \[
-    \sum_{p\text{ rational prime}} p^{-s} \sim \log\frac{1}{s-1}.
-  \]
-\end{lemma}
-
-\begin{proof}
-  The case $K=\Q$ of \cref{lem:prime-ideal-sum-log} below: combine the
-  Euler product
-  $\zeta(s)=\prod_p(1-p^{-s})^{-1}$ with the simple pole of $\zeta$ at
-  $s=1$.
-\end{proof}
-
 \begin{lemma}\label{lem:logzeta-eq-primesum-bounded}
   \lean{Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded}
   \uses{lem:prime-zeta-higher-tail-bounded}
@@ -80,14 +47,20 @@ out the analytic ingredients.
 
 \begin{lemma}\label{lem:logzeta-eq-loginv-bounded}
   \lean{Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded}
+  \leanok
   Simple-pole identity:
   $\bigl|\log\zeta_K(s) - \log(1/(s-1))\bigr| \le C$ on a right
   neighbourhood of $1$.
 \end{lemma}
 
 \begin{proof}
+  \leanok
   From the simple pole of $\zeta_K$ at $s=1$ (mathlib's
-  \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT}).
+  \texttt{NumberField.tendsto\_sub\_one\_mul\_dedekindZeta\_nhdsGT}):
+  $(s-1)\zeta_K(s) \to r > 0$ (the residue,
+  \texttt{dedekindZeta\_residue\_pos}), so
+  $\log\zeta_K(s) - \log(1/(s-1)) = \log\bigl((s-1)\zeta_K(s)\bigr)$
+  converges to $\log r$ and is therefore bounded near $1$.
 \end{proof}
 
 \begin{lemma}\label{lem:prime-zeta-ge-log-minus-bounded}
@@ -128,6 +101,7 @@ out the analytic ingredients.
 
 \begin{lemma}\label{lem:tendsto-ratio-one-of-log-pm-bounded}
   \lean{Chebotarev.tendsto_ratio_one_of_log_pm_bounded}
+  \leanok
   Let $f : (1,\infty) \to \R$. If $f$ is sandwiched as
   $\log\bigl(1/(s-1)\bigr) - C \le f(s) \le \log\bigl(1/(s-1)\bigr) + C'$
   on a right neighbourhood of $1$, then
@@ -135,6 +109,7 @@ out the analytic ingredients.
 \end{lemma}
 
 \begin{proof}
+  \leanok
   Since $\log\bigl(1/(s-1)\bigr) \to \infty$ as $s \downarrow 1$, the
   additive constants $C, C'$ wash out under division, and the squeeze
   gives the limit $1$.
@@ -142,6 +117,7 @@ out the analytic ingredients.
 
 \begin{lemma}\label{lem:prime-ideal-sum-log}
   \lean{Chebotarev.primeIdealZetaSum_univ_tendsto_log}
+  \leanok
   \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
   As $s\downarrow 1$,
   \[
@@ -150,6 +126,7 @@ out the analytic ingredients.
 \end{lemma}
 
 \begin{proof}
+  \leanok
   \uses{lem:prime-zeta-ge-log-minus-bounded, lem:prime-zeta-le-log-plus-bounded, lem:tendsto-ratio-one-of-log-pm-bounded}
   Combine the lower bound \cref{lem:prime-zeta-ge-log-minus-bounded} and
   the upper bound \cref{lem:prime-zeta-le-log-plus-bounded} into a

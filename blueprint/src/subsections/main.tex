@@ -116,17 +116,6 @@ helper sub-lemmas captured here.
   monoid), the carrier of $[g]$ is $\{g\}$.
 \end{proof}
 
-\begin{lemma}\label{lem:nat-card-galois-eq-finrank}
-  \lean{Chebotarev.nat_card_galois_eq_finrank}
-  \leanok
-  For a finite-dimensional Galois extension $L/K$,
-  $\abs{\Gal{L/K}} = [L:K]$.
-\end{lemma}
-
-\begin{proof}\leanok
-  Mathlib's \texttt{IsGalois.card\_aut\_eq\_finrank}.
-\end{proof}
-
 \begin{lemma}\label{lem:infinite-of-density-pos}
   \lean{Chebotarev.infinite_of_hasDirichletDensity_pos}
   A set $S$ of prime ideals with positive Dirichlet density is infinite.
@@ -154,20 +143,21 @@ helper sub-lemmas captured here.
 
 \begin{corollary}\label{cor:density-split-completely}
   \lean{Chebotarev.density_split_completely}
-  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one, lem:nat-card-galois-eq-finrank}
+  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one}
   For a finite Galois extension $L/K$ of number fields, the Dirichlet
   density of primes of $\OK$ that split completely in $L$ equals
   $1/[L:K]$.
 \end{corollary}
 
 \begin{proof}
-  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one, lem:nat-card-galois-eq-finrank}
+  \uses{thm:chebotarev-density, lem:conjclasses-mk-one-carrier-card-one}
   A prime $\fp$ splits completely in $L$ iff every $\fP \mid \fp$ has
   $\Frob_\fP = 1$, i.e.\ the Frobenius conjugacy class is the trivial
   class. Apply \cref{thm:chebotarev-density} at $C = \mathrm{Conj}(G)_{\{1\}}$;
   by \cref{lem:conjclasses-mk-one-carrier-card-one} the numerator
-  $\abs{C} = 1$ and by \cref{lem:nat-card-galois-eq-finrank} the
-  denominator $\abs{G} = [L:K]$, so the density equals $1/[L:K]$.
+  $\abs{C} = 1$ and by mathlib's \texttt{IsGalois.card\_aut\_eq\_finrank}
+  the denominator $\abs{\Gal{L/K}} = [L:K]$, so the density equals
+  $1/[L:K]$.
 \end{proof}
 
 \begin{corollary}\label{cor:infinite-frobenius-class}

@@ -72,12 +72,10 @@ Four sub-lemmas:
 Verbatim source quote: "we have φ_𝔭(ζ_m) = ζ_m^{N𝔭} for a primitive
 mth root of unity ζ_m". -/
 theorem cyclotomic_frobenius_acts_as_norm_power
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
-    (_hunr : UnramifiedIn K L 𝔭)
-    (𝔓 : Ideal (𝓞 L)) (hp : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (hnz : 𝔓 ≠ ⊥) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
+    (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
+    (hp : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (hnz : 𝔓 ≠ ⊥) :
     ∀ ζ : L, ζ ∈ primitiveRoots m L →
       frobeniusAt K L 𝔓 hp hnz
           (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact _hunr 𝔓 hp hP) ζ
@@ -88,10 +86,8 @@ theorem cyclotomic_frobenius_acts_as_norm_power
 half-plane `Re s > 1` (p. 142). Verbatim source quote: "log L(χ,s) ~
 Σ_𝔭 χ(𝔭) N𝔭^{-s} for Re(s) > 1". -/
 theorem log_artinLSeries_asymp_character_sum
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (χ : galoisCharacter K L) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
@@ -103,33 +99,23 @@ theorem log_artinLSeries_asymp_character_sum
 case (p. 142), **matching case**: when `frobeniusClass K L 𝔭 =
 ConjClasses.mk σ`, the character sum equals `|G|`. -/
 theorem character_orthogonality_cyclotomic_eq
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    [Fintype (galoisCharacter K L)]
-    (σ : L ≃ₐ[K] L)
-    (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
-    (_hunr : UnramifiedIn K L 𝔭)
-    (_h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime)
+    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹)
-      = (Nat.card (L ≃ₐ[K] L) : ℂ) := by
+      = (Nat.card Gal(L/K) : ℂ) := by
   sorry
 
 /-- Sharifi 7.2.1 character orthogonality, **non-matching case**:
 when `frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ`, the character sum
 vanishes. -/
 theorem character_orthogonality_cyclotomic_ne
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    [Fintype (galoisCharacter K L)]
-    (σ : L ≃ₐ[K] L)
-    (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
-    (_hunr : UnramifiedIn K L 𝔭)
-    (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime)
+    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹) = 0 := by
   sorry
@@ -144,25 +130,19 @@ the log-asymptotic of the Artin L-functions
 `Σ_χ χ(σ)⁻¹ log L(χ,s) ~ |G| Σ_{σ_𝔭=σ} N𝔭^{-s}` on one side and
 `~ log ζ_K(s) ~ log(1/(s-1))` on the other. -/
 theorem primeIdealZetaSum_frobeniusFibre_asymp
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)] (σ : L ≃ₐ[K] L) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum K
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / Real.log (1 / (s - 1)))
-      (𝓝[>] 1) (𝓝 ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹)) := by
+      (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) := by
   sorry
 
-/-- Pure real-analysis glue: if `num(s) ~ (1/N) log(1/(s-1))` and
-`den(s) ~ log(1/(s-1))` as `s ↓ 1` (both via the ratio against
-`log(1/(s-1))` tending to the stated constants), then
-`num(s)/den(s) → 1/N`. The proof writes `num/den = (num/L)/(den/L)`
-with `L = log(1/(s-1)) → ∞` (so eventually nonzero) and applies
-`Tendsto.div`. -/
+/-- Pure real-analysis glue: if `num(s) / log(1/(s-1)) → c` and
+`den(s) / log(1/(s-1)) → 1` as `s ↓ 1`, then `num(s) / den(s) → c`. -/
 theorem tendsto_ratio_of_log_asymp_numerator
     (num den : ℝ → ℝ) (c : ℝ)
     (hnum : Tendsto (fun s : ℝ ↦ num s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 c))
@@ -172,39 +152,25 @@ theorem tendsto_ratio_of_log_asymp_numerator
     have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 :=
       nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
     filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
-    have hs1' : (1 : ℝ) < s := hs1
-    have hpos : (0 : ℝ) < s - 1 := by linarith
-    have : (1 : ℝ) < 1 / (s - 1) := by
-      rw [lt_div_iff₀ hpos]; linarith
-    exact (Real.log_pos this).ne'
-  have key := hnum.div hden one_ne_zero
-  rw [div_one] at key
-  refine key.congr' ?_
-  filter_upwards [hL] with s hs
-  exact div_div_div_cancel_right₀ hs (num s) (den s)
+    have hpos : (0 : ℝ) < s - 1 := sub_pos.mpr hs1
+    exact (Real.log_pos ((one_lt_div₀ hpos).2 (by linarith))).ne'
+  exact (div_one c ▸ hnum.div hden one_ne_zero).congr'
+    (hL.mono fun s hs ↦ div_div_div_cancel_right₀ hs (num s) (den s))
 
 /-- Sharifi 7.2.1 step (iv) — two-sided log-asymptotic comparison (p. 142).
 Source: "on the one hand we have Σ_χ χ(σ)^{-1} log L(χ,s) ~ |G|
 Σ_{φ_𝔭=σ} N𝔭^{-s}, whereas on the other we have Σ_χ χ(σ)^{-1} log L(χ,s)
-~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`.
-
-**Composition**: the numerator asymptotic
-`primeIdealZetaSum_frobeniusFibre_asymp` (`num ~ (1/|G|) log(1/(s-1))`)
-and the denominator asymptotic `primeIdealZetaSum_univ_tendsto_log`
-(`den ~ log(1/(s-1))`) feed the ratio glue
-`tendsto_ratio_of_log_asymp_numerator`. -/
+~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`. -/
 theorem cyclotomic_density_from_two_sided_asymp
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)] (σ : L ≃ₐ[K] L) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum K
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
-      (𝓝[>] 1) (𝓝 ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹)) :=
+      (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) :=
   tendsto_ratio_of_log_asymp_numerator _ _ _
     (primeIdealZetaSum_frobeniusFibre_asymp K L m σ)
     (primeIdealZetaSum_univ_tendsto_log K)
@@ -213,38 +179,24 @@ theorem cyclotomic_density_from_two_sided_asymp
 
 For `K` a number field, `m ≥ 1`, and `L = K(μ_m)` the `m`-th cyclotomic
 extension of `K`, every `σ ∈ Gal(L/K)` is the Frobenius of a set of primes
-of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`.
-
-**Composition**: this is literally
-`cyclotomic_density_from_two_sided_asymp` packaged as a
-`HasDirichletDensity` claim. The two are definitionally the same
-(`HasDirichletDensity` unfolds to the same `Tendsto`). -/
+of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
 theorem chebotarev_cyclotomic
-    (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     HasDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+      ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   cyclotomic_density_from_two_sided_asymp K L m σ
 
 /-- A variant of the cyclotomic-case theorem stated as a lower-density
 inequality. Used in the abelian case to feed into the
-`HasLowerDirichletDensity.mono` chain.
-
-**Composition**: extracts the lower density from the full density via
-`HasDirichletDensity.hasLower`. -/
+`HasLowerDirichletDensity.mono` chain. -/
 theorem chebotarev_cyclotomic_lowerDensity_ge
-    (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     HasLowerDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+      ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   (chebotarev_cyclotomic K L m σ).hasLower
 
 end Chebotarev

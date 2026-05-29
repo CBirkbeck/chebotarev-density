@@ -83,11 +83,19 @@ Five sub-lemmas (mirror Sharifi's structure):
 `⟨(σ,τ)⟩ ∩ (G × {1}) = 1`". This is the only place where the
 `|G| | ord(τ)` hypothesis is used in Step 2. -/
 theorem cyclic_subgroup_meets_G_times_one_trivially
-    (G H : Type*) [Group G] [Group H] [Finite G] [Finite H]
-    (σ : G) (τ : H) (_hn : Nat.card G ∣ orderOf τ) :
+    (G H : Type*) [Group G] [Group H] [Finite G] [Finite H] (σ : G) (τ : H)
+    (_hn : Nat.card G ∣ orderOf τ) :
     (Subgroup.zpowers (σ, τ)) ⊓
         ((⊤ : Subgroup G).prod (⊥ : Subgroup H)) = ⊥ := by
-  sorry
+  rw [eq_bot_iff]
+  rintro ⟨g, h⟩ hmem
+  rw [Subgroup.mem_inf, Subgroup.mem_prod, Subgroup.mem_bot] at hmem
+  obtain ⟨⟨k, hk⟩, _, (hh : h = 1)⟩ := hmem
+  have h2 : τ ^ k = 1 := by simpa [hh] using congrArg Prod.snd hk
+  have hg2 : σ ^ k = 1 := orderOf_dvd_iff_zpow_eq_one.mp
+    (((orderOf_dvd_natCard σ).trans _hn).natCast.trans (orderOf_dvd_iff_zpow_eq_one.mpr h2))
+  rw [Subgroup.mem_bot, Prod.mk_eq_one]
+  exact ⟨by simpa [hg2] using (congrArg Prod.fst hk).symm, hh⟩
 
 /-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)`
 coming from one choice of cyclotomic crossing modulus `m`. Source quote
@@ -112,12 +120,10 @@ Without `L(μ_m)` explicitly in scope, we state the conclusion of the
 per-`m` summation step directly: a lower bound `|H_n(m)|/(|G|·|H(m)|)`
 on the `liminf` of the density ratio for `S_σ` in `K`. -/
 theorem liminf_density_S_sigma_ge_card_H_n_div_GH
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) (m : ℕ) (_hm : 1 ≤ m) :
-    (Nat.card {τ : (ZMod m)ˣ // Nat.card (L ≃ₐ[K] L) ∣ orderOf τ} : ℝ)
-        / (Nat.card (L ≃ₐ[K] L) * Nat.card ((ZMod m)ˣ))
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m) :
+    (Nat.card {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} : ℝ)
+        / (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ))
       ≤ Filter.liminf
           (fun s : ℝ ↦
             primeIdealZetaSum K
@@ -132,8 +138,7 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
 Verbatim source quote: "`|H_n|/|H| = ∏_{i=1}^r (1 - p_i^{k_i-1} /
 p_i^{j_i k_i}) ≥ ∏_{i=1}^r (1 - 1/p^{(j-1)k_i + 1})`". -/
 theorem H_n_over_H_lower_bound_via_prime_factorisation
-    (n m : ℕ) (hn : 1 ≤ n) (hm : 1 ≤ m)
-    (_hm_one_mod : m % n = 1 % n) :
+    (n m : ℕ) (hn : 1 ≤ n) (hm : 1 ≤ m) (_hm_one_mod : m % n = 1 % n) :
     (Nat.card {τ : (ZMod m)ˣ // n ∣ orderOf τ} : ℝ) / Nat.card ((ZMod m)ˣ)
       ≥ (n.factorization.support.prod fun p ↦
           1 - 1 / (p : ℝ) ^ (Nat.factorization (m - 1) p - 1)) := by
@@ -155,11 +160,9 @@ bound `liminf_density_S_sigma_ge_card_H_n_div_GH` as `m → ∞` along
 `m ≡ 1 mod n^k` using `H_n_over_H_tends_to_one` (so `|H_n|/|H| → 1`).
 This is the lower half of Sharifi 7.2.2 Step 2 (p. 144). -/
 theorem liminf_ratio_ge_inv_card_G
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) :
-    (Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
+    (Nat.card Gal(L/K) : ℝ)⁻¹
       ≤ Filter.liminf
           (fun s : ℝ ↦
             primeIdealZetaSum K
@@ -175,10 +178,10 @@ to `1` as `s ↓ 1` since the ramified primes are finite
 (`finite_ramifiedIn`, density `0`). Sharifi 7.2.2 Step 2: the `S_σ`
 partition the unramified primes. -/
 theorem ratioSum_frobeniusFibres_tendsto_one
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L] :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] :
     Filter.Tendsto
-      (fun s : ℝ ↦ ∑ σ : L ≃ₐ[K] L,
+      (fun s : ℝ ↦ ∑ σ : Gal(L/K),
         primeIdealZetaSum K
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
@@ -193,8 +196,7 @@ must each tend to `1/N`. (The lower bounds and the sum-limit pin every
 theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
     {ι : Type*} [Fintype ι] (g : ι → ℝ → ℝ)
     (hlo : ∀ i, (Fintype.card ι : ℝ)⁻¹ ≤ Filter.liminf (g i) (𝓝[>] (1 : ℝ)))
-    (hsum : Filter.Tendsto (fun s ↦ ∑ i, g i s) (𝓝[>] (1 : ℝ)) (𝓝 1))
-    (i₀ : ι) :
+    (hsum : Filter.Tendsto (fun s ↦ ∑ i, g i s) (𝓝[>] (1 : ℝ)) (𝓝 1)) (i₀ : ι) :
     Filter.Tendsto (g i₀) (𝓝[>] (1 : ℝ)) (𝓝 (Fintype.card ι : ℝ)⁻¹) := by
   sorry
 
@@ -210,41 +212,29 @@ For an abelian Galois extension `L/K` of number fields and any
 `tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one` forces each to the
 limit `1/|G|`. -/
 theorem chebotarev_abelian
-    [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     HasDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) := by
-  have hcard : (Nat.card (L ≃ₐ[K] L) : ℝ) = (Fintype.card (L ≃ₐ[K] L) : ℝ) := by
-    rw [Nat.card_eq_fintype_card]
-  rw [HasDirichletDensity, hcard]
+      ((Nat.card Gal(L/K) : ℝ)⁻¹) := by
+  simp only [HasDirichletDensity, Nat.card_eq_fintype_card]
   refine tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
     (fun τ s ↦
       primeIdealZetaSum K
           {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
             frobeniusClass K L 𝔭 = ConjClasses.mk τ} s
         / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
-    (fun τ ↦ ?_) ?_ σ
-  · rw [← hcard]; exact liminf_ratio_ge_inv_card_G K L τ
-  · exact ratioSum_frobeniusFibres_tendsto_one K L
+    (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
+  simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
 
-/-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` obtained from a single
-choice of cyclotomic crossing modulus `m`, before passing to the limit. This
-is the per-`m` inequality at the heart of Sharifi 7.2.2 Step 2.
-
-**Composition**: extracts the lower density from the full abelian
-density via `HasDirichletDensity.hasLower`. (The dependence on `m`
-disappears once equality is reached.) -/
+/-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` from the full abelian
+density, extracted via `HasDirichletDensity.hasLower`. -/
 theorem chebotarev_abelian_lowerDensity_per_m
-    [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) (m : ℕ) (hm : 1 ≤ m) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     HasLowerDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹) :=
+      ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   (chebotarev_abelian K L σ).hasLower
 
 end Chebotarev

@@ -5,12 +5,14 @@ original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
 
 \begin{lemma}\label{lem:cyclic-subgroup-trivial-meet}
   \lean{Chebotarev.cyclic_subgroup_meets_G_times_one_trivially}
+  \leanok
   Let $G, H$ be finite groups, $\sigma \in G$, $\tau \in H$. If
   $\abs{G}\mid\mathrm{ord}(\tau)$, then
   $\ang{(\sigma,\tau)}\cap (G\times\{1\}) = \{1\}$.
 \end{lemma}
 
 \begin{proof}
+  \leanok
   Pure group theory. If $(\sigma^k, \tau^k) \in G\times\{1\}$ then
   $\tau^k = 1$, so $\mathrm{ord}(\tau)\mid k$, hence
   $\abs{G}\mid k$, hence $\sigma^k = 1$.

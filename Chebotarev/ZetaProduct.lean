@@ -57,8 +57,8 @@ namespace Chebotarev
 
 /-- A character of `Gal(L/K)` valued in `ℂ^×`. -/
 abbrev galoisCharacter
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] : Type _ := (L ≃ₐ[K] L) →* ℂˣ
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
+    Type _ := Gal(L/K) →* ℂˣ
 
 /-! ### Sub-lemmas for `exists_dedekindZeta_factorisation`
 
@@ -91,10 +91,8 @@ sub-lemma is supported by a verbatim source quote in
 character `χ : Gal(L/K) → ℂ^×`. The Lean statement asserts existence of
 the L-function and its Euler product on `Re s > 1`. -/
 theorem exists_artinLSeries_eulerProduct_abelian
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (χ : galoisCharacter K L) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ Lf : ℂ → ℂ,
       ∀ s : ℂ, 1 < s.re →
         Lf s = ∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
@@ -106,11 +104,9 @@ unramified prime `𝔭` of `K` factors as a product over characters.
 Source quote (paraphrased identity): the local factor
 `∏_{𝔓|𝔭}(1-N𝔓^{-s})^{-1}` equals `∏_χ(1-χ(σ_𝔭) N𝔭^{-s})^{-1}`. -/
 theorem dedekindZeta_local_factor_eq_product_artin_local
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime) (_hnz : 𝔭 ≠ ⊥)
-    (_hunr : UnramifiedIn K L 𝔭) (s : ℂ) (_hs : 1 < s.re) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (𝔭 : Ideal (𝓞 K)) (_hpr : 𝔭.IsPrime)
+    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (s : ℂ) (_hs : 1 < s.re) :
     ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥},
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
       = ∏' χ : galoisCharacter K L,
@@ -122,10 +118,9 @@ partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` is `O(N^{1-1/[K:ℚ]})` for 
 nontrivial character `χ`. This is the convergence input that extends
 `L(χ,·)` to `Z(1 - [K:ℚ]^{-1})`. -/
 theorem character_sum_geometry_of_numbers_bound
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (_hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ N : ℕ,
       ‖∑' 𝔞 : {𝔞 : Ideal (𝓞 K) //
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
@@ -152,10 +147,9 @@ Mathlib analogue of Sharifi Lemma 7.1.5:
 `LSeries.tendsto_neg_logDerivLSeries_eq_*` machinery in
 `Mathlib.NumberTheory.LSeries.*`). -/
 theorem artinLSeries_analytic_extension
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (_hχ : χ ≠ 1) :
     ∃ Lf : ℂ → ℂ,
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} ∧
       (∀ s : ℂ, 1 < s.re →
@@ -173,10 +167,9 @@ contradiction. Uses `artinLSeries_analytic_extension` so that
 "`L(χ, 1)` is defined" makes sense — the extension brings `s = 1` into
 the analyticity domain. -/
 theorem artinLSeries_one_ne_zero
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (_hχ : χ ≠ 1) :
     ∃ Lf : ℂ → ℂ, Lf 1 ≠ 0 := by
   sorry
 
@@ -194,9 +187,8 @@ analytic on `Re s ≥ 1` (with `L_1` having a simple pole at `s = 1` matching
 
 The `L_χ` are the Artin / Hecke L-series of the abelian extension. -/
 theorem exists_dedekindZeta_factorisation
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)] :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
     ∃ Lf : galoisCharacter K L → ℂ → ℂ,
       (∀ s : ℂ, 1 < s.re → dedekindZeta L s = ∏' χ : galoisCharacter K L, Lf χ s) ∧
       (∀ s : ℂ, Lf 1 s = dedekindZeta K s) ∧
@@ -211,17 +203,15 @@ For an abelian extension `L/K` with `L = K(μ_m)`, the family `Lf` from
 the orthogonality identity that lets one extract the density of primes
 with a given Frobenius. -/
 theorem exists_chebotarev_cyclotomic_residue_identity
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative (L ≃ₐ[K] L)]
-    (σ : L ≃ₐ[K] L) :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     ∃ c : ℝ,
       Filter.Tendsto
         (fun s : ℝ ↦
           primeIdealZetaSum K
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
-            - (Nat.card (L ≃ₐ[K] L) : ℝ)⁻¹ * Real.log (1 / (s - 1)))
+            - (Nat.card Gal(L/K) : ℝ)⁻¹ * Real.log (1 / (s - 1)))
         (nhdsWithin 1 (Set.Ioi 1)) (nhds c) := by
   sorry
 

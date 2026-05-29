@@ -45,8 +45,7 @@ namespace Chebotarev
 /-- Partial Dirichlet series `Σ_{𝔭 ∈ S} N𝔭^{-s}` over nonzero prime ideals
 `𝔭` of `𝓞 K` lying in the set `S`. -/
 noncomputable def primeIdealZetaSum
-    (K : Type*) [Field K] [NumberField K]
-    (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
+    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
   ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
     (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
 
@@ -55,8 +54,7 @@ the ratio of partial sums tends to `δ` as `s ↓ 1`.
 
 Sharifi 7.1.13: `δ(S) = lim_{s → 1⁺} (Σ_{𝔭 ∈ S} N𝔭^{-s}) / (Σ_𝔭 N𝔭^{-s})`. -/
 def HasDirichletDensity
-    (K : Type*) [Field K] [NumberField K]
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Tendsto
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) (𝓝 δ)
@@ -76,8 +74,7 @@ standard convention, so:
 
 When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
 def HasUpperDirichletDensity
-    (K : Type*) [Field K] [NumberField K]
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Filter.limsup
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
@@ -87,8 +84,7 @@ def HasUpperDirichletDensity
 Sharifi's `δ_inf` notation despite Sharifi's labelling
 inversion. -/
 def HasLowerDirichletDensity
-    (K : Type*) [Field K] [NumberField K]
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Filter.liminf
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
@@ -98,7 +94,10 @@ variable (K : Type*) [Field K] [NumberField K]
 /-- The Dirichlet density of the empty set is `0`. -/
 theorem hasDirichletDensity_empty :
     HasDirichletDensity K (∅ : Set (Ideal (𝓞 K))) 0 := by
-  sorry
+  have : IsEmpty {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (∅ : Set (Ideal (𝓞 K))) ∧
+      𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := ⟨fun x ↦ (Set.mem_empty_iff_false x.1).mp x.2.1⟩
+  simpa only [HasDirichletDensity, primeIdealZetaSum, tsum_empty, zero_div]
+    using tendsto_const_nhds
 
 /-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`. -/
 theorem hasDirichletDensity_univ :
@@ -114,8 +113,7 @@ theorem hasDirichletDensity_of_finite
 `δ`, then the Dirichlet density of `S` is `δ`. (Sandwich criterion used in the
 Chebotarev proof: Sharifi 7.2.2 Step 2 last paragraph.) -/
 theorem HasDirichletDensity.of_upper_eq_lower
-    {S : Set (Ideal (𝓞 K))} {δ : ℝ}
-    (hUp : HasUpperDirichletDensity K S δ)
+    {S : Set (Ideal (𝓞 K))} {δ : ℝ} (hUp : HasUpperDirichletDensity K S δ)
     (hLow : HasLowerDirichletDensity K S δ) :
     HasDirichletDensity K S δ := by
   sorry
@@ -124,25 +122,25 @@ theorem HasDirichletDensity.of_upper_eq_lower
 lower density. -/
 theorem HasDirichletDensity.hasUpper
     {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity K S δ) :
-    HasUpperDirichletDensity K S δ := by
-  sorry
+    HasUpperDirichletDensity K S δ :=
+  h.limsup_eq
 
 theorem HasDirichletDensity.hasLower
     {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity K S δ) :
-    HasLowerDirichletDensity K S δ := by
-  sorry
+    HasLowerDirichletDensity K S δ :=
+  h.liminf_eq
 
 /-- Finite disjoint additivity. -/
 theorem HasDirichletDensity.union_of_disjoint
-    {S T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {δ ε : ℝ}
-    (hS : HasDirichletDensity K S δ) (hT : HasDirichletDensity K T ε) :
+    {S T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {δ ε : ℝ} (hS : HasDirichletDensity K S δ)
+    (hT : HasDirichletDensity K T ε) :
     HasDirichletDensity K (S ∪ T) (δ + ε) := by
   sorry
 
 /-- Monotonicity of the lower density under inclusion. -/
 theorem HasLowerDirichletDensity.mono
-    {S T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {δ ε : ℝ}
-    (hS : HasLowerDirichletDensity K S δ) (hT : HasLowerDirichletDensity K T ε) :
+    {S T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {δ ε : ℝ} (hS : HasLowerDirichletDensity K S δ)
+    (hT : HasLowerDirichletDensity K T ε) :
     δ ≤ ε := by
   sorry
 
@@ -156,10 +154,7 @@ source's argument decomposes into:
 (ii) `log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}` as the principal term, with the
     higher-power tail `Σ_{k≥2,𝔭} N𝔭^{-ks}/k` bounded on `Re s > 1/2`
     (Sharifi 7.1.12 proof: "log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}").
-(iii) Comparison `Σ_𝔭 N𝔭^{-s} ≤ [K:ℚ] Σ_p p^{-s}` from the bound
-    "at most `[K:ℚ]` primes of `𝓞 K` lie over each rational prime"
-    (Sharifi 7.1.12 proof: "the latter sum is at most [K:ℚ] Σ_p p^{-s}").
-(iv) `log ζ_K(s) ~ log(1/(s-1))` from the simple pole of `ζ_K` at `s=1`
+(iii) `log ζ_K(s) ~ log(1/(s-1))` from the simple pole of `ζ_K` at `s=1`
     (mathlib: `NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`).
 -/
 
@@ -173,27 +168,6 @@ theorem primeIdealZetaHigherTail_bounded :
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
           (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s)
             / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ C := by
-  sorry
-
-/-- Sharifi 7.1.12 proof (p. 140), comparison step: each rational prime `p`
-has at most `[K:ℚ]` primes of `𝓞 K` lying above it, so
-`Σ_𝔭 N𝔭^{-s} ≤ [K:ℚ] Σ_p p^{-s}`. Source quote: "the latter sum is at most
-`[K:ℚ] Σ_p p^{-s}`". -/
-theorem primeIdealZetaSum_le_finrank_smul_riemannPrimeSum :
-    ∀ᶠ s in 𝓝[>] (1 : ℝ),
-      primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
-        ≤ (Module.finrank ℚ K : ℝ)
-          * ∑' p : Nat.Primes, (p.1 : ℝ) ^ (-s) := by
-  sorry
-
-/-- Sharifi 7.1.12 (case `K = ℚ`, p. 139–140): the Riemann prime sum is
-asymptotic to `log(1/(s-1))` as `s ↓ 1`. This is the analytic input that
-the general case immediately above reduces to. -/
-theorem riemannPrimeSum_asymp_log :
-    Tendsto
-      (fun s : ℝ ↦ (∑' p : Nat.Primes, (p.1 : ℝ) ^ (-s))
-        / Real.log (1 / (s - 1)))
-      (𝓝[>] 1) (𝓝 1) := by
   sorry
 
 /-- Sharifi 7.1.12 proof (p. 140), Euler-product-log identity:
@@ -213,14 +187,30 @@ theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
 theorem logDedekindZeta_sub_log_inv_sub_one_bounded :
     ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ),
       |Real.log (dedekindZeta K (s : ℂ)).re - Real.log (1 / (s - 1))| ≤ C := by
-  sorry
+  set r := dedekindZeta_residue K
+  have hrpos : 0 < r := dedekindZeta_residue_pos K
+  have hF : Tendsto (fun s : ℝ => (s - 1) * (dedekindZeta K (s : ℂ)).re)
+      (𝓝[>] (1 : ℝ)) (𝓝 r) := by
+    refine ((Complex.continuous_re.tendsto _).comp
+      (tendsto_sub_one_mul_dedekindZeta_nhdsGT K)).congr fun s => ?_
+    rw [Function.comp_apply, show ((s : ℂ) - 1) = ((s - 1 : ℝ) : ℂ) by push_cast; ring,
+      Complex.re_ofReal_mul]
+  refine ⟨max |Real.log (r / 2)| |Real.log (2 * r)|, ?_⟩
+  have hev : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      (s - 1) * (dedekindZeta K (s : ℂ)).re ∈ Set.Ioo (r / 2) (2 * r) :=
+    hF.eventually (Ioo_mem_nhds (by linarith) (by linarith))
+  filter_upwards [hev, self_mem_nhdsWithin] with s hF_s hs1
+  simp only [Set.mem_Ioi] at hs1
+  have hsm1 : (0 : ℝ) < s - 1 := by linarith
+  obtain ⟨hlo, hhi⟩ := hF_s
+  have hFpos : (0 : ℝ) < (s - 1) * (dedekindZeta K (s : ℂ)).re := by linarith
+  have hζpos : (0 : ℝ) < (dedekindZeta K (s : ℂ)).re := (mul_pos_iff_of_pos_left hsm1).mp hFpos
+  rw [one_div, Real.log_inv, sub_neg_eq_add,
+    ← Real.log_mul (ne_of_gt hζpos) (ne_of_gt hsm1), mul_comm]
+  exact abs_le_max_abs_abs (Real.log_lt_log (by linarith) hlo).le (Real.log_lt_log hFpos hhi).le
 
 /-- Sharifi 7.1.12 proof (p. 140), lower bound: `Σ_𝔭 N𝔭^{-s} ≥
-log(1/(s-1)) - C`.
-
-**Composition**: chain the Euler-log identity
-`logDedekindZeta_sub_primeIdealZetaSum_bounded` and the simple-pole
-identity `logDedekindZeta_sub_log_inv_sub_one_bounded`. -/
+log(1/(s-1)) - C`. -/
 theorem primeIdealZetaSum_ge_log_minus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
@@ -229,13 +219,10 @@ theorem primeIdealZetaSum_ge_log_minus_bounded :
   obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
   refine ⟨C₁ + C₂, ?_⟩
   filter_upwards [h₁, h₂] with s hs₁ hs₂
-  rw [abs_le] at hs₁ hs₂
-  linarith [hs₁.1, hs₁.2, hs₂.1, hs₂.2]
+  linarith [abs_le.mp hs₁, abs_le.mp hs₂]
 
 /-- Sharifi 7.1.12 proof (p. 140), upper bound: `Σ_𝔭 N𝔭^{-s} ≤
-log(1/(s-1)) + C'`.
-
-**Composition**: same two identities as the lower bound, transposed. -/
+log(1/(s-1)) + C'`. -/
 theorem primeIdealZetaSum_le_log_plus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
@@ -244,33 +231,42 @@ theorem primeIdealZetaSum_le_log_plus_bounded :
   obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
   refine ⟨C₁ + C₂, ?_⟩
   filter_upwards [h₁, h₂] with s hs₁ hs₂
-  rw [abs_le] at hs₁ hs₂
-  linarith [hs₁.1, hs₁.2, hs₂.1, hs₂.2]
+  linarith [abs_le.mp hs₁, abs_le.mp hs₂]
 
 /-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
 neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
 analytic content is just that `log(1/(s-1)) → ∞`, so the additive
 bounded term washes out under division. -/
 theorem tendsto_ratio_one_of_log_pm_bounded
-    (f : ℝ → ℝ)
-    (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
+    (f : ℝ → ℝ) (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
     (h_ge : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≥ Real.log (1 / (s - 1)) - C) :
     Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
-  sorry
+  obtain ⟨C₁, hle⟩ := h_le
+  obtain ⟨C₂, hge⟩ := h_ge
+  have hL : Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1:ℝ)) atTop := by
+    refine Real.tendsto_log_atTop.comp ?_
+    have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1:ℝ)) (𝓝[>] (0:ℝ)) := by
+      refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_ ?_
+      · exact ((continuous_sub_right 1).tendsto' 1 0 (by ring)).mono_left nhdsWithin_le_nhds
+      · filter_upwards [self_mem_nhdsWithin] with s hs
+        simp only [Set.mem_Ioi] at hs ⊢
+        linarith
+    simpa [one_div] using h1.inv_tendsto_nhdsGT_zero
+  have hLpos := hL.eventually_gt_atTop 0
+  have h0 : Tendsto (fun s ↦ (f s - Real.log (1 / (s - 1))) / Real.log (1 / (s - 1)))
+      (𝓝[>] (1:ℝ)) (𝓝 0) :=
+    tendsto_bdd_div_atTop_nhds_zero (b := -C₂) (B := C₁)
+      (hge.mono fun s h ↦ by linarith) (hle.mono fun s h ↦ by linarith) hL
+  refine (add_zero (1:ℝ) ▸ h0.const_add 1).congr' ?_
+  filter_upwards [hLpos] with s h
+  rw [add_div_eq_mul_add_div _ _ h.ne', one_mul, add_sub_cancel]
 
 /-- **Sharifi 7.1.12**, *Algebraic Number Theory*, p. 140.
 
 The denominator `Σ_𝔭 N𝔭^{-s}` is asymptotic to `log(1/(s-1))` as `s ↓ 1`.
 This is the analytic ingredient that makes the Dirichlet-density
 definition robust under the L-function comparisons in the Chebotarev
-proof.
-
-**Composition**: sandwich the two bounds. From
-`primeIdealZetaSum_ge_log_minus_bounded` and
-`primeIdealZetaSum_le_log_plus_bounded`,
-`Σ_𝔭 N𝔭^{-s} = log(1/(s-1)) + O(1)`; dividing by `log(1/(s-1))`
-(which → ∞ as `s ↓ 1`) gives a ratio that → 1 by
-`tendsto_ratio_one_of_log_pm_bounded`. -/
+proof. -/
 theorem primeIdealZetaSum_univ_tendsto_log :
     Tendsto
       (fun s : ℝ ↦ primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
