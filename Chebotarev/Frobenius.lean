@@ -166,6 +166,20 @@ theorem frobeniusAt_spec
           ((Ideal.Quotient.mk 𝔓) x) ^ Ideal.absNorm (𝔓.under (𝓞 K)) :=
   (exists_unique_frobeniusAt K L 𝔓 hp hnz hunr).exists.choose_spec
 
+/-- **Frobenius conjugation formula** (Stevenhagen–Lenstra p. 14:
+`Frob_{ψ∘τ} = τ⁻¹ ∘ Frob_ψ ∘ τ`). If `σ • 𝔓 = 𝔓'`, then `Frob_{𝔓'} = σ · Frob_𝔓 · σ⁻¹`:
+the conjugate `σ · Frob_𝔓 · σ⁻¹` stabilises `𝔓'` and acts as the `N𝔭`-th power on the
+residue field `κ(𝔓')`, so by the uniqueness in `exists_unique_frobeniusAt` it is the
+Frobenius at `𝔓'`. -/
+theorem frobeniusAt_conj_eq
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (𝔓 𝔓' : Ideal (𝓞 L)) (hp : 𝔓.IsPrime) (hnz : 𝔓 ≠ ⊥)
+    (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) (hp' : 𝔓'.IsPrime) (hnz' : 𝔓' ≠ ⊥)
+    (hunr' : Ideal.ramificationIdx (𝔓'.under (𝓞 K)) 𝔓' = 1)
+    (σ : Gal(L/K)) (hσ : σ • 𝔓 = 𝔓') :
+    frobeniusAt K L 𝔓' hp' hnz' hunr' = σ * frobeniusAt K L 𝔓 hp hnz hunr * σ⁻¹ := by
+  sorry
+
 /-- For a prime `𝔭` of `𝓞 K` unramified in `L`, any two Frobenius elements
 above `𝔭` are conjugate in `Gal(L/K)` — the conjugating element witnesses
 transitivity of the Galois action on primes above `𝔭`. -/
@@ -179,7 +193,26 @@ theorem frobeniusAt_isConj_of_liesOver
         (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hp hP))
       (frobeniusAt K L 𝔓' hp' hnz'
         (by rw [show 𝔓'.under (𝓞 K) = 𝔭 from hP'.over.symm]; exact hunr 𝔓' hp' hP')) := by
-  sorry
+  obtain ⟨σ, hσ⟩ := Ideal.exists_smul_eq_of_isGaloisGroup 𝔭 𝔓 𝔓' Gal(L/K)
+  rw [frobeniusAt_conj_eq K L 𝔓 𝔓' hp hnz
+      (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hp hP) hp' hnz'
+      (by rw [show 𝔓'.under (𝓞 K) = 𝔭 from hP'.over.symm]; exact hunr 𝔓' hp' hP') σ hσ]
+  exact isConj_iff.mpr ⟨σ, rfl⟩
+
+/-- A nonzero prime `𝔭` of `𝓞 K` has at least one prime `𝔓` of `𝓞 L` lying
+over it, and any such `𝔓` is nonzero (going-up for the integral extension
+`𝓞 K ⊆ 𝓞 L`; nonzero because `𝔭` is and `algebraMap (𝓞 K) (𝓞 L)` is injective). -/
+theorem exists_prime_liesOver
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (𝔭 : Ideal (𝓞 K)) (hpr : 𝔭.IsPrime) (hnz : 𝔭 ≠ ⊥) :
+    ∃ 𝔓 : Ideal (𝓞 L), 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥ := by
+  obtain ⟨𝔓, hp, hcomap⟩ :=
+    Ideal.exists_ideal_over_prime_of_isIntegral_of_isDomain (S := 𝓞 L) 𝔭 (by simp)
+  refine ⟨𝔓, hp, ⟨hcomap.symm⟩, ?_⟩
+  rintro rfl
+  rw [← RingHom.ker_eq_comap_bot, (RingHom.injective_iff_ker_eq_bot _).mp
+    (FaithfulSMul.algebraMap_injective (𝓞 K) (𝓞 L))] at hcomap
+  exact hnz hcomap.symm
 
 /-- Existence (and uniqueness, by conjugacy-class collapse) of the Frobenius
 conjugacy class of an unramified prime `𝔭` of `𝓞 K`.
@@ -191,7 +224,12 @@ theorem exists_frobeniusClass
       ∀ (𝔓 : Ideal (𝓞 L)) (hp : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (hnz : 𝔓 ≠ ⊥),
         C = ConjClasses.mk (frobeniusAt K L 𝔓 hp hnz
           (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hp hP)) := by
-  sorry
+  obtain ⟨𝔓₀, hp₀, hlo₀, hnz₀⟩ := exists_prime_liesOver K L 𝔭 hpr hnz_𝔭
+  refine ⟨ConjClasses.mk (frobeniusAt K L 𝔓₀ hp₀ hnz₀
+    (by rw [show 𝔓₀.under (𝓞 K) = 𝔭 from hlo₀.over.symm]; exact hunr 𝔓₀ hp₀ hlo₀)), ?_⟩
+  intro 𝔓 hp hP hnz
+  rw [ConjClasses.mk_eq_mk_iff_isConj]
+  exact frobeniusAt_isConj_of_liesOver K L 𝔭 hpr hnz_𝔭 hunr 𝔓₀ 𝔓 hp₀ hlo₀ hnz₀ hp hP hnz
 
 /-- The Frobenius conjugacy class of a prime `𝔭` of `𝓞 K`. When `𝔭` is a
 nonzero unramified prime, this is the conjugacy class of `frobeniusAt 𝔓` for
