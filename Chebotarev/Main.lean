@@ -107,6 +107,38 @@ theorem count_primes_above_with_frobenius_eq_sigma
       = Nat.card (L ≃ₐ[K] L) := by
   sorry
 
+/-- **Density-lift through the fixed-field subextension** (Sharifi 7.2.2
+Step 1, p. 143). Let `σ ∈ Gal(L/K)`, `E = L^⟨σ⟩` the fixed field of the
+cyclic subgroup `⟨σ⟩`, and `σ_E ∈ Gal(L/E)` the corresponding element.
+Given the abelian-case density over `E` for the Frobenius-fibre of `σ_E`
+(value `1/|Gal(L/E)|`), the density over `K` of the Frobenius **class** of
+`σ` is `|C|/|G|`.
+
+Source quote (verbatim, p. 143): "δ(S) = … = (f|C|/|G|) δ(T_σ),
+recalling once again that `Σ_𝔭 N𝔭^{-s} ~ Σ_P NP^{-s}`. Supposing the
+theorem for K/E, we have δ(T_σ) = 1/f, and we therefore obtain δ(S) =
+|C|/|G|." Here `f = ord σ = |Gal(L/E)|`, and the counting factor is
+`count_primes_above_with_frobenius_eq_sigma`.
+
+The hypothesis `hEfix` records that `E` is the fixed field of `⟨σ⟩`; the
+hypothesis `hab` is the abelian-case output for `L/E` from
+`chebotarev_abelian`. -/
+theorem density_lift_through_fixedField
+    [FiniteDimensional K L]
+    (σ : L ≃ₐ[K] L)
+    (E : IntermediateField K L)
+    (σE : L ≃ₐ[↥E] L)
+    (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
+    (_hab : HasDirichletDensity ↥E
+        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ P ≠ ⊥ ∧ UnramifiedIn ↥E L P ∧
+          frobeniusClass ↥E L P = ConjClasses.mk σE}
+        ((Nat.card (L ≃ₐ[↥E] L) : ℝ)⁻¹)) :
+    HasDirichletDensity K
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+        frobeniusClass K L 𝔭 = ConjClasses.mk σ}
+      ((Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card (L ≃ₐ[K] L)) := by
+  sorry
+
 /-- **Chebotarev's density theorem** (Sharifi 7.2.2; SL Appendix).
 
 For a finite Galois extension `L/K` of number fields with Galois group `G`
@@ -120,7 +152,23 @@ theorem chebotarev_density
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card (L ≃ₐ[K] L)) := by
-  sorry
+  -- Step 1 (Sharifi 7.2.2): pick a representative σ ∈ C and reduce to the
+  -- cyclic subextension L / E where E = L^⟨σ⟩.
+  obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
+  -- `Gal(L/E) ≃* ⟨σ⟩`, so `Gal(L/E)` is commutative (⟨σ⟩ is cyclic).
+  have e := IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers σ)
+  letI : CommMonoid ↥(Subgroup.zpowers σ) := IsMulCommutative.instCommMonoid
+  haveI :
+      IsMulCommutative (L ≃ₐ[↥(IntermediateField.fixedField (Subgroup.zpowers σ))] L) :=
+    ⟨⟨fun a b => by
+      obtain ⟨x, rfl⟩ := e.surjective a
+      obtain ⟨y, rfl⟩ := e.surjective b
+      rw [← map_mul e x y, ← map_mul e y x, mul_comm x y]⟩⟩
+  -- L / E is abelian, so the abelian case applies to its Frobenius σ_E.
+  exact density_lift_through_fixedField K L σ
+    (IntermediateField.fixedField (Subgroup.zpowers σ))
+    (e ⟨σ, Subgroup.mem_zpowers σ⟩) rfl
+    (chebotarev_abelian _ L (e ⟨σ, Subgroup.mem_zpowers σ⟩))
 
 /-- In a commutative finite group every conjugacy class is a singleton,
 so `|C| = 1`. (Uses `isConj_iff_eq`.) -/

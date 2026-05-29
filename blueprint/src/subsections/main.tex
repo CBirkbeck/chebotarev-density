@@ -25,9 +25,28 @@ Step~1 (p.~143).
   (Sharifi p.~143).
 \end{proof}
 
+\begin{lemma}[Density lift through the fixed field]\label{lem:density-lift-fixedfield}
+  \lean{Chebotarev.density_lift_through_fixedField}
+  \uses{def:dirichlet-density, def:frobenius-class, lem:count-primes-above-frob-sigma, lem:prime-ideal-sum-log}
+  Let $\sigma\in\Gal{L/K}$, $E = L^{\ang\sigma}$, and $\sigma_E\in\Gal{L/E}$
+  the corresponding element. Given the abelian-case density over $E$ for
+  the Frobenius-fibre of $\sigma_E$ (value $1/\abs{\Gal{L/E}}$), the
+  $K$-density of the Frobenius class $[\sigma]$ is $\abs{[\sigma]}/\abs{G}$.
+\end{lemma}
+
+\begin{proof}
+  \uses{lem:count-primes-above-frob-sigma, lem:prime-ideal-sum-log}
+  For primes $P$ of $E$ above $\fp\in S = \setof{\fp}{\sigma_\fp = [\sigma]}$,
+  exactly $\abs{G}/(f\abs{C})$ of the primes of $L$ above have Frobenius
+  $\sigma$ (\cref{lem:count-primes-above-frob-sigma}); with $\sum_\fp
+  N\fp^{-s} \sim \sum_P NP^{-s}$ (\cref{lem:prime-ideal-sum-log} over both
+  $K$ and $E$), $\delta_K(S) = (f\abs{C}/\abs{G})\,\delta_E(T_\sigma) =
+  (f\abs{C}/\abs{G})(1/f) = \abs{C}/\abs{G}$.
+\end{proof}
+
 \begin{theorem}[Chebotarev density theorem]\label{thm:chebotarev-density}
   \lean{Chebotarev.chebotarev_density}
-  \uses{def:dirichlet-density, def:frobenius-class, thm:chebotarev-abelian, lem:count-primes-above-frob-sigma}
+  \uses{thm:chebotarev-abelian, lem:density-lift-fixedfield}
   For a finite Galois extension $L/K$ of number fields with
   $G=\Gal{L/K}$ and any conjugacy class $C\subseteq G$,
   \[
@@ -37,26 +56,16 @@ Step~1 (p.~143).
 \end{theorem}
 
 \begin{proof}
-  Pick $\sigma\in C$, let $E = L^{\ang\sigma}$, and set
-  $f = \mathrm{ord}(\sigma) = \abs{\ang\sigma}$. Then $L/E$ is cyclic
-  (hence abelian) of degree $f$, so
-  \cref{thm:chebotarev-abelian} applied to $L/E$ gives
-  $\delta_E(\setof{P}{\sigma_P = \sigma}) = 1/f$.
-
-  Combine the above with the counting from
-  \cref{lem:count-primes-above-frob-sigma}: for primes $P$ of $E$ above
-  $\fp \in S = \setof{\fp}{\sigma_\fp = C}$, the count with
-  $\sigma_P = \sigma$ is exactly $\abs{G}/(f\cdot\abs{C})$ per orbit.
-  Using $\sum_\fp N\fp^{-s} \sim \sum_P NP^{-s}$
-  (\cref{lem:prime-ideal-sum-log} applied to both $K$ and $E$),
-  \[
-    \delta_K(S) \;=\;
-    \frac{f\cdot\abs{C}}{\abs{G}}\cdot\delta_E(\setof{P}{\sigma_P = \sigma})
-    \;=\;
-    \frac{f\cdot\abs{C}}{\abs{G}}\cdot\frac{1}{f}
-    \;=\;
-    \frac{\abs{C}}{\abs{G}}.
-  \]
+  \uses{thm:chebotarev-abelian, lem:density-lift-fixedfield}
+  \leanok
+  Pick a representative $\sigma\in C$ (\texttt{ConjClasses.mk\_surjective})
+  and let $E = L^{\ang\sigma}$ be the fixed field of $\ang\sigma$. The map
+  $\ang\sigma \xrightarrow{\sim} \Gal{L/E}$
+  (\texttt{IntermediateField.subgroupEquivAlgEquiv}) shows $\Gal{L/E}$ is
+  commutative (as $\ang\sigma$ is cyclic), so $L/E$ is abelian and
+  \cref{thm:chebotarev-abelian} applies to its Frobenius $\sigma_E$, giving
+  $\delta_E(T_\sigma) = 1/\abs{\Gal{L/E}}$. Feeding this into the density
+  lift \cref{lem:density-lift-fixedfield} yields $\abs{C}/\abs{G}$.
 \end{proof}
 
 \begin{theorem}[Chebotarev, abelian case]\label{thm:chebotarev-density-comm}
