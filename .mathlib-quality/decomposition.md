@@ -68,6 +68,27 @@ Two Frobenius elements above the same unramified `𝔭` are conjugate. Composed 
 - `finite_ramifiedIn` — leaf, `sorry`. Only finitely many primes divide the (nonzero)
   relative discriminant; mathlib `NumberField`/different-ideal API.
 
+## R: `hasDirichletDensity_of_finite` — DONE (decomposed + fully proven this pass)
+
+Sharifi 7.1.13: a finite set of primes has Dirichlet density `0`. The numerator
+`Σ_{𝔭∈S} N𝔭⁻ˢ` is bounded (finitely many terms, each `≤ 1`) while the denominator
+`Σ_𝔭 N𝔭⁻ˢ → ∞`; the ratio is squeezed `0 ≤ · ≤ M/Σ_univ → 0`.
+
+Composed sorry-free from two finer leaves, **both now proven**:
+- **`primeIdealZetaSum_univ_tendsto_atTop`** (PROVEN): `Σ_univ N𝔭⁻ˢ → +∞` as `s↓1`.
+  From the proven `primeIdealZetaSum_univ_tendsto_log` (ratio `→ 1`) and
+  `log(1/(s-1)) → ∞`: eventually `Σ_univ ≥ ½·log` (ratio `> ½`), and `½·log → ∞`
+  (`Filter.Tendsto.const_mul_atTop`), so `tendsto_atTop_mono'` closes it.
+- **`primeIdealZetaSum_le_card_of_finite`** (PROVEN): `Σ_{𝔭∈S} N𝔭⁻ˢ ≤ #{primes}` for
+  `s>0`. Finite index (`Set.Finite.to_subtype`) ⇒ `tsum_fintype`; each
+  `N𝔭⁻ˢ ≤ 1` by `Real.rpow_le_one_of_one_le_of_nonpos` (`N𝔭 ≥ 1` via
+  `Ideal.absNorm_eq_zero_iff`).
+- parent body: `tendsto_of_tendsto_of_tendsto_of_le_of_le'` squeeze between `0` and
+  `M/Σ_univ` (`Tendsto.div_atTop`), the bounds from the two leaves.
+
+This fully backs `infinite_of_hasDirichletDensity_pos` (Main, already composed) ⇒
+`infinite_setOf_frobenius_class`.
+
 ## Build
 `lake build` (chebotarev-density): success (3778 jobs). Two parents composed
 sorry-free this pass (`exists_frobeniusClass`, `frobeniusAt_isConj_of_liesOver`);

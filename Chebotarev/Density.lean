@@ -99,16 +99,6 @@ theorem hasDirichletDensity_empty :
   simpa only [HasDirichletDensity, primeIdealZetaSum, tsum_empty, zero_div]
     using tendsto_const_nhds
 
-/-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`. -/
-theorem hasDirichletDensity_univ :
-    HasDirichletDensity K (Set.univ : Set (Ideal (𝓞 K))) 1 := by
-  sorry
-
-/-- Density of a finite set of primes is `0`. -/
-theorem hasDirichletDensity_of_finite
-    {S : Set (Ideal (𝓞 K))} (hS : S.Finite) : HasDirichletDensity K S 0 := by
-  sorry
-
 /-- If the upper density of `S` equals the lower density of `S` and both equal
 `δ`, then the Dirichlet density of `S` is `δ`. (Sandwich criterion used in the
 Chebotarev proof: Sharifi 7.2.2 Step 2 last paragraph.) -/
@@ -276,5 +266,82 @@ theorem primeIdealZetaSum_univ_tendsto_log :
     (primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))))
     (primeIdealZetaSum_le_log_plus_bounded K)
     (primeIdealZetaSum_ge_log_minus_bounded K)
+
+/-- The full prime-ideal zeta sum diverges to `+∞` as `s ↓ 1` (it is asymptotic to
+`log(1/(s-1)) → ∞`). -/
+theorem primeIdealZetaSum_univ_tendsto_atTop :
+    Tendsto (primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K)))) (𝓝[>] 1) atTop := by
+  have hL : Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1 : ℝ)) atTop := by
+    apply Real.tendsto_log_atTop.comp
+    have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝[>] (0 : ℝ)) := by
+      apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+      · have : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝 (1 - 1)) :=
+          (continuous_sub_right 1).continuousWithinAt
+        simpa using this
+      · filter_upwards [self_mem_nhdsWithin] with s hs
+        simp only [Set.mem_Ioi] at hs ⊢
+        linarith
+    have h2 : Tendsto (fun x : ℝ ↦ 1 / x) (𝓝[>] (0 : ℝ)) atTop := by
+      simpa [one_div] using tendsto_inv_nhdsGT_zero
+    exact h2.comp h1
+  have hhalf : Tendsto (fun s : ℝ ↦ (1 / 2 : ℝ) * Real.log (1 / (s - 1))) (𝓝[>] 1) atTop :=
+    hL.const_mul_atTop (by norm_num)
+  refine tendsto_atTop_mono' _ ?_ hhalf
+  filter_upwards [(primeIdealZetaSum_univ_tendsto_log K).eventually
+      (Ioi_mem_nhds (show (1 / 2 : ℝ) < 1 by norm_num)), hL.eventually_gt_atTop 0] with s hs hpos
+  exact ((lt_div_iff₀ hpos).mp (Set.mem_Ioi.mp hs)).le
+
+/-- For a finite set `S`, the partial sum `Σ_{𝔭 ∈ S} N𝔭^{-s}` is bounded above by the
+number of qualifying primes: there are finitely many terms and each `N𝔭^{-s} ≤ 1`
+for `s > 0` (since `N𝔭 ≥ 1`). -/
+theorem primeIdealZetaSum_le_card_of_finite {S : Set (Ideal (𝓞 K))} (hS : S.Finite)
+    {s : ℝ} (hs : 0 < s) :
+    primeIdealZetaSum K S s ≤
+      Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := by
+  haveI : Finite {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
+    (hS.subset fun _ hx ↦ hx.1).to_subtype
+  haveI : Fintype {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := Fintype.ofFinite _
+  rw [primeIdealZetaSum, tsum_fintype, Nat.card_eq_fintype_card]
+  calc ∑ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
+      ≤ ∑ _𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, (1 : ℝ) := by
+        refine Finset.sum_le_sum fun 𝔭 _ ↦ Real.rpow_le_one_of_one_le_of_nonpos ?_ (by linarith)
+        exact_mod_cast Nat.one_le_iff_ne_zero.mpr
+          (by rw [Ne, Ideal.absNorm_eq_zero_iff]; exact 𝔭.2.2.2)
+    _ = (Fintype.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} : ℝ) := by
+        rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
+
+/-- **Density of a finite set of primes is `0`** (Sharifi 7.1.13). The numerator
+`Σ_{𝔭 ∈ S} N𝔭^{-s}` is bounded (finitely many terms, each `≤ 1`) while the denominator
+`Σ_𝔭 N𝔭^{-s} → ∞`, so the ratio `→ 0`. -/
+theorem hasDirichletDensity_of_finite {S : Set (Ideal (𝓞 K))} (hS : S.Finite) :
+    HasDirichletDensity K S 0 := by
+  have hUniv := primeIdealZetaSum_univ_tendsto_atTop K
+  have hUnivPos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < primeIdealZetaSum K Set.univ s :=
+    hUniv.eventually_gt_atTop 0
+  change Tendsto (fun s ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
+    (𝓝[>] 1) (𝓝 0)
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' (g := fun _ ↦ (0 : ℝ))
+    (h := fun s ↦ (Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} : ℝ)
+      / primeIdealZetaSum K Set.univ s)
+    tendsto_const_nhds (tendsto_const_nhds.div_atTop hUniv) ?_ ?_
+  · filter_upwards [hUnivPos] with s hpos
+    exact div_nonneg (by unfold primeIdealZetaSum; exact tsum_nonneg fun _ ↦ by positivity)
+      hpos.le
+  · filter_upwards [hUnivPos, self_mem_nhdsWithin] with s hpos hs1
+    simp only [Set.mem_Ioi] at hs1
+    exact (div_le_div_iff_of_pos_right hpos).mpr
+      (primeIdealZetaSum_le_card_of_finite K hS (by linarith))
+
+/-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`: the ratio
+`Σ_𝔭 N𝔭⁻ˢ / Σ_𝔭 N𝔭⁻ˢ` is eventually `1` since the denominator is eventually nonzero
+(it `→ ∞`). -/
+theorem hasDirichletDensity_univ :
+    HasDirichletDensity K (Set.univ : Set (Ideal (𝓞 K))) 1 := by
+  change Tendsto (fun s ↦ primeIdealZetaSum K Set.univ s / primeIdealZetaSum K Set.univ s)
+    (𝓝[>] 1) (𝓝 1)
+  refine tendsto_const_nhds.congr' ?_
+  filter_upwards [(primeIdealZetaSum_univ_tendsto_atTop K).eventually_gt_atTop 0] with s hs
+  exact (div_self hs.ne').symm
 
 end Chebotarev
