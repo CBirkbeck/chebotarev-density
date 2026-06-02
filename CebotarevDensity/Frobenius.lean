@@ -55,12 +55,17 @@ namespace Chebotarev
 
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 
-/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if every prime `𝔓` of `𝓞 L`
-lying over `𝔭` has ramification index `1`. -/
+/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if it is nonzero and every prime `𝔓` of
+`𝓞 L` lying over `𝔭` is unramified over `𝓞 K` in mathlib's sense (`Algebra.IsUnramifiedAt`,
+which for nonzero primes is `e(𝔓 ∣ 𝔭) = 1` by
+`Algebra.isUnramifiedAt_iff_of_isDedekindDomain`). The `𝔭 ≠ ⊥` clause is needed because the
+generic point `⊥` *is* `Algebra.IsUnramifiedAt` — its localisation is the
+formally-unramified fraction field — so without it the zero ideal would count as
+unramified. -/
 def UnramifiedIn
     [IsGalois K L]
     (𝔭 : Ideal (𝓞 K)) : Prop :=
-  ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime], 𝔓.LiesOver 𝔭 → Ideal.ramificationIdx 𝔭 𝔓 = 1
+  𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime], 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
 
 /-- A prime of `𝓞 L` with ramification index `1` over its image in `𝓞 K` is nonzero:
 the zero ideal has ramification index `0` (`Ideal.ramificationIdx_bot`). -/
@@ -69,13 +74,11 @@ theorem ne_bot_of_ramificationIdx_eq_one
   rintro rfl
   simp at hunr
 
-/-- An unramified prime is nonzero: the zero ideal of `𝓞 L` lies over the zero ideal of
-`𝓞 K` with ramification index `0` (`Ideal.ramificationIdx_bot`), not `1`. -/
+/-- An unramified prime is nonzero — the first clause of `UnramifiedIn`. -/
 theorem UnramifiedIn.ne_bot
     [IsGalois K L]
-    {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) : 𝔭 ≠ ⊥ := by
-  rintro rfl
-  simpa [Ideal.ramificationIdx_bot] using hunr ⊥ inferInstance
+    {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) : 𝔭 ≠ ⊥ :=
+  hunr.1
 
 /-- For a prime `𝔓` of `𝓞 L` lying over an unramified prime `𝔭` of `𝓞 K`,
 the ramification index `e(𝔓 ∣ 𝔭)` equals `1`. -/
@@ -83,7 +86,9 @@ theorem UnramifiedIn.ramificationIdx_eq_one
     [IsGalois K L]
     {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
-  rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP
+  haveI := hP
+  have h𝔓 : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔓
+  exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp (hunr.2 𝔓 hP)
 
 /-- The Frobenius automorphism at an unramified prime `𝔓` of `𝓞 L`: mathlib's
 `arithFrobAt` for the `𝓞 K`-action of `Gal(L/K)` on `𝓞 L`. -/
