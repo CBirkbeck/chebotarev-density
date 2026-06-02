@@ -31,8 +31,8 @@ exploiting the `Pointwise` action `Ideal.pointwiseDistribMulAction`.
 
 * `Chebotarev.UnramifiedIn` — `𝔭` is unramified in `L`.
 * `Chebotarev.frobeniusAt` — the Frobenius automorphism at
-  an unramified prime `𝔓`, extracted via `Classical.choose` from the
-  existence theorem `exists_unique_frobeniusAt`.
+  an unramified prime `𝔓`, namely mathlib's `arithFrobAt` for the
+  action of `Gal(L/K)` on `𝓞 L`.
 * `Chebotarev.frobeniusClass` — the conjugacy class of
   Frobenius elements above a prime `𝔭` of `K`.
 
@@ -134,12 +134,11 @@ at `𝔓` is trivial, there is a unique `σ ∈ Gal(L/K)` stabilising `𝔓` and
 the `N𝔭`-th power on the residue field `𝓞 L / 𝔓`. -/
 theorem exists_unique_frobeniusAt_of_inertia_trivial
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hnz : 𝔓 ≠ ⊥) (hI : Ideal.inertia Gal(L/K) 𝔓 = ⊥) :
+    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] [Finite (𝓞 L ⧸ 𝔓)] (hI : Ideal.inertia Gal(L/K) 𝔓 = ⊥) :
     ∃! σ : Gal(L/K), σ ∈ MulAction.stabilizer Gal(L/K) 𝔓 ∧
       ∀ x : 𝓞 L,
         (Ideal.Quotient.mk 𝔓) (σ • x) =
           ((Ideal.Quotient.mk 𝔓) x) ^ Ideal.absNorm (𝔓.under (𝓞 K)) := by
-  have : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓 hnz
   obtain ⟨σ, hσ⟩ := IsArithFrobAt.exists_of_isInvariant (𝓞 K) Gal(L/K) 𝔓
   refine ⟨σ, ⟨hσ.mem_stabilizer, hσ.mk_apply⟩, ?_⟩
   rintro τ ⟨-, hτ_pow⟩
@@ -161,15 +160,20 @@ theorem exists_unique_frobeniusAt
       ∀ x : 𝓞 L,
         (Ideal.Quotient.mk 𝔓) (σ • x) =
           ((Ideal.Quotient.mk 𝔓) x) ^ Ideal.absNorm (𝔓.under (𝓞 K)) :=
-  exists_unique_frobeniusAt_of_inertia_trivial K L 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
+  haveI : Finite (𝓞 L ⧸ 𝔓) :=
+    Ideal.finiteQuotientOfFreeOfNeBot 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
+  exists_unique_frobeniusAt_of_inertia_trivial K L 𝔓
     (inertiaGroup_trivial_of_unramified K L 𝔓 hunr)
 
-/-- The Frobenius automorphism at an unramified prime `𝔓` of `𝓞 L`. -/
+/-- The Frobenius automorphism at an unramified prime `𝔓` of `𝓞 L`: mathlib's
+`arithFrobAt` for the `𝓞 K`-action of `Gal(L/K)` on `𝓞 L`. -/
 def frobeniusAt
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) :
     Gal(L/K) :=
-  (exists_unique_frobeniusAt K L 𝔓 hunr).exists.choose
+  haveI : Finite (𝓞 L ⧸ 𝔓) :=
+    Ideal.finiteQuotientOfFreeOfNeBot 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
+  arithFrobAt (𝓞 K) Gal(L/K) 𝔓
 
 /-- The Frobenius automorphism stabilises `𝔓` and acts as the `N𝔭`-th power
 on the residue field. -/
@@ -179,40 +183,26 @@ theorem frobeniusAt_spec
     frobeniusAt K L 𝔓 hunr ∈ MulAction.stabilizer Gal(L/K) 𝔓 ∧
       ∀ x : 𝓞 L,
         (Ideal.Quotient.mk 𝔓) (frobeniusAt K L 𝔓 hunr • x) =
-          ((Ideal.Quotient.mk 𝔓) x) ^ Ideal.absNorm (𝔓.under (𝓞 K)) :=
-  (exists_unique_frobeniusAt K L 𝔓 hunr).exists.choose_spec
-
-/-- **Frobenius conjugation formula** (Stevenhagen–Lenstra p. 14:
-`Frob_{ψ∘τ} = τ⁻¹ ∘ Frob_ψ ∘ τ`). If `σ • 𝔓 = 𝔓'`, then `Frob_{𝔓'} = σ · Frob_𝔓 · σ⁻¹`:
-the conjugate `σ · Frob_𝔓 · σ⁻¹` stabilises `𝔓'` and acts as the `N𝔭`-th power on the
-residue field `κ(𝔓')`, so by the uniqueness in `exists_unique_frobeniusAt` it is the
-Frobenius at `𝔓'`. -/
-theorem frobeniusAt_conj_eq
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime]
-    (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1)
-    (hunr' : Ideal.ramificationIdx (𝔓'.under (𝓞 K)) 𝔓' = 1)
-    (σ : Gal(L/K)) (hσ : σ • 𝔓 = 𝔓') :
-    frobeniusAt K L 𝔓' hunr' = σ * frobeniusAt K L 𝔓 hunr * σ⁻¹ := by
-  sorry
+          ((Ideal.Quotient.mk 𝔓) x) ^ Ideal.absNorm (𝔓.under (𝓞 K)) := by
+  haveI : Finite (𝓞 L ⧸ 𝔓) :=
+    Ideal.finiteQuotientOfFreeOfNeBot 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
+  exact ⟨IsArithFrobAt.arithFrobAt_mem_stabilizer (𝓞 K) Gal(L/K) 𝔓,
+    (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).mk_apply⟩
 
 /-- For a prime `𝔭` of `𝓞 K` unramified in `L`, any two Frobenius elements
-above `𝔭` are conjugate in `Gal(L/K)` — the conjugating element witnesses
-transitivity of the Galois action on primes above `𝔭`. -/
+above `𝔭` are conjugate in `Gal(L/K)`: both are `arithFrobAt` at primes lying over the
+same prime `𝔭`, so `isConj_arithFrobAt` applies. -/
 theorem frobeniusAt_isConj_of_liesOver
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime] (hP : 𝔓.LiesOver 𝔭) (hP' : 𝔓'.LiesOver 𝔭) :
-    IsConj
-      (frobeniusAt K L 𝔓
-        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
-      (frobeniusAt K L 𝔓'
-        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP')) := by
-  obtain ⟨σ, hσ⟩ := Ideal.exists_smul_eq_of_isGaloisGroup 𝔭 𝔓 𝔓' Gal(L/K)
-  rw [frobeniusAt_conj_eq K L 𝔓 𝔓'
-      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
-      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP') σ hσ]
-  exact isConj_iff.mpr ⟨σ, rfl⟩
+    IsConj (frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
+      (frobeniusAt K L 𝔓' (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP')) := by
+  haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
+    (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
+  haveI : Finite (𝓞 L ⧸ 𝔓') := Ideal.finiteQuotientOfFreeOfNeBot 𝔓'
+    (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP'))
+  exact isConj_arithFrobAt (𝓞 K) Gal(L/K) 𝔓 𝔓' (hP.over.symm.trans hP'.over)
 
 /-- A nonzero prime `𝔭` of `𝓞 K` has at least one prime `𝔓` of `𝓞 L` lying
 over it, and any such `𝔓` is nonzero (going-up for the integral extension
