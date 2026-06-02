@@ -141,6 +141,39 @@ theorem card_primesAbove_mul_orderOf_eq
   rw [← finrank_residue_eq_orderOf K L σ C _hσ 𝔭 hunr _hCfrob 𝔓₀ hlo₀]
   exact card_primesAbove_mul_finrank_eq K L 𝔭 hunr 𝔓₀ hlo₀
 
+/-- **Equipotent Frobenius fibres** (the "distributed evenly" of Sharifi 7.2.2, p. 143).
+For `IsConj σ σ'`, conjugating by the witnessing element is a bijection between the primes
+above `𝔭` with `Frob_𝔓 = σ` and those with `Frob_𝔓 = σ'` (via `frobeniusAt_conj_eq`), so the
+two Frobenius fibres have equal cardinality. -/
+theorem frobeniusFibre_card_eq_of_isConj
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
+    (σ σ' : Gal(L/K)) (hc : IsConj σ σ') :
+    Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+        frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ}
+      = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+        frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'} := by
+  sorry
+
+/-- **Balanced fibre count.** If every prime above `𝔭` has Frobenius in the class `C = [σ]`
+and conjugate Frobenius values occur equally often (`hequi`), the total number of primes
+above `𝔭` is `|C|` times the number with `Frob_𝔓 = σ`: partition by the (class-`C`-valued)
+Frobenius via `Finset.card_eq_sum_card_fiberwise`, then `Finset.sum_const` using `hequi`. -/
+theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (hσ : ConjClasses.mk σ = C)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hCfrob : frobeniusClass K L 𝔭 = C)
+    (hequi : ∀ σ' : Gal(L/K), IsConj σ σ' →
+      Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ}
+        = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'}) :
+    Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
+      = Nat.card C.carrier
+        * Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ} := by
+  sorry
+
 /-- **Even distribution of Frobenius over the conjugacy class** (Sharifi 7.2.2 Step 1,
 p. 143). The Frobenius elements of the primes above `𝔭` sweep out the conjugacy class
 `C = [σ]` evenly, so the number of primes above `𝔭` with `Frob_𝔓 = σ` times `|C|` equals
@@ -157,7 +190,9 @@ theorem count_frobenius_eq_sigma_mul_card_carrier
           = σ}
       * Nat.card C.carrier
       = Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} := by
-  sorry
+  rw [mul_comm]
+  exact (card_primesAbove_eq_card_carrier_mul_frobeniusFibre K L σ C _hσ 𝔭 hunr _hCfrob
+    fun σ' hc => frobeniusFibre_card_eq_of_isConj K L 𝔭 hunr σ σ' hc).symm
 
 /-- Sharifi 7.2.2 Step 1, above-counting (p. 143). Verbatim source quote:
 "exactly `|G|/f|C|` of these have Frobenius σ". For a prime `𝔭` of

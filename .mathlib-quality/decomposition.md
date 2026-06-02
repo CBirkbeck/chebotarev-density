@@ -149,8 +149,36 @@ conjugate to `σ` ⟹ `ord σ = f`. Substitute.
 - `card_primesAbove_mul_orderOf_eq`: `rw [← finrank_residue_eq_orderOf …]; exact
   card_primesAbove_mul_finrank_eq …` over `𝔓₀` from `exists_prime_liesOver`.
 
+## R: `count_frobenius_eq_sigma_mul_card_carrier` (Main.lean) — DONE (decomposed, builds green)
+
+Source: **Sharifi 7.2.2 Step 1, p. 143**: "the Frobenius elements of such primes are
+distributed evenly among the elements of the conjugacy class `C` of `σ`, exactly `|G|/f|C|`
+of these have Frobenius `σ`." i.e. `|{𝔓 above 𝔭 : Frob_𝔓 = σ}| · |C| = |{𝔓 above 𝔭}|`.
+
+**Plain-English proof.** `𝔓 ↦ Frob_𝔓` maps `{above 𝔭}` onto `C` and is `G`-equivariant
+(`Frob_{g•𝔓} = g·Frob_𝔓·g⁻¹`, `frobeniusAt_conj_eq`). Transitivity of `G` on `{above 𝔭}`
+makes the fibres over conjugate values equipotent; partitioning `{above 𝔭}` over `C` and
+collapsing the equal terms gives `|{above 𝔭}| = |C|·|fibre σ|`.
+
+### Leaves
+- **L_eq [needs proof]** `frobeniusFibre_card_eq_of_isConj` (Main.lean, `sorry`): for
+  `IsConj σ σ'`, `|{𝔓 above 𝔭 : Frob=σ}| = |{𝔓 above 𝔭 : Frob=σ'}|`. Discharge: the action of
+  the conjugating element is a bijection between the fibres (`frobeniusAt_conj_eq` for
+  equivariance + transitivity); `Nat.card_congr`.
+- **L_count [mathlib]** `card_primesAbove_eq_card_carrier_mul_frobeniusFibre` (Main.lean,
+  `sorry`): given equipotence (`hequi`) + `Frob_𝔓 ∈ C` (`frobeniusClass_eq_mk_frobeniusAt` +
+  `hCfrob`), `|{above 𝔭}| = |C| · |fibre σ|`. Discharge: `Finset.card_eq_sum_card_fiberwise`
+  (partition by Frobenius value over `C.carrier`) + `Finset.sum_const` via `hequi`.
+
+### Proved glue (build-verified, sorry-free)
+- `count_frobenius_eq_sigma_mul_card_carrier`: `rw [mul_comm]; exact (L_count … (fun σ' hc =>
+  L_eq …)).symm`. (The two fibre-subtype spellings — inline `by` vs
+  `UnramifiedIn.ramificationIdx_eq_one` — agree by proof irrelevance, so `exact` unifies.)
+
 ## Frontier queue (top-down)
-`count_frobenius_eq_sigma_mul_card_carrier` (even distribution over `C`); then
 `density_lift_through_fixedField` (density relation `δ_K(S)=(f|C|/|G|)δ_E(T_σ)`, needs
 `Σ N𝔭^{-s} ~ Σ NP^{-s}`, Sharifi 7.1.12); `dirichlet_primes_in_AP` (7.2.3); then the
 abelian subtree `Abelian → Cyclotomic → ZetaProduct → Density`, and `finite_ramifiedIn`.
+Open leaves so far: `orderOf_frobeniusAt_eq_finrank` (API-gap),
+`card_primesAbove_mul_finrank_eq`, `frobeniusFibre_card_eq_of_isConj`,
+`card_primesAbove_eq_card_carrier_mul_frobeniusFibre`.
