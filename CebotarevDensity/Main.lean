@@ -27,8 +27,7 @@ and a conjugacy class `C ⊆ G`, the Dirichlet density of the set of primes
 `𝔭` of `𝓞 K` unramified in `L` such that the Frobenius conjugacy class of
 `𝔭` is `C` equals `|C| / |G|`. -/
 theorem chebotarev_density
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity K
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
