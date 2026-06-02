@@ -203,12 +203,12 @@ theorem logDedekindZeta_sub_log_inv_sub_one_bounded :
     ← Real.log_mul (ne_of_gt hζpos) (ne_of_gt hsm1), mul_comm]
   exact abs_le_max_abs_abs (Real.log_lt_log (by linarith) hlo).le (Real.log_lt_log hFpos hhi).le
 
-/-- Sharifi 7.1.12 proof (p. 140), lower bound: `Σ_𝔭 N𝔭^{-s} ≥
-log(1/(s-1)) - C`. -/
-theorem primeIdealZetaSum_ge_log_minus_bounded :
+/-- Sharifi 7.1.12 proof (p. 140), lower bound:
+`log(1/(s-1)) - C ≤ Σ_𝔭 N𝔭^{-s}`. -/
+theorem log_minus_bounded_le_primeIdealZetaSum :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
-      primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s
-        ≥ Real.log (1 / (s - 1)) - C := by
+      Real.log (1 / (s - 1)) - C
+        ≤ primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s := by
   obtain ⟨C₁, h₁⟩ := logDedekindZeta_sub_primeIdealZetaSum_bounded K
   obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
   refine ⟨C₁ + C₂, ?_⟩
@@ -247,15 +247,15 @@ analytic content is just that `log(1/(s-1)) → ∞`, so the additive
 bounded term washes out under division. -/
 theorem tendsto_ratio_one_of_log_pm_bounded
     (f : ℝ → ℝ) (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
-    (h_ge : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≥ Real.log (1 / (s - 1)) - C) :
+    (h_lower : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), Real.log (1 / (s - 1)) - C ≤ f s) :
     Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
   obtain ⟨C₁, hle⟩ := h_le
-  obtain ⟨C₂, hge⟩ := h_ge
+  obtain ⟨C₂, hlower⟩ := h_lower
   have hL := tendsto_log_one_div_sub_one_atTop
   have h0 : Tendsto (fun s ↦ (f s - Real.log (1 / (s - 1))) / Real.log (1 / (s - 1)))
       (𝓝[>] (1 : ℝ)) (𝓝 0) :=
     tendsto_bdd_div_atTop_nhds_zero (b := -C₂) (B := C₁)
-      (hge.mono fun s h ↦ by linarith) (hle.mono fun s h ↦ by linarith) hL
+      (hlower.mono fun s h ↦ by linarith) (hle.mono fun s h ↦ by linarith) hL
   refine (add_zero (1 : ℝ) ▸ h0.const_add 1).congr' ?_
   filter_upwards [hL.eventually_gt_atTop 0] with s h
   rw [add_div_eq_mul_add_div _ _ h.ne', one_mul, add_sub_cancel]
@@ -274,7 +274,7 @@ theorem primeIdealZetaSum_univ_tendsto_log :
   tendsto_ratio_one_of_log_pm_bounded
     (primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))))
     (primeIdealZetaSum_le_log_plus_bounded K)
-    (primeIdealZetaSum_ge_log_minus_bounded K)
+    (log_minus_bounded_le_primeIdealZetaSum K)
 
 /-- The full prime-ideal zeta sum diverges to `+∞` as `s ↓ 1` (it is asymptotic to
 `log(1/(s-1)) → ∞`). -/
