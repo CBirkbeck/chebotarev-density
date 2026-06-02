@@ -106,6 +106,13 @@ residue-Galois iso / different-ideal finiteness), not a composition.
 > `exists_unique_frobeniusAt(_of_inertia_trivial)` were **deleted** as dead/superseded
 > (their content is in mathlib). The only remaining Frobenius-layer sorry is
 > `finite_ramifiedIn`.
+>
+> **Re-introduced (for the even-distribution count).** `inertiaGroup_trivial_of_unramified`
+> and `frobeniusAt_conj_eq` are back, both **proved** (not sorry). `frobeniusAt_conj_eq`
+> (`Frob_{σ•𝔓} = σ·Frob_𝔓·σ⁻¹`, scoped to unramified `𝔓,𝔓'`) follows from
+> `IsArithFrobAt.conj` (the conjugate is a Frobenius at `σ•𝔓 = 𝔓'`) + trivial inertia at `𝔓'`
+> + `IsArithFrobAt.mul_inv_mem_inertia` (the two Frobenii at `𝔓'` coincide). It is the
+> `G`-equivariance of `𝔓 ↦ Frob_𝔓`, needed for `count_frobenius_eq_sigma_mul_card_carrier`.
 
 ---
 

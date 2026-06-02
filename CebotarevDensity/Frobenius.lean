@@ -84,6 +84,27 @@ theorem UnramifiedIn.ramificationIdx_eq_one
     (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
   rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP
 
+/-- For an unramified prime `𝔓`, the inertia group is trivial: by
+`Ideal.card_inertia_eq_ramificationIdxIn` its cardinality equals the ramification index
+`e(𝔓 ∣ 𝔭) = 1`, and a subgroup of cardinality one is trivial (`Subgroup.eq_bot_iff_card`). -/
+theorem inertiaGroup_trivial_of_unramified
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) :
+    Ideal.inertia Gal(L/K) 𝔓 = ⊥ := by
+  have hPbot : 𝔓 ≠ ⊥ := ne_bot_of_ramificationIdx_eq_one K L hunr
+  have hpbot : 𝔓.under (𝓞 K) ≠ ⊥ := Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPbot
+  haveI : 𝔓.IsMaximal := ‹𝔓.IsPrime›.isMaximal hPbot
+  haveI : (𝔓.under (𝓞 K)).IsMaximal :=
+    (inferInstance : (𝔓.under (𝓞 K)).IsPrime).isMaximal hpbot
+  haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓 hPbot
+  haveI : Algebra.IsSeparable (𝓞 K ⧸ 𝔓.under (𝓞 K)) (𝓞 L ⧸ 𝔓) := by
+    letI : Field (𝓞 K ⧸ 𝔓.under (𝓞 K)) := Ideal.Quotient.field _
+    letI : Field (𝓞 L ⧸ 𝔓) := Ideal.Quotient.field _
+    exact IsGalois.to_isSeparable
+  rwa [Subgroup.eq_bot_iff_card,
+      Ideal.card_inertia_eq_ramificationIdxIn (𝔓.under (𝓞 K)) hpbot 𝔓,
+      Ideal.ramificationIdxIn_eq_ramificationIdx (𝔓.under (𝓞 K)) 𝔓 Gal(L/K)]
+
 /-- The Frobenius automorphism at an unramified prime `𝔓` of `𝓞 L`: mathlib's
 `arithFrobAt` for the `𝓞 K`-action of `Gal(L/K)` on `𝓞 L`. -/
 def frobeniusAt
@@ -107,6 +128,27 @@ theorem frobeniusAt_spec
     Ideal.finiteQuotientOfFreeOfNeBot 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
   exact ⟨IsArithFrobAt.arithFrobAt_mem_stabilizer (𝓞 K) Gal(L/K) 𝔓,
     (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).mk_apply⟩
+
+/-- **Frobenius conjugation formula** (Stevenhagen–Lenstra p. 14). If `σ • 𝔓 = 𝔓'`, then
+`Frob_{𝔓'} = σ · Frob_𝔓 · σ⁻¹`: the conjugate `σ · Frob_𝔓 · σ⁻¹` is a Frobenius at `𝔓'`
+(`IsArithFrobAt.conj`), and for the unramified `𝔓'` the inertia is trivial, so it agrees
+with `Frob_{𝔓'}` (two Frobenii differ by inertia, `IsArithFrobAt.mul_inv_mem_inertia`). -/
+theorem frobeniusAt_conj_eq
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime]
+    (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1)
+    (hunr' : Ideal.ramificationIdx (𝔓'.under (𝓞 K)) 𝔓' = 1)
+    (σ : Gal(L/K)) (hσ : σ • 𝔓 = 𝔓') :
+    frobeniusAt K L 𝔓' hunr' = σ * frobeniusAt K L 𝔓 hunr * σ⁻¹ := by
+  haveI : Finite (𝓞 L ⧸ 𝔓) :=
+    Ideal.finiteQuotientOfFreeOfNeBot 𝔓 (ne_bot_of_ramificationIdx_eq_one K L hunr)
+  haveI : Finite (𝓞 L ⧸ 𝔓') :=
+    Ideal.finiteQuotientOfFreeOfNeBot 𝔓' (ne_bot_of_ramificationIdx_eq_one K L hunr')
+  have Hc : IsArithFrobAt (𝓞 K) (σ * arithFrobAt (𝓞 K) Gal(L/K) 𝔓 * σ⁻¹) 𝔓' :=
+    hσ ▸ (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).conj σ
+  have hmem := IsArithFrobAt.mul_inv_mem_inertia Hc (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓')
+  rw [inertiaGroup_trivial_of_unramified K L 𝔓' hunr', Subgroup.mem_bot] at hmem
+  exact (mul_inv_eq_one.mp hmem).symm
 
 /-- For a prime `𝔭` of `𝓞 K` unramified in `L`, any two Frobenius elements
 above `𝔭` are conjugate in `Gal(L/K)`: both are `arithFrobAt` at primes lying over the
