@@ -127,7 +127,7 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
       ≤ Filter.liminf
           (fun s : ℝ ↦
             primeIdealZetaSum K
-                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
                   frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
               / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
           (𝓝[>] 1) := by
@@ -166,7 +166,7 @@ theorem liminf_ratio_ge_inv_card_G
       ≤ Filter.liminf
           (fun s : ℝ ↦
             primeIdealZetaSum K
-                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+                {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
                   frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
               / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
           (𝓝[>] 1) := by
@@ -183,7 +183,7 @@ theorem ratioSum_frobeniusFibres_tendsto_one
     Filter.Tendsto
       (fun s : ℝ ↦ ∑ σ : Gal(L/K),
         primeIdealZetaSum K
-            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 1) := by
@@ -214,14 +214,14 @@ limit `1/|G|`. -/
 theorem chebotarev_abelian
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) := by
   simp only [HasDirichletDensity, Nat.card_eq_fintype_card]
   refine tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
     (fun τ s ↦
       primeIdealZetaSum K
-          {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+          {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
             frobeniusClass K L 𝔭 = ConjClasses.mk τ} s
         / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
     (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
@@ -232,7 +232,7 @@ density, extracted via `HasDirichletDensity.hasLower`. -/
 theorem chebotarev_abelian_lowerDensity_per_m
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     HasLowerDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   (chebotarev_abelian K L σ).hasLower

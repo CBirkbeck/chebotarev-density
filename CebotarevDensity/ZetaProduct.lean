@@ -95,7 +95,7 @@ theorem exists_artinLSeries_eulerProduct_abelian
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ Lf : ℂ → ℂ,
       ∀ s : ℂ, 1 < s.re →
-        Lf s = ∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
+        Lf s = ∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
   sorry
 
@@ -106,7 +106,7 @@ Source quote (paraphrased identity): the local factor
 theorem dedekindZeta_local_factor_eq_product_artin_local
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (s : ℂ) (_hs : 1 < s.re) :
+    (_hunr : UnramifiedIn K L 𝔭) (s : ℂ) (_hs : 1 < s.re) :
     ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥},
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
       = ∏' χ : galoisCharacter K L,
@@ -209,7 +209,7 @@ theorem exists_chebotarev_cyclotomic_residue_identity
       Filter.Tendsto
         (fun s : ℝ ↦
           primeIdealZetaSum K
-            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
             - (Nat.card Gal(L/K) : ℝ)⁻¹ * Real.log (1 / (s - 1)))
         (nhdsWithin 1 (Set.Ioi 1)) (nhds c) := by

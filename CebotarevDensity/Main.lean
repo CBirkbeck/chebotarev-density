@@ -88,7 +88,7 @@ decomposition group `D_𝔓`; for an unramified prime `D_𝔓` is cyclic of orde
 theorem card_primesAbove_mul_orderOf_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hnz : 𝔭 ≠ ⊥) (hunr : UnramifiedIn K L 𝔭)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} * orderOf σ
       = Nat.card Gal(L/K) := by
@@ -101,7 +101,7 @@ the total number of primes above `𝔭`. -/
 theorem count_frobenius_eq_sigma_mul_card_carrier
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hnz : 𝔭 ≠ ⊥) (hunr : UnramifiedIn K L 𝔭)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
@@ -127,7 +127,7 @@ together with `Σ N𝔭^{-s} ~ Σ NP^{-s}` (Sharifi 7.1.12 applied to both
 theorem count_primes_above_with_frobenius_eq_sigma
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hnz : 𝔭 ≠ ⊥) (hunr : UnramifiedIn K L 𝔭)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
@@ -137,8 +137,8 @@ theorem count_primes_above_with_frobenius_eq_sigma
       * orderOf σ * Nat.card C.carrier
       = Nat.card Gal(L/K) := by
   rw [mul_right_comm,
-    count_frobenius_eq_sigma_mul_card_carrier K L σ C _hσ 𝔭 _hnz hunr _hCfrob]
-  exact card_primesAbove_mul_orderOf_eq K L σ C _hσ 𝔭 _hnz hunr _hCfrob
+    count_frobenius_eq_sigma_mul_card_carrier K L σ C _hσ 𝔭 hunr _hCfrob]
+  exact card_primesAbove_mul_orderOf_eq K L σ C _hσ 𝔭 hunr _hCfrob
 
 /-- **Density-lift through the fixed-field subextension** (Sharifi 7.2.2
 Step 1, p. 143). Let `σ ∈ Gal(L/K)`, `E = L^⟨σ⟩` the fixed field of the
@@ -160,11 +160,11 @@ theorem density_lift_through_fixedField
     [FiniteDimensional K L] (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
     (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
     (_hab : HasDirichletDensity ↥E
-        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ P ≠ ⊥ ∧ UnramifiedIn ↥E L P ∧
+        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E L P ∧
           frobeniusClass ↥E L P = ConjClasses.mk σE}
         ((Nat.card Gal(L/E) : ℝ)⁻¹)) :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card Gal(L/K)) := by
   sorry
@@ -178,7 +178,7 @@ and a conjugacy class `C ⊆ G`, the Dirichlet density of the set of primes
 theorem chebotarev_density
     [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
@@ -210,7 +210,7 @@ extension `L/K`, the Dirichlet density of primes `𝔭` of `𝓞 K` unramified i
 theorem chebotarev_density_of_comm
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
@@ -237,7 +237,7 @@ theorem ConjClasses_carrier_card_pos
 theorem infinite_setOf_frobenius_class
     [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
     Set.Infinite
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C} := by
   refine infinite_of_hasDirichletDensity_pos K (chebotarev_density K L C) ?_
   apply div_pos
@@ -259,7 +259,7 @@ The Dirichlet density of primes `𝔭` of `𝓞 K` that split completely in `L`
 equals `1 / [L : K]`. -/
 theorem density_split_completely :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk 1}
       ((Module.finrank K L : ℝ)⁻¹) := by
   have h := chebotarev_density K L (ConjClasses.mk (1 : Gal(L/K)))

@@ -74,7 +74,7 @@ mth root of unity ζ_m". -/
 theorem cyclotomic_frobenius_acts_as_norm_power
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
-    [𝔭.IsPrime] (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
+    [𝔭.IsPrime] (_hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
     [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     ∀ ζ : L, ζ ∈ primitiveRoots m L →
       frobeniusAt K L 𝔓
@@ -89,7 +89,7 @@ theorem log_artinLSeries_asymp_character_sum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
+      ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
             (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
         ≤ C * Real.log (1 / (s - 1)) + C := by
@@ -102,7 +102,7 @@ theorem character_orthogonality_cyclotomic_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
+    (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹)
       = (Nat.card Gal(L/K) : ℂ) := by
@@ -115,7 +115,7 @@ theorem character_orthogonality_cyclotomic_ne
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (_hnz : 𝔭 ≠ ⊥) (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
+    (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹) = 0 := by
   sorry
@@ -135,7 +135,7 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum K
-            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / Real.log (1 / (s - 1)))
       (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) := by
@@ -167,7 +167,7 @@ theorem cyclotomic_density_from_two_sided_asymp
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum K
-            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) :=
@@ -183,7 +183,7 @@ of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
 theorem chebotarev_cyclotomic
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     HasDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   cyclotomic_density_from_two_sided_asymp K L m σ
@@ -194,7 +194,7 @@ inequality. Used in the abelian case to feed into the
 theorem chebotarev_cyclotomic_lowerDensity_ge
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     HasLowerDirichletDensity K
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
   (chebotarev_cyclotomic K L m σ).hasLower
