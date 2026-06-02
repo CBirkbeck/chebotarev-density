@@ -49,6 +49,13 @@ def primeIdealZetaSum
   ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
     (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
 
+/-- Equation lemma unfolding `primeIdealZetaSum` to its defining `tsum`. -/
+theorem primeIdealZetaSum_def (K : Type*) [Field K] [NumberField K]
+    (S : Set (Ideal (𝓞 K))) (s : ℝ) :
+    primeIdealZetaSum K S s =
+      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := rfl
+
 /-- The Dirichlet density of a set `S` of prime ideals of `𝓞 K` is `δ` when
 the ratio of partial sums tends to `δ` as `s ↓ 1`.
 
@@ -75,7 +82,7 @@ standard convention, so:
 When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
 def HasUpperDirichletDensity
     (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
-  Filter.limsup
+  limsup
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
 
@@ -85,7 +92,7 @@ Sharifi's `δ_inf` notation despite Sharifi's labelling
 inversion. -/
 def HasLowerDirichletDensity
     (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
-  Filter.liminf
+  liminf
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
 
@@ -95,8 +102,8 @@ variable (K : Type*) [Field K] [NumberField K]
 theorem hasDirichletDensity_empty :
     HasDirichletDensity K (∅ : Set (Ideal (𝓞 K))) 0 := by
   have : IsEmpty {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (∅ : Set (Ideal (𝓞 K))) ∧
-      𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := ⟨fun x ↦ (Set.mem_empty_iff_false x.1).mp x.2.1⟩
-  simpa only [HasDirichletDensity, primeIdealZetaSum, tsum_empty, zero_div]
+      𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := ⟨fun x ↦ x.2.1⟩
+  simpa only [HasDirichletDensity, primeIdealZetaSum_def, tsum_empty, zero_div]
     using tendsto_const_nhds
 
 /-- If the upper density of `S` equals the lower density of `S` and both equal
@@ -108,19 +115,19 @@ theorem HasDirichletDensity.of_upper_eq_lower
     HasDirichletDensity K S δ := by
   sorry
 
-/-- Existence + value: from `HasDirichletDensity` one extracts the upper and
-lower density. -/
+/-- The upper Dirichlet density extracted from `HasDirichletDensity`. -/
 theorem HasDirichletDensity.hasUpper
     {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity K S δ) :
     HasUpperDirichletDensity K S δ :=
   h.limsup_eq
 
+/-- The lower Dirichlet density extracted from `HasDirichletDensity`. -/
 theorem HasDirichletDensity.hasLower
     {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity K S δ) :
     HasLowerDirichletDensity K S δ :=
   h.liminf_eq
 
-/-- Finite disjoint additivity. -/
+/-- The Dirichlet density of a disjoint union is the sum of the densities. -/
 theorem HasDirichletDensity.union_of_disjoint
     {S T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {δ ε : ℝ} (hS : HasDirichletDensity K S δ)
     (hT : HasDirichletDensity K T ε) :
@@ -148,16 +155,14 @@ source's argument decomposes into:
     (mathlib: `NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`).
 -/
 
-/-- Sharifi 7.1.12 proof (p. 140), bounded tail step. The higher-power
-contribution to the Euler-product logarithm,
-`Σ_{𝔭, k≥2} N𝔭^{-ks}/k`, is bounded on a right neighbourhood of `s = 1`
-(in fact on `Re s > 1/2`). This is implicit in the source's "`log ζ_K(s) ~
-Σ_𝔭 N𝔭^{-s}`" — the `~` collapses the tail into an analytic-at-1 piece. -/
+/-- Sharifi 7.1.12 proof (p. 140), bounded tail step. The geometric
+higher-power tail `Σ_𝔭 N𝔭^{-2s}/(1 - N𝔭^{-s}) = Σ_{𝔭, k≥2} N𝔭^{-ks}` is
+bounded on a right neighbourhood of `s = 1` (in fact on `Re s > 1/2`). It
+dominates the weighted Euler-product log-tail `Σ_{𝔭, k≥2} N𝔭^{-ks}/k`, so
+bounding it suffices for the source's "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
 theorem primeIdealZetaHigherTail_bounded :
-    ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
-      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
-          (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s)
-            / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ C := by
+    ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ C := by
   sorry
 
 /-- Sharifi 7.1.12 proof (p. 140), Euler-product-log identity:
@@ -165,9 +170,8 @@ theorem primeIdealZetaHigherTail_bounded :
 higher-power tail `Σ_{𝔭,k≥2} N𝔭^{-ks}/k`, bounded by
 `primeIdealZetaHigherTail_bounded`. Source: "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
 theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
-    ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ),
-      |Real.log (dedekindZeta K (s : ℂ)).re
-        - primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s| ≤ C := by
+    ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ), |Real.log (dedekindZeta K (s : ℂ)).re
+      - primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s| ≤ C := by
   sorry
 
 /-- Sharifi 7.1.12 proof (p. 140), simple-pole identity:
@@ -179,10 +183,10 @@ theorem logDedekindZeta_sub_log_inv_sub_one_bounded :
       |Real.log (dedekindZeta K (s : ℂ)).re - Real.log (1 / (s - 1))| ≤ C := by
   set r := dedekindZeta_residue K
   have hrpos : 0 < r := dedekindZeta_residue_pos K
-  have hF : Tendsto (fun s : ℝ => (s - 1) * (dedekindZeta K (s : ℂ)).re)
+  have hF : Tendsto (fun s : ℝ ↦ (s - 1) * (dedekindZeta K (s : ℂ)).re)
       (𝓝[>] (1 : ℝ)) (𝓝 r) := by
     refine ((Complex.continuous_re.tendsto _).comp
-      (tendsto_sub_one_mul_dedekindZeta_nhdsGT K)).congr fun s => ?_
+      (tendsto_sub_one_mul_dedekindZeta_nhdsGT K)).congr fun s ↦ ?_
     rw [Function.comp_apply, show ((s : ℂ) - 1) = ((s - 1 : ℝ) : ℂ) by push_cast; ring,
       Complex.re_ofReal_mul]
   refine ⟨max |Real.log (r / 2)| |Real.log (2 * r)|, ?_⟩
@@ -223,6 +227,20 @@ theorem primeIdealZetaSum_le_log_plus_bounded :
   filter_upwards [h₁, h₂] with s hs₁ hs₂
   linarith [abs_le.mp hs₁, abs_le.mp hs₂]
 
+/-- `log(1/(s-1)) → +∞` as `s ↓ 1` — the divergence driving the density
+asymptotics. -/
+theorem tendsto_log_one_div_sub_one_atTop :
+    Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1 : ℝ)) atTop := by
+  refine Real.tendsto_log_atTop.comp ?_
+  have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝[>] (0 : ℝ)) := by
+    refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_ ?_
+    · exact ((continuous_sub_right 1).tendsto' 1 0 (by ring)).mono_left nhdsWithin_le_nhds
+    · filter_upwards [self_mem_nhdsWithin] with s hs
+      simp only [Set.mem_Ioi] at hs ⊢
+      linarith
+  simp only [one_div]
+  exact h1.inv_tendsto_nhdsGT_zero
+
 /-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
 neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
 analytic content is just that `log(1/(s-1)) → ∞`, so the additive
@@ -233,23 +251,13 @@ theorem tendsto_ratio_one_of_log_pm_bounded
     Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
   obtain ⟨C₁, hle⟩ := h_le
   obtain ⟨C₂, hge⟩ := h_ge
-  have hL : Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1:ℝ)) atTop := by
-    refine Real.tendsto_log_atTop.comp ?_
-    have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1:ℝ)) (𝓝[>] (0:ℝ)) := by
-      refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_ ?_
-      · exact ((continuous_sub_right 1).tendsto' 1 0 (by ring)).mono_left nhdsWithin_le_nhds
-      · filter_upwards [self_mem_nhdsWithin] with s hs
-        simp only [Set.mem_Ioi] at hs ⊢
-        linarith
-    simp only [one_div]
-    exact h1.inv_tendsto_nhdsGT_zero
-  have hLpos := hL.eventually_gt_atTop 0
+  have hL := tendsto_log_one_div_sub_one_atTop
   have h0 : Tendsto (fun s ↦ (f s - Real.log (1 / (s - 1))) / Real.log (1 / (s - 1)))
-      (𝓝[>] (1:ℝ)) (𝓝 0) :=
+      (𝓝[>] (1 : ℝ)) (𝓝 0) :=
     tendsto_bdd_div_atTop_nhds_zero (b := -C₂) (B := C₁)
       (hge.mono fun s h ↦ by linarith) (hle.mono fun s h ↦ by linarith) hL
-  refine (add_zero (1:ℝ) ▸ h0.const_add 1).congr' ?_
-  filter_upwards [hLpos] with s h
+  refine (add_zero (1 : ℝ) ▸ h0.const_add 1).congr' ?_
+  filter_upwards [hL.eventually_gt_atTop 0] with s h
   rw [add_div_eq_mul_add_div _ _ h.ne', one_mul, add_sub_cancel]
 
 /-- **Sharifi 7.1.12**, *Algebraic Number Theory*, p. 140.
@@ -272,19 +280,7 @@ theorem primeIdealZetaSum_univ_tendsto_log :
 `log(1/(s-1)) → ∞`). -/
 theorem primeIdealZetaSum_univ_tendsto_atTop :
     Tendsto (primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K)))) (𝓝[>] 1) atTop := by
-  have hL : Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1 : ℝ)) atTop := by
-    apply Real.tendsto_log_atTop.comp
-    have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-      apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-      · have : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝 (1 - 1)) :=
-          (continuous_sub_right 1).continuousWithinAt
-        simpa using this
-      · filter_upwards [self_mem_nhdsWithin] with s hs
-        simp only [Set.mem_Ioi] at hs ⊢
-        linarith
-    have h2 : Tendsto (fun x : ℝ ↦ 1 / x) (𝓝[>] (0 : ℝ)) atTop := by
-      simpa [one_div] using tendsto_inv_nhdsGT_zero
-    exact h2.comp h1
+  have hL := tendsto_log_one_div_sub_one_atTop
   have hhalf : Tendsto (fun s : ℝ ↦ (1 / 2 : ℝ) * Real.log (1 / (s - 1))) (𝓝[>] 1) atTop :=
     hL.const_mul_atTop (by norm_num)
   refine tendsto_atTop_mono' _ ?_ hhalf
@@ -299,10 +295,10 @@ theorem primeIdealZetaSum_le_card_of_finite {S : Set (Ideal (𝓞 K))} (hS : S.F
     {s : ℝ} (hs : 0 < s) :
     primeIdealZetaSum K S s ≤
       Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := by
-  haveI : Finite {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
+  have : Finite {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
     (hS.subset fun _ hx ↦ hx.1).to_subtype
-  haveI : Fintype {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := Fintype.ofFinite _
-  rw [primeIdealZetaSum, tsum_fintype, Nat.card_eq_fintype_card]
+  have : Fintype {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := Fintype.ofFinite _
+  rw [primeIdealZetaSum_def, tsum_fintype, Nat.card_eq_fintype_card]
   calc ∑ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
       ≤ ∑ _𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, (1 : ℝ) := by
@@ -327,7 +323,7 @@ theorem hasDirichletDensity_of_finite {S : Set (Ideal (𝓞 K))} (hS : S.Finite)
       / primeIdealZetaSum K Set.univ s)
     tendsto_const_nhds (tendsto_const_nhds.div_atTop hUniv) ?_ ?_
   · filter_upwards [hUnivPos] with s hpos
-    exact div_nonneg (by unfold primeIdealZetaSum; exact tsum_nonneg fun _ ↦ by positivity)
+    exact div_nonneg (by rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ ↦ by positivity)
       hpos.le
   · filter_upwards [hUnivPos, self_mem_nhdsWithin] with s hpos hs1
     simp only [Set.mem_Ioi] at hs1
@@ -337,8 +333,7 @@ theorem hasDirichletDensity_of_finite {S : Set (Ideal (𝓞 K))} (hS : S.Finite)
 /-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`: the ratio
 `Σ_𝔭 N𝔭⁻ˢ / Σ_𝔭 N𝔭⁻ˢ` is eventually `1` since the denominator is eventually nonzero
 (it `→ ∞`). -/
-theorem hasDirichletDensity_univ :
-    HasDirichletDensity K (Set.univ : Set (Ideal (𝓞 K))) 1 := by
+theorem hasDirichletDensity_univ : HasDirichletDensity K (Set.univ : Set (Ideal (𝓞 K))) 1 := by
   change Tendsto (fun s ↦ primeIdealZetaSum K Set.univ s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) (𝓝 1)
   refine tendsto_const_nhds.congr' ?_
