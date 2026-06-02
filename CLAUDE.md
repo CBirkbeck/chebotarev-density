@@ -7,7 +7,7 @@ Context for Claude Code (claude.ai/code) working in this repo.
 Lean 4 / Mathlib formalisation of **Chebotarev's density theorem** in
 conjugacy-class form for a finite Galois extension of number fields.
 
-The target statement (in `Chebotarev/Main.lean`):
+The target statement (in `CebotarevDensity/Main.lean`):
 
 ```
 For L/K a finite Galois extension of number fields with G = Gal(L/K),
@@ -17,7 +17,9 @@ and for any conjugacy class C ⊆ G,
 
 All theorem proofs are currently `sorry`. All definitions have real
 content (`MulAction.stabilizer`, `Ideal.inertia`, `Classical.choose` of
-existence theorems) — there are **no placeholder `def := sorry`**.
+existence theorems) — there are **no placeholder `def := sorry`** and
+**no `axiom`s anywhere** in the project (a hard requirement from the
+reviewers; see Conventions).
 
 ## Proof structure
 
@@ -46,14 +48,14 @@ Three reductions following Sharifi §7.2 / Stevenhagen–Lenstra appendix:
 
 | File | Role |
 |---|---|
-| `Chebotarev/Density.lean` | Dirichlet density definition + asymptotic for `Σ_𝔭 N𝔭^{-s}` |
-| `Chebotarev/Frobenius.lean` | Decomposition / inertia / Frobenius element / Frobenius conjugacy class |
-| `Chebotarev/ZetaProduct.lean` | `ζ_L = ∏_χ L(χ,·)` factorisation for abelian L/K + non-vanishing |
-| `Chebotarev/Cyclotomic.lean` | Chebotarev cyclotomic case (Sharifi 7.2.1) |
-| `Chebotarev/Abelian.lean` | Chebotarev abelian case via cyclotomic crossing (Sharifi 7.2.2 Step 2) |
-| `Chebotarev/Main.lean` | Main theorem + corollaries (Dirichlet AP, splitting density) |
-| `Chebotarev/NumberFieldEulerProduct.lean` | Generic `ζ_K = ∏(1-N𝔭^{-s})^{-1}` Euler-product infrastructure |
-| `Chebotarev.lean` | Umbrella module |
+| `CebotarevDensity/Density.lean` | Dirichlet density definition + asymptotic for `Σ_𝔭 N𝔭^{-s}` |
+| `CebotarevDensity/Frobenius.lean` | Decomposition / inertia / Frobenius element / Frobenius conjugacy class |
+| `CebotarevDensity/ZetaProduct.lean` | `ζ_L = ∏_χ L(χ,·)` factorisation for abelian L/K + non-vanishing |
+| `CebotarevDensity/Cyclotomic.lean` | Chebotarev cyclotomic case (Sharifi 7.2.1) |
+| `CebotarevDensity/Abelian.lean` | Chebotarev abelian case via cyclotomic crossing (Sharifi 7.2.2 Step 2) |
+| `CebotarevDensity/Main.lean` | Main theorem + corollaries (Dirichlet AP, splitting density) |
+| `CebotarevDensity/NumberFieldEulerProduct.lean` | Generic `ζ_K = ∏(1-N𝔭^{-s})^{-1}` Euler-product infrastructure |
+| `CebotarevDensity.lean` | Umbrella module |
 
 ## References
 
@@ -87,12 +89,16 @@ chosen because the source itself proves it explicitly.
 ```
 lake exe cache get        # fetch mathlib build artefacts
 lake build                # build the whole project
-lake build Chebotarev.Main   # build a single module
+lake build CebotarevDensity.Main   # build a single module
 ```
 
-The toolchain is pinned to mathlib master via `lean-toolchain` and
-`lakefile.toml` (mathlib `rev = "master"`). `lake update` bumps mathlib
-+ aligns the toolchain.
+This branch tracks **the latest mathlib** — `lakefile.toml` has mathlib
+`rev = "master"` and `lean-toolchain` is aligned to it (currently
+`v4.31.0-rc1`). To bump: `lake update mathlib`, then copy
+`.lake/packages/mathlib/lean-toolchain` to `./lean-toolchain`. Note the
+shared `origin/master` (the `CebotarevDensity` skeleton the slice-PRs
+target) is frozen to the `v4.30.0` release tag, so slice-PRs carry a
+mathlib-pin diff to reconcile with the maintainers.
 
 `lakefile.toml` enables strict mathlib options: `autoImplicit = false`,
 `relaxedAutoImplicit = false`, `linter.mathlibStandardSet`,
@@ -127,8 +133,13 @@ CI deploys to GitHub Pages at https://cbirkbeck.github.io/chebotarev-density/
 
 ## Conventions
 
-- **Namespace**: everything sits in `namespace Chebotarev`. Don't
-  introduce sub-namespaces unless there's a clear sub-topic.
+- **Namespace vs library**: everything sits in `namespace Chebotarev`
+  (unchanged), but the Lean **library/module** is `CebotarevDensity`
+  (files under `CebotarevDensity/`, root `CebotarevDensity.lean`). So
+  module imports read `import CebotarevDensity.X`, while qualified names
+  and blueprint `\lean{Chebotarev.…}` refs keep the `Chebotarev`
+  namespace. Don't introduce sub-namespaces unless there's a clear
+  sub-topic.
 - **Argument convention**: `K L` (number fields) are **explicit
   positional** arguments in every definition and theorem. Don't
   switch to implicit `{K L}` — the helper `variable (K L : Type*) …`
@@ -139,6 +150,12 @@ CI deploys to GitHub Pages at https://cbirkbeck.github.io/chebotarev-density/
   reach for `Classical.choose` of an existence theorem (where the
   existence theorem is itself a real proposition that can be
   sorried).
+- **No `axiom`s**. The reviewers require the project to contain **no
+  `axiom` declarations** (Riccardo Brasca, PR #4). Supporting notions
+  (`HasDirichletDensity`, `UnramifiedIn`, `frobeniusClass`) are real
+  `def`s, never axioms. If you need an interface before its content
+  exists, use `Classical.choose` of a sorried existence theorem — not
+  an axiom.
 - **Source quotes are binding**. When stating a new sub-lemma, the
   docstring should quote Sharifi or Stevenhagen–Lenstra verbatim (in
   English) and cite the page. If the cited passage doesn't match the
@@ -163,6 +180,17 @@ CI deploys to GitHub Pages at https://cbirkbeck.github.io/chebotarev-density/
   density is treated.
 - **Functional equation of L(χ,·)**. Only non-vanishing at `s = 1`
   (Sharifi 7.1.19) is used.
+
+## Branch workflow
+
+Active development happens on the **`development`** branch (this tree),
+which holds the full decomposed project. Progress ships to the shared
+**`master`** — the near-empty `CebotarevDensity` skeleton the
+maintainers reset to — as **small, reviewable slice-PRs** cut from
+`development`. The complete pre-restart snapshot is preserved read-only
+on `origin/review-head` (PR #2). PR #4 was the first slice (the
+statement); its review comments (no axioms; drop `𝔭 ≠ ⊥`) are addressed
+on `development` and propagated forward.
 
 ## Provenance
 
