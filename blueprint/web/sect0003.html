@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chebotarev density theorem: Zeta factorisation for an abelian extension</title>
+<link rel="next" href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case" />
+<link rel="prev" href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions" />
+<link rel="up" href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Chebotarev density theorem</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="ch-density.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density of a set of prime ideals</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0001.html#a0000000022"><span class="toc_ref"></span> <span class="toc_entry">Density API</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-frobenius.html"><span class="toc_ref">2</span> <span class="toc_entry">Decomposition, inertia, Frobenius</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0002.html"><span class="toc_ref">1</span> <span class="toc_entry">Decomposition group, inertia, Frobenius</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class=" active">
+  <a href="ch-zeta-product.html"><span class="toc_ref">3</span> <span class="toc_entry">Zeta factorisation for abelian extensions</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class=" active current">
+  <a href="sect0003.html"><span class="toc_ref">1</span> <span class="toc_entry">Zeta factorisation for an abelian extension</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-cyclotomic.html"><span class="toc_ref">4</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0004.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-abelian.html"><span class="toc_ref">5</span> <span class="toc_entry">Chebotarev: abelian case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0005.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: abelian case via cyclotomic crossing</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-main.html"><span class="toc_ref">6</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0006.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0006.html#a0000000025"><span class="toc_ref"></span> <span class="toc_entry">Corollaries</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000004">1 Zeta factorisation for an abelian extension</h1>
+<p>For an abelian Galois extension \(L/K\) of number fields with \(G=\mathrm{Gal}(L/K)\), the Dedekind zeta function \(\zeta _L\) factors as a product of Hecke \(L\)-functions indexed by characters of \(G\). This is the analytic engine of the cyclotomic case of Chebotarev. </p>
+<div class="definition_thmwrapper theorem-style-plain" id="def:galois-character">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.1</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#def:galois-character">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.galoisCharacter" class="lean_decl">Chebotarev.galoisCharacter</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  A <em>character of \(G\)</em> is a group homomorphism \(\chi : G \to \mathbb {C}^\times \). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:artin-euler-product-abelian">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.2</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#lem:artin-euler-product-abelian">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000036"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#def:galois-character">Definition 1.1</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_artinLSeries_eulerProduct_abelian" class="lean_decl">Chebotarev.exists_artinLSeries_eulerProduct_abelian</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For an abelian character \(\chi : G \to \mathbb {C}^\times \), there is a function \(L(\chi , \cdot ): \mathbb {C}\to \mathbb {C}\) such that on \(\operatorname {Re}(s) {\gt} 1\), </p>
+<div class="displaymath" id="a0000000037">
+  \[  L(\chi , s) \; =\;  \prod _\mathfrak {p}\bigl(1-\chi (\mathrm{Frob}_\mathfrak {p}) \mathrm{N}(\mathfrak {p})^{-s}\bigr)^{-1},  \]
+</div>
+<p> where the product runs over primes \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), with the convention \(\chi (\mathfrak {p}) = 0\) on ramified primes. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000036">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Sharifi Prop.&#160;7.1.18 (p.&#160;141). The Euler product converges absolutely on \(\operatorname {Re}(s) {\gt} 1\) by comparison with \(\zeta _K\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:dedekind-local-factor">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.3</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#lem:dedekind-local-factor">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000038"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#lem:artin-euler-product-abelian">Lemma 1.2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.dedekindZeta_local_factor_eq_product_artin_local" class="lean_decl">Chebotarev.dedekindZeta_local_factor_eq_product_artin_local</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For each unramified prime \(\mathfrak {p}\) of \(\mathcal{O}_K\), the local Euler factor of \(\zeta _L\) at \(\mathfrak {p}\) factors as </p>
+<div class="displaymath" id="a0000000039">
+  \[  \prod _{\mathfrak {P}\mid \mathfrak {p}}\bigl(1-\mathrm{N}(\mathfrak {P})^{-s}\bigr)^{-1} \; =\;  \prod _\chi \bigl(1-\chi (\mathrm{Frob}_\mathfrak {p})\mathrm{N}(\mathfrak {p})^{-s}\bigr)^{-1}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000038">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Standard cyclic-group character theory applied to the residue Galois group: the characters of \(\mathrm{Gal}((\mathcal{O}_L/\mathfrak {P})/(\mathcal{O}_K/\mathfrak {p}))\) separate elements, and the indicated product over \(\chi \) recovers the local factor (Sharifi 7.1.16 step at \(\mathfrak {p}\)). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:character-sum-geom-numbers">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.4</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#lem:character-sum-geom-numbers">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000040"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_sum_geometry_of_numbers_bound" class="lean_decl">Chebotarev.character_sum_geometry_of_numbers_bound</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  For a nontrivial character \(\chi : G \to \mathbb {C}^\times \), there is a constant \(C\) such that </p>
+<div class="displaymath" id="a0000000041">
+  \[  \biggl\lVert \sum _{\mathrm{N}(\mathfrak {a})\le N}\chi (\mathfrak {a})\biggr\rVert \; \le \;  C \cdot N^{1 - 1/[K:\mathbb {Q}]} \qquad \text{for all }N\ge 1.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000040">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Geometry-of-numbers count of ideals in a norm-bounded region (Sharifi 7.1.19, p.&#160;142, step&#160;1). Per-residue-class count \(C N + O(N^{1-1/[K:\mathbb {Q}]})\); summing over \(\chi (\mathfrak {a}) = \zeta \) for \(\zeta \) a root of unity, the \(C N\) contributions cancel by \(\sum _\zeta \zeta = 0\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:artin-analytic-extension">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.5</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#lem:artin-analytic-extension">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000042"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#lem:artin-euler-product-abelian">Lemma 1.2</a></li>
+          
+          <li><a href="sect0003.html#lem:character-sum-geom-numbers">Lemma 1.4</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.artinLSeries_analytic_extension" class="lean_decl">Chebotarev.artinLSeries_analytic_extension</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For every nontrivial character \(\chi : G \to \mathbb {C}^\times \), the Dirichlet series \(L(\chi , s) = \sum _{\mathfrak {a}} \chi (\mathfrak {a})\mathrm{N}(\mathfrak {a})^{-s}\) extends to a function analytic on \(\operatorname {Re}(s) {\gt} 1 - 1/[K:\mathbb {Q}]\), agreeing with the Euler product on \(\operatorname {Re}(s) {\gt} 1\). In particular, \(L(\chi , 1)\) is well-defined. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000042">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Combine <a href="sect0003.html#lem:character-sum-geom-numbers">lemma 1.4</a> (Sharifi 7.1.19 step 1a) with Sharifi Lemma 7.1.5 (p.&#160;138, a generic Dirichlet-series convergence criterion from a polynomial bound on partial sums): given \(\bigl|\sum _{n\le N}a_n\bigr|\le CN^{u}\), the Dirichlet series \(\sum _n a_n n^{-s}\) converges absolutely and uniformly on every compact subset of \(\operatorname {Re}(s) {\gt} u\). Applied to \(a_{\mathfrak {a}} = \chi (\mathfrak {a})\) with \(u = 1 - 1/[K:\mathbb {Q}]\), the series defines an analytic function on \(\operatorname {Re}(s) {\gt} 1 - 1/[K:\mathbb {Q}]\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:artin-one-ne-zero">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.6</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#lem:artin-one-ne-zero">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000043"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#lem:artin-analytic-extension">Lemma 1.5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.artinLSeries_one_ne_zero" class="lean_decl">Chebotarev.artinLSeries_one_ne_zero</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For every nontrivial character \(\chi : G \to \mathbb {C}^\times \), \(L(\chi , 1) \ne 0\). (Here \(L(\chi , 1)\) refers to the analytic extension of <a href="sect0003.html#lem:artin-analytic-extension">lemma 1.5</a>.) </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000043">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Sharifi 7.1.19 step 2 (p.&#160;142). Write \(\log \zeta _L(t) = \sum _\chi \log L(\chi , t)\) for \(t {\gt} 1\). Up to a bounded function as \(t \to 1^+\), the right side has absolute value at least \(\bigl(1 - \sum _\chi m_\chi \bigr)\log (t-1)^{-1}\), where \(m_\chi \) is the order of vanishing of \(L(\chi , s)\) at \(s = 1\). If any \(m_\chi \ge 1\), this is at most \(0\cdot \log (t-1)^{-1}\), contradicting \(\log \zeta _L(s) \sim \log (s-1)^{-1}\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:dedekind-zeta-factorisation">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">1.7</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0003.html#thm:dedekind-zeta-factorisation">#</a>
+    
+    <a class="icon proof" href="sect0003.html#a0000000044"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#def:galois-character">Definition 1.1</a></li>
+          
+          <li><a href="sect0003.html#lem:dedekind-local-factor">Lemma 1.3</a></li>
+          
+          <li><a href="sect0003.html#lem:artin-one-ne-zero">Lemma 1.6</a></li>
+          
+          <li><a href="sect0003.html#lem:dedekind-local-factor">Lemma 1.3</a></li>
+          
+          <li><a href="sect0003.html#lem:artin-one-ne-zero">Lemma 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_dedekindZeta_factorisation" class="lean_decl">Chebotarev.exists_dedekindZeta_factorisation</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(L/K\) be a finite abelian Galois extension of number fields. There is a family of functions \(\left\{  L(\chi , \cdot ) : \chi \in \widehat{G} \right\} \), each holomorphic on \(\operatorname {Re}(s) {\gt} 1\), satisfying: </p>
+<ol class="enumerate">
+  <li><p>\(\displaystyle \zeta _L(s) \; =\;  \prod _{\chi \in \widehat{G}} L(\chi , s)\) for \(\operatorname {Re}(s) {\gt} 1\); </p>
+</li>
+  <li><p>\(L(\mathbf{1}, s) = \zeta _K(s)\); </p>
+</li>
+  <li><p>\(L(\chi , 1) \ne 0\) for every \(\chi \ne \mathbf{1}\). </p>
+</li>
+</ol>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000044">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Compose <a href="sect0003.html#lem:dedekind-local-factor">lemma 1.3</a> prime by prime, using the absolute convergence of the global Euler product; combine with the non-vanishing <a href="sect0003.html#lem:artin-one-ne-zero">lemma 1.6</a>. </p>
+
+  </div>
+</div>
+<p><br /></p>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

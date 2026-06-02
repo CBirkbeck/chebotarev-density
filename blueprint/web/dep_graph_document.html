@@ -1,0 +1,1945 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dependency graph</title>
+  <meta name="generator" content="plasTeX" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles/theme-white.css" />
+  <link rel="stylesheet" href="styles/dep_graph.css" />
+  
+  <script type="text/x-mathjax-config">
+  
+    MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+  
+  </script>
+
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">  </script>
+
+
+<link rel="stylesheet" href="styles/extra_styles.css" />
+
+</head>
+
+<body>
+<header>
+  <a class="toc" href="index.html">Home</a>
+  <h1 id="doc_title">Dependencies</h1>
+</header>
+<div class="wrapper">
+<div class="content">
+  <div id="Legend">
+    <span id="legend_title" class="title">Legend
+    <div class="btn">
+       <div class="bar"></div>
+       <div class="bar"></div>
+       <div class="bar"></div>
+    </div></span> 
+    <dl class="legend">
+      
+      <dt>Boxes</dt><dd>definitions</dd>
+      
+      <dt>Ellipses</dt><dd>theorems and lemmas</dd>
+      
+      <dt>Blue border</dt><dd>the <em>statement</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Orange border</dt><dd>the <em>statement</em> of this result is not ready to be formalized; the blueprint needs more work</dd>
+      
+      <dt>Blue background</dt><dd>the <em>proof</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Green border</dt><dd>the <em>statement</em> of this result is formalized</dd>
+      
+      <dt>Green background</dt><dd>the <em>proof</em> of this result is formalized</dd>
+      
+      <dt>Dark green background</dt><dd>the <em>proof</em> of this result and all its ancestors are formalized</dd>
+      
+      <dt>Dark green border</dt><dd>this is in Mathlib</dd>
+      
+    </dl>
+  </div>
+    <div id="graph"></div>
+<div id="statements">
+
+    
+    <div class="dep-modal-container" id="cor:density-split-completely_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="cor:density-split-completely" style="display: none">
+    <div class="thm_thmheading">
+      <span class="corollary_thmcaption">
+      Corollary
+      </span>
+      <span class="corollary_thmlabel">1.10</span></div>
+    <div class="thm_thmcontent"><p>   For a finite Galois extension \(L/K\) of number fields, the Dirichlet density of primes of \(\mathcal{O}_K\) that split completely in \(L\) equals \(1/[L:K]\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#cor:density-split-completely">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.density_split_completely">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="cor:dirichlet-ap-density_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="cor:dirichlet-ap-density" style="display: none">
+    <div class="thm_thmheading">
+      <span class="corollary_thmcaption">
+      Corollary
+      </span>
+      <span class="corollary_thmlabel">1.12</span><span class="corollary_thmtitle">Dirichlet, density form</span></div>
+    <div class="thm_thmcontent"><p>   For \(n \ge 1\) and \(a \in (\mathbb {Z}/n\mathbb {Z})^\times \), the Dirichlet density of the rational primes \(p\) with \(p \equiv a \pmod{n}\) equals \(1/\varphi (n)\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#cor:dirichlet-ap-density">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.dirichlet_primes_in_AP">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="cor:infinite-frobenius-class_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="cor:infinite-frobenius-class" style="display: none">
+    <div class="thm_thmheading">
+      <span class="corollary_thmcaption">
+      Corollary
+      </span>
+      <span class="corollary_thmlabel">1.11</span></div>
+    <div class="thm_thmcontent"><p>   For a finite Galois extension \(L/K\) of number fields and any conjugacy class \(C \subseteq \mathrm{Gal}(L/K)\), the set of primes \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\) with Frobenius conjugacy class \(C\) is infinite. </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#cor:infinite-frobenius-class">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.infinite_setOf_frobenius_class">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:decomposition-group_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:decomposition-group" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.2</span></div>
+    <div class="thm_thmcontent"><p>  For a prime \(\mathfrak {P}\) of \(\mathcal{O}_L\), the <em>decomposition group</em> at \(\mathfrak {P}\) is </p>
+<div class="displaymath" id="a0000000026">
+  \[  D_\mathfrak {P}\; =\;  \left\{  \sigma \in G : \sigma (\mathfrak {P})=\mathfrak {P} \right\}  \; =\;  \mathrm{Stab}_G(\mathfrak {P}).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0002.html#def:decomposition-group">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.decompositionGroup">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:dirichlet-density_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:dirichlet-density" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>  A set \(S\) of nonzero prime ideals of \(\mathcal{O}_K\) has <em>Dirichlet density</em> \(\delta \in \mathbb {R}\), written \(\delta (S)=\delta \), if </p>
+<div class="displaymath" id="a0000000008">
+  \[  \lim _{s\to 1^+} \frac{\displaystyle \sum _{\mathfrak {p}\in S} N\mathfrak {p}^{-s}}{\displaystyle \sum _{\mathfrak {p}} N\mathfrak {p}^{-s}} = \delta ,  \]
+</div>
+<p> where the denominator sum runs over all nonzero prime ideals of \(\mathcal{O}_K\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#def:dirichlet-density">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.HasDirichletDensity">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:frobenius-at_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:frobenius-at" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>   For an unramified nonzero prime \(\mathfrak {P}\) of \(\mathcal{O}_L\), the <em>Frobenius automorphism</em> \(\mathrm{Frob}_\mathfrak {P}\in G\) is the unique element of \(D_\mathfrak {P}\) characterised by \(\mathrm{Frob}_\mathfrak {P}(x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\) for all \(x\in \mathcal{O}_L\). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#def:frobenius-at">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusAt">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:frobenius-class_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:frobenius-class" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.8</span></div>
+    <div class="thm_thmcontent"><p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), the <em>Frobenius conjugacy class</em> is </p>
+<div class="displaymath" id="a0000000032">
+  \[  \sigma _\mathfrak {p}\; =\;  \left\{  \mathrm{Frob}_\mathfrak {P}: \mathfrak {P}\mid \mathfrak {p} \right\}  \; \in \;  \mathrm{Conj}(G),  \]
+</div>
+<p> the conjugacy class in \(G\) containing \(\mathrm{Frob}_\mathfrak {P}\) for any (equivalently every) prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\). The class is independent of the choice of \(\mathfrak {P}\). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#def:frobenius-class">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusClass">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:galois-character_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:galois-character" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>  A <em>character of \(G\)</em> is a group homomorphism \(\chi : G \to \mathbb {C}^\times \). </p>
+</div>
+
+    <a class="latex_link" href="sect0003.html#def:galois-character">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.galoisCharacter">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:inertia-group_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:inertia-group" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.3</span></div>
+    <div class="thm_thmcontent"><p>   The <em>inertia group</em> at \(\mathfrak {P}\) is </p>
+<div class="displaymath" id="a0000000027">
+  \[  I_\mathfrak {P}\; =\;  \left\{  \sigma \in G \; \middle |\;  \forall x\in \mathcal{O}_L,\; \sigma (x)\equiv x\pmod\mathfrak {P} \right\} .  \]
+</div>
+<p> This is the generic ideal-inertia subgroup <span class="ttfamily">Ideal.inertia</span> from mathlib, instantiated at the natural action of \(G\) on \(\mathcal{O}_L\); acting trivially mod&#160;\(\mathfrak {P}\) forces stabilising \(\mathfrak {P}\), so \(I_\mathfrak {P}\) sits inside \(D_\mathfrak {P}\), and is the kernel of the action of \(D_\mathfrak {P}\) on the residue field \(\mathcal{O}_L/\mathfrak {P}\). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#def:inertia-group">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.inertiaGroup">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:unramified-in_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:unramified-in" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>  A nonzero prime ideal \(\mathfrak {p}\) of \(\mathcal{O}_K\) is <em>unramified in \(L\)</em> if every prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) lying over \(\mathfrak {p}\) has ramification index \(1\), i.e. \(\mathfrak {p}\mathcal{O}_L\) factors into distinct primes. </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#def:unramified-in">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.UnramifiedIn">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:artin-analytic-extension_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:artin-analytic-extension" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>   For every nontrivial character \(\chi : G \to \mathbb {C}^\times \), the Dirichlet series \(L(\chi , s) = \sum _{\mathfrak {a}} \chi (\mathfrak {a})\mathrm{N}(\mathfrak {a})^{-s}\) extends to a function analytic on \(\operatorname {Re}(s) {\gt} 1 - 1/[K:\mathbb {Q}]\), agreeing with the Euler product on \(\operatorname {Re}(s) {\gt} 1\). In particular, \(L(\chi , 1)\) is well-defined. </p>
+</div>
+
+    <a class="latex_link" href="sect0003.html#lem:artin-analytic-extension">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.artinLSeries_analytic_extension">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:artin-euler-product-abelian_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:artin-euler-product-abelian" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.2</span></div>
+    <div class="thm_thmcontent"><p>   For an abelian character \(\chi : G \to \mathbb {C}^\times \), there is a function \(L(\chi , \cdot ): \mathbb {C}\to \mathbb {C}\) such that on \(\operatorname {Re}(s) {\gt} 1\), </p>
+<div class="displaymath" id="a0000000037">
+  \[  L(\chi , s) \; =\;  \prod _\mathfrak {p}\bigl(1-\chi (\mathrm{Frob}_\mathfrak {p}) \mathrm{N}(\mathfrak {p})^{-s}\bigr)^{-1},  \]
+</div>
+<p> where the product runs over primes \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), with the convention \(\chi (\mathfrak {p}) = 0\) on ramified primes. </p>
+</div>
+
+    <a class="latex_link" href="sect0003.html#lem:artin-euler-product-abelian">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_artinLSeries_eulerProduct_abelian">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:artin-one-ne-zero_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:artin-one-ne-zero" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>   For every nontrivial character \(\chi : G \to \mathbb {C}^\times \), \(L(\chi , 1) \ne 0\). (Here \(L(\chi , 1)\) refers to the analytic extension of <a href="sect0003.html#lem:artin-analytic-extension">lemma 1.5</a>.) </p>
+</div>
+
+    <a class="latex_link" href="sect0003.html#lem:artin-one-ne-zero">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.artinLSeries_one_ne_zero">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:character-orthogonality-eq_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:character-orthogonality-eq" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.3</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L = K(\zeta _m)\), \(\sigma \in G\), and \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\) with \(\sigma _\mathfrak {p}\) the conjugacy class of \(\sigma \). Then </p>
+<div class="displaymath" id="a0000000048">
+  \[  \sum _{\chi \in \widehat G} \chi (\sigma )\chi (\mathrm{Frob}_\mathfrak {p})^{-1} \; =\;  \left\lvert G \right\rvert .  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:character-orthogonality-eq">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_orthogonality_cyclotomic_eq">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:character-orthogonality-ne_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:character-orthogonality-ne" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.4</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L = K(\zeta _m)\), \(\sigma \in G\), and \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\) whose Frobenius class is not the conjugacy class of \(\sigma \). Then </p>
+<div class="displaymath" id="a0000000050">
+  \[  \sum _{\chi \in \widehat G} \chi (\sigma )\chi (\mathrm{Frob}_\mathfrak {p})^{-1} \; =\;  0.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:character-orthogonality-ne">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_orthogonality_cyclotomic_ne">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:character-sum-geom-numbers_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:character-sum-geom-numbers" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.4</span></div>
+    <div class="thm_thmcontent"><p>  For a nontrivial character \(\chi : G \to \mathbb {C}^\times \), there is a constant \(C\) such that </p>
+<div class="displaymath" id="a0000000041">
+  \[  \biggl\lVert \sum _{\mathrm{N}(\mathfrak {a})\le N}\chi (\mathfrak {a})\biggr\rVert \; \le \;  C \cdot N^{1 - 1/[K:\mathbb {Q}]} \qquad \text{for all }N\ge 1.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0003.html#lem:character-sum-geom-numbers">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_sum_geometry_of_numbers_bound">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:conjclasses-carrier-card-one-comm_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:conjclasses-carrier-card-one-comm" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>  In a commutative finite group, every conjugacy class is a singleton, so has cardinality \(1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:conjclasses-carrier-card-one-comm">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.ConjClasses_carrier_card_eq_one_of_comm">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:conjclasses-carrier-card-pos_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:conjclasses-carrier-card-pos" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.9</span></div>
+    <div class="thm_thmcontent"><p>  Every conjugacy class in a finite group has cardinality at least \(1\) (it contains at least its own representative). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:conjclasses-carrier-card-pos">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.ConjClasses_carrier_card_pos">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:conjclasses-mk-one-carrier-card-one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:conjclasses-mk-one-carrier-card-one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>  Let \(G\) be a finite group. The conjugacy class of the identity has cardinality \(1\): \(\left\lvert (\mathrm{Conj}(G))_{\{ 1\} } \right\rvert  = 1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:conjclasses-mk-one-carrier-card-one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.ConjClasses_mk_one_carrier_card_eq_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:count-primes-above-frob-sigma_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:count-primes-above-frob-sigma" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L/K\) be a finite Galois extension with \(G=\mathrm{Gal}(L/K)\), \(C\subseteq G\) a conjugacy class, \(\sigma \in C\), and \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\) with \(\sigma _\mathfrak {p}= C\). The number of primes \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\) with \(\mathrm{Frob}_\mathfrak {P}= \sigma \) is exactly \(\left\lvert G \right\rvert /(f\cdot \left\lvert C \right\rvert )\), where \(f = \mathrm{ord}(\sigma )\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:count-primes-above-frob-sigma">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.count_primes_above_with_frobenius_eq_sigma">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:cyclic-subgroup-trivial-meet_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:cyclic-subgroup-trivial-meet" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>  Let \(G, H\) be finite groups, \(\sigma \in G\), \(\tau \in H\). If \(\left\lvert G \right\rvert \mid \mathrm{ord}(\tau )\), then \(\left\langle (\sigma ,\tau ) \right\rangle \cap (G\times \{ 1\} ) = \{ 1\} \). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:cyclic-subgroup-trivial-meet">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclic_subgroup_meets_G_times_one_trivially">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:cyclotomic-density-two-sided_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:cyclotomic-density-two-sided" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L = K(\zeta _m)\) and \(\sigma \in G\). Then </p>
+<div class="displaymath" id="a0000000055">
+  \[  \lim _{s\downarrow 1} \frac{\sum _{\mathfrak {p}:\, \sigma _\mathfrak {p}= \sigma } N\mathfrak {p}^{-s}}{\sum _\mathfrak {p}N\mathfrak {p}^{-s}} \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:cyclotomic-density-two-sided">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclotomic_density_from_two_sided_asymp">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:cyclotomic-frobenius-norm-power_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:cyclotomic-frobenius-norm-power" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.1</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L = K(\zeta _m)\), \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\), and \(\mathfrak {P}\) a prime of \(\mathcal{O}_L\) above \(\mathfrak {p}\). Then for every primitive \(m\)-th root of unity \(\zeta \in L\), </p>
+<div class="displaymath" id="a0000000046">
+  \[  \mathrm{Frob}_\mathfrak {P}(\zeta ) \; =\;  \zeta ^{N\mathfrak {p}}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:cyclotomic-frobenius-norm-power">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclotomic_frobenius_acts_as_norm_power">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:dedekind-local-factor_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:dedekind-local-factor" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.3</span></div>
+    <div class="thm_thmcontent"><p>   For each unramified prime \(\mathfrak {p}\) of \(\mathcal{O}_K\), the local Euler factor of \(\zeta _L\) at \(\mathfrak {p}\) factors as </p>
+<div class="displaymath" id="a0000000039">
+  \[  \prod _{\mathfrak {P}\mid \mathfrak {p}}\bigl(1-\mathrm{N}(\mathfrak {P})^{-s}\bigr)^{-1} \; =\;  \prod _\chi \bigl(1-\chi (\mathrm{Frob}_\mathfrak {p})\mathrm{N}(\mathfrak {p})^{-s}\bigr)^{-1}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0003.html#lem:dedekind-local-factor">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.dedekindZeta_local_factor_eq_product_artin_local">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:density-implies-lower_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:density-implies-lower" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.12</span></div>
+    <div class="thm_thmcontent"><p>   If \(S\) has Dirichlet density \(\delta \), then its lower Dirichlet density is also \(\delta \). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:density-implies-lower">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.HasDirichletDensity.hasLower">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:density-lift-fixedfield_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:density-lift-fixedfield" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.2</span><span class="lemma_thmtitle">Density lift through the fixed field</span></div>
+    <div class="thm_thmcontent"><p>   Let \(\sigma \in \mathrm{Gal}(L/K)\), \(E = L^{\left\langle \sigma  \right\rangle }\), and \(\sigma _E\in \mathrm{Gal}(L/E)\) the corresponding element. Given the abelian-case density over \(E\) for the Frobenius-fibre of \(\sigma _E\) (value \(1/\left\lvert \mathrm{Gal}(L/E) \right\rvert \)), the \(K\)-density of the Frobenius class \([\sigma ]\) is \(\left\lvert [\sigma ] \right\rvert /\left\lvert G \right\rvert \). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:density-lift-fixedfield">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.density_lift_through_fixedField">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:density-S-sigma-tau_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:density-S-sigma-tau" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.2</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L/K\) be a finite abelian Galois extension with \(G=\mathrm{Gal}(L/K)\), \(\sigma \in G\), and \(m\ge 1\) coprime to the discriminant of \(L\), so that \(\mathrm{Gal}(L(\zeta _m)/K)\cong G\times H\) with \(H=\mathrm{Gal}(K(\zeta _m)/K)\subseteq (\mathbb {Z}/m\mathbb {Z})^\times \). Set \(H_n = \left\{  \tau \in H \; \middle |\;  \left\lvert G \right\rvert \mid \mathrm{ord}(\tau ) \right\} \). Then </p>
+<div class="displaymath" id="a0000000059">
+  \[  \delta _{\mathrm{inf}}\bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;   \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; \ge \;  \frac{\left\lvert H_n \right\rvert }{\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert }.  \]
+</div>
+<p> <em>Corrected.</em> An earlier draft of this lemma claimed \(\delta \bigl(\left\{  \mathfrak {p}: \sigma _\mathfrak {p}= \sigma  \right\} \bigr) = 1/(\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert )\) — that is mathematically wrong (the set \(\left\{  \sigma _\mathfrak {p}= \sigma  \right\} \) has density \(1/\left\lvert G \right\rvert \), not \(1/(\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert )\)). The actual per-\(m\) step that feeds into the proof of \(\delta (\sigma _\mathfrak {p}= \sigma ) = 1/\left\lvert G \right\rvert \) is the \(\liminf \) lower bound above (Sharifi p.&#160;144). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:density-S-sigma-tau">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:exists-frobenius-class_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:exists-frobenius-class" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.9</span></div>
+    <div class="thm_thmcontent"><p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), there exists a conjugacy class \(C \subseteq \mathrm{Gal}(L/K)\) such that for every prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\), \(C = [\mathrm{Frob}_\mathfrak {P}]\). (Equivalently, the Frobenius elements above \(\mathfrak {p}\) are all conjugate.) </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#lem:exists-frobenius-class">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_frobeniusClass">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:exists-unique-frobenius-inertia-trivial_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:exists-unique-frobenius-inertia-trivial" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>   Let \(\mathfrak {P}\) be a nonzero prime of \(\mathcal{O}_L\) with trivial inertia group \(I_\mathfrak {P}= \{ 1\} \). There is a unique \(\sigma \in D_\mathfrak {P}\) such that \(\sigma (x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\) for every \(x\in \mathcal{O}_L\). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#lem:exists-unique-frobenius-inertia-trivial">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_unique_frobeniusAt_of_inertia_trivial">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:finite-ramified-primes_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:finite-ramified-primes" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.11</span></div>
+    <div class="thm_thmcontent"><p>   Only finitely many nonzero primes of \(\mathcal{O}_K\) ramify in \(L\). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#lem:finite-ramified-primes">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.finite_ramifiedIn">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:frobenius-class-eq-mk_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:frobenius-class-eq-mk" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.10</span></div>
+    <div class="thm_thmcontent"><p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), and any prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\), </p>
+<div class="displaymath" id="a0000000034">
+  \[  \sigma _\mathfrak {p}\; =\;  [\mathrm{Frob}_\mathfrak {P}].  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0002.html#lem:frobenius-class-eq-mk">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusClass_eq_mk_frobeniusAt">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:H-n-over-H-formula_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:H-n-over-H-formula" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.3</span></div>
+    <div class="thm_thmcontent"><p>  Let \(n = p_1^{k_1}\cdots p_r^{k_r}\) with \(p_i\) distinct primes, \(k_i\ge 1\). For an integer \(m \ge 1\) with \(m \equiv 1 \pmod{n^j}\), setting \(j_i = v_{p_i}(m-1) \ge j\) and \(H_n = \left\{  \tau \in (\mathbb {Z}/m\mathbb {Z})^\times  \; \middle |\;  n\mid \mathrm{ord}(\tau ) \right\} \), </p>
+<div class="displaymath" id="a0000000061">
+  \[  \frac{\left\lvert H_n \right\rvert }{\left\lvert (\mathbb {Z}/m\mathbb {Z})^\times  \right\rvert } \; =\;  \prod _{i=1}^r\! \biggl(1-\frac{p_i^{k_i-1}}{p_i^{j_i k_i}}\biggr) \; \ge \;  \prod _{i=1}^r\! \biggl(1-\frac{1}{p_i^{(j-1)k_i+1}}\biggr).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:H-n-over-H-formula">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:H-n-over-H-tends-one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:H-n-over-H-tends-one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.4</span></div>
+    <div class="thm_thmcontent"><p>   As \(k \to \infty \), \(\left\lvert H_n \right\rvert /\left\lvert (\mathbb {Z}/n^k\mathbb {Z})^\times  \right\rvert  \to 1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:H-n-over-H-tends-one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.H_n_over_H_tends_to_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:has-density-finite_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:has-density-finite" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.11</span></div>
+    <div class="thm_thmcontent"><p>   A finite set of prime ideals has Dirichlet density \(0\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:has-density-finite">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.hasDirichletDensity_of_finite">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:inertia-trivial-unramified_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:inertia-trivial-unramified" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.4</span></div>
+    <div class="thm_thmcontent"><p>   If \(\mathfrak {P}\) is unramified over \(\mathfrak {p}=\mathfrak {P}\cap \mathcal{O}_K\), then \(I_\mathfrak {P}=\{ 1\} \). </p>
+</div>
+
+    <a class="latex_link" href="sect0002.html#lem:inertia-trivial-unramified">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.inertiaGroup_trivial_of_unramified">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:infinite-of-density-pos_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:infinite-of-density-pos" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.8</span></div>
+    <div class="thm_thmcontent"><p>  A set \(S\) of prime ideals with positive Dirichlet density is infinite. </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:infinite-of-density-pos">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.infinite_of_hasDirichletDensity_pos">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:liminf-ratio-ge-inv-card-G_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:liminf-ratio-ge-inv-card-G" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>   For every \(\sigma \in G\), \(\delta _{\mathrm{inf}}\bigl(\left\{  \mathfrak {p} \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \ge 1/\left\lvert G \right\rvert \). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:liminf-ratio-ge-inv-card-G">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.liminf_ratio_ge_inv_card_G">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:log-artin-asymp-character-sum_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:log-artin-asymp-character-sum" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.2</span></div>
+    <div class="thm_thmcontent"><p>   For every character \(\chi \) of \(G\), the partial sum \(\sum _\mathfrak {p}\chi (\mathrm{Frob}_\mathfrak {p}) N\mathfrak {p}^{-s}\) over \(\mathfrak {p}\) unramified in \(L\) is bounded by \(C\log (1/(s-1)) + C\) for some constant \(C\), in a right neighbourhood of \(s = 1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:log-artin-asymp-character-sum">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.log_artinLSeries_asymp_character_sum">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:logzeta-eq-loginv-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:logzeta-eq-loginv-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>  Simple-pole identity: \(\bigl|\log \zeta _K(s) - \log (1/(s-1))\bigr| \le C\) on a right neighbourhood of \(1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:logzeta-eq-loginv-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:logzeta-eq-primesum-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:logzeta-eq-primesum-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>   Euler-product-log identity: \(\bigl|\log \zeta _K(s) - \sum _\mathfrak {p}N\mathfrak {p}^{-s}\bigr| \le C\) on a right neighbourhood of \(1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:logzeta-eq-primesum-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:nat-card-galois-eq-finrank_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:nat-card-galois-eq-finrank" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>  For a finite-dimensional Galois extension \(L/K\), \(\left\lvert \mathrm{Gal}(L/K) \right\rvert  = [L:K]\). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#lem:nat-card-galois-eq-finrank">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.nat_card_galois_eq_finrank">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:pigeonhole-density_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:pigeonhole-density" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>  Let \(g_i\) (\(i\) in a finite index set of size \(N\)) be real functions with \(\liminf _{s\downarrow 1} g_i \ge 1/N\) for each \(i\), and \(\sum _i g_i(s) \to 1\) as \(s\downarrow 1\). Then \(g_i(s) \to 1/N\) for every \(i\). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:pigeonhole-density">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:prime-ideal-sum-log_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:prime-ideal-sum-log" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.10</span></div>
+    <div class="thm_thmcontent"><p>   As \(s\downarrow 1\), </p>
+<div class="displaymath" id="a0000000021">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \sim \log \frac{1}{s-1}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:prime-ideal-sum-log">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_univ_tendsto_log">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:prime-zeta-ge-log-minus-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:prime-zeta-ge-log-minus-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>   There is a constant \(C\) such that, for \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000016">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \ge \;  \log \frac{1}{s-1} - C.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:prime-zeta-ge-log-minus-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_ge_log_minus_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:prime-zeta-higher-tail-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:prime-zeta-higher-tail-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.2</span></div>
+    <div class="thm_thmcontent"><p>  The higher-power tail of the log-Euler-product \(\sum _{\mathfrak {p},k\ge 2}\frac{N\mathfrak {p}^{-2s}}{1-N\mathfrak {p}^{-s}}\) is bounded on a right neighbourhood of \(s=1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:prime-zeta-higher-tail-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaHigherTail_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:prime-zeta-le-finrank-riemann_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:prime-zeta-le-finrank-riemann" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.3</span></div>
+    <div class="thm_thmcontent"><p>   For \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000010">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \le \;  [K:\mathbb {Q}]\sum _{p\text{ rational prime}} p^{-s}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:prime-zeta-le-finrank-riemann">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_le_finrank_smul_riemannPrimeSum">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:prime-zeta-le-log-plus-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:prime-zeta-le-log-plus-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.8</span></div>
+    <div class="thm_thmcontent"><p>   There is a constant \(C'\) such that, for \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000018">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \le \;  \log \frac{1}{s-1} + C'.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:prime-zeta-le-log-plus-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_le_log_plus_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:primesum-fibre-asymp_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:primesum-fibre-asymp" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.5</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L = K(\zeta _m)\) and \(\sigma \in G\). The Frobenius-fibre prime sum is asymptotic to \((1/\left\lvert G \right\rvert )\log (1/(s-1))\): </p>
+<div class="displaymath" id="a0000000052">
+  \[  \lim _{s\downarrow 1} \frac{\sum _{\mathfrak {p}:\, \sigma _\mathfrak {p}= \sigma } N\mathfrak {p}^{-s}}{\log (1/(s-1))} \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:primesum-fibre-asymp">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:ratio-glue-numerator_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:ratio-glue-numerator" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>  If \(\mathrm{num}(s)/\log (1/(s-1)) \to c\) and \(\mathrm{den}(s)/\log (1/(s-1)) \to 1\) as \(s\downarrow 1\), then \(\mathrm{num}(s)/\mathrm{den}(s) \to c\). </p>
+</div>
+
+    <a class="latex_link" href="sect0004.html#lem:ratio-glue-numerator">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_ratio_of_log_asymp_numerator">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:ratiosum-fibres-tendsto-one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:ratiosum-fibres-tendsto-one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>   As \(s\downarrow 1\), the sum over \(\sigma \in G\) of the density ratios of the fibres \(\left\{  \mathfrak {p} \; \middle |\;  \sigma _\mathfrak {p}=\sigma  \right\} \) tends to \(1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0005.html#lem:ratiosum-fibres-tendsto-one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.ratioSum_frobeniusFibres_tendsto_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:riemann-prime-sum-asymp_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:riemann-prime-sum-asymp" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.4</span></div>
+    <div class="thm_thmcontent"><p>  As \(s\downarrow 1\), </p>
+<div class="displaymath" id="a0000000012">
+  \[  \sum _{p\text{ rational prime}} p^{-s} \sim \log \frac{1}{s-1}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:riemann-prime-sum-asymp">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.riemannPrimeSum_asymp_log">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:tendsto-ratio-one-of-log-pm-bounded_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:tendsto-ratio-one-of-log-pm-bounded" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">1.9</span></div>
+    <div class="thm_thmcontent"><p>  Let \(f : (1,\infty ) \to \mathbb {R}\). If \(f\) is sandwiched as \(\log \bigl(1/(s-1)\bigr) - C \le f(s) \le \log \bigl(1/(s-1)\bigr) + C'\) on a right neighbourhood of \(1\), then \(f(s)/\log \bigl(1/(s-1)\bigr) \to 1\) as \(s \downarrow 1\). </p>
+</div>
+
+    <a class="latex_link" href="sect0001.html#lem:tendsto-ratio-one-of-log-pm-bounded">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_ratio_one_of_log_pm_bounded">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:chebotarev-abelian_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:chebotarev-abelian" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.8</span></div>
+    <div class="thm_thmcontent"><p>   For a finite abelian Galois extension \(L/K\) of number fields with \(G=\mathrm{Gal}(L/K)\) and every \(\sigma \in G\), </p>
+<div class="displaymath" id="a0000000067">
+  \[  \delta \bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0005.html#thm:chebotarev-abelian">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_abelian">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:chebotarev-cyclotomic_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:chebotarev-cyclotomic" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.8</span></div>
+    <div class="thm_thmcontent"><p>   For \(K\) a number field, \(m\ge 1\), \(L=K(\zeta _m)\), and every \(\sigma \in G = \mathrm{Gal}(L/K)\), </p>
+<div class="displaymath" id="a0000000056">
+  \[  \delta \bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0004.html#thm:chebotarev-cyclotomic">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_cyclotomic">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:chebotarev-density_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:chebotarev-density" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.3</span><span class="theorem_thmtitle">Chebotarev density theorem</span></div>
+    <div class="thm_thmcontent"><p>   For a finite Galois extension \(L/K\) of number fields with \(G=\mathrm{Gal}(L/K)\) and any conjugacy class \(C\subseteq G\), </p>
+<div class="displaymath" id="a0000000071">
+  \[  \delta \bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;  \sigma _\mathfrak {p}= C \right\} \bigr) \; =\;  \frac{\left\lvert C \right\rvert }{\left\lvert G \right\rvert }.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0006.html#thm:chebotarev-density">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_density">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:chebotarev-density-comm_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:chebotarev-density-comm" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.4</span><span class="theorem_thmtitle">Chebotarev, abelian case</span></div>
+    <div class="thm_thmcontent"><p>   When \(G = \mathrm{Gal}(L/K)\) is abelian, the Chebotarev density theorem holds: for every conjugacy class \(C\), \(\delta (\left\{  \mathfrak {p} \; \middle |\;  \sigma _\mathfrak {p}= C \right\} ) = \left\lvert C \right\rvert /\left\lvert G \right\rvert \). </p>
+</div>
+
+    <a class="latex_link" href="sect0006.html#thm:chebotarev-density-comm">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_density_of_comm">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:dedekind-zeta-factorisation_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:dedekind-zeta-factorisation" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.7</span></div>
+    <div class="thm_thmcontent"><p>   Let \(L/K\) be a finite abelian Galois extension of number fields. There is a family of functions \(\left\{  L(\chi , \cdot ) : \chi \in \widehat{G} \right\} \), each holomorphic on \(\operatorname {Re}(s) {\gt} 1\), satisfying: </p>
+<ol class="enumerate">
+  <li><p>\(\displaystyle \zeta _L(s) \; =\;  \prod _{\chi \in \widehat{G}} L(\chi , s)\) for \(\operatorname {Re}(s) {\gt} 1\); </p>
+</li>
+  <li><p>\(L(\mathbf{1}, s) = \zeta _K(s)\); </p>
+</li>
+  <li><p>\(L(\chi , 1) \ne 0\) for every \(\chi \ne \mathbf{1}\). </p>
+</li>
+</ol>
+</div>
+
+    <a class="latex_link" href="sect0003.html#thm:dedekind-zeta-factorisation">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_dedekindZeta_factorisation">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:exists-unique-frobenius_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:exists-unique-frobenius" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">1.6</span></div>
+    <div class="thm_thmcontent"><p>   Let \(\mathfrak {P}\) be a nonzero prime of \(\mathcal{O}_L\) lying over the unramified \(\mathfrak {p}\). There is a unique \(\sigma \in D_\mathfrak {P}\) such that </p>
+<div class="displaymath" id="a0000000031">
+  \[  \sigma (x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\qquad \text{for every }x\in \mathcal{O}_L.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="sect0002.html#thm:exists-unique-frobenius">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_unique_frobeniusAt">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+</div>
+</div> <!-- content -->
+</div> <!-- wrapper -->
+<script src="js/jquery.min.js" type="text/javascript"></script>
+
+<script src="js/d3.min.js"></script>
+<script src="js/hpcc.min.js"></script>
+<script src="js/d3-graphviz.js"></script>
+
+<script type="text/javascript">
+const graphContainer = d3.select("#graph");
+const width = graphContainer.node().clientWidth;
+const height = graphContainer.node().clientHeight;
+
+
+graphContainer.graphviz({useWorker: true})
+    .width(width)
+    .height(height)
+    .fit(true)
+    .renderDot(`strict digraph "" {	graph [bgcolor=transparent];	node [label="\N",		penwidth=1.8	];	edge [arrowhead=vee];	"def:decomposition-group"	[color=green,		fillcolor="#B0ECA3",		label="decomposition-group",		shape=box,		style=filled];	"def:inertia-group"	[color=green,		fillcolor="#B0ECA3",		label="inertia-group",		shape=box,		style=filled];	"def:decomposition-group" -> "def:inertia-group"	[style=dashed];	"lem:exists-unique-frobenius-inertia-trivial"	[color=blue,		fillcolor="#A3D6FF",		label="exists-unique-frobenius-inertia-trivial",		shape=ellipse,		style=filled];	"def:inertia-group" -> "lem:exists-unique-frobenius-inertia-trivial"	[style=dashed];	"lem:inertia-trivial-unramified"	[color=blue,		fillcolor="#A3D6FF",		label="inertia-trivial-unramified",		shape=ellipse,		style=filled];	"def:inertia-group" -> "lem:inertia-trivial-unramified"	[style=dashed];	"thm:exists-unique-frobenius"	[fillcolor="#9CEC8B",		label="exists-unique-frobenius",		shape=ellipse,		style=filled];	"lem:exists-unique-frobenius-inertia-trivial" -> "thm:exists-unique-frobenius"	[style=dashed];	"def:frobenius-at"	[label="frobenius-at",		shape=box];	"thm:exists-unique-frobenius" -> "def:frobenius-at"	[style=dashed];	"lem:inertia-trivial-unramified" -> "thm:exists-unique-frobenius"	[style=dashed];	"lem:prime-zeta-ge-log-minus-bounded"	[fillcolor="#9CEC8B",		label="prime-zeta-ge-log-minus-bounded",		shape=ellipse,		style=filled];	"lem:prime-ideal-sum-log"	[label="prime-ideal-sum-log",		shape=ellipse];	"lem:prime-zeta-ge-log-minus-bounded" -> "lem:prime-ideal-sum-log"	[style=dashed];	"lem:cyclotomic-density-two-sided"	[fillcolor="#9CEC8B",		label="cyclotomic-density-two-sided",		shape=ellipse,		style=filled];	"lem:prime-ideal-sum-log" -> "lem:cyclotomic-density-two-sided"	[style=dashed];	"lem:density-lift-fixedfield"	[label="density-lift-fixedfield",		shape=ellipse];	"lem:prime-ideal-sum-log" -> "lem:density-lift-fixedfield"	[style=dashed];	"thm:chebotarev-cyclotomic"	[label="chebotarev-cyclotomic",		shape=ellipse];	"lem:cyclotomic-density-two-sided" -> "thm:chebotarev-cyclotomic"	[style=dashed];	"thm:chebotarev-density"	[fillcolor="#9CEC8B",		label="chebotarev-density",		shape=ellipse,		style=filled];	"lem:density-lift-fixedfield" -> "thm:chebotarev-density"	[style=dashed];	"lem:cyclotomic-frobenius-norm-power"	[label="cyclotomic-frobenius-norm-power",		shape=ellipse];	"lem:density-S-sigma-tau"	[label="density-S-sigma-tau",		shape=ellipse];	"thm:chebotarev-cyclotomic" -> "lem:density-S-sigma-tau"	[style=dashed];	"lem:liminf-ratio-ge-inv-card-G"	[label="liminf-ratio-ge-inv-card-G",		shape=ellipse];	"lem:density-S-sigma-tau" -> "lem:liminf-ratio-ge-inv-card-G"	[style=dashed];	"lem:H-n-over-H-formula"	[color=blue,		fillcolor="#A3D6FF",		label="H-n-over-H-formula",		shape=ellipse,		style=filled];	"lem:H-n-over-H-tends-one"	[label="H-n-over-H-tends-one",		shape=ellipse];	"lem:H-n-over-H-formula" -> "lem:H-n-over-H-tends-one"	[style=dashed];	"lem:H-n-over-H-tends-one" -> "lem:liminf-ratio-ge-inv-card-G"	[style=dashed];	"thm:chebotarev-abelian"	[fillcolor="#9CEC8B",		label="chebotarev-abelian",		shape=ellipse,		style=filled];	"lem:liminf-ratio-ge-inv-card-G" -> "thm:chebotarev-abelian"	[style=dashed];	"thm:chebotarev-abelian" -> "thm:chebotarev-density"	[style=dashed];	"thm:chebotarev-density-comm"	[fillcolor="#9CEC8B",		label="chebotarev-density-comm",		shape=ellipse,		style=filled];	"thm:chebotarev-abelian" -> "thm:chebotarev-density-comm"	[style=dashed];	"thm:dedekind-zeta-factorisation"	[label="dedekind-zeta-factorisation",		shape=ellipse];	"lem:log-artin-asymp-character-sum"	[label="log-artin-asymp-character-sum",		shape=ellipse];	"thm:dedekind-zeta-factorisation" -> "lem:log-artin-asymp-character-sum"	[style=dashed];	"lem:primesum-fibre-asymp"	[label="primesum-fibre-asymp",		shape=ellipse];	"lem:log-artin-asymp-character-sum" -> "lem:primesum-fibre-asymp"	[style=dashed];	"lem:primesum-fibre-asymp" -> "lem:cyclotomic-density-two-sided"	[style=dashed];	"def:frobenius-at" -> "lem:cyclotomic-frobenius-norm-power"	[style=dashed];	"lem:exists-frobenius-class"	[label="exists-frobenius-class",		shape=ellipse];	"def:frobenius-at" -> "lem:exists-frobenius-class"	[style=dashed];	"def:frobenius-class"	[label="frobenius-class",		shape=box];	"def:frobenius-at" -> "def:frobenius-class"	[style=dashed];	"cor:density-split-completely"	[label="density-split-completely",		shape=ellipse];	"thm:chebotarev-density" -> "cor:density-split-completely"	[style=dashed];	"cor:infinite-frobenius-class"	[label="infinite-frobenius-class",		shape=ellipse];	"thm:chebotarev-density" -> "cor:infinite-frobenius-class"	[style=dashed];	"cor:dirichlet-ap-density"	[label="dirichlet-ap-density",		shape=ellipse];	"thm:chebotarev-density" -> "cor:dirichlet-ap-density"	[style=dashed];	"def:dirichlet-density"	[color=green,		fillcolor="#B0ECA3",		label="dirichlet-density",		shape=box,		style=filled];	"def:dirichlet-density" -> "lem:density-lift-fixedfield"	[style=dashed];	"def:dirichlet-density" -> "thm:chebotarev-cyclotomic"	[style=dashed];	"lem:has-density-finite"	[color=blue,		fillcolor="#A3D6FF",		label="has-density-finite",		shape=ellipse,		style=filled];	"def:dirichlet-density" -> "lem:has-density-finite"	[style=dashed];	"lem:density-implies-lower"	[color=blue,		fillcolor="#A3D6FF",		label="density-implies-lower",		shape=ellipse,		style=filled];	"def:dirichlet-density" -> "lem:density-implies-lower"	[style=dashed];	"lem:prime-zeta-le-finrank-riemann"	[color=blue,		fillcolor="#A3D6FF",		label="prime-zeta-le-finrank-riemann",		shape=ellipse,		style=filled];	"def:dirichlet-density" -> "lem:prime-zeta-le-finrank-riemann"	[style=dashed];	"def:unramified-in"	[color=green,		fillcolor="#B0ECA3",		label="unramified-in",		shape=box,		style=filled];	"def:unramified-in" -> "lem:inertia-trivial-unramified"	[style=dashed];	"lem:finite-ramified-primes"	[color=blue,		fillcolor="#A3D6FF",		label="finite-ramified-primes",		shape=ellipse,		style=filled];	"def:unramified-in" -> "lem:finite-ramified-primes"	[style=dashed];	"lem:ratiosum-fibres-tendsto-one"	[label="ratiosum-fibres-tendsto-one",		shape=ellipse];	"lem:finite-ramified-primes" -> "lem:ratiosum-fibres-tendsto-one"	[style=dashed];	"lem:ratiosum-fibres-tendsto-one" -> "thm:chebotarev-abelian"	[style=dashed];	"lem:artin-one-ne-zero"	[label="artin-one-ne-zero",		shape=ellipse];	"lem:artin-one-ne-zero" -> "thm:dedekind-zeta-factorisation"	[style=dashed];	"lem:frobenius-class-eq-mk"	[fillcolor="#9CEC8B",		label="frobenius-class-eq-mk",		shape=ellipse,		style=filled];	"lem:exists-frobenius-class" -> "lem:frobenius-class-eq-mk"	[style=dashed];	"lem:artin-euler-product-abelian"	[label="artin-euler-product-abelian",		shape=ellipse];	"lem:dedekind-local-factor"	[label="dedekind-local-factor",		shape=ellipse];	"lem:artin-euler-product-abelian" -> "lem:dedekind-local-factor"	[style=dashed];	"lem:artin-analytic-extension"	[label="artin-analytic-extension",		shape=ellipse];	"lem:artin-euler-product-abelian" -> "lem:artin-analytic-extension"	[style=dashed];	"lem:dedekind-local-factor" -> "thm:dedekind-zeta-factorisation"	[style=dashed];	"lem:artin-analytic-extension" -> "lem:artin-one-ne-zero"	[style=dashed];	"lem:character-orthogonality-ne"	[label="character-orthogonality-ne",		shape=ellipse];	"lem:character-orthogonality-ne" -> "lem:primesum-fibre-asymp"	[style=dashed];	"lem:pigeonhole-density"	[color=blue,		fillcolor="#A3D6FF",		label="pigeonhole-density",		shape=ellipse,		style=filled];	"lem:pigeonhole-density" -> "thm:chebotarev-abelian"	[style=dashed];	"lem:nat-card-galois-eq-finrank"	[color=green,		fillcolor="#1CAC78",		label="nat-card-galois-eq-finrank",		shape=ellipse,		style=filled];	"lem:nat-card-galois-eq-finrank" -> "cor:density-split-completely"	[style=dashed];	"lem:tendsto-ratio-one-of-log-pm-bounded"	[color=blue,		fillcolor="#A3D6FF",		label="tendsto-ratio-one-of-log-pm-bounded",		shape=ellipse,		style=filled];	"lem:tendsto-ratio-one-of-log-pm-bounded" -> "lem:prime-ideal-sum-log"	[style=dashed];	"def:frobenius-class" -> "lem:ratiosum-fibres-tendsto-one"	[style=dashed];	"def:frobenius-class" -> "lem:frobenius-class-eq-mk"	[style=dashed];	"def:frobenius-class" -> "lem:artin-euler-product-abelian"	[style=dashed];	"def:frobenius-class" -> "lem:character-orthogonality-ne"	[style=dashed];	"lem:character-orthogonality-eq"	[label="character-orthogonality-eq",		shape=ellipse];	"def:frobenius-class" -> "lem:character-orthogonality-eq"	[style=dashed];	"lem:count-primes-above-frob-sigma"	[label="count-primes-above-frob-sigma",		shape=ellipse];	"def:frobenius-class" -> "lem:count-primes-above-frob-sigma"	[style=dashed];	"lem:character-orthogonality-eq" -> "lem:primesum-fibre-asymp"	[style=dashed];	"lem:count-primes-above-frob-sigma" -> "lem:density-lift-fixedfield"	[style=dashed];	"def:galois-character"	[color=green,		fillcolor="#B0ECA3",		label="galois-character",		shape=box,		style=filled];	"def:galois-character" -> "lem:artin-euler-product-abelian"	[style=dashed];	"def:galois-character" -> "lem:character-orthogonality-ne"	[style=dashed];	"def:galois-character" -> "lem:character-orthogonality-eq"	[style=dashed];	"lem:prime-zeta-higher-tail-bounded"	[color=blue,		label="prime-zeta-higher-tail-bounded",		shape=ellipse];	"lem:logzeta-eq-primesum-bounded"	[label="logzeta-eq-primesum-bounded",		shape=ellipse];	"lem:prime-zeta-higher-tail-bounded" -> "lem:logzeta-eq-primesum-bounded"	[style=dashed];	"lem:logzeta-eq-primesum-bounded" -> "lem:prime-zeta-ge-log-minus-bounded"	[style=dashed];	"lem:prime-zeta-le-log-plus-bounded"	[fillcolor="#9CEC8B",		label="prime-zeta-le-log-plus-bounded",		shape=ellipse,		style=filled];	"lem:logzeta-eq-primesum-bounded" -> "lem:prime-zeta-le-log-plus-bounded"	[style=dashed];	"lem:prime-zeta-le-log-plus-bounded" -> "lem:prime-ideal-sum-log"	[style=dashed];	"lem:riemann-prime-sum-asymp"	[color=blue,		fillcolor="#A3D6FF",		label="riemann-prime-sum-asymp",		shape=ellipse,		style=filled];	"lem:ratio-glue-numerator"	[color=green,		fillcolor="#1CAC78",		label="ratio-glue-numerator",		shape=ellipse,		style=filled];	"lem:ratio-glue-numerator" -> "lem:cyclotomic-density-two-sided"	[style=dashed];	"lem:conjclasses-carrier-card-pos"	[color=green,		fillcolor="#1CAC78",		label="conjclasses-carrier-card-pos",		shape=ellipse,		style=filled];	"lem:conjclasses-carrier-card-pos" -> "cor:infinite-frobenius-class"	[style=dashed];	"lem:cyclic-subgroup-trivial-meet"	[color=blue,		fillcolor="#A3D6FF",		label="cyclic-subgroup-trivial-meet",		shape=ellipse,		style=filled];	"lem:cyclic-subgroup-trivial-meet" -> "lem:density-S-sigma-tau"	[style=dashed];	"lem:conjclasses-mk-one-carrier-card-one"	[color=green,		fillcolor="#1CAC78",		label="conjclasses-mk-one-carrier-card-one",		shape=ellipse,		style=filled];	"lem:conjclasses-mk-one-carrier-card-one" -> "cor:density-split-completely"	[style=dashed];	"lem:conjclasses-carrier-card-one-comm"	[color=green,		fillcolor="#1CAC78",		label="conjclasses-carrier-card-one-comm",		shape=ellipse,		style=filled];	"lem:conjclasses-carrier-card-one-comm" -> "thm:chebotarev-density-comm"	[style=dashed];	"lem:infinite-of-density-pos"	[color=blue,		fillcolor="#A3D6FF",		label="infinite-of-density-pos",		shape=ellipse,		style=filled];	"lem:infinite-of-density-pos" -> "cor:infinite-frobenius-class"	[style=dashed];	"lem:logzeta-eq-loginv-bounded"	[color=blue,		fillcolor="#A3D6FF",		label="logzeta-eq-loginv-bounded",		shape=ellipse,		style=filled];	"lem:logzeta-eq-loginv-bounded" -> "lem:prime-zeta-ge-log-minus-bounded"	[style=dashed];	"lem:logzeta-eq-loginv-bounded" -> "lem:prime-zeta-le-log-plus-bounded"	[style=dashed];	"lem:character-sum-geom-numbers"	[color=blue,		fillcolor="#A3D6FF",		label="character-sum-geom-numbers",		shape=ellipse,		style=filled];	"lem:character-sum-geom-numbers" -> "lem:artin-analytic-extension"	[style=dashed];}`)
+    .on("end", interactive);
+
+latexLabelEscaper = function(label) {
+  return label.replace(/\./g, '\\.').replace(/:/g, '\\:')
+}
+
+clickNode = function() {
+  $("#statements div").hide()
+  var node_id = $('text', this).text();
+  $('.thm').hide();
+  $('#'+latexLabelEscaper(node_id)).show().children().show();
+}
+function interactive() {
+    $("span#legend_title").on("click", function () {
+           $(this).siblings('dl').toggle();
+        })
+
+    d3.selectAll('.node')
+        .attr('pointer-events', 'fill')
+        .on('click', function () {
+           var title = d3.select(this).selectAll('title').text().trim();
+           $('#statements > div').hide()
+           $('.thm').hide();
+           $('#'+latexLabelEscaper(title)+'_modal').show().children().show().children().show();
+           $('#statements').show()
+        });
+
+    d3.selectAll('.dep-closebtn').on('click', function() {
+        var modal =
+            d3.select(this).node().parentNode.parentNode.parentNode ;
+        d3.select(modal).style('display', 'none');
+    });
+}
+
+</script>
+
+</body>
+</html>

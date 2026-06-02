@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chebotarev density theorem: Decomposition group, inertia, Frobenius</title>
+<link rel="next" href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions" />
+<link rel="prev" href="ch-frobenius.html" title="Decomposition, inertia, Frobenius" />
+<link rel="up" href="ch-frobenius.html" title="Decomposition, inertia, Frobenius" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Chebotarev density theorem</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="ch-density.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density of a set of prime ideals</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0001.html#a0000000022"><span class="toc_ref"></span> <span class="toc_entry">Density API</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li class=" active">
+  <a href="ch-frobenius.html"><span class="toc_ref">2</span> <span class="toc_entry">Decomposition, inertia, Frobenius</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class=" active current">
+  <a href="sect0002.html"><span class="toc_ref">1</span> <span class="toc_entry">Decomposition group, inertia, Frobenius</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-zeta-product.html"><span class="toc_ref">3</span> <span class="toc_entry">Zeta factorisation for abelian extensions</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0003.html"><span class="toc_ref">1</span> <span class="toc_entry">Zeta factorisation for an abelian extension</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-cyclotomic.html"><span class="toc_ref">4</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0004.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-abelian.html"><span class="toc_ref">5</span> <span class="toc_entry">Chebotarev: abelian case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0005.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: abelian case via cyclotomic crossing</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-main.html"><span class="toc_ref">6</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0006.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0006.html#a0000000025"><span class="toc_ref"></span> <span class="toc_entry">Corollaries</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000003">1 Decomposition group, inertia, Frobenius</h1>
+<p>Let \(L/K\) be a finite Galois extension of number fields with \(G=\mathrm{Gal}(L/K)\). The Galois group acts on ideals of \(\mathcal{O}_L\) (via the canonical \(G\)-action restricted to \(\mathcal{O}_L\) and extended multiplicatively), and in particular permutes the primes lying above a given prime \(\mathfrak {p}\) of \(\mathcal{O}_K\). </p>
+<div class="definition_thmwrapper theorem-style-plain" id="def:unramified-in">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.1</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#def:unramified-in">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.UnramifiedIn" class="lean_decl">Chebotarev.UnramifiedIn</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  A nonzero prime ideal \(\mathfrak {p}\) of \(\mathcal{O}_K\) is <em>unramified in \(L\)</em> if every prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) lying over \(\mathfrak {p}\) has ramification index \(1\), i.e. \(\mathfrak {p}\mathcal{O}_L\) factors into distinct primes. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-plain" id="def:decomposition-group">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.2</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#def:decomposition-group">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.decompositionGroup" class="lean_decl">Chebotarev.decompositionGroup</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  For a prime \(\mathfrak {P}\) of \(\mathcal{O}_L\), the <em>decomposition group</em> at \(\mathfrak {P}\) is </p>
+<div class="displaymath" id="a0000000026">
+  \[  D_\mathfrak {P}\; =\;  \left\{  \sigma \in G : \sigma (\mathfrak {P})=\mathfrak {P} \right\}  \; =\;  \mathrm{Stab}_G(\mathfrak {P}).  \]
+</div>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-plain" id="def:inertia-group">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.3</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#def:inertia-group">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:decomposition-group">Definition 1.2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.inertiaGroup" class="lean_decl">Chebotarev.inertiaGroup</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>inertia group</em> at \(\mathfrak {P}\) is </p>
+<div class="displaymath" id="a0000000027">
+  \[  I_\mathfrak {P}\; =\;  \left\{  \sigma \in G \; \middle |\;  \forall x\in \mathcal{O}_L,\; \sigma (x)\equiv x\pmod\mathfrak {P} \right\} .  \]
+</div>
+<p> This is the generic ideal-inertia subgroup <span class="ttfamily">Ideal.inertia</span> from mathlib, instantiated at the natural action of \(G\) on \(\mathcal{O}_L\); acting trivially mod&#160;\(\mathfrak {P}\) forces stabilising \(\mathfrak {P}\), so \(I_\mathfrak {P}\) sits inside \(D_\mathfrak {P}\), and is the kernel of the action of \(D_\mathfrak {P}\) on the residue field \(\mathcal{O}_L/\mathfrak {P}\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:inertia-trivial-unramified">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.4</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#lem:inertia-trivial-unramified">#</a>
+    
+    <a class="icon proof" href="sect0002.html#a0000000028"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:inertia-group">Definition 1.3</a></li>
+          
+          <li><a href="sect0002.html#def:unramified-in">Definition 1.1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.inertiaGroup_trivial_of_unramified" class="lean_decl">Chebotarev.inertiaGroup_trivial_of_unramified</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   If \(\mathfrak {P}\) is unramified over \(\mathfrak {p}=\mathfrak {P}\cap \mathcal{O}_K\), then \(I_\mathfrak {P}=\{ 1\} \). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000028">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Mathlib’s <span class="ttfamily">Ideal.ramificationIdx_eq_one_of_isUnramifiedAt</span> gives the forward equivalence between unramifiedness and ramification index \(1\); combined with \(\left\lvert I_\mathfrak {P} \right\rvert =e(\mathfrak {P}\mid \mathfrak {p})\) this yields the claim. </p>
+
+  </div>
+</div>
+<p>When \(\mathfrak {P}\) is unramified, the surjection \(D_\mathfrak {P}\to \mathrm{Gal}((\mathcal{O}_L/\mathfrak {P})/(\mathcal{O}_K/\mathfrak {p}))\) (mathlib’s <span class="ttfamily">IsFractionRing.stabilizerHom_surjective</span>) has trivial kernel <a href="sect0002.html#lem:inertia-trivial-unramified">lemma 1.4</a>, so it is an isomorphism. The residue Galois group of a finite-field extension is canonically cyclic, generated by the absolute Frobenius \(x\mapsto x^{N\mathfrak {p}}\) (mathlib’s <span class="ttfamily">FiniteField.frobeniusAlgEquivOfAlgebraic</span>). Hence \(D_\mathfrak {P}\) has a distinguished element. </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:exists-unique-frobenius-inertia-trivial">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.5</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#lem:exists-unique-frobenius-inertia-trivial">#</a>
+    
+    <a class="icon proof" href="sect0002.html#a0000000029"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:decomposition-group">Definition 1.2</a></li>
+          
+          <li><a href="sect0002.html#def:inertia-group">Definition 1.3</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_unique_frobeniusAt_of_inertia_trivial" class="lean_decl">Chebotarev.exists_unique_frobeniusAt_of_inertia_trivial</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(\mathfrak {P}\) be a nonzero prime of \(\mathcal{O}_L\) with trivial inertia group \(I_\mathfrak {P}= \{ 1\} \). There is a unique \(\sigma \in D_\mathfrak {P}\) such that \(\sigma (x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\) for every \(x\in \mathcal{O}_L\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000029">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>With \(I_\mathfrak {P}\) trivial, the surjection \(D_\mathfrak {P}\to \mathrm{Gal}(\kappa (\mathfrak {P})/\kappa (\mathfrak {p}))\) is an isomorphism, and the residue Galois group is cyclic with distinguished generator the absolute Frobenius; pull it back. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:exists-unique-frobenius">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">1.6</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#thm:exists-unique-frobenius">#</a>
+    
+    <a class="icon proof" href="sect0002.html#a0000000030"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#lem:inertia-trivial-unramified">Lemma 1.4</a></li>
+          
+          <li><a href="sect0002.html#lem:exists-unique-frobenius-inertia-trivial">Lemma 1.5</a></li>
+          
+          <li><a href="sect0002.html#lem:inertia-trivial-unramified">Lemma 1.4</a></li>
+          
+          <li><a href="sect0002.html#lem:exists-unique-frobenius-inertia-trivial">Lemma 1.5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_unique_frobeniusAt" class="lean_decl">Chebotarev.exists_unique_frobeniusAt</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(\mathfrak {P}\) be a nonzero prime of \(\mathcal{O}_L\) lying over the unramified \(\mathfrak {p}\). There is a unique \(\sigma \in D_\mathfrak {P}\) such that </p>
+<div class="displaymath" id="a0000000031">
+  \[  \sigma (x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\qquad \text{for every }x\in \mathcal{O}_L.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000030">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Unramifiedness gives \(I_\mathfrak {P}= \{ 1\} \) (<a href="sect0002.html#lem:inertia-trivial-unramified">lemma 1.4</a>); apply <a href="sect0002.html#lem:exists-unique-frobenius-inertia-trivial">lemma 1.5</a>. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-plain" id="def:frobenius-at">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.7</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#def:frobenius-at">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#thm:exists-unique-frobenius">Theorem 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusAt" class="lean_decl">Chebotarev.frobeniusAt</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For an unramified nonzero prime \(\mathfrak {P}\) of \(\mathcal{O}_L\), the <em>Frobenius automorphism</em> \(\mathrm{Frob}_\mathfrak {P}\in G\) is the unique element of \(D_\mathfrak {P}\) characterised by \(\mathrm{Frob}_\mathfrak {P}(x)\equiv x^{N\mathfrak {p}}\pmod\mathfrak {P}\) for all \(x\in \mathcal{O}_L\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-plain" id="def:frobenius-class">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.8</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#def:frobenius-class">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:frobenius-at">Definition 1.7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusClass" class="lean_decl">Chebotarev.frobeniusClass</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), the <em>Frobenius conjugacy class</em> is </p>
+<div class="displaymath" id="a0000000032">
+  \[  \sigma _\mathfrak {p}\; =\;  \left\{  \mathrm{Frob}_\mathfrak {P}: \mathfrak {P}\mid \mathfrak {p} \right\}  \; \in \;  \mathrm{Conj}(G),  \]
+</div>
+<p> the conjugacy class in \(G\) containing \(\mathrm{Frob}_\mathfrak {P}\) for any (equivalently every) prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\). The class is independent of the choice of \(\mathfrak {P}\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:exists-frobenius-class">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.9</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#lem:exists-frobenius-class">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:frobenius-at">Definition 1.7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.exists_frobeniusClass" class="lean_decl">Chebotarev.exists_frobeniusClass</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), there exists a conjugacy class \(C \subseteq \mathrm{Gal}(L/K)\) such that for every prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\), \(C = [\mathrm{Frob}_\mathfrak {P}]\). (Equivalently, the Frobenius elements above \(\mathfrak {p}\) are all conjugate.) </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:frobenius-class-eq-mk">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.10</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#lem:frobenius-class-eq-mk">#</a>
+    
+    <a class="icon proof" href="sect0002.html#a0000000033"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-at">Definition 1.7</a></li>
+          
+          <li><a href="sect0002.html#lem:exists-frobenius-class">Lemma 1.9</a></li>
+          
+          <li><a href="sect0002.html#lem:exists-frobenius-class">Lemma 1.9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.frobeniusClass_eq_mk_frobeniusAt" class="lean_decl">Chebotarev.frobeniusClass_eq_mk_frobeniusAt</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For a nonzero prime \(\mathfrak {p}\) of \(\mathcal{O}_K\) unramified in \(L\), and any prime \(\mathfrak {P}\) of \(\mathcal{O}_L\) above \(\mathfrak {p}\), </p>
+<div class="displaymath" id="a0000000034">
+  \[  \sigma _\mathfrak {p}\; =\;  [\mathrm{Frob}_\mathfrak {P}].  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000033">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Unfold \(\sigma _\mathfrak {p}\) at the unramified positive case to expose the \(\mathrm{choose}\) from <a href="sect0002.html#lem:exists-frobenius-class">lemma 1.9</a>; the witness property of \(\mathrm{choose\_ spec}\) at \(\mathfrak {P}\) closes the goal. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:finite-ramified-primes">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.11</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0002.html#lem:finite-ramified-primes">#</a>
+    
+    <a class="icon proof" href="sect0002.html#a0000000035"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:unramified-in">Definition 1.1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.finite_ramifiedIn" class="lean_decl">Chebotarev.finite_ramifiedIn</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Only finitely many nonzero primes of \(\mathcal{O}_K\) ramify in \(L\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000035">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>The primes ramifying in \(L\) are exactly the divisors of the relative different ideal \(\mathfrak {d}_{L/K}\subseteq \mathcal{O}_L\), which has a finite prime factorisation in the Dedekind domain \(\mathcal{O}_L\). </p>
+
+  </div>
+</div>
+<p><br /></p>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="ch-frobenius.html" title="Decomposition, inertia, Frobenius"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="ch-frobenius.html" title="Decomposition, inertia, Frobenius"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="ch-zeta-product.html" title="Zeta factorisation for abelian extensions"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+% Common macros for the Chebotarev density blueprint.
+
+% THEOREMS
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{hypothesis}[theorem]{Hypothesis}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{remark}[theorem]{Remark}
+
+% NUMBER SYSTEMS
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\F}{\mathbb{F}}
+
+% NUMBER-THEORETIC OBJECTS
+\newcommand{\OK}{\mathcal{O}_K}                  % Ring of integers of K
+\newcommand{\Ocirc}{\mathcal{O}}                 % Generic ring of integers
+\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}            % Galois group
+\newcommand{\Norm}[1]{\mathrm{N}(#1)}             % Field norm
+\newcommand{\fp}{\mathfrak{p}}                   % Prime ideal of O_K
+\newcommand{\fP}{\mathfrak{P}}                   % Prime ideal of O_L
+\newcommand{\Frob}{\mathrm{Frob}}                % Frobenius automorphism
+\renewcommand{\Re}{\operatorname{Re}}            % Real part
+\newcommand{\re}{\operatorname{Re}}              % Real part (lowercase alias)
+
+% DELIMITERS
+\newcommand{\set}[1]{\left\{ #1 \right\}}
+\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\ang}[1]{\left\langle #1 \right\rangle}
+
+% MISC
+\newcommand{\todo}[1]{{\color{red}{\textbf{TODO: #1}}}}

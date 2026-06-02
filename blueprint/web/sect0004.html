@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chebotarev density theorem: Chebotarev: cyclotomic case</title>
+<link rel="next" href="ch-abelian.html" title="Chebotarev: abelian case" />
+<link rel="prev" href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case" />
+<link rel="up" href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Chebotarev density theorem</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="ch-density.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density of a set of prime ideals</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0001.html#a0000000022"><span class="toc_ref"></span> <span class="toc_entry">Density API</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-frobenius.html"><span class="toc_ref">2</span> <span class="toc_entry">Decomposition, inertia, Frobenius</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0002.html"><span class="toc_ref">1</span> <span class="toc_entry">Decomposition group, inertia, Frobenius</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-zeta-product.html"><span class="toc_ref">3</span> <span class="toc_entry">Zeta factorisation for abelian extensions</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0003.html"><span class="toc_ref">1</span> <span class="toc_entry">Zeta factorisation for an abelian extension</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class=" active">
+  <a href="ch-cyclotomic.html"><span class="toc_ref">4</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class=" active current">
+  <a href="sect0004.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-abelian.html"><span class="toc_ref">5</span> <span class="toc_entry">Chebotarev: abelian case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0005.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: abelian case via cyclotomic crossing</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-main.html"><span class="toc_ref">6</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0006.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0006.html#a0000000025"><span class="toc_ref"></span> <span class="toc_entry">Corollaries</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000005">1 Chebotarev: cyclotomic case</h1>
+<p>For a cyclotomic extension \(L = K(\zeta _m)\), Chebotarev’s theorem reduces directly to Dirichlet’s argument. Source: Sharifi 7.2.1 (pp.&#160;142–143). </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:cyclotomic-frobenius-norm-power">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.1</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:cyclotomic-frobenius-norm-power">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000045"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:frobenius-at">Definition 1.7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclotomic_frobenius_acts_as_norm_power" class="lean_decl">Chebotarev.cyclotomic_frobenius_acts_as_norm_power</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L = K(\zeta _m)\), \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\), and \(\mathfrak {P}\) a prime of \(\mathcal{O}_L\) above \(\mathfrak {p}\). Then for every primitive \(m\)-th root of unity \(\zeta \in L\), </p>
+<div class="displaymath" id="a0000000046">
+  \[  \mathrm{Frob}_\mathfrak {P}(\zeta ) \; =\;  \zeta ^{N\mathfrak {p}}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000045">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>By the defining property of \(\mathrm{Frob}_\mathfrak {P}\) (acts as \(N\mathfrak {p}\)-power on \(\mathcal{O}_L/\mathfrak {P}\)) combined with the fact that \(\zeta _m\) lifts isomorphically from the residue field for \(\mathfrak {p}\nmid m\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:log-artin-asymp-character-sum">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.2</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:log-artin-asymp-character-sum">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000047"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#thm:dedekind-zeta-factorisation">Theorem 1.7</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.log_artinLSeries_asymp_character_sum" class="lean_decl">Chebotarev.log_artinLSeries_asymp_character_sum</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For every character \(\chi \) of \(G\), the partial sum \(\sum _\mathfrak {p}\chi (\mathrm{Frob}_\mathfrak {p}) N\mathfrak {p}^{-s}\) over \(\mathfrak {p}\) unramified in \(L\) is bounded by \(C\log (1/(s-1)) + C\) for some constant \(C\), in a right neighbourhood of \(s = 1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000047">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Expand \(\log L(\chi , s)\) via the Euler product <a href="sect0003.html#lem:artin-euler-product-abelian">lemma 1.2</a>; the higher-power tail is bounded analogously to <a href="sect0001.html#lem:prime-zeta-higher-tail-bounded">lemma 1.2</a>. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:character-orthogonality-eq">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.3</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:character-orthogonality-eq">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#def:galois-character">Definition 1.1</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_orthogonality_cyclotomic_eq" class="lean_decl">Chebotarev.character_orthogonality_cyclotomic_eq</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L = K(\zeta _m)\), \(\sigma \in G\), and \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\) with \(\sigma _\mathfrak {p}\) the conjugacy class of \(\sigma \). Then </p>
+<div class="displaymath" id="a0000000048">
+  \[  \sum _{\chi \in \widehat G} \chi (\sigma )\chi (\mathrm{Frob}_\mathfrak {p})^{-1} \; =\;  \left\lvert G \right\rvert .  \]
+</div>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:character-orthogonality-ne">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.4</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:character-orthogonality-ne">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000049"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0003.html#def:galois-character">Definition 1.1</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.character_orthogonality_cyclotomic_ne" class="lean_decl">Chebotarev.character_orthogonality_cyclotomic_ne</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L = K(\zeta _m)\), \(\sigma \in G\), and \(\mathfrak {p}\) a nonzero prime of \(\mathcal{O}_K\) unramified in \(L\) whose Frobenius class is not the conjugacy class of \(\sigma \). Then </p>
+<div class="displaymath" id="a0000000050">
+  \[  \sum _{\chi \in \widehat G} \chi (\sigma )\chi (\mathrm{Frob}_\mathfrak {p})^{-1} \; =\;  0.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000049">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Standard finite-group character orthogonality for the dual of \(G\) (Sharifi 7.2.1 step at p.&#160;142). Under the isomorphism \(G\cong (\mathbb {Z}/m\mathbb {Z})^\times \) from <a href="sect0004.html#lem:cyclotomic-frobenius-norm-power">lemma 1.1</a>, \(\chi (\mathrm{Frob}_\mathfrak {p})\) depends only on \(N\mathfrak {p}\bmod m\), and the sum reduces to the orthogonality relation on the cyclic group \((\mathbb {Z}/m\mathbb {Z})^\times \). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:primesum-fibre-asymp">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.5</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:primesum-fibre-asymp">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000051"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0004.html#lem:log-artin-asymp-character-sum">Lemma 1.2</a></li>
+          
+          <li><a href="sect0004.html#lem:character-orthogonality-eq">Lemma 1.3</a></li>
+          
+          <li><a href="sect0004.html#lem:character-orthogonality-ne">Lemma 1.4</a></li>
+          
+          <li><a href="sect0003.html#lem:artin-one-ne-zero">Lemma 1.6</a></li>
+          
+          <li><a href="sect0004.html#lem:character-orthogonality-eq">Lemma 1.3</a></li>
+          
+          <li><a href="sect0004.html#lem:character-orthogonality-ne">Lemma 1.4</a></li>
+          
+          <li><a href="sect0003.html#lem:artin-one-ne-zero">Lemma 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp" class="lean_decl">Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L = K(\zeta _m)\) and \(\sigma \in G\). The Frobenius-fibre prime sum is asymptotic to \((1/\left\lvert G \right\rvert )\log (1/(s-1))\): </p>
+<div class="displaymath" id="a0000000052">
+  \[  \lim _{s\downarrow 1} \frac{\sum _{\mathfrak {p}:\, \sigma _\mathfrak {p}= \sigma } N\mathfrak {p}^{-s}}{\log (1/(s-1))} \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000051">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Multiply \(\log L(\chi , s)\) by \(\chi (\sigma )^{-1}\) and sum over \(\chi \): the orthogonality relations (??) pick out the primes with Frobenius \(\sigma \), giving \(\sum _\chi \chi (\sigma )^{-1}\log L(\chi , s) \sim \left\lvert G \right\rvert \sum _{\sigma _\mathfrak {p}=\sigma } N\mathfrak {p}^{-s}\); on the other hand it \(\sim \log \zeta _K(s) \sim \log (1/(s-1))\) (only \(\chi =1\) contributes a pole, by <a href="sect0003.html#lem:artin-one-ne-zero">lemma 1.6</a>). Divide. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:ratio-glue-numerator">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.6</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:ratio-glue-numerator">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000053"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_ratio_of_log_asymp_numerator" class="lean_decl">Chebotarev.tendsto_ratio_of_log_asymp_numerator</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  If \(\mathrm{num}(s)/\log (1/(s-1)) \to c\) and \(\mathrm{den}(s)/\log (1/(s-1)) \to 1\) as \(s\downarrow 1\), then \(\mathrm{num}(s)/\mathrm{den}(s) \to c\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000053">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Write \(\mathrm{num}/\mathrm{den} = (\mathrm{num}/L)/(\mathrm{den}/L)\) with \(L = \log (1/(s-1))\), which is positive (hence nonzero) for \(s\in (1,2)\) since \(1/(s-1) {\gt} 1\); apply the quotient rule for limits and cancel \(L\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:cyclotomic-density-two-sided">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.7</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#lem:cyclotomic-density-two-sided">#</a>
+    
+    <a class="icon proof" href="sect0004.html#a0000000054"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0004.html#lem:primesum-fibre-asymp">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-ideal-sum-log">Lemma 1.10</a></li>
+          
+          <li><a href="sect0004.html#lem:ratio-glue-numerator">Lemma 1.6</a></li>
+          
+          <li><a href="sect0004.html#lem:primesum-fibre-asymp">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-ideal-sum-log">Lemma 1.10</a></li>
+          
+          <li><a href="sect0004.html#lem:ratio-glue-numerator">Lemma 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclotomic_density_from_two_sided_asymp" class="lean_decl">Chebotarev.cyclotomic_density_from_two_sided_asymp</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L = K(\zeta _m)\) and \(\sigma \in G\). Then </p>
+<div class="displaymath" id="a0000000055">
+  \[  \lim _{s\downarrow 1} \frac{\sum _{\mathfrak {p}:\, \sigma _\mathfrak {p}= \sigma } N\mathfrak {p}^{-s}}{\sum _\mathfrak {p}N\mathfrak {p}^{-s}} \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000054">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The numerator asymptotic <a href="sect0004.html#lem:primesum-fibre-asymp">lemma 1.5</a> (\(\mathrm{num}\sim (1/\left\lvert G \right\rvert )\log (1/(s-1))\)) and the denominator asymptotic <a href="sect0001.html#lem:prime-ideal-sum-log">lemma 1.10</a> (\(\mathrm{den}\sim \log (1/(s-1))\)) feed the ratio glue <a href="sect0004.html#lem:ratio-glue-numerator">lemma 1.6</a>. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:chebotarev-cyclotomic">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">1.8</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0004.html#thm:chebotarev-cyclotomic">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:dirichlet-density">Definition 1.1</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+          <li><a href="sect0004.html#lem:cyclotomic-density-two-sided">Lemma 1.7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_cyclotomic" class="lean_decl">Chebotarev.chebotarev_cyclotomic</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   For \(K\) a number field, \(m\ge 1\), \(L=K(\zeta _m)\), and every \(\sigma \in G = \mathrm{Gal}(L/K)\), </p>
+<div class="displaymath" id="a0000000056">
+  \[  \delta \bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+
+  </div>
+</div>
+<p><br /></p>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="ch-cyclotomic.html" title="Chebotarev: cyclotomic case"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="ch-abelian.html" title="Chebotarev: abelian case"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

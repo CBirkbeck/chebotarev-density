@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chebotarev density theorem: Dirichlet density of a set of prime ideals</title>
+<link rel="next" href="ch-frobenius.html" title="Decomposition, inertia, Frobenius" />
+<link rel="prev" href="ch-density.html" title="Dirichlet density" />
+<link rel="up" href="ch-density.html" title="Dirichlet density" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Chebotarev density theorem</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class=" active">
+  <a href="ch-density.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class=" active current">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density of a set of prime ideals</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-2 active">
+     <li class="">
+  <a href="sect0001.html#a0000000022"><span class="toc_ref"></span> <span class="toc_entry">Density API</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-frobenius.html"><span class="toc_ref">2</span> <span class="toc_entry">Decomposition, inertia, Frobenius</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0002.html"><span class="toc_ref">1</span> <span class="toc_entry">Decomposition group, inertia, Frobenius</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-zeta-product.html"><span class="toc_ref">3</span> <span class="toc_entry">Zeta factorisation for abelian extensions</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0003.html"><span class="toc_ref">1</span> <span class="toc_entry">Zeta factorisation for an abelian extension</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-cyclotomic.html"><span class="toc_ref">4</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0004.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-abelian.html"><span class="toc_ref">5</span> <span class="toc_entry">Chebotarev: abelian case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0005.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: abelian case via cyclotomic crossing</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-main.html"><span class="toc_ref">6</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0006.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0006.html#a0000000025"><span class="toc_ref"></span> <span class="toc_entry">Corollaries</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000002">1 Dirichlet density of a set of prime ideals</h1>
+<p>Throughout, \(K\) denotes a number field, \(\mathcal{O}_K\) its ring of integers, and \(\mathfrak {p}\) ranges over nonzero prime ideals of \(\mathcal{O}_K\) with absolute norm \(N\mathfrak {p}=[\mathcal{O}_K:\mathfrak {p}]\). </p>
+<div class="definition_thmwrapper theorem-style-plain" id="def:dirichlet-density">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1.1</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#def:dirichlet-density">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.HasDirichletDensity" class="lean_decl">Chebotarev.HasDirichletDensity</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  A set \(S\) of nonzero prime ideals of \(\mathcal{O}_K\) has <em>Dirichlet density</em> \(\delta \in \mathbb {R}\), written \(\delta (S)=\delta \), if </p>
+<div class="displaymath" id="a0000000008">
+  \[  \lim _{s\to 1^+} \frac{\displaystyle \sum _{\mathfrak {p}\in S} N\mathfrak {p}^{-s}}{\displaystyle \sum _{\mathfrak {p}} N\mathfrak {p}^{-s}} = \delta ,  \]
+</div>
+<p> where the denominator sum runs over all nonzero prime ideals of \(\mathcal{O}_K\). </p>
+
+  </div>
+</div>
+<p>The denominator is asymptotically \(\log \bigl(1/(s-1)\bigr)\) as \(s\downarrow 1\) (Sharifi Prop.&#160;7.1.12, p.&#160;140); the lemmas below break out the analytic ingredients. </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prime-zeta-higher-tail-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.2</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prime-zeta-higher-tail-bounded">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaHigherTail_bounded" class="lean_decl">Chebotarev.primeIdealZetaHigherTail_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  The higher-power tail of the log-Euler-product \(\sum _{\mathfrak {p},k\ge 2}\frac{N\mathfrak {p}^{-2s}}{1-N\mathfrak {p}^{-s}}\) is bounded on a right neighbourhood of \(s=1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prime-zeta-le-finrank-riemann">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.3</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prime-zeta-le-finrank-riemann">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000009"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:dirichlet-density">Definition 1.1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_le_finrank_smul_riemannPrimeSum" class="lean_decl">Chebotarev.primeIdealZetaSum_le_finrank_smul_riemannPrimeSum</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000010">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \le \;  [K:\mathbb {Q}]\sum _{p\text{ rational prime}} p^{-s}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000009">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>At most \([K:\mathbb {Q}]\) primes of \(\mathcal{O}_K\) lie above any rational prime \(p\) (the identity \(\sum _{\mathfrak {p}\mid p}e(\mathfrak {p}\mid p)f(\mathfrak {p}\mid p)=[K:\mathbb {Q}]\) in mathlib’s <span class="ttfamily">Ideal.sum_ramification_inertia</span>), and the norm of such a prime is at least \(p\), so the bound follows by absolute convergence on \(\operatorname {Re}(s){\gt}1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:riemann-prime-sum-asymp">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.4</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:riemann-prime-sum-asymp">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000011"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.riemannPrimeSum_asymp_log" class="lean_decl">Chebotarev.riemannPrimeSum_asymp_log</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  As \(s\downarrow 1\), </p>
+<div class="displaymath" id="a0000000012">
+  \[  \sum _{p\text{ rational prime}} p^{-s} \sim \log \frac{1}{s-1}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000011">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>The case \(K=\mathbb {Q}\) of <a href="sect0001.html#lem:prime-ideal-sum-log">lemma 1.10</a> below: combine the Euler product \(\zeta (s)=\prod _p(1-p^{-s})^{-1}\) with the simple pole of \(\zeta \) at \(s=1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:logzeta-eq-primesum-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.5</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:logzeta-eq-primesum-bounded">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000013"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#lem:prime-zeta-higher-tail-bounded">Lemma 1.2</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-zeta-higher-tail-bounded">Lemma 1.2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded" class="lean_decl">Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Euler-product-log identity: \(\bigl|\log \zeta _K(s) - \sum _\mathfrak {p}N\mathfrak {p}^{-s}\bigr| \le C\) on a right neighbourhood of \(1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000013">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> \(\log \zeta _K(s) = \sum _\mathfrak {p}N\mathfrak {p}^{-s} + \sum _{\mathfrak {p},k\ge 2} N\mathfrak {p}^{-ks}/k\); the tail is bounded by <a href="sect0001.html#lem:prime-zeta-higher-tail-bounded">lemma 1.2</a>. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:logzeta-eq-loginv-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.6</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:logzeta-eq-loginv-bounded">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000014"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded" class="lean_decl">Chebotarev.logDedekindZeta_sub_log_inv_sub_one_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Simple-pole identity: \(\bigl|\log \zeta _K(s) - \log (1/(s-1))\bigr| \le C\) on a right neighbourhood of \(1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000014">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>From the simple pole of \(\zeta _K\) at \(s=1\) (mathlib’s <span class="ttfamily">NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT</span>). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prime-zeta-ge-log-minus-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.7</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prime-zeta-ge-log-minus-bounded">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-primesum-bounded">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-loginv-bounded">Lemma 1.6</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-primesum-bounded">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-loginv-bounded">Lemma 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_ge_log_minus_bounded" class="lean_decl">Chebotarev.primeIdealZetaSum_ge_log_minus_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   There is a constant \(C\) such that, for \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000016">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \ge \;  \log \frac{1}{s-1} - C.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000015">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Chain the two identities ??: \(\sum _\mathfrak {p}N\mathfrak {p}^{-s} \ge \log \zeta _K(s) - C_1 \ge \log (1/(s-1)) - C_1 - C_2\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prime-zeta-le-log-plus-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.8</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prime-zeta-le-log-plus-bounded">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-primesum-bounded">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-loginv-bounded">Lemma 1.6</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-primesum-bounded">Lemma 1.5</a></li>
+          
+          <li><a href="sect0001.html#lem:logzeta-eq-loginv-bounded">Lemma 1.6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_le_log_plus_bounded" class="lean_decl">Chebotarev.primeIdealZetaSum_le_log_plus_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   There is a constant \(C'\) such that, for \(s{\gt}1\) in a right neighbourhood of \(1\), </p>
+<div class="displaymath" id="a0000000018">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \; \le \;  \log \frac{1}{s-1} + C'.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000017">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Same two identities ??, transposed. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:tendsto-ratio-one-of-log-pm-bounded">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.9</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:tendsto-ratio-one-of-log-pm-bounded">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_ratio_one_of_log_pm_bounded" class="lean_decl">Chebotarev.tendsto_ratio_one_of_log_pm_bounded</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Let \(f : (1,\infty ) \to \mathbb {R}\). If \(f\) is sandwiched as \(\log \bigl(1/(s-1)\bigr) - C \le f(s) \le \log \bigl(1/(s-1)\bigr) + C'\) on a right neighbourhood of \(1\), then \(f(s)/\log \bigl(1/(s-1)\bigr) \to 1\) as \(s \downarrow 1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000019">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Since \(\log \bigl(1/(s-1)\bigr) \to \infty \) as \(s \downarrow 1\), the additive constants \(C, C'\) wash out under division, and the squeeze gives the limit \(1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:prime-ideal-sum-log">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.10</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:prime-ideal-sum-log">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000020"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#lem:prime-zeta-ge-log-minus-bounded">Lemma 1.7</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-zeta-le-log-plus-bounded">Lemma 1.8</a></li>
+          
+          <li><a href="sect0001.html#lem:tendsto-ratio-one-of-log-pm-bounded">Lemma 1.9</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-zeta-ge-log-minus-bounded">Lemma 1.7</a></li>
+          
+          <li><a href="sect0001.html#lem:prime-zeta-le-log-plus-bounded">Lemma 1.8</a></li>
+          
+          <li><a href="sect0001.html#lem:tendsto-ratio-one-of-log-pm-bounded">Lemma 1.9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.primeIdealZetaSum_univ_tendsto_log" class="lean_decl">Chebotarev.primeIdealZetaSum_univ_tendsto_log</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   As \(s\downarrow 1\), </p>
+<div class="displaymath" id="a0000000021">
+  \[  \sum _{\mathfrak {p}} N\mathfrak {p}^{-s} \sim \log \frac{1}{s-1}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000020">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Combine the lower bound <a href="sect0001.html#lem:prime-zeta-ge-log-minus-bounded">lemma 1.7</a> and the upper bound <a href="sect0001.html#lem:prime-zeta-le-log-plus-bounded">lemma 1.8</a> into a two-sided \(\log \bigl(1/(s-1)\bigr) \pm O(1)\) sandwich, then apply <a href="sect0001.html#lem:tendsto-ratio-one-of-log-pm-bounded">lemma 1.9</a> to extract the ratio limit. </p>
+
+  </div>
+</div>
+<h2 id="a0000000022">Density API</h2>
+<p>The following routine API lemmas are used by the proofs of the corollaries in <a href="ch-main.html">chapter 6</a>. </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:has-density-finite">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.11</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:has-density-finite">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000023"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:dirichlet-density">Definition 1.1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.hasDirichletDensity_of_finite" class="lean_decl">Chebotarev.hasDirichletDensity_of_finite</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   A finite set of prime ideals has Dirichlet density \(0\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000023">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>The numerator \(\sum _{\mathfrak {p}\in S}\mathrm{N}(\mathfrak {p})^{-s}\) is bounded as \(s \to 1^+\) (a finite sum of bounded terms), while the denominator \(\sum _\mathfrak {p}\mathrm{N}(\mathfrak {p})^{-s}\to \infty \) by <a href="sect0001.html#lem:prime-ideal-sum-log">lemma 1.10</a>; the ratio tends to \(0\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:density-implies-lower">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.12</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0001.html#lem:density-implies-lower">#</a>
+    
+    <a class="icon proof" href="sect0001.html#a0000000024"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:dirichlet-density">Definition 1.1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.HasDirichletDensity.hasLower" class="lean_decl">Chebotarev.HasDirichletDensity.hasLower</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   If \(S\) has Dirichlet density \(\delta \), then its lower Dirichlet density is also \(\delta \). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000024">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Convergence of the ratio implies the liminf and limsup coincide with the limit; specifically the liminf equals \(\delta \). </p>
+
+  </div>
+</div>
+<p><br /></p>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="ch-density.html" title="Dirichlet density"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="ch-density.html" title="Dirichlet density"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="ch-frobenius.html" title="Decomposition, inertia, Frobenius"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

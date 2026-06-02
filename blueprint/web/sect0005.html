@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chebotarev density theorem: Chebotarev: abelian case via cyclotomic crossing</title>
+<link rel="next" href="ch-main.html" title="Chebotarev density theorem" />
+<link rel="prev" href="ch-abelian.html" title="Chebotarev: abelian case" />
+<link rel="up" href="ch-abelian.html" title="Chebotarev: abelian case" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Chebotarev density theorem</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="ch-density.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0001.html"><span class="toc_ref">1</span> <span class="toc_entry">Dirichlet density of a set of prime ideals</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0001.html#a0000000022"><span class="toc_ref"></span> <span class="toc_entry">Density API</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-frobenius.html"><span class="toc_ref">2</span> <span class="toc_entry">Decomposition, inertia, Frobenius</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0002.html"><span class="toc_ref">1</span> <span class="toc_entry">Decomposition group, inertia, Frobenius</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-zeta-product.html"><span class="toc_ref">3</span> <span class="toc_entry">Zeta factorisation for abelian extensions</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0003.html"><span class="toc_ref">1</span> <span class="toc_entry">Zeta factorisation for an abelian extension</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-cyclotomic.html"><span class="toc_ref">4</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0004.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: cyclotomic case</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class=" active">
+  <a href="ch-abelian.html"><span class="toc_ref">5</span> <span class="toc_entry">Chebotarev: abelian case</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class=" active current">
+  <a href="sect0005.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev: abelian case via cyclotomic crossing</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li class="">
+  <a href="ch-main.html"><span class="toc_ref">6</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="sect0006.html"><span class="toc_ref">1</span> <span class="toc_entry">Chebotarev density theorem</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-2">
+     <li class="">
+  <a href="sect0006.html#a0000000025"><span class="toc_ref"></span> <span class="toc_entry">Corollaries</span></a>
+ </li>
+
+  </ul>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="a0000000006">1 Chebotarev: abelian case via cyclotomic crossing</h1>
+<p>The abelian case is reduced to the cyclotomic case by Chebotarev’s original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.&#160;143–144). </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:cyclic-subgroup-trivial-meet">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.1</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:cyclic-subgroup-trivial-meet">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000057"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.cyclic_subgroup_meets_G_times_one_trivially" class="lean_decl">Chebotarev.cyclic_subgroup_meets_G_times_one_trivially</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Let \(G, H\) be finite groups, \(\sigma \in G\), \(\tau \in H\). If \(\left\lvert G \right\rvert \mid \mathrm{ord}(\tau )\), then \(\left\langle (\sigma ,\tau ) \right\rangle \cap (G\times \{ 1\} ) = \{ 1\} \). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000057">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Pure group theory. If \((\sigma ^k, \tau ^k) \in G\times \{ 1\} \) then \(\tau ^k = 1\), so \(\mathrm{ord}(\tau )\mid k\), hence \(\left\lvert G \right\rvert \mid k\), hence \(\sigma ^k = 1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:density-S-sigma-tau">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.2</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:density-S-sigma-tau">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000058"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0005.html#lem:cyclic-subgroup-trivial-meet">Lemma 1.1</a></li>
+          
+          <li><a href="sect0004.html#thm:chebotarev-cyclotomic">Theorem 1.8</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH" class="lean_decl">Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(L/K\) be a finite abelian Galois extension with \(G=\mathrm{Gal}(L/K)\), \(\sigma \in G\), and \(m\ge 1\) coprime to the discriminant of \(L\), so that \(\mathrm{Gal}(L(\zeta _m)/K)\cong G\times H\) with \(H=\mathrm{Gal}(K(\zeta _m)/K)\subseteq (\mathbb {Z}/m\mathbb {Z})^\times \). Set \(H_n = \left\{  \tau \in H \; \middle |\;  \left\lvert G \right\rvert \mid \mathrm{ord}(\tau ) \right\} \). Then </p>
+<div class="displaymath" id="a0000000059">
+  \[  \delta _{\mathrm{inf}}\bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;   \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; \ge \;  \frac{\left\lvert H_n \right\rvert }{\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert }.  \]
+</div>
+<p> <em>Corrected.</em> An earlier draft of this lemma claimed \(\delta \bigl(\left\{  \mathfrak {p}: \sigma _\mathfrak {p}= \sigma  \right\} \bigr) = 1/(\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert )\) — that is mathematically wrong (the set \(\left\{  \sigma _\mathfrak {p}= \sigma  \right\} \) has density \(1/\left\lvert G \right\rvert \), not \(1/(\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert )\)). The actual per-\(m\) step that feeds into the proof of \(\delta (\sigma _\mathfrak {p}= \sigma ) = 1/\left\lvert G \right\rvert \) is the \(\liminf \) lower bound above (Sharifi p.&#160;144). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000058">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>By <a href="sect0005.html#lem:cyclic-subgroup-trivial-meet">lemma 1.1</a>, the fixed field \(F = L(\zeta _m)^{\left\langle (\sigma ,\tau ) \right\rangle }\) satisfies \(F(\zeta _m) = L(\zeta _m)\), so the extension \(L(\zeta _m)/F\) is cyclotomic. Apply the cyclotomic case <a href="sect0004.html#thm:chebotarev-cyclotomic">theorem 1.8</a> to \(L(\zeta _m)/F\) to obtain \(\delta _F = 1/\left\lvert \left\langle (\sigma ,\tau ) \right\rangle  \right\rvert \). The conjugacy-class reduction (<a href="sect0006.html#thm:chebotarev-density">theorem 1.3</a> below, Step&#160;1’s counting) lifts this to a \(K\)-density of \(1/(\left\lvert G \right\rvert \cdot \left\lvert H \right\rvert )\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:H-n-over-H-formula">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.3</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:H-n-over-H-formula">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000060"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation" class="lean_decl">Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Let \(n = p_1^{k_1}\cdots p_r^{k_r}\) with \(p_i\) distinct primes, \(k_i\ge 1\). For an integer \(m \ge 1\) with \(m \equiv 1 \pmod{n^j}\), setting \(j_i = v_{p_i}(m-1) \ge j\) and \(H_n = \left\{  \tau \in (\mathbb {Z}/m\mathbb {Z})^\times  \; \middle |\;  n\mid \mathrm{ord}(\tau ) \right\} \), </p>
+<div class="displaymath" id="a0000000061">
+  \[  \frac{\left\lvert H_n \right\rvert }{\left\lvert (\mathbb {Z}/m\mathbb {Z})^\times  \right\rvert } \; =\;  \prod _{i=1}^r\! \biggl(1-\frac{p_i^{k_i-1}}{p_i^{j_i k_i}}\biggr) \; \ge \;  \prod _{i=1}^r\! \biggl(1-\frac{1}{p_i^{(j-1)k_i+1}}\biggr).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000060">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Direct combinatorial computation on \((\mathbb {Z}/m\mathbb {Z})^\times \) using CRT and the prime-power factorisation of \(n\) (Sharifi p.&#160;144). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:H-n-over-H-tends-one">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.4</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:H-n-over-H-tends-one">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000062"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0005.html#lem:H-n-over-H-formula">Lemma 1.3</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.H_n_over_H_tends_to_one" class="lean_decl">Chebotarev.H_n_over_H_tends_to_one</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   As \(k \to \infty \), \(\left\lvert H_n \right\rvert /\left\lvert (\mathbb {Z}/n^k\mathbb {Z})^\times  \right\rvert  \to 1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000062">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Limit of the product formula <a href="sect0005.html#lem:H-n-over-H-formula">lemma 1.3</a> as \(j \to \infty \): each factor tends to \(1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:liminf-ratio-ge-inv-card-G">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.5</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:liminf-ratio-ge-inv-card-G">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000063"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0005.html#lem:density-S-sigma-tau">Lemma 1.2</a></li>
+          
+          <li><a href="sect0005.html#lem:H-n-over-H-tends-one">Lemma 1.4</a></li>
+          
+          <li><a href="sect0005.html#lem:density-S-sigma-tau">Lemma 1.2</a></li>
+          
+          <li><a href="sect0005.html#lem:H-n-over-H-tends-one">Lemma 1.4</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.liminf_ratio_ge_inv_card_G" class="lean_decl">Chebotarev.liminf_ratio_ge_inv_card_G</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For every \(\sigma \in G\), \(\delta _{\mathrm{inf}}\bigl(\left\{  \mathfrak {p} \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \ge 1/\left\lvert G \right\rvert \). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000063">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Take the limit of the per-\(m\) bound <a href="sect0005.html#lem:density-S-sigma-tau">lemma 1.2</a> as \(m \to \infty \) along \(m \equiv 1\pmod{\left\lvert G \right\rvert ^k}\), where \(\left\lvert H_n \right\rvert /\left\lvert H \right\rvert \to 1\) by <a href="sect0005.html#lem:H-n-over-H-tends-one">lemma 1.4</a>. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:ratiosum-fibres-tendsto-one">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.6</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:ratiosum-fibres-tendsto-one">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000064"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+          <li><a href="sect0002.html#lem:finite-ramified-primes">Lemma 1.11</a></li>
+          
+          <li><a href="sect0002.html#lem:finite-ramified-primes">Lemma 1.11</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.ratioSum_frobeniusFibres_tendsto_one" class="lean_decl">Chebotarev.ratioSum_frobeniusFibres_tendsto_one</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   As \(s\downarrow 1\), the sum over \(\sigma \in G\) of the density ratios of the fibres \(\left\{  \mathfrak {p} \; \middle |\;  \sigma _\mathfrak {p}=\sigma  \right\} \) tends to \(1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000064">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The fibres partition the unramified primes; the ramified primes are finite (<a href="sect0002.html#lem:finite-ramified-primes">lemma 1.11</a>) hence contribute density \(0\), so the partial sums of the fibre ratios equal the ratio for the unramified primes, which \(\to 1\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:pigeonhole-density">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">1.7</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#lem:pigeonhole-density">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000065"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one" class="lean_decl">Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Let \(g_i\) (\(i\) in a finite index set of size \(N\)) be real functions with \(\liminf _{s\downarrow 1} g_i \ge 1/N\) for each \(i\), and \(\sum _i g_i(s) \to 1\) as \(s\downarrow 1\). Then \(g_i(s) \to 1/N\) for every \(i\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000065">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p>Pure real analysis: the lower bounds and the sum-limit pin every \(g_i\) to \(1/N\) by a \(\liminf \)/\(\limsup \) pigeonhole. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:chebotarev-abelian">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">1.8</span>
+    <div class="thm_header_extras">
+
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="sect0005.html#thm:chebotarev-abelian">#</a>
+    
+    <a class="icon proof" href="sect0005.html#a0000000066"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="sect0001.html#def:dirichlet-density">Definition 1.1</a></li>
+          
+          <li><a href="sect0002.html#def:frobenius-class">Definition 1.8</a></li>
+          
+          <li><a href="sect0005.html#lem:liminf-ratio-ge-inv-card-G">Lemma 1.5</a></li>
+          
+          <li><a href="sect0005.html#lem:ratiosum-fibres-tendsto-one">Lemma 1.6</a></li>
+          
+          <li><a href="sect0005.html#lem:pigeonhole-density">Lemma 1.7</a></li>
+          
+          <li><a href="sect0005.html#lem:liminf-ratio-ge-inv-card-G">Lemma 1.5</a></li>
+          
+          <li><a href="sect0005.html#lem:ratiosum-fibres-tendsto-one">Lemma 1.6</a></li>
+          
+          <li><a href="sect0005.html#lem:pigeonhole-density">Lemma 1.7</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/chebotarev-density/docs/find/#doc/Chebotarev.chebotarev_abelian" class="lean_decl">Chebotarev.chebotarev_abelian</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   For a finite abelian Galois extension \(L/K\) of number fields with \(G=\mathrm{Gal}(L/K)\) and every \(\sigma \in G\), </p>
+<div class="displaymath" id="a0000000067">
+  \[  \delta \bigl(\left\{  \mathfrak {p}\subset \mathcal{O}_K \; \middle |\;  \sigma _\mathfrak {p}= \sigma  \right\} \bigr) \; =\;  \frac{1}{\left\lvert G \right\rvert }.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000066">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The \(\left\lvert G \right\rvert \) fibres each have \(\liminf \ge 1/\left\lvert G \right\rvert \) (<a href="sect0005.html#lem:liminf-ratio-ge-inv-card-G">lemma 1.5</a>) and their density ratios sum to \(1\) (<a href="sect0005.html#lem:ratiosum-fibres-tendsto-one">lemma 1.6</a>); the pigeonhole glue <a href="sect0005.html#lem:pigeonhole-density">lemma 1.7</a> forces each fibre’s ratio to the limit \(1/\left\lvert G \right\rvert \). </p>
+
+  </div>
+</div>
+<p><br /></p>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="ch-abelian.html" title="Chebotarev: abelian case"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="ch-abelian.html" title="Chebotarev: abelian case"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="ch-main.html" title="Chebotarev density theorem"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

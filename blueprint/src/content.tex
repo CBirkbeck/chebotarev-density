@@ -1,0 +1,89 @@
+% Top-level content for the Chebotarev density blueprint.
+
+\blueprintfrontmatter
+
+\begin{abstract}
+This document outlines a Lean 4 / Mathlib formalisation of the
+\textbf{Chebotarev density theorem} in conjugacy-class form. For a
+finite Galois extension $L/K$ of number fields with Galois group
+$G=\Gal{L/K}$ and a conjugacy class $C\subseteq G$, the Dirichlet
+density of the set of primes $\fp$ of $\OK$ whose Frobenius conjugacy
+class is $C$ equals $\abs{C}/\abs{G}$.
+
+The proof follows the modern exposition of Stevenhagen--Lenstra
+(\emph{Chebotarëv and his density theorem}, Appendix) and Sharifi
+(\emph{Algebraic Number Theory}, \S{}7.2). Both references are included
+under \texttt{docs/}.
+
+\smallskip
+\noindent\textbf{Outline.} The proof proceeds in three reductions:
+
+\begin{enumerate}
+\item \emph{Foundations}
+(\cref{ch:density,ch:frobenius}). We define the Dirichlet density of a
+set of prime ideals via the Dirichlet series
+$\sum_{\fp\in S} \Norm{\fp}^{-s}$ normalised against the same sum over
+all primes, and we set up the Frobenius element at an unramified prime
+$\fP$ of $\Ocirc_L$ together with its conjugacy class as $\fP$ varies
+above a $K$-prime $\fp$.
+
+\item \emph{Cyclotomic case} (\cref{ch:zeta-product,ch:cyclotomic}). The
+analytic engine is the factorisation
+\(
+  \zeta_L(s) = \prod_{\chi\in\widehat{G}} L(\chi, s)
+\)
+of the Dedekind zeta function of $L$ into Hecke (Artin) $L$-functions
+indexed by characters of $G$, valid when $G$ is abelian, together with
+the non-vanishing $L(\chi, 1)\ne 0$ for nontrivial $\chi$. Applied to a
+cyclotomic extension $L=K(\zeta_m)$, this yields the cyclotomic case of
+Chebotarev directly from Dirichlet's argument.
+
+\item \emph{Abelian case} (\cref{ch:abelian}). For a general abelian
+$L/K$, we use Chebotarev's crossing trick: pick $m$ coprime to the
+discriminant of $L$ so that
+$\Gal{L(\zeta_m)/K}\cong G\times H$ with $H=\Gal{K(\zeta_m)/K}$; for
+$\tau\in H$ with $\abs{G}\mid\mathrm{ord}(\tau)$, the cyclic subgroup
+$\ang{(\sigma,\tau)}\subseteq G\times H$ has trivial intersection with
+$G\times\{1\}$, so the fixed-field extension is cyclotomic; the
+cyclotomic case applies; summing over admissible $\tau$ and letting
+$m\equiv 1\pmod{n^k}$ for $k\to\infty$ recovers the abelian density.
+
+\item \emph{General case} (\cref{ch:main}). The conjugacy-class form is
+reduced to the cyclic-extension case via the intermediate field
+$E=L^{\ang\sigma}$: the counting "exactly $\abs{G}/(f\abs{C})$ primes of
+$L$ above $\fp$ have Frobenius $\sigma$" yields the density relation
+$\delta_K(S) = (f\abs{C}/\abs{G})\delta_E(T_\sigma)$, which combines
+with the abelian case for $L/E$.
+\end{enumerate}
+
+The proof needs no class field theory; it is essentially Chebotarev's
+original strategy as expounded by Stevenhagen--Lenstra.
+\end{abstract}
+
+\clearpage
+\setcounter{page}{2}
+\tableofcontents
+
+\blueprintmainmatter
+\chapter{Dirichlet density}\label{ch:density}
+\input{subsections/density}
+
+\pagebreak
+\chapter{Decomposition, inertia, Frobenius}\label{ch:frobenius}
+\input{subsections/frobenius}
+
+\pagebreak
+\chapter{Zeta factorisation for abelian extensions}\label{ch:zeta-product}
+\input{subsections/zeta-product}
+
+\pagebreak
+\chapter{Chebotarev: cyclotomic case}\label{ch:cyclotomic}
+\input{subsections/cyclotomic}
+
+\pagebreak
+\chapter{Chebotarev: abelian case}\label{ch:abelian}
+\input{subsections/abelian}
+
+\pagebreak
+\chapter{Chebotarev density theorem}\label{ch:main}
+\input{subsections/main}
