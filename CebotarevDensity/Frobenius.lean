@@ -137,7 +137,8 @@ theorem exists_unique_frobeniusAt_of_inertia_trivial
   refine ⟨σ, ⟨hσ.mem_stabilizer, hσ.mk_apply⟩, ?_⟩
   rintro τ ⟨-, hτ_pow⟩
   have hτ : IsArithFrobAt (𝓞 K) τ 𝔓 := fun x ↦ by
-    simpa [← Ideal.Quotient.eq_zero_iff_mem, sub_eq_zero] using hτ_pow x
+    simpa [← Ideal.Quotient.eq_zero_iff_mem, sub_eq_zero,
+      Ideal.absNorm_apply, Submodule.cardQuot_apply] using hτ_pow x
   exact mul_inv_eq_one.mp (Subgroup.mem_bot.mp (hI ▸ IsArithFrobAt.mul_inv_mem_inertia hτ hσ))
 
 /-- **Existence and uniqueness of Frobenius at an unramified prime**.

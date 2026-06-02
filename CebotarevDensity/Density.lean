@@ -241,7 +241,8 @@ theorem tendsto_ratio_one_of_log_pm_bounded
       · filter_upwards [self_mem_nhdsWithin] with s hs
         simp only [Set.mem_Ioi] at hs ⊢
         linarith
-    simpa [one_div] using h1.inv_tendsto_nhdsGT_zero
+    simp only [one_div]
+    exact h1.inv_tendsto_nhdsGT_zero
   have hLpos := hL.eventually_gt_atTop 0
   have h0 : Tendsto (fun s ↦ (f s - Real.log (1 / (s - 1))) / Real.log (1 / (s - 1)))
       (𝓝[>] (1:ℝ)) (𝓝 0) :=
