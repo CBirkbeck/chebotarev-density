@@ -184,7 +184,7 @@ theorem count_frobenius_eq_sigma_mul_card_carrier
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓
-            (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)
+            (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
           = σ}
       * Nat.card C.carrier
       = Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
@@ -211,7 +211,7 @@ theorem count_primes_above_with_frobenius_eq_sigma
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓
-            (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)
+            (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
           = σ}
       * orderOf σ * Nat.card C.carrier
       = Nat.card Gal(L/K) := by

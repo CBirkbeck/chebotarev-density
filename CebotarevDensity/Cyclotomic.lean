@@ -74,11 +74,10 @@ mth root of unity ζ_m". -/
 theorem cyclotomic_frobenius_acts_as_norm_power
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
-    [𝔭.IsPrime] (_hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
+    [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
     [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     ∀ ζ : L, ζ ∈ primitiveRoots m L →
-      frobeniusAt K L 𝔓
-          (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact _hunr 𝔓 hP) ζ
+      frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ζ
         = ζ ^ Ideal.absNorm 𝔭 := by
   sorry
 
