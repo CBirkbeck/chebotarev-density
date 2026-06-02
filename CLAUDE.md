@@ -156,6 +156,13 @@ CI deploys to GitHub Pages at https://cbirkbeck.github.io/chebotarev-density/
   `def`s, never axioms. If you need an interface before its content
   exists, use `Classical.choose` of a sorried existence theorem — not
   an axiom.
+- **Always `≤`, never `≥`** (and `<`, never `>`) in Lean statements and
+  hypotheses — mathlib convention (Riccardo Brasca, PR #4, on `Density.lean`).
+  Orient every inequality with the smaller side on the **left**: write
+  `log (1/(s-1)) - C ≤ f s`, not `f s ≥ log (1/(s-1)) - C`; name such lemmas
+  `a_le_b`, not `b_ge_a`. (Math prose inside docstrings may keep `≥`/`k ≥ 2`
+  where it reads more naturally — the rule is about Lean code.) `/cleanup` does
+  not yet catch `≥`; recorded as a `/teach` learning so it does going forward.
 - **Source quotes are binding**. When stating a new sub-lemma, the
   docstring should quote Sharifi or Stevenhagen–Lenstra verbatim (in
   English) and cite the page. If the cited passage doesn't match the
