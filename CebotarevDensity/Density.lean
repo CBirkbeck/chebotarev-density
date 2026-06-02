@@ -1,7 +1,7 @@
 module
 
-public import Mathlib.NumberTheory.NumberField.DedekindZeta
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.NumberTheory.NumberField.DedekindZeta
 public import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 /-!
@@ -44,7 +44,7 @@ namespace Chebotarev
 
 /-- Partial Dirichlet series `Σ_{𝔭 ∈ S} N𝔭^{-s}` over nonzero prime ideals
 `𝔭` of `𝓞 K` lying in the set `S`. -/
-noncomputable def primeIdealZetaSum
+def primeIdealZetaSum
     (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
   ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
     (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
