@@ -1,13 +1,14 @@
 module
 
-public import Mathlib.NumberTheory.RamificationInertia.Galois
-public import Mathlib.NumberTheory.RamificationInertia.Unramified
-public import Mathlib.RingTheory.RamificationInertia.Inertia
-public import Mathlib.RingTheory.Frobenius
-public import Mathlib.RingTheory.Ideal.Pointwise
+public import Mathlib.Algebra.Group.Conj
 public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.FieldTheory.Galois.Basic
-public import Mathlib.Algebra.Group.Conj
+public import Mathlib.NumberTheory.RamificationInertia.Galois
+public import Mathlib.NumberTheory.RamificationInertia.Unramified
+public import Mathlib.RingTheory.Frobenius
+public import Mathlib.RingTheory.Ideal.Pointwise
+public import Mathlib.RingTheory.RamificationInertia.Inertia
+
 public import CebotarevDensity.Density
 
 /-!
@@ -158,7 +159,7 @@ theorem exists_unique_frobeniusAt
     (inertiaGroup_trivial_of_unramified K L 𝔓 hunr)
 
 /-- The Frobenius automorphism at an unramified prime `𝔓` of `𝓞 L`. -/
-noncomputable def frobeniusAt
+def frobeniusAt
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) :
     Gal(L/K) :=
@@ -245,7 +246,7 @@ any prime `𝔓` of `𝓞 L` above `𝔭` (well-definedness from
 `exists_frobeniusClass`). For other primes the value is the trivial class —
 a junk value never used in the Chebotarev statement (which always restricts
 to unramified nonzero primes). -/
-noncomputable def frobeniusClass
+def frobeniusClass
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K) := by
   classical
