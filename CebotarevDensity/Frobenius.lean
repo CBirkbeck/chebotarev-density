@@ -76,6 +76,14 @@ theorem UnramifiedIn.ne_bot
   rintro rfl
   simpa [Ideal.ramificationIdx_bot] using hunr ⊥ inferInstance
 
+/-- For a prime `𝔓` of `𝓞 L` lying over an unramified prime `𝔭` of `𝓞 K`,
+the ramification index `e(𝔓 ∣ 𝔭)` equals `1`. -/
+theorem UnramifiedIn.ramificationIdx_eq_one
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
+  rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP
+
 /-! ### Sub-lemmas for `exists_unique_frobeniusAt`
 
 Sharifi *Algebraic Number Theory* §2.6 (decomposition groups, not
@@ -197,20 +205,20 @@ theorem frobeniusAt_isConj_of_liesOver
     (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime] (hP : 𝔓.LiesOver 𝔭) (hP' : 𝔓'.LiesOver 𝔭) :
     IsConj
       (frobeniusAt K L 𝔓
-        (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP))
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
       (frobeniusAt K L 𝔓'
-        (by rw [show 𝔓'.under (𝓞 K) = 𝔭 from hP'.over.symm]; exact hunr 𝔓' hP')) := by
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP')) := by
   obtain ⟨σ, hσ⟩ := Ideal.exists_smul_eq_of_isGaloisGroup 𝔭 𝔓 𝔓' Gal(L/K)
   rw [frobeniusAt_conj_eq K L 𝔓 𝔓'
-      (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)
-      (by rw [show 𝔓'.under (𝓞 K) = 𝔭 from hP'.over.symm]; exact hunr 𝔓' hP') σ hσ]
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP') σ hσ]
   exact isConj_iff.mpr ⟨σ, rfl⟩
 
 /-- A nonzero prime `𝔭` of `𝓞 K` has at least one prime `𝔓` of `𝓞 L` lying
 over it, and any such `𝔓` is nonzero (going-up for the integral extension
 `𝓞 K ⊆ 𝓞 L`; nonzero because `𝔭` is and `algebraMap (𝓞 K) (𝓞 L)` is injective). -/
 theorem exists_prime_liesOver
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hnz : 𝔭 ≠ ⊥) :
     ∃ 𝔓 : Ideal (𝓞 L), 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥ := by
   obtain ⟨𝔓, hp, hcomap⟩ :=
@@ -227,10 +235,10 @@ theorem exists_frobeniusClass
     ∃ C : ConjClasses Gal(L/K),
       ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭),
         C = ConjClasses.mk (frobeniusAt K L 𝔓
-          (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)) := by
+          (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)) := by
   obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 (UnramifiedIn.ne_bot K L hunr)
   refine ⟨ConjClasses.mk (frobeniusAt K L 𝔓₀
-    (by rw [show 𝔓₀.under (𝓞 K) = 𝔭 from hlo₀.over.symm]; exact hunr 𝔓₀ hlo₀)), ?_⟩
+    (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓₀ hlo₀)), ?_⟩
   intro 𝔓 _ hP
   exact ConjClasses.mk_eq_mk_iff_isConj.mpr (frobeniusAt_isConj_of_liesOver K L 𝔭 hunr 𝔓₀ 𝔓 hlo₀ hP)
 
@@ -258,7 +266,7 @@ theorem frobeniusClass_eq_mk_frobeniusAt
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     frobeniusClass K L 𝔭 =
       ConjClasses.mk (frobeniusAt K L 𝔓
-        (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)) := by
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)) := by
   rw [frobeniusClass, dif_pos ⟨‹𝔭.IsPrime›, hunr⟩]
   exact (exists_frobeniusClass K L 𝔭 hunr).choose_spec 𝔓 hP
 
