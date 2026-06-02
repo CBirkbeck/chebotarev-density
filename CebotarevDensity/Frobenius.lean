@@ -101,8 +101,7 @@ reproduced in §7); standard textbook content. The proof decomposes as:
 `e(𝔓∣𝔭) = 1`, and a subgroup of cardinality one is trivial (`Subgroup.eq_bot_iff_card`). -/
 theorem inertiaGroup_trivial_of_unramified
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
-    (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) :
+    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunr : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) :
     Ideal.inertia Gal(L/K) 𝔓 = ⊥ := by
   have hPbot : 𝔓 ≠ ⊥ := ne_bot_of_ramificationIdx_eq_one K L hunr
   have hpbot : 𝔓.under (𝓞 K) ≠ ⊥ := Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPbot
@@ -110,18 +109,17 @@ theorem inertiaGroup_trivial_of_unramified
   haveI : (𝔓.under (𝓞 K)).IsMaximal :=
     (inferInstance : (𝔓.under (𝓞 K)).IsPrime).isMaximal hpbot
   haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓 hPbot
-  -- `Ideal.Quotient.field` is deliberately NOT a global instance: it would clash with
-  -- `Ideal.Quotient.commRing` as a `CommRing (R ⧸ 𝔭)` diamond (the two are only defeq, not
-  -- syntactically equal), so mathlib keeps the field structure explicit. Hence we must
-  -- `letI` the residue-field structures by hand before `IsGalois.to_isSeparable` fires.
+  -- `Ideal.Quotient.field` is deliberately a reducible non-instance, not a global `Field`
+  -- instance (see note [reducible non-instances]): mathlib keeps it explicit so applications
+  -- retain computable inverses / `qsmul` / `ratCast`. Hence we must `letI` the residue-field
+  -- structures by hand before `IsGalois.to_isSeparable` fires (it needs both as `Field`s).
   haveI : Algebra.IsSeparable (𝓞 K ⧸ 𝔓.under (𝓞 K)) (𝓞 L ⧸ 𝔓) := by
     letI : Field (𝓞 K ⧸ 𝔓.under (𝓞 K)) := Ideal.Quotient.field _
     letI : Field (𝓞 L ⧸ 𝔓) := Ideal.Quotient.field _
     exact IsGalois.to_isSeparable
-  rw [Subgroup.eq_bot_iff_card,
+  rwa [Subgroup.eq_bot_iff_card,
       Ideal.card_inertia_eq_ramificationIdxIn (𝔓.under (𝓞 K)) hpbot 𝔓,
       Ideal.ramificationIdxIn_eq_ramificationIdx (𝔓.under (𝓞 K)) 𝔓 Gal(L/K)]
-  exact hunr
 
 /-- **Frobenius existence when inertia is trivial**. Given that the inertia group
 at `𝔓` is trivial, there is a unique `σ ∈ Gal(L/K)` stabilising `𝔓` and acting as
@@ -217,13 +215,10 @@ theorem exists_prime_liesOver
     ∃ 𝔓 : Ideal (𝓞 L), 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥ := by
   obtain ⟨𝔓, hp, hcomap⟩ :=
     Ideal.exists_ideal_over_prime_of_isIntegral_of_isDomain (S := 𝓞 L) 𝔭 (by simp)
-  refine ⟨𝔓, hp, ⟨hcomap.symm⟩, ?_⟩
-  rintro rfl
-  rw [← RingHom.ker_eq_comap_bot, (RingHom.injective_iff_ker_eq_bot _).mp
-    (FaithfulSMul.algebraMap_injective (𝓞 K) (𝓞 L))] at hcomap
-  exact hnz hcomap.symm
+  haveI : 𝔓.LiesOver 𝔭 := ⟨hcomap.symm⟩
+  exact ⟨𝔓, hp, ⟨hcomap.symm⟩, Ideal.ne_bot_of_liesOver_of_ne_bot hnz 𝔓⟩
 
-/-- Existence (and uniqueness, by conjugacy-class collapse) of the Frobenius
+/-- Existence and well-definedness of the Frobenius
 conjugacy class of an unramified prime `𝔭` of `𝓞 K`.
 Sharifi §7.2 + SL Appendix paragraph 1. -/
 theorem exists_frobeniusClass
@@ -237,8 +232,7 @@ theorem exists_frobeniusClass
   refine ⟨ConjClasses.mk (frobeniusAt K L 𝔓₀
     (by rw [show 𝔓₀.under (𝓞 K) = 𝔭 from hlo₀.over.symm]; exact hunr 𝔓₀ hlo₀)), ?_⟩
   intro 𝔓 _ hP
-  rw [ConjClasses.mk_eq_mk_iff_isConj]
-  exact frobeniusAt_isConj_of_liesOver K L 𝔭 hunr 𝔓₀ 𝔓 hlo₀ hP
+  exact ConjClasses.mk_eq_mk_iff_isConj.mpr (frobeniusAt_isConj_of_liesOver K L 𝔭 hunr 𝔓₀ 𝔓 hlo₀ hP)
 
 /-- The Frobenius conjugacy class of a prime `𝔭` of `𝓞 K`. When `𝔭` is a
 nonzero unramified prime, this is the conjugacy class of `frobeniusAt 𝔓` for
@@ -248,14 +242,13 @@ a junk value never used in the Chebotarev statement (which always restricts
 to unramified nonzero primes). -/
 def frobeniusClass
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K) := by
-  classical
-  exact
-    if h : 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 then
-      haveI := h.1
-      (exists_frobeniusClass K L 𝔭 h.2).choose
-    else
-      ConjClasses.mk 1
+    (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K) :=
+  open Classical in
+  if h : 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 then
+    haveI := h.1
+    (exists_frobeniusClass K L 𝔭 h.2).choose
+  else
+    ConjClasses.mk 1
 
 /-- `frobeniusClass K L 𝔭` is the conjugacy class of `frobeniusAt 𝔓` for any
 prime `𝔓` of `𝓞 L` above `𝔭`. -/
