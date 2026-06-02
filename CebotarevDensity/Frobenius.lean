@@ -129,10 +129,9 @@ theorem frobeniusAt_spec
   exact ⟨IsArithFrobAt.arithFrobAt_mem_stabilizer (𝓞 K) Gal(L/K) 𝔓,
     (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).mk_apply⟩
 
-/-- **Frobenius conjugation formula** (Stevenhagen–Lenstra p. 14). If `σ • 𝔓 = 𝔓'`, then
-`Frob_{𝔓'} = σ · Frob_𝔓 · σ⁻¹`: the conjugate `σ · Frob_𝔓 · σ⁻¹` is a Frobenius at `𝔓'`
-(`IsArithFrobAt.conj`), and for the unramified `𝔓'` the inertia is trivial, so it agrees
-with `Frob_{𝔓'}` (two Frobenii differ by inertia, `IsArithFrobAt.mul_inv_mem_inertia`). -/
+/-- **Frobenius conjugation formula** (Stevenhagen–Lenstra p. 14). For unramified primes
+`𝔓, 𝔓'` of `𝓞 L` with `σ • 𝔓 = 𝔓'`, the Frobenius elements satisfy
+`Frob_{𝔓'} = σ · Frob_𝔓 · σ⁻¹`. -/
 theorem frobeniusAt_conj_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime]

@@ -116,12 +116,11 @@ theorem finrank_residue_eq_orderOf
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hCfrob : frobeniusClass K L 𝔭 = C)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hlo : 𝔓.LiesOver 𝔭) :
     Module.finrank (𝓞 K ⧸ 𝔓.under (𝓞 K)) (𝓞 L ⧸ 𝔓) = orderOf σ := by
-  have hconj : IsConj
+  obtain ⟨c, hc⟩ : IsConj
       (frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hlo)) σ := by
     rw [← ConjClasses.mk_eq_mk_iff_isConj,
       ← frobeniusClass_eq_mk_frobeniusAt K L 𝔭 hunr 𝔓 hlo, hCfrob, hσ]
-  obtain ⟨c, hc⟩ := isConj_iff.mp hconj
-  rw [← hc, ← MulAut.conj_apply, MulEquiv.orderOf_eq,
+  rw [← hc.orderOf_eq,
     orderOf_frobeniusAt_eq_finrank K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hlo)]
 
 /-- **Orbit–stabilizer for the primes above `𝔭`** (Sharifi 7.2.2 Step 1, p. 143). The
@@ -137,7 +136,6 @@ theorem card_primesAbove_mul_orderOf_eq
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} * orderOf σ
       = Nat.card Gal(L/K) := by
   obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 (UnramifiedIn.ne_bot K L hunr)
-  haveI := hp₀
   rw [← finrank_residue_eq_orderOf K L σ C _hσ 𝔭 hunr _hCfrob 𝔓₀ hlo₀]
   exact card_primesAbove_mul_finrank_eq K L 𝔭 hunr 𝔓₀ hlo₀
 
@@ -189,10 +187,9 @@ theorem count_frobenius_eq_sigma_mul_card_carrier
             (by rw [show 𝔓.under (𝓞 K) = 𝔭 from hP.over.symm]; exact hunr 𝔓 hP)
           = σ}
       * Nat.card C.carrier
-      = Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} := by
-  rw [mul_comm]
-  exact (card_primesAbove_eq_card_carrier_mul_frobeniusFibre K L σ C _hσ 𝔭 hunr _hCfrob
-    fun σ' hc => frobeniusFibre_card_eq_of_isConj K L 𝔭 hunr σ σ' hc).symm
+      = Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
+  (mul_comm _ _).trans (card_primesAbove_eq_card_carrier_mul_frobeniusFibre K L σ C _hσ 𝔭 hunr
+    _hCfrob fun σ' hc ↦ frobeniusFibre_card_eq_of_isConj K L 𝔭 hunr σ σ' hc).symm
 
 /-- Sharifi 7.2.2 Step 1, above-counting (p. 143). Verbatim source quote:
 "exactly `|G|/f|C|` of these have Frobenius σ". For a prime `𝔭` of
