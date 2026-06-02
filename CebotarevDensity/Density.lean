@@ -42,15 +42,17 @@ open Filter NumberField Topology
 
 namespace Chebotarev
 
+variable (K : Type*) [Field K] [NumberField K]
+
 /-- Partial Dirichlet series `Σ_{𝔭 ∈ S} N𝔭^{-s}` over nonzero prime ideals
 `𝔭` of `𝓞 K` lying in the set `S`. -/
 def primeIdealZetaSum
-    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
+    (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
   ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
     (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
 
 /-- Equation lemma unfolding `primeIdealZetaSum` to its defining `tsum`. -/
-theorem primeIdealZetaSum_def (K : Type*) [Field K] [NumberField K]
+theorem primeIdealZetaSum_def
     (S : Set (Ideal (𝓞 K))) (s : ℝ) :
     primeIdealZetaSum K S s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
@@ -61,7 +63,7 @@ the ratio of partial sums tends to `δ` as `s ↓ 1`.
 
 Sharifi 7.1.13: `δ(S) = lim_{s → 1⁺} (Σ_{𝔭 ∈ S} N𝔭^{-s}) / (Σ_𝔭 N𝔭^{-s})`. -/
 def HasDirichletDensity
-    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Tendsto
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) (𝓝 δ)
@@ -81,7 +83,7 @@ standard convention, so:
 
 When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
 def HasUpperDirichletDensity
-    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   limsup
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
@@ -91,12 +93,10 @@ def HasUpperDirichletDensity
 Sharifi's `δ_inf` notation despite Sharifi's labelling
 inversion. -/
 def HasLowerDirichletDensity
-    (K : Type*) [Field K] [NumberField K] (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   liminf
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K Set.univ s)
     (𝓝[>] 1) = δ
-
-variable (K : Type*) [Field K] [NumberField K]
 
 /-- The Dirichlet density of the empty set is `0`. -/
 theorem hasDirichletDensity_empty :
@@ -238,8 +238,7 @@ theorem tendsto_log_one_div_sub_one_atTop :
     · filter_upwards [self_mem_nhdsWithin] with s hs
       simp only [Set.mem_Ioi] at hs ⊢
       linarith
-  simp only [one_div]
-  exact h1.inv_tendsto_nhdsGT_zero
+  simpa only [one_div] using! h1.inv_tendsto_nhdsGT_zero
 
 /-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
 neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
