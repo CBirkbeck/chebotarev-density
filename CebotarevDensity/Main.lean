@@ -50,7 +50,7 @@ open NumberField
 
 namespace Chebotarev
 
-variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
+variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L]
   [Algebra K L] [IsGalois K L]
 
 /-! ### Sub-lemmas for `chebotarev_density`
@@ -267,7 +267,7 @@ theorem chebotarev_density
       obtain ⟨x, rfl⟩ := e.surjective a
       obtain ⟨y, rfl⟩ := e.surjective b
       rw [← map_mul e x y, ← map_mul e y x, mul_comm' x y]
-  exact density_lift_through_fixedField K L σ
+  exact density_lift_through_fixedField σ
     (IntermediateField.fixedField (Subgroup.zpowers σ))
     (e ⟨σ, Subgroup.mem_zpowers σ⟩) rfl
     (chebotarev_abelian _ L (e ⟨σ, Subgroup.mem_zpowers σ⟩))
@@ -318,7 +318,7 @@ theorem infinite_setOf_frobenius_class
     Set.Infinite
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C} := by
-  refine infinite_of_hasDirichletDensity_pos K (chebotarev_density K L C) ?_
+  refine infinite_of_hasDirichletDensity_pos (chebotarev_density C) ?_
   apply div_pos
   · exact_mod_cast ConjClasses_carrier_card_pos C
   · exact_mod_cast Nat.card_pos (α := Gal(L/K))
@@ -341,7 +341,7 @@ theorem density_split_completely :
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk 1}
       ((Module.finrank K L : ℝ)⁻¹) := by
-  have h := chebotarev_density K L (ConjClasses.mk (1 : Gal(L/K)))
+  have h := chebotarev_density (ConjClasses.mk (1 : Gal(L/K)))
   rw [ConjClasses_mk_one_carrier_card_eq_one Gal(L/K), IsGalois.card_aut_eq_finrank K L] at h
   simpa using h
 
