@@ -1,6 +1,8 @@
 module
 
 public import CebotarevDensity.ZetaProduct
+public import Mathlib.GroupTheory.FiniteAbelian.Duality
+public import Mathlib.NumberTheory.Cyclotomic.Basic
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
 
 /-!
@@ -94,6 +96,33 @@ theorem log_artinLSeries_asymp_character_sum
         ≤ C * Real.log (1 / (s - 1)) + C := by
   sorry
 
+open scoped Classical in
+/-- Column orthogonality of the characters of a finite commutative group valued in `ℂˣ`:
+`Σ_χ χ(g) = |G|` if `g = 1` and `0` otherwise. This is the only group-theoretic input to the
+two cyclotomic orthogonality relations below; `ℂ` has enough roots of unity because it is
+algebraically closed. -/
+private theorem sum_galoisCharacter_eq_card_or_zero
+    (G : Type*) [Group G] [IsMulCommutative G] [Finite G] [Fintype (G →* ℂˣ)] (g : G) :
+    (∑ χ : G →* ℂˣ, (χ g : ℂ)) = if g = 1 then (Nat.card G : ℂ) else 0 := by
+  letI : CommGroup G := { mul_comm := mul_comm' }
+  haveI : NeZero (Monoid.exponent G) := ⟨Monoid.exponent_ne_zero_of_finite⟩
+  haveI : HasEnoughRootsOfUnity ℂ (Monoid.exponent G) := inferInstance
+  by_cases hg : g = 1
+  · subst hg
+    rw [if_pos rfl]
+    simp only [map_one, Units.val_one, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
+    rw [← Nat.card_eq_fintype_card, CommGroup.card_monoidHom_of_hasEnoughRootsOfUnity G ℂ]
+  · rw [if_neg hg]
+    obtain ⟨ψ, hψ⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
+    set S : ℂ := ∑ χ : G →* ℂˣ, (χ g : ℂ) with hS
+    have key : (ψ g : ℂ) * S = S := by
+      rw [hS, Finset.mul_sum, ← Equiv.sum_comp (Equiv.mulLeft ψ) fun χ : G →* ℂˣ => (χ g : ℂ)]
+      refine Finset.sum_congr rfl fun χ _ => ?_
+      simp only [Equiv.coe_mulLeft, MonoidHom.mul_apply, Units.val_mul]
+    have hfactor : ((ψ g : ℂ) - 1) * S = 0 := by linear_combination key
+    have hne : (ψ g : ℂ) - 1 ≠ 0 := sub_ne_zero.mpr fun h => hψ (Units.val_eq_one.mp h)
+    exact (mul_eq_zero.mp hfactor).resolve_left hne
+
 /-- Sharifi 7.2.1 step (iii) — character orthogonality for the cyclotomic
 case (p. 142), **matching case**: when `frobeniusClass K L 𝔭 =
 ConjClasses.mk σ`, the character sum equals `|G|`. -/
@@ -105,7 +134,19 @@ theorem character_orthogonality_cyclotomic_eq
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹)
       = (Nat.card Gal(L/K) : ℂ) := by
-  sorry
+  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  set τ := (frobeniusClass K L 𝔭).out
+  have hsummand : ∀ χ : galoisCharacter K L,
+      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
+    rw [map_mul, map_inv, Units.val_mul, Units.val_inv_eq_inv_val]
+  have hmk : ConjClasses.mk τ = frobeniusClass K L 𝔭 := Quotient.out_eq _
+  have heq : σ * τ⁻¹ = 1 := by
+    obtain ⟨c, hc⟩ : IsConj τ σ :=
+      ConjClasses.mk_eq_mk_iff_isConj.mp (hmk.trans _h)
+    rw [SemiconjBy, mul_comm' (c : Gal(L/K))] at hc
+    rw [mul_right_cancel hc, mul_inv_cancel]
+  simp_rw [hsummand]
+  rw [sum_galoisCharacter_eq_card_or_zero Gal(L/K) (σ * τ⁻¹), if_pos heq]
 
 /-- Sharifi 7.2.1 character orthogonality, **non-matching case**:
 when `frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ`, the character sum
@@ -117,7 +158,16 @@ theorem character_orthogonality_cyclotomic_ne
     (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹) = 0 := by
-  sorry
+  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  set τ := (frobeniusClass K L 𝔭).out
+  have hsummand : ∀ χ : galoisCharacter K L,
+      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
+    rw [map_mul, map_inv, Units.val_mul, Units.val_inv_eq_inv_val]
+  have hmk : ConjClasses.mk τ = frobeniusClass K L 𝔭 := Quotient.out_eq _
+  have hne : σ * τ⁻¹ ≠ 1 := fun hσ =>
+    _h <| hmk.symm.trans (congrArg ConjClasses.mk (mul_inv_eq_one.mp hσ)).symm
+  simp_rw [hsummand]
+  rw [sum_galoisCharacter_eq_card_or_zero Gal(L/K) (σ * τ⁻¹), if_neg hne]
 
 /-- Sharifi 7.2.1 step (iv-a) — the numerator asymptotic. The prime-sum
 over the Frobenius fibre `{σ_𝔭 = σ}` is asymptotic to
