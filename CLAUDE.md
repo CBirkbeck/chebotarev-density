@@ -140,10 +140,22 @@ CI deploys to GitHub Pages at https://cbirkbeck.github.io/chebotarev-density/
   and blueprint `\lean{Chebotarev.…}` refs keep the `Chebotarev`
   namespace. Don't introduce sub-namespaces unless there's a clear
   sub-topic.
-- **Argument convention**: `K L` (number fields) are **explicit
-  positional** arguments in every definition and theorem. Don't
-  switch to implicit `{K L}` — the helper `variable (K L : Type*) …`
-  block from earlier projects doesn't always propagate cleanly here.
+- **Argument convention** (Riccardo Brasca, PR #4, on `Density.lean`):
+  declare the number fields once in a `variable` line, not in every
+  signature, and make a field **implicit when it is recoverable from
+  another argument**. In `Density.lean`, `K` is recovered from
+  `S : Set (Ideal (𝓞 K))`, so the line is
+  `variable {K : Type*} [Field K] [NumberField K] {S : Set (Ideal (𝓞 K))} {δ : ℝ}`
+  and `K` is dropped from every declaration. Keep `K` **explicit**
+  where it cannot be inferred — the universal-sum analytic theorems
+  (no `S`) re-enable it with a local `variable (K)`, and the universal
+  sum itself is pinned with `(univ : Set (Ideal (𝓞 K)))`. In
+  `Frobenius.lean` / `Cyclotomic.lean` / `Abelian.lean`, `K L` stay
+  explicit in the `variable (K L : Type*) …` line: the upstairs field
+  `L` (hence the extension) is **not** recoverable from a prime `𝔭` of
+  the base `𝓞 K`. (This supersedes the earlier "always explicit `K L`"
+  rule — that was a pragmatic workaround; the `variable`-line form is
+  what the maintainers want.)
 - **No placeholder `def := sorry`**. Real definitions only. The user
   is allergic to scaffolding. Either use mathlib's API directly
   (`MulAction.stabilizer`, `Ideal.inertia`), inline the formula, or
