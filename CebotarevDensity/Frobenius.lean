@@ -55,17 +55,17 @@ namespace Chebotarev
 
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 
-/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if it is nonzero and every prime `𝔓` of
-`𝓞 L` lying over `𝔭` is unramified over `𝓞 K` in mathlib's sense (`Algebra.IsUnramifiedAt`,
-which for nonzero primes is `e(𝔓 ∣ 𝔭) = 1` by
-`Algebra.isUnramifiedAt_iff_of_isDedekindDomain`). The `𝔭 ≠ ⊥` clause is needed because the
-generic point `⊥` *is* `Algebra.IsUnramifiedAt` — its localisation is the
-formally-unramified fraction field — so without it the zero ideal would count as
-unramified. -/
+/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if it is nonzero and every **maximal** prime
+`𝔓` of `𝓞 L` lying over `𝔭` is unramified over `𝓞 K` (`Algebra.IsUnramifiedAt`). The `∀ 𝔓`
+clause has the same shape as the unramified condition in mathlib's
+`NumberField.not_dvd_discr_iff_forall_liesOver`. The `𝔭 ≠ ⊥` clause (on the base prime) is
+kept because the `frobeniusAt` construction below needs a finite residue field; for nonzero
+`𝔭` the maximal primes over `𝔭` are exactly its prime divisors, so each has `e(𝔓 ∣ 𝔭) = 1`
+(`Algebra.isUnramifiedAt_iff_of_isDedekindDomain`). -/
 def UnramifiedIn
     [IsGalois K L]
     (𝔭 : Ideal (𝓞 K)) : Prop :=
-  𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime], 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
+  𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
 
 omit [NumberField K] [NumberField L] in
 /-- A prime of `𝓞 L` with ramification index `1` over its image in `𝓞 K` is nonzero:
@@ -90,7 +90,8 @@ theorem UnramifiedIn.ramificationIdx_eq_one
     (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
   haveI := hP
   have h𝔓 : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔓
-  exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp (hunr.2 𝔓 hP)
+  exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp
+    (hunr.2 𝔓 (‹𝔓.IsPrime›.isMaximal h𝔓) hP)
 
 /-- For an unramified prime `𝔓`, the inertia group is trivial: by
 `Ideal.card_inertia_eq_ramificationIdxIn` its cardinality equals the ramification index
