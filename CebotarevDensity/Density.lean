@@ -288,6 +288,57 @@ source's argument decomposes into:
 
 include K
 
+/-- Over the nonzero prime ideals of `𝓞 K` (the 2-part subtype, no ambient set),
+the series `Σ_𝔭 N𝔭^{-s}` is summable for `1 < s`: transport
+`summable_prime_absNorm_rpow K univ` along the equivalence dropping the trivial
+`𝔭 ∈ univ` component. -/
+private theorem summable_prime2_absNorm_rpow {s : ℝ} (hs : 1 < s) :
+    Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) := by
+  have hi : Function.Injective
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+        (⟨𝔭.1, mem_univ _, 𝔭.2.1, 𝔭.2.2⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ univ ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
+  exact ((summable_prime_absNorm_rpow K univ hs).comp_injective hi).congr fun _ => rfl
+
+/-- A nonzero prime ideal of `𝓞 K` has absolute norm at least `2`: it is neither
+`⊥` (norm `0`, by `Ideal.absNorm_eq_zero_iff`) nor `⊤` (norm `1`, by
+`Ideal.absNorm_eq_one_iff`), so its positive natural norm is `≠ 1`. -/
+private theorem two_le_absNorm_of_prime {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+    (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) := by
+  have h0 : Ideal.absNorm 𝔭 ≠ 0 := by rwa [Ne, Ideal.absNorm_eq_zero_iff]
+  have h1 : Ideal.absNorm 𝔭 ≠ 1 := by rw [Ne, Ideal.absNorm_eq_one_iff]; exact hp.ne_top
+  exact_mod_cast show (2 : ℕ) ≤ Ideal.absNorm 𝔭 by lia
+
+/-- Per-prime termwise bound for the higher-power tail. For `1 < s` and a nonzero
+prime `𝔭` (so `2 ≤ N𝔭`), the geometric term is dominated by `2·N𝔭^{-2}`:
+`N𝔭^{-s} ≤ 2^{-s} ≤ 1/2` makes the denominator `≥ 1/2`, and `N𝔭^{-2s} ≤ N𝔭^{-2}`
+since the base is `≥ 1` and `-2s ≤ -2`. -/
+private theorem primeIdealHigherTail_term_le {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥)
+    {s : ℝ} (hs : 1 < s) :
+    (Ideal.absNorm 𝔭 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭 : ℝ) ^ (-s)) ≤
+      2 * (Ideal.absNorm 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
+  set x : ℝ := (Ideal.absNorm 𝔭 : ℝ)
+  have hx : (2 : ℝ) ≤ x := two_le_absNorm_of_prime K hp hne
+  have hx0 : (0 : ℝ) < x := by linarith
+  have hxs_le : x ^ (-s) ≤ (2 : ℝ) ^ (-s) :=
+    Real.rpow_le_rpow_of_nonpos zero_lt_two hx (by linarith)
+  have h2s_le : (2 : ℝ) ^ (-s) ≤ (2 : ℝ) ^ (-(1 : ℝ)) :=
+    Real.rpow_le_rpow_of_exponent_le one_le_two (by linarith)
+  have h2half : (2 : ℝ) ^ (-(1 : ℝ)) = 1 / 2 := by rw [Real.rpow_neg_one]; norm_num
+  have hxs_half : x ^ (-s) ≤ 1 / 2 := by rw [← h2half]; exact le_trans hxs_le h2s_le
+  have hden_pos : (0 : ℝ) < 1 - x ^ (-s) := by linarith
+  have hinv_le : (1 - x ^ (-s))⁻¹ ≤ 2 := by
+    rw [inv_le_comm₀ hden_pos (by norm_num)]; linarith
+  have hexp : x ^ (-(2 : ℝ) * s) ≤ x ^ (-(2 : ℝ)) :=
+    Real.rpow_le_rpow_of_exponent_le (by linarith) (by nlinarith)
+  have hx2_nonneg : (0 : ℝ) ≤ x ^ (-(2 : ℝ)) := Real.rpow_nonneg hx0.le _
+  rw [div_eq_mul_inv]
+  calc x ^ (-(2 : ℝ) * s) * (1 - x ^ (-s))⁻¹
+      ≤ x ^ (-(2 : ℝ)) * 2 := mul_le_mul hexp hinv_le (by positivity) hx2_nonneg
+    _ = 2 * x ^ (-(2 : ℝ)) := by ring
+
 /-- Sharifi 7.1.12 proof (p. 140), bounded tail step. The geometric
 higher-power tail `Σ_𝔭 N𝔭^{-2s}/(1 - N𝔭^{-s}) = Σ_{𝔭, k≥2} N𝔭^{-ks}` is
 bounded on a right neighbourhood of `s = 1` (in fact on `Re s > 1/2`). It
@@ -296,7 +347,36 @@ bounding it suffices for the source's "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
 theorem primeIdealZetaHigherTail_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ C := by
-  sorry
+  refine ⟨2 * ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+    (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)), ?_⟩
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  simp only [mem_Ioi] at hs
+  have hbound : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤
+        2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 =>
+    primeIdealHigherTail_term_le K 𝔭.2.1 𝔭.2.2 hs
+  have hnonneg : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+      (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
+    fun 𝔭 => by
+      have hx : (2 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := two_le_absNorm_of_prime K 𝔭.2.1 𝔭.2.2
+      have hden_pos : (0 : ℝ) < 1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
+        have := Real.rpow_lt_one_of_one_lt_of_neg (x := (Ideal.absNorm 𝔭.1 : ℝ))
+          (by linarith) (by linarith : -s < 0)
+        linarith
+      exact div_nonneg (Real.rpow_nonneg (by positivity) _) hden_pos.le
+  have hsummable_rhs : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ))) :=
+    (summable_prime2_absNorm_rpow K one_lt_two).mul_left 2
+  have hsummable_lhs : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))) :=
+    Summable.of_nonneg_of_le hnonneg hbound hsummable_rhs
+  calc ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))
+      ≤ ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+          2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) :=
+        hsummable_lhs.tsum_le_tsum hbound hsummable_rhs
+    _ = 2 * ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+          (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := tsum_mul_left
 
 /-- Sharifi 7.1.12 proof (p. 140), Euler-product-log identity:
 `log ζ_K(s) = Σ_𝔭 N𝔭^{-s} + O(1)` as `s ↓ 1`. The `O(1)` is the
