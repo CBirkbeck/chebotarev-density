@@ -164,6 +164,7 @@ theorem card_primesAbove_mul_orderOf_eq
   rw [← finrank_residue_eq_orderOf K L σ C _hσ 𝔭 hunr _hCfrob 𝔓₀ hlo₀]
   exact card_primesAbove_mul_finrank_eq K L 𝔭 hunr 𝔓₀ hlo₀
 
+open scoped Pointwise in
 /-- **Equipotent Frobenius fibres** (the "distributed evenly" of Sharifi 7.2.2, p. 143).
 For `IsConj σ σ'`, conjugating by the witnessing element is a bijection between the primes
 above `𝔭` with `Frob_𝔓 = σ` and those with `Frob_𝔓 = σ'` (via `frobeniusAt_conj_eq`), so the
@@ -176,7 +177,33 @@ theorem frobeniusFibre_card_eq_of_isConj
         frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ}
       = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'} := by
-  sorry
+  obtain ⟨c, hc⟩ := isConj_iff.mp hc
+  apply Nat.card_congr
+  refine Equiv.subtypeEquiv (MulAction.toPerm c) fun 𝔓 => ?_
+  simp only [MulAction.toPerm_apply]
+  constructor
+  · rintro ⟨hp, hP, hne, hfrob⟩
+    haveI := hp
+    haveI := hP
+    refine ⟨inferInstance, inferInstance, ?_, ?_⟩
+    · rw [← Ideal.smul_bot c]
+      exact (MulAction.injective c).ne hne
+    · rw [frobeniusAt_conj_eq K L 𝔓 (c • 𝔓)
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) _ c rfl, hfrob, hc]
+  · rintro ⟨hp, hP, hne, hfrob⟩
+    haveI := hp
+    haveI := hP
+    have hsmul : c⁻¹ • (c • 𝔓) = 𝔓 := inv_smul_smul c 𝔓
+    haveI hp' : 𝔓.IsPrime := hsmul ▸ (inferInstance : (c⁻¹ • (c • 𝔓)).IsPrime)
+    haveI hP' : 𝔓.LiesOver 𝔭 := hsmul ▸ (inferInstance : (c⁻¹ • (c • 𝔓)).LiesOver 𝔭)
+    have hne' : 𝔓 ≠ ⊥ := by
+      rw [← hsmul, ← Ideal.smul_bot c⁻¹]
+      exact (MulAction.injective c⁻¹).ne hne
+    refine ⟨hp', hP', hne', ?_⟩
+    rw [frobeniusAt_conj_eq K L (c • 𝔓) 𝔓
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr (c • 𝔓) hP)
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP') c⁻¹ hsmul, hfrob, ← hc]
+    group
 
 /-- **Balanced fibre count.** If every prime above `𝔭` has Frobenius in the class `C = [σ]`
 and conjugate Frobenius values occur equally often (`hequi`), the total number of primes
