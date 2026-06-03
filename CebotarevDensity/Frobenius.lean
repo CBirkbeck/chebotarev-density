@@ -67,6 +67,7 @@ def UnramifiedIn
     (𝔭 : Ideal (𝓞 K)) : Prop :=
   𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime], 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
 
+omit [NumberField K] [NumberField L] in
 /-- A prime of `𝓞 L` with ramification index `1` over its image in `𝓞 K` is nonzero:
 the zero ideal has ramification index `0` (`Ideal.ramificationIdx_bot`). -/
 theorem ne_bot_of_ramificationIdx_eq_one
@@ -74,6 +75,7 @@ theorem ne_bot_of_ramificationIdx_eq_one
   rintro rfl
   simp at hunr
 
+omit [NumberField K] [NumberField L] in
 /-- An unramified prime is nonzero — the first clause of `UnramifiedIn`. -/
 theorem UnramifiedIn.ne_bot
     [IsGalois K L]
@@ -170,6 +172,7 @@ theorem frobeniusAt_isConj_of_liesOver
     (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP'))
   exact isConj_arithFrobAt (𝓞 K) Gal(L/K) 𝔓 𝔓' (hP.over.symm.trans hP'.over)
 
+omit [NumberField K] [NumberField L] in
 /-- A nonzero prime `𝔭` of `𝓞 K` has at least one prime `𝔓` of `𝓞 L` lying
 over it, and any such `𝔓` is nonzero (going-up for the integral extension
 `𝓞 K ⊆ 𝓞 L`; nonzero because `𝔭` is and `algebraMap (𝓞 K) (𝓞 L)` is injective). -/

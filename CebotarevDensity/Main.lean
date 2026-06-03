@@ -104,7 +104,32 @@ theorem card_primesAbove_mul_finrank_eq
     (𝔓₀ : Ideal (𝓞 L)) [𝔓₀.IsPrime] (hlo : 𝔓₀.LiesOver 𝔭) :
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
         * Module.finrank (𝓞 K ⧸ 𝔓₀.under (𝓞 K)) (𝓞 L ⧸ 𝔓₀) = Nat.card Gal(L/K) := by
-  sorry
+  have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
+  have he : Ideal.ramificationIdx (𝔓₀.under (𝓞 K)) 𝔓₀ = 1 :=
+    UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓₀ hlo
+  have hP0bot : 𝔓₀ ≠ ⊥ := ne_bot_of_ramificationIdx_eq_one K L he
+  have hunder : 𝔓₀.under (𝓞 K) = 𝔭 := hlo.over.symm
+  have hp_under_bot : 𝔓₀.under (𝓞 K) ≠ ⊥ := hunder ▸ hpbot
+  haveI : 𝔓₀.IsMaximal := ‹𝔓₀.IsPrime›.isMaximal hP0bot
+  haveI : (𝔓₀.under (𝓞 K)).IsMaximal :=
+    (inferInstance : (𝔓₀.under (𝓞 K)).IsPrime).isMaximal hp_under_bot
+  haveI : Finite (𝓞 L ⧸ 𝔓₀) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓₀ hP0bot
+  haveI : Algebra.IsSeparable (𝓞 K ⧸ 𝔓₀.under (𝓞 K)) (𝓞 L ⧸ 𝔓₀) := by
+    letI : Field (𝓞 K ⧸ 𝔓₀.under (𝓞 K)) := Ideal.Quotient.field _
+    letI : Field (𝓞 L ⧸ 𝔓₀) := Ideal.Quotient.field _
+    exact IsGalois.to_isSeparable
+  have H := Ideal.ncard_primesOver_mul_card_inertia_mul_finrank
+    (G := Gal(L/K)) (𝔓₀.under (𝓞 K)) 𝔓₀
+  rw [inertiaGroup_trivial_of_unramified K L 𝔓₀ he, Subgroup.card_bot, mul_one] at H
+  have hset : (𝔓₀.under (𝓞 K)).primesOver (𝓞 L)
+      = {𝔓 : Ideal (𝓞 L) | 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} := by
+    ext 𝔓
+    refine ⟨fun ⟨hp, hlo'⟩ => ?_, fun ⟨hp, hlo', _⟩ => ?_⟩
+    · haveI := hlo'
+      exact ⟨hp, hunder ▸ hlo', Ideal.ne_bot_of_liesOver_of_ne_bot hp_under_bot 𝔓⟩
+    · exact ⟨hp, hunder ▸ hlo'⟩
+  rw [hset, ← Nat.card_coe_set_eq] at H
+  exact H
 
 /-- The residue degree `[κ(𝔓) : κ(𝔭)]` at an unramified prime `𝔓` above `𝔭`, whose
 Frobenius class is `C = [σ]`, equals `orderOf σ`: `Frob_𝔓` generates `D_𝔓` of order `f`
