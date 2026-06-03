@@ -180,7 +180,7 @@ to `1` as `s ↓ 1` since the ramified primes are finite
 partition the unramified primes. -/
 theorem ratioSum_frobeniusFibres_tendsto_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
     Filter.Tendsto
       (fun s : ℝ ↦ ∑ σ : Gal(L/K),
         primeIdealZetaSum
@@ -188,7 +188,66 @@ theorem ratioSum_frobeniusFibres_tendsto_one
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 1) := by
-  sorry
+  classical
+  set S : Gal(L/K) → Set (Ideal (𝓞 K)) := fun σ =>
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ frobeniusClass K L 𝔭 = ConjClasses.mk σ}
+    with hS
+  set R : Set (Ideal (𝓞 K)) :=
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} with hR
+  set D : ℝ → ℝ := primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) with hD
+  -- `ConjClasses.mk` is injective on the abelian group `Gal(L/K)`.
+  have hmk_inj : Function.Injective (ConjClasses.mk : Gal(L/K) → ConjClasses Gal(L/K)) := by
+    intro a b hab
+    obtain ⟨c, hc⟩ : IsConj a b := ConjClasses.mk_eq_mk_iff_isConj.mp hab
+    rw [SemiconjBy, mul_comm' (c : Gal(L/K))] at hc
+    exact mul_right_cancel hc
+  -- The fibres `S σ` are pairwise disjoint (distinct Frobenius classes).
+  have hpd : ((Finset.univ : Finset Gal(L/K)) : Set Gal(L/K)).PairwiseDisjoint S := by
+    intro a _ b _ hab
+    refine Set.disjoint_left.mpr fun 𝔭 ha hb => hab (hmk_inj ?_)
+    rw [hS] at ha hb
+    exact ha.2.2.symm.trans hb.2.2
+  -- `⋃_σ S σ` is disjoint from the ramified set `R`.
+  have hdisjR : Disjoint (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) R := by
+    refine Set.disjoint_left.mpr fun 𝔭 hmem hbad => ?_
+    simp only [Set.mem_iUnion] at hmem
+    obtain ⟨σ, -, hσ⟩ := hmem
+    exact hbad.2.2 (hS ▸ hσ).2.1
+  -- Every nonzero prime lies in `(⋃_σ S σ) ∪ R`.
+  have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ →
+      𝔭 ∈ (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) ∪ R := by
+    intro 𝔭 hp hne
+    by_cases hunr : UnramifiedIn K L 𝔭
+    · obtain ⟨σ, hσ⟩ := ConjClasses.mk_surjective (frobeniusClass K L 𝔭)
+      exact Or.inl <| Set.mem_iUnion.mpr ⟨σ, Set.mem_iUnion.mpr ⟨Finset.mem_univ σ,
+        hS ▸ ⟨hp, hunr, hσ.symm⟩⟩⟩
+    · exact Or.inr ⟨hp, hne, hunr⟩
+  -- `R` is finite, so its density ratio tends to `0`.
+  have hRfin : R.Finite := finite_ramifiedIn K L
+  have hR0 : Filter.Tendsto (fun s ↦ primeIdealZetaSum R s / D s) (𝓝[>] 1) (𝓝 0) :=
+    hasDirichletDensity_of_finite K hRfin
+  -- The denominator `D s` is eventually positive (it diverges to `+∞`).
+  have hDpos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < D s :=
+    (primeIdealZetaSum_univ_tendsto_atTop K).eventually_gt_atTop 0
+  -- The comparison function `1 - Z(R) s / D s` tends to `1 - 0 = 1`.
+  have hcomp : Filter.Tendsto (fun s ↦ 1 - primeIdealZetaSum R s / D s) (𝓝[>] 1) (𝓝 1) := by
+    simpa using hR0.const_sub 1
+  -- On `s > 1`, the σ-sum equals `1 - Z(R) s / D s`.
+  refine hcomp.congr' ?_
+  filter_upwards [hDpos, self_mem_nhdsWithin] with s hpos hs1
+  simp only [Set.mem_Ioi] at hs1
+  -- The σ-sum of fibre series is the series over their (disjoint) union.
+  have hsum : ∑ σ : Gal(L/K), primeIdealZetaSum (S σ) s
+      = primeIdealZetaSum (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) s :=
+    (primeIdealZetaSum_biUnion_of_pairwiseDisjoint Finset.univ S hpd hs1).symm
+  -- That union plus the ramified set recovers all nonzero primes.
+  have hadd : primeIdealZetaSum (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) s
+      + primeIdealZetaSum R s = D s := by
+    rw [← primeIdealZetaSum_union_of_disjoint hdisjR hs1, hD]
+    exact primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s
+  rw [← Finset.sum_div, hsum]
+  field_simp
+  linarith [hadd]
 
 section LiminfSumGlue
 

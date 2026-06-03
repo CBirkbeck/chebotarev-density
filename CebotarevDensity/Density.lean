@@ -187,7 +187,7 @@ as the sum of those over `S` and `T`, for `1 < s`: the union-prime subtype is th
 disjoint union (via the membership-in-`S` set and its complement) of the
 `S`-prime and `T`-prime subtypes, so the `tsum` splits by
 `tsum_subtype_add_tsum_subtype_compl`. -/
-private theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T)
+theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T)
     {s : ℝ} (hs : 1 < s) :
     primeIdealZetaSum (S ∪ T) s = primeIdealZetaSum S s + primeIdealZetaSum T s := by
   let eS : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
@@ -208,6 +208,47 @@ private theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (
       {x | (x.1 : Ideal (𝓞 K)) ∈ S},
     ← eS.tsum_eq (fun x => (Ideal.absNorm (x.1 : Ideal (𝓞 K)) : ℝ) ^ (-s)),
     ← eT.tsum_eq (fun x => (Ideal.absNorm (x.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
+  rfl
+
+/-- The partial Dirichlet series over the empty set is `0`. -/
+theorem primeIdealZetaSum_empty (s : ℝ) :
+    primeIdealZetaSum (∅ : Set (Ideal (𝓞 K))) s = 0 := by
+  have : IsEmpty {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (∅ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
+    ⟨fun x => x.2.1⟩
+  rw [primeIdealZetaSum_def, tsum_empty]
+
+/-- The partial Dirichlet series over a `Finset`-indexed pairwise-disjoint family
+`⋃ i ∈ t, g i` splits as the finite sum `∑ i ∈ t, primeIdealZetaSum (g i)`, for
+`1 < s`. Proved by induction on `t` from the two-set case
+`primeIdealZetaSum_union_of_disjoint`. -/
+theorem primeIdealZetaSum_biUnion_of_pairwiseDisjoint {ι : Type*} (t : Finset ι)
+    (g : ι → Set (Ideal (𝓞 K))) (hg : (t : Set ι).PairwiseDisjoint g) {s : ℝ} (hs : 1 < s) :
+    primeIdealZetaSum (⋃ i ∈ t, g i) s = ∑ i ∈ t, primeIdealZetaSum (g i) s := by
+  classical
+  induction t using Finset.induction with
+  | empty => simp [primeIdealZetaSum_empty]
+  | insert a t ha ih =>
+      have hdisj : Disjoint (g a) (⋃ i ∈ t, g i) :=
+        disjoint_iUnion₂_right.2 fun i hi =>
+          hg (Finset.mem_insert_self a t) (Finset.mem_insert_of_mem hi)
+            (fun h => ha (h ▸ hi))
+      rw [Finset.set_biUnion_insert, primeIdealZetaSum_union_of_disjoint hdisj hs,
+        Finset.sum_insert ha, ih (hg.subset (Finset.coe_subset.mpr (Finset.subset_insert a t)))]
+
+/-- If `S` contains every nonzero prime ideal of `𝓞 K`, then its partial Dirichlet
+series agrees with the one over `univ`: the defining `tsum`s run over the same
+subtype (membership in `S` is implied for every nonzero prime). -/
+theorem primeIdealZetaSum_eq_univ_of_forall_prime_mem
+    (hS : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ S) (s : ℝ) :
+    primeIdealZetaSum S s = primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s := by
+  let e : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
+      {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (univ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
+    { toFun := fun 𝔭 => ⟨𝔭.1, mem_univ _, 𝔭.2.2.1, 𝔭.2.2.2⟩
+      invFun := fun 𝔭 => ⟨𝔭.1, hS 𝔭.1 𝔭.2.2.1 𝔭.2.2.2, 𝔭.2.2.1, 𝔭.2.2.2⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
+  rw [primeIdealZetaSum_def, primeIdealZetaSum_def,
+    ← e.tsum_eq (fun 𝔭 => (Ideal.absNorm (𝔭.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
   rfl
 
 /-- If the upper density of `S` equals the lower density of `S` and both equal
