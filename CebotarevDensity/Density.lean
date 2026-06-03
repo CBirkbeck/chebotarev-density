@@ -1,9 +1,13 @@
 module
 
 public import CebotarevDensity.ForMathlib.LogOneDivSubOne
+public import CebotarevDensity.NumberFieldEulerProduct
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.NumberTheory.NumberField.DedekindZeta
 public import Mathlib.Topology.Algebra.InfiniteSum.Basic
+public import Mathlib.Topology.Algebra.InfiniteSum.Order
+public import Mathlib.Topology.Algebra.InfiniteSum.Real
+public import Mathlib.Topology.Order.LiminfLimsup
 
 /-!
 # Dirichlet density of a set of prime ideals
@@ -107,6 +111,71 @@ theorem hasDirichletDensity_empty :
   simpa only [HasDirichletDensity, primeIdealZetaSum_def, tsum_empty, zero_div]
     using tendsto_const_nhds
 
+/-- Over the nonzero ideals of `𝓞 K`, the series `Σ_I N(I)^{-s}` is summable for
+`1 < s`. Grouping by norm value, the fibre `{I : N(I) = n}` is finite and the
+fibre-sum series is the (real, norm-grouped) tail of the Dedekind zeta series,
+summable by `summable_idealNormMultiplicity_mul_cpow_neg`. -/
+private theorem summable_nonzeroIdeal_absNorm_rpow {s : ℝ} (hs : 1 < s) :
+    Summable (fun I : NonzeroIdeal K ↦ (Ideal.absNorm I.1 : ℝ) ^ (-s)) := by
+  have hf_nonneg : ∀ I : NonzeroIdeal K, 0 ≤ (Ideal.absNorm I.1 : ℝ) ^ (-s) :=
+    fun I => Real.rpow_nonneg (by positivity) _
+  haveI hfiber : ∀ n : ℕ, Finite {I : NonzeroIdeal K // Ideal.absNorm I.1 = n} := fun n =>
+    Set.Finite.to_subtype <| Set.Finite.of_finite_image
+      (f := fun I : NonzeroIdeal K => I.1)
+      ((Ideal.finite_setOf_absNorm_eq (S := 𝓞 K) n).subset
+        (by rintro _ ⟨⟨I, _⟩, rfl, rfl⟩; rfl))
+      (fun _ _ _ _ => Subtype.ext)
+  have hfiber_sum : ∀ n : ℕ,
+      (∑' y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n}, (Ideal.absNorm (y.1).1 : ℝ) ^ (-s))
+        = ‖(idealNormMultiplicity K n : ℂ) * (n : ℂ) ^ (-(s : ℂ))‖ := fun n => by
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · have : IsEmpty {I : NonzeroIdeal K // Ideal.absNorm I.1 = 0} :=
+        ⟨fun y => y.1.2 (Ideal.absNorm_eq_zero_iff.mp y.2)⟩
+      rw [tsum_empty]
+      simp [idealNormMultiplicity_zero]
+    · have hconst : ∀ y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
+          (Ideal.absNorm (y.1).1 : ℝ) ^ (-s) = (n : ℝ) ^ (-s) := fun y => by rw [y.2]
+      rw [tsum_congr hconst, tsum_const, norm_mul, Complex.norm_natCast,
+        Complex.norm_natCast_cpow_of_pos hn, Complex.neg_re, Complex.ofReal_re, nsmul_eq_mul,
+        idealNormMultiplicity]
+  rw [← (Equiv.sigmaFiberEquiv (fun I : NonzeroIdeal K => Ideal.absNorm I.1)).summable_iff]
+  refine (summable_sigma_of_nonneg (fun _ => hf_nonneg _)).mpr ⟨fun _ => Summable.of_finite, ?_⟩
+  have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
+  exact (summable_idealNormMultiplicity_mul_cpow_neg K hs').congr (fun n => (hfiber_sum n).symm)
+
+/-- Over the nonzero prime ideals of `𝓞 K` lying in any set `S`, the series
+`Σ_𝔭 N𝔭^{-s}` is summable for `1 < s`: the prime subtype injects into the
+nonzero-ideal type, where summability holds by
+`summable_nonzeroIdeal_absNorm_rpow`. -/
+private theorem summable_prime_absNorm_rpow (S : Set (Ideal (𝓞 K))) {s : ℝ} (hs : 1 < s) :
+    Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) := by
+  have hi : Function.Injective
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+        (⟨𝔭.1, 𝔭.2.2.2⟩ : NonzeroIdeal K)) := by
+    intro a b hab
+    exact Subtype.ext (Subtype.mk_eq_mk.mp hab)
+  exact ((summable_nonzeroIdeal_absNorm_rpow K hs).comp_injective hi).congr fun _ => rfl
+
+/-- The partial Dirichlet series is nonnegative: it is a `tsum` of nonnegative
+terms `N𝔭^{-s} ≥ 0`. -/
+private theorem primeIdealZetaSum_nonneg (S : Set (Ideal (𝓞 K))) (s : ℝ) :
+    0 ≤ primeIdealZetaSum K S s := by
+  rw [primeIdealZetaSum_def]
+  exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
+
+/-- The partial Dirichlet series over `S` is bounded above by the one over all
+primes, for `1 < s`: the `S`-prime subtype injects into the universal prime
+subtype, the terms agree, and both families are summable. -/
+private theorem primeIdealZetaSum_le_univ {s : ℝ} (hs : 1 < s) :
+    primeIdealZetaSum K S s ≤ primeIdealZetaSum K univ s := by
+  rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
+  refine (summable_prime_absNorm_rpow K S hs).tsum_le_tsum_of_inj
+    (fun 𝔭 => ⟨𝔭.1, ⟨mem_univ _, 𝔭.2.2.1, 𝔭.2.2.2⟩⟩)
+    (fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab))
+    (fun c _ => Real.rpow_nonneg (Nat.cast_nonneg _) _)
+    (fun 𝔭 => le_of_eq rfl) (summable_prime_absNorm_rpow K univ hs)
+
 /-- If the upper density of `S` equals the lower density of `S` and both equal
 `δ`, then the Dirichlet density of `S` is `δ`. (Sandwich criterion used in the
 Chebotarev proof: Sharifi 7.2.2 Step 2 last paragraph.) -/
@@ -114,7 +183,16 @@ theorem HasDirichletDensity.of_upper_eq_lower
     (hUp : HasUpperDirichletDensity K S δ)
     (hLow : HasLowerDirichletDensity K S δ) :
     HasDirichletDensity K S δ := by
-  sorry
+  refine tendsto_of_liminf_eq_limsup hLow hUp ?_ ?_
+  · refine ⟨1, ?_⟩
+    rw [eventually_map]
+    filter_upwards [self_mem_nhdsWithin] with s hs
+    simp only [mem_Ioi] at hs
+    rcases (primeIdealZetaSum_nonneg K univ s).lt_or_eq with hpos | hzero
+    · exact (div_le_one hpos).mpr (primeIdealZetaSum_le_univ K hs)
+    · rw [← hzero, div_zero]; exact zero_le_one
+  · exact isBoundedUnder_of ⟨0, fun s =>
+      div_nonneg (primeIdealZetaSum_nonneg K S s) (primeIdealZetaSum_nonneg K univ s)⟩
 
 /-- The upper Dirichlet density extracted from `HasDirichletDensity`. -/
 theorem HasDirichletDensity.hasUpper
