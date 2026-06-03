@@ -222,7 +222,43 @@ theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
       = Nat.card C.carrier
         * Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
           frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ} := by
-  sorry
+  classical
+  have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
+  haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal hpbot
+  haveI : Finite (𝔭.primesOver (𝓞 L)) := (IsDedekindDomain.primesOver_finite 𝔭 (𝓞 L)).to_subtype
+  haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
+    Finite.of_injective
+      (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} =>
+        (⟨𝔓.1, 𝔓.2.1, 𝔓.2.2.1⟩ : 𝔭.primesOver (𝓞 L)))
+      fun _ _ hab => Subtype.ext (by simpa using hab)
+  haveI : Fintype C.carrier := Fintype.ofFinite _
+  have hmem : ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭),
+      frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ∈ C.carrier := by
+    intro 𝔓 _ hP
+    rw [ConjClasses.mem_carrier_iff_mk_eq, ← frobeniusClass_eq_mk_frobeniusAt K L 𝔭 hunr 𝔓 hP,
+      hCfrob]
+  have hconj : ∀ g : C.carrier, IsConj σ g.1 := by
+    rintro ⟨g, hg⟩
+    rw [ConjClasses.mem_carrier_iff_mk_eq] at hg
+    exact ConjClasses.mk_eq_mk_iff_isConj.mp (hσ.trans hg.symm)
+  let F : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} → C.carrier := fun 𝔓 =>
+    haveI := 𝔓.2.1
+    ⟨frobeniusAt K L 𝔓.1 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓.1 𝔓.2.2.1),
+      hmem 𝔓.1 𝔓.2.2.1⟩
+  rw [← Nat.card_congr (Equiv.sigmaFiberEquiv F), Nat.card_sigma]
+  have hfib : ∀ g : C.carrier,
+      Nat.card {𝔓 // F 𝔓 = g}
+        = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
+            frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ} := by
+    intro g
+    rw [hequi g.1 (hconj g)]
+    refine Nat.card_congr ⟨fun x => ⟨x.1.1, x.1.2.1, x.1.2.2.1, x.1.2.2.2, ?_⟩,
+      fun x => ⟨⟨x.1, by obtain ⟨hp, hP, hne, _⟩ := x.2; exact ⟨hp, hP, hne⟩⟩, ?_⟩,
+      fun _ => rfl, fun _ => rfl⟩
+    · exact Subtype.ext_iff.mp x.2
+    · obtain ⟨_, _, _, hg⟩ := x.2; exact Subtype.ext hg
+  simp_rw [hfib]
+  rw [Finset.sum_const, Finset.card_univ, smul_eq_mul, ← Nat.card_eq_fintype_card]
 
 /-- **Even distribution of Frobenius over the conjugacy class** (Sharifi 7.2.2 Step 1,
 p. 143). The Frobenius elements of the primes above `𝔭` sweep out the conjugacy class
