@@ -369,11 +369,11 @@ hypothesis `hab` is the abelian-case output for `L/E` from
 theorem density_lift_through_fixedField
     [FiniteDimensional K L] (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
     (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
-    (_hab : HasDirichletDensity ↥E
+    (_hab : HasDirichletDensity
         {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E L P ∧
           frobeniusClass ↥E L P = ConjClasses.mk σE}
         ((Nat.card Gal(L/E) : ℝ)⁻¹)) :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card Gal(L/K)) := by
@@ -387,7 +387,7 @@ and a conjugacy class `C ⊆ G`, the Dirichlet density of the set of primes
 `𝔭` is `C` equals `|C| / |G|`. -/
 theorem chebotarev_density
     [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
@@ -419,7 +419,7 @@ extension `L/K`, the Dirichlet density of primes `𝔭` of `𝓞 K` unramified i
 `L` whose Frobenius conjugacy class is `C` is `|C| / |Gal(L/K)|`. -/
 theorem chebotarev_density_of_comm
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (C : ConjClasses Gal(L/K)) :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
@@ -430,7 +430,7 @@ theorem chebotarev_density_of_comm
 infinite. Contrapositive: a finite set has density `0` (by
 `hasDirichletDensity_of_finite` from `Density.lean`). -/
 theorem infinite_of_hasDirichletDensity_pos
-    {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity K S δ) (hδ : 0 < δ) :
+    {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity S δ) (hδ : 0 < δ) :
     S.Infinite :=
   fun hfin ↦ hδ.ne' (tendsto_nhds_unique h (hasDirichletDensity_of_finite K hfin))
 
@@ -468,7 +468,7 @@ Chebotarev applied to the identity conjugacy class).
 The Dirichlet density of primes `𝔭` of `𝓞 K` that split completely in `L`
 equals `1 / [L : K]`. -/
 theorem density_split_completely :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk 1}
       ((Module.finrank K L : ℝ)⁻¹) := by
@@ -483,7 +483,7 @@ For coprime integers `a, n` with `1 ≤ n` and `gcd a n = 1`, the Dirichlet
 density of primes `p` with `p ≡ a mod n` equals `1 / φ(n)`. This is the
 specialisation of Chebotarev to `K = ℚ`, `L = ℚ(μ_n)` (Sharifi 7.2.3). -/
 theorem dirichlet_primes_in_AP (n : ℕ) (hn : 1 ≤ n) (a : ZMod n) (ha : IsUnit a) :
-    HasDirichletDensity ℚ
+    HasDirichletDensity
       ((fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
         {p : ℕ | p.Prime ∧ (p : ZMod n) = a})
       ((Nat.totient n : ℝ)⁻¹) := by

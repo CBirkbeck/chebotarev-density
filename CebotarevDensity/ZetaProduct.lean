@@ -291,7 +291,7 @@ theorem exists_chebotarev_cyclotomic_residue_identity
     ∃ c : ℝ,
       Filter.Tendsto
         (fun s : ℝ ↦
-          primeIdealZetaSum K
+          primeIdealZetaSum
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
             - (Nat.card Gal(L/K) : ℝ)⁻¹ * Real.log (1 / (s - 1)))

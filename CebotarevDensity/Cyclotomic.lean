@@ -220,7 +220,7 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
-        primeIdealZetaSum K
+        primeIdealZetaSum
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
           / Real.log (1 / (s - 1)))
@@ -252,10 +252,10 @@ theorem cyclotomic_density_from_two_sided_asymp
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
-        primeIdealZetaSum K
+        primeIdealZetaSum
             {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
               frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
-          / primeIdealZetaSum K (Set.univ : Set (Ideal (𝓞 K))) s)
+          / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) :=
   tendsto_ratio_of_log_asymp_numerator _ _ _
     (primeIdealZetaSum_frobeniusFibre_asymp K L m σ)
@@ -268,7 +268,7 @@ extension of `K`, every `σ ∈ Gal(L/K)` is the Frobenius of a set of primes
 of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
 theorem chebotarev_cyclotomic
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
@@ -279,7 +279,7 @@ inequality. Used in the abelian case to feed into the
 `HasLowerDirichletDensity.mono` chain. -/
 theorem chebotarev_cyclotomic_lowerDensity_ge
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
-    HasLowerDirichletDensity K
+    HasLowerDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=

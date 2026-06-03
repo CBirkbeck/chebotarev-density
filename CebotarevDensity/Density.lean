@@ -47,7 +47,7 @@ open Filter NumberField Topology Set
 
 namespace Chebotarev
 
-variable (K : Type*) [Field K] [NumberField K] {S : Set (Ideal (𝓞 K))} {δ : ℝ}
+variable {K : Type*} [Field K] [NumberField K] {S : Set (Ideal (𝓞 K))} {δ : ℝ}
 
 /-- Partial Dirichlet series `Σ_{𝔭 ∈ S} N𝔭^{-s}` over nonzero prime ideals
 `𝔭` of `𝓞 K` lying in the set `S`. -/
@@ -57,7 +57,7 @@ def primeIdealZetaSum (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
 
 /-- Equation lemma unfolding `primeIdealZetaSum` to its defining `tsum`. -/
 theorem primeIdealZetaSum_def (S : Set (Ideal (𝓞 K))) (s : ℝ) :
-    primeIdealZetaSum K S s =
+    primeIdealZetaSum S s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := rfl
 
@@ -67,7 +67,7 @@ the ratio of partial sums tends to `δ` as `s ↓ 1`.
 Sharifi 7.1.13: `δ(S) = lim_{s → 1⁺} (Σ_{𝔭 ∈ S} N𝔭^{-s}) / (Σ_𝔭 N𝔭^{-s})`. -/
 def HasDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Tendsto
-    (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
+    (fun s : ℝ ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
     (𝓝[>] 1) (𝓝 δ)
 
 /-- Upper Dirichlet density (`limsup` of the ratio).
@@ -86,7 +86,7 @@ standard convention, so:
 When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
 def HasUpperDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   limsup
-    (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
+    (fun s : ℝ ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
     (𝓝[>] 1) = δ
 
 /-- Lower Dirichlet density (`liminf` of the ratio). See
@@ -95,12 +95,12 @@ Sharifi's `δ_inf` notation despite Sharifi's labelling
 inversion. -/
 def HasLowerDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   liminf
-    (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
+    (fun s : ℝ ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
     (𝓝[>] 1) = δ
 
 /-- The Dirichlet density of the empty set is `0`. -/
 theorem hasDirichletDensity_empty :
-    HasDirichletDensity K (∅ : Set (Ideal (𝓞 K))) 0 := by
+    HasDirichletDensity (∅ : Set (Ideal (𝓞 K))) 0 := by
   have : IsEmpty {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (∅ : Set (Ideal (𝓞 K))) ∧
       𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := ⟨fun x ↦ x.2.1⟩
   simpa only [HasDirichletDensity, primeIdealZetaSum_def, tsum_empty, zero_div]
@@ -148,12 +148,12 @@ private theorem summable_prime_absNorm_rpow (S : Set (Ideal (𝓞 K))) {s : ℝ}
       (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
         (⟨𝔭.1, 𝔭.2.2.2⟩ : NonzeroIdeal K)) :=
     fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
-  exact ((summable_nonzeroIdeal_absNorm_rpow K hs).comp_injective hi).congr fun _ => rfl
+  exact ((summable_nonzeroIdeal_absNorm_rpow hs).comp_injective hi).congr fun _ => rfl
 
 /-- The partial Dirichlet series is nonnegative: it is a `tsum` of nonnegative
 terms `N𝔭^{-s} ≥ 0`. -/
 private theorem primeIdealZetaSum_nonneg (S : Set (Ideal (𝓞 K))) (s : ℝ) :
-    0 ≤ primeIdealZetaSum K S s := by
+    0 ≤ primeIdealZetaSum S s := by
   rw [primeIdealZetaSum_def]
   exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
 
@@ -161,26 +161,26 @@ private theorem primeIdealZetaSum_nonneg (S : Set (Ideal (𝓞 K))) (s : ℝ) :
 primes, for `1 < s`: the `S`-prime subtype injects into the universal prime
 subtype, the terms agree, and both families are summable. -/
 private theorem primeIdealZetaSum_le_univ {s : ℝ} (hs : 1 < s) :
-    primeIdealZetaSum K S s ≤ primeIdealZetaSum K univ s := by
+    primeIdealZetaSum S s ≤ primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s := by
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
-  refine (summable_prime_absNorm_rpow K S hs).tsum_le_tsum_of_inj
+  refine (summable_prime_absNorm_rpow S hs).tsum_le_tsum_of_inj
     (fun 𝔭 => ⟨𝔭.1, ⟨mem_univ _, 𝔭.2.2.1, 𝔭.2.2.2⟩⟩)
     (fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab))
     (fun c _ => Real.rpow_nonneg (Nat.cast_nonneg _) _)
-    (fun 𝔭 => le_of_eq rfl) (summable_prime_absNorm_rpow K univ hs)
+    (fun 𝔭 => le_of_eq rfl) (summable_prime_absNorm_rpow (univ : Set (Ideal (𝓞 K))) hs)
 
 /-- The partial Dirichlet series over `S ⊆ T` is bounded above by the one over
 `T`, for `1 < s`: the `S`-prime subtype injects into the `T`-prime subtype, the
 terms agree, and both families are summable. -/
 private theorem primeIdealZetaSum_le_of_subset {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {s : ℝ}
     (hs : 1 < s) :
-    primeIdealZetaSum K S s ≤ primeIdealZetaSum K T s := by
+    primeIdealZetaSum S s ≤ primeIdealZetaSum T s := by
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
-  refine (summable_prime_absNorm_rpow K S hs).tsum_le_tsum_of_inj
+  refine (summable_prime_absNorm_rpow S hs).tsum_le_tsum_of_inj
     (fun 𝔭 => ⟨𝔭.1, hST 𝔭.2.1, 𝔭.2.2.1, 𝔭.2.2.2⟩)
     (fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab))
     (fun c _ => Real.rpow_nonneg (Nat.cast_nonneg _) _)
-    (fun 𝔭 => le_of_eq rfl) (summable_prime_absNorm_rpow K T hs)
+    (fun 𝔭 => le_of_eq rfl) (summable_prime_absNorm_rpow T hs)
 
 /-- For disjoint `S` and `T`, the partial Dirichlet series over `S ∪ T` splits
 as the sum of those over `S` and `T`, for `1 < s`: the union-prime subtype is the
@@ -189,7 +189,7 @@ disjoint union (via the membership-in-`S` set and its complement) of the
 `tsum_subtype_add_tsum_subtype_compl`. -/
 private theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T)
     {s : ℝ} (hs : 1 < s) :
-    primeIdealZetaSum K (S ∪ T) s = primeIdealZetaSum K S s + primeIdealZetaSum K T s := by
+    primeIdealZetaSum (S ∪ T) s = primeIdealZetaSum S s + primeIdealZetaSum T s := by
   let eS : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
       ↑{x : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∪ T ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} | (x.1 : Ideal (𝓞 K)) ∈ S} :=
     { toFun := fun 𝔭 => ⟨⟨𝔭.1, Or.inl 𝔭.2.1, 𝔭.2.2.1, 𝔭.2.2.2⟩, 𝔭.2.1⟩
@@ -204,7 +204,7 @@ private theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (
       left_inv := fun _ => rfl
       right_inv := fun _ => rfl }
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def, primeIdealZetaSum_def,
-    ← (summable_prime_absNorm_rpow K (S ∪ T) hs).tsum_subtype_add_tsum_subtype_compl
+    ← (summable_prime_absNorm_rpow (S ∪ T) hs).tsum_subtype_add_tsum_subtype_compl
       {x | (x.1 : Ideal (𝓞 K)) ∈ S},
     ← eS.tsum_eq (fun x => (Ideal.absNorm (x.1 : Ideal (𝓞 K)) : ℝ) ^ (-s)),
     ← eT.tsum_eq (fun x => (Ideal.absNorm (x.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
@@ -214,58 +214,62 @@ private theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (
 `δ`, then the Dirichlet density of `S` is `δ`. (Sandwich criterion used in the
 Chebotarev proof: Sharifi 7.2.2 Step 2 last paragraph.) -/
 theorem HasDirichletDensity.of_upper_eq_lower
-    (hUp : HasUpperDirichletDensity K S δ)
-    (hLow : HasLowerDirichletDensity K S δ) :
-    HasDirichletDensity K S δ := by
+    (hUp : HasUpperDirichletDensity S δ)
+    (hLow : HasLowerDirichletDensity S δ) :
+    HasDirichletDensity S δ := by
   refine tendsto_of_liminf_eq_limsup hLow hUp ?_ ?_
   · refine ⟨1, ?_⟩
     rw [eventually_map]
     filter_upwards [self_mem_nhdsWithin] with s hs
     simp only [mem_Ioi] at hs
-    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ K hs) (primeIdealZetaSum_nonneg K univ s)
+    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ hs)
+      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
   · exact isBoundedUnder_of ⟨0, fun s =>
-      div_nonneg (primeIdealZetaSum_nonneg K S s) (primeIdealZetaSum_nonneg K univ s)⟩
+      div_nonneg (primeIdealZetaSum_nonneg S s)
+        (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)⟩
 
 /-- The upper Dirichlet density extracted from `HasDirichletDensity`. -/
 theorem HasDirichletDensity.hasUpper
-    (h : HasDirichletDensity K S δ) :
-    HasUpperDirichletDensity K S δ :=
+    (h : HasDirichletDensity S δ) :
+    HasUpperDirichletDensity S δ :=
   h.limsup_eq
 
 /-- The lower Dirichlet density extracted from `HasDirichletDensity`. -/
 theorem HasDirichletDensity.hasLower
-    (h : HasDirichletDensity K S δ) :
-    HasLowerDirichletDensity K S δ :=
+    (h : HasDirichletDensity S δ) :
+    HasLowerDirichletDensity S δ :=
   h.liminf_eq
 
 /-- The Dirichlet density of a disjoint union is the sum of the densities. -/
 theorem HasDirichletDensity.union_of_disjoint
-    {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {ε : ℝ} (hS : HasDirichletDensity K S δ)
-    (hT : HasDirichletDensity K T ε) :
-    HasDirichletDensity K (S ∪ T) (δ + ε) := by
+    {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {ε : ℝ} (hS : HasDirichletDensity S δ)
+    (hT : HasDirichletDensity T ε) :
+    HasDirichletDensity (S ∪ T) (δ + ε) := by
   rw [HasDirichletDensity] at hS hT ⊢
   refine (hS.add hT).congr' ?_
   filter_upwards [self_mem_nhdsWithin] with s hs
   simp only [mem_Ioi] at hs
-  rw [primeIdealZetaSum_union_of_disjoint K hDisj hs, add_div]
+  rw [primeIdealZetaSum_union_of_disjoint hDisj hs, add_div]
 
 /-- Monotonicity of the lower density under inclusion. -/
 theorem HasLowerDirichletDensity.mono
-    {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {ε : ℝ} (hS : HasLowerDirichletDensity K S δ)
-    (hT : HasLowerDirichletDensity K T ε) :
+    {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {ε : ℝ} (hS : HasLowerDirichletDensity S δ)
+    (hT : HasLowerDirichletDensity T ε) :
     δ ≤ ε := by
   rw [HasLowerDirichletDensity] at hS hT
   rw [← hS, ← hT]
   refine liminf_le_liminf ?_ ?_ (isCoboundedUnder_ge_of_eventually_le (x := 1) _ ?_)
   · filter_upwards [self_mem_nhdsWithin] with s hs
     simp only [mem_Ioi] at hs
-    exact div_le_div_of_nonneg_right (primeIdealZetaSum_le_of_subset K hST hs)
-      (primeIdealZetaSum_nonneg K univ s)
+    exact div_le_div_of_nonneg_right (primeIdealZetaSum_le_of_subset hST hs)
+      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
   · exact isBoundedUnder_of ⟨0, fun s =>
-      div_nonneg (primeIdealZetaSum_nonneg K S s) (primeIdealZetaSum_nonneg K univ s)⟩
+      div_nonneg (primeIdealZetaSum_nonneg S s)
+        (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)⟩
   · filter_upwards [self_mem_nhdsWithin] with s hs
     simp only [mem_Ioi] at hs
-    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ K hs) (primeIdealZetaSum_nonneg K univ s)
+    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ hs)
+      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
 
 /-! ### Sub-lemmas for `primeIdealZetaSum_univ_tendsto_log`
 
@@ -281,7 +285,7 @@ source's argument decomposes into:
     (mathlib: `NumberField.tendsto_sub_one_mul_dedekindZeta_nhdsGT`).
 -/
 
-include K
+variable (K)
 
 /-- Over the nonzero prime ideals of `𝓞 K` (the 2-part subtype, no ambient set),
 the series `Σ_𝔭 N𝔭^{-s}` is summable for `1 < s`: transport
@@ -295,7 +299,8 @@ private theorem summable_prime2_absNorm_rpow {s : ℝ} (hs : 1 < s) :
         (⟨𝔭.1, mem_univ _, 𝔭.2.1, 𝔭.2.2⟩ :
           {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ univ ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
     fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
-  exact ((summable_prime_absNorm_rpow K univ hs).comp_injective hi).congr fun _ => rfl
+  exact ((summable_prime_absNorm_rpow (univ : Set (Ideal (𝓞 K))) hs).comp_injective hi).congr
+    fun _ => rfl
 
 /-- A nonzero prime ideal of `𝓞 K` has absolute norm at least `2`: it is neither
 `⊥` (norm `0`, by `Ideal.absNorm_eq_zero_iff`) nor `⊤` (norm `1`, by
@@ -379,7 +384,7 @@ higher-power tail `Σ_{𝔭,k≥2} N𝔭^{-ks}/k`, bounded by
 `primeIdealZetaHigherTail_bounded`. Source: "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
 theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
     ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ), |Real.log (dedekindZeta K (s : ℂ)).re
-      - primeIdealZetaSum K (univ : Set (Ideal (𝓞 K))) s| ≤ C := by
+      - primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s| ≤ C := by
   sorry
 
 /-- Sharifi 7.1.12 proof (p. 140), simple-pole identity:
@@ -416,7 +421,7 @@ theorem logDedekindZeta_sub_log_inv_sub_one_bounded :
 theorem log_minus_bounded_le_primeIdealZetaSum :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       Real.log (1 / (s - 1)) - C
-        ≤ primeIdealZetaSum K (univ : Set (Ideal (𝓞 K))) s := by
+        ≤ primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s := by
   obtain ⟨C₁, h₁⟩ := logDedekindZeta_sub_primeIdealZetaSum_bounded K
   obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
   refine ⟨C₁ + C₂, ?_⟩
@@ -427,7 +432,7 @@ theorem log_minus_bounded_le_primeIdealZetaSum :
 log(1/(s-1)) + C'`. -/
 theorem primeIdealZetaSum_le_log_plus_bounded :
     ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
-      primeIdealZetaSum K (univ : Set (Ideal (𝓞 K))) s
+      primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s
         ≤ Real.log (1 / (s - 1)) + C := by
   obtain ⟨C₁, h₁⟩ := logDedekindZeta_sub_primeIdealZetaSum_bounded K
   obtain ⟨C₂, h₂⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
@@ -443,18 +448,18 @@ definition robust under the L-function comparisons in the Chebotarev
 proof. -/
 theorem primeIdealZetaSum_univ_tendsto_log :
     Tendsto
-      (fun s : ℝ ↦ primeIdealZetaSum K (univ : Set (Ideal (𝓞 K))) s
+      (fun s : ℝ ↦ primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s
         / Real.log (1 / (s - 1)))
       (𝓝[>] 1) (𝓝 1) :=
   tendsto_ratio_one_of_log_pm_bounded
-    (primeIdealZetaSum K (univ : Set (Ideal (𝓞 K))))
+    (primeIdealZetaSum (univ : Set (Ideal (𝓞 K))))
     (primeIdealZetaSum_le_log_plus_bounded K)
     (log_minus_bounded_le_primeIdealZetaSum K)
 
 /-- The full prime-ideal zeta sum diverges to `+∞` as `s ↓ 1` (it is asymptotic to
 `log(1/(s-1)) → ∞`). -/
 theorem primeIdealZetaSum_univ_tendsto_atTop :
-    Tendsto (primeIdealZetaSum K (univ : Set (Ideal (𝓞 K)))) (𝓝[>] 1) atTop := by
+    Tendsto (primeIdealZetaSum (univ : Set (Ideal (𝓞 K)))) (𝓝[>] 1) atTop := by
   have hL := tendsto_log_one_div_sub_one_atTop
   have hhalf : Tendsto (fun s : ℝ ↦ (1 / 2 : ℝ) * Real.log (1 / (s - 1))) (𝓝[>] 1) atTop :=
     hL.const_mul_atTop (by norm_num)
@@ -468,7 +473,7 @@ number of qualifying primes: there are finitely many terms and each `N𝔭^{-s} 
 for `s > 0` (since `N𝔭 ≥ 1`). -/
 theorem primeIdealZetaSum_le_card_of_finite (hS : S.Finite)
     {s : ℝ} (hs : 0 < s) :
-    primeIdealZetaSum K S s ≤
+    primeIdealZetaSum S s ≤
       Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := by
   have : Finite {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
     (hS.subset fun _ hx ↦ hx.1).to_subtype
@@ -487,15 +492,15 @@ theorem primeIdealZetaSum_le_card_of_finite (hS : S.Finite)
 `Σ_{𝔭 ∈ S} N𝔭^{-s}` is bounded (finitely many terms, each `≤ 1`) while the denominator
 `Σ_𝔭 N𝔭^{-s} → ∞`, so the ratio `→ 0`. -/
 theorem hasDirichletDensity_of_finite (hS : S.Finite) :
-    HasDirichletDensity K S 0 := by
+    HasDirichletDensity S 0 := by
   have hUniv := primeIdealZetaSum_univ_tendsto_atTop K
-  have hUnivPos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < primeIdealZetaSum K univ s :=
+  have hUnivPos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s :=
     hUniv.eventually_gt_atTop 0
-  change Tendsto (fun s ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
+  change Tendsto (fun s ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
     (𝓝[>] 1) (𝓝 0)
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' (g := fun _ ↦ (0 : ℝ))
     (h := fun s ↦ (Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} : ℝ)
-      / primeIdealZetaSum K univ s)
+      / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
     tendsto_const_nhds (tendsto_const_nhds.div_atTop hUniv) ?_ ?_
   · filter_upwards [hUnivPos] with s hpos
     exact div_nonneg (by rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ ↦ by positivity)
@@ -508,9 +513,9 @@ theorem hasDirichletDensity_of_finite (hS : S.Finite) :
 /-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`: the ratio
 `Σ_𝔭 N𝔭⁻ˢ / Σ_𝔭 N𝔭⁻ˢ` is eventually `1` since the denominator is eventually nonzero
 (it `→ ∞`). -/
-theorem hasDirichletDensity_univ : HasDirichletDensity K (univ : Set (Ideal (𝓞 K))) 1 := by
-  change Tendsto (fun s ↦ primeIdealZetaSum K univ s / primeIdealZetaSum K univ s)
-    (𝓝[>] 1) (𝓝 1)
+theorem hasDirichletDensity_univ : HasDirichletDensity (univ : Set (Ideal (𝓞 K))) 1 := by
+  change Tendsto (fun s ↦ primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s
+    / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s) (𝓝[>] 1) (𝓝 1)
   refine tendsto_const_nhds.congr' ?_
   filter_upwards [(primeIdealZetaSum_univ_tendsto_atTop K).eventually_gt_atTop 0] with s hs
   exact (div_self hs.ne').symm
