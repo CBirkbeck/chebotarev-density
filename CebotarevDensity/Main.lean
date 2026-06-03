@@ -29,7 +29,7 @@ and a conjugacy class `C ⊆ G`, the Dirichlet density of the set of primes
 theorem chebotarev_density
     {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (C : ConjClasses Gal(L/K)) :
-    HasDirichletDensity K
+    HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
