@@ -4,6 +4,7 @@ public import CebotarevDensity.ZetaProduct
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.NumberTheory.Cyclotomic.Basic
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
+public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 
 /-!
 # Chebotarev's theorem: cyclotomic case
@@ -71,17 +72,54 @@ Four sub-lemmas:
 -/
 
 /-- Sharifi 7.2.1 step (i) — cyclotomic Frobenius formula (p. 142).
-Verbatim source quote: "we have φ_𝔭(ζ_m) = ζ_m^{N𝔭} for a primitive
-mth root of unity ζ_m". -/
+Verbatim source quote: "we have φ_𝔭(ζ_m) = ζ_m^{N𝔭} for a primitive mth root of
+unity ζ_m". The coprimality `hcop : (N𝔭).Coprime m` is Sharifi's implicit
+hypothesis made explicit — it is genuinely necessary: if `μ_m ⊆ K` then `L = K`,
+`φ_𝔭 = id`, and *every* prime is unramified, yet the formula would force
+`N𝔭 ≡ 1 (mod m)`. For a nontrivial extension it is the statement that an
+unramified prime does not divide `m`; mathlib currently provides that only over
+`ℚ` (`IsCyclotomicExtension.Rat.*`), so over a general base `K` the caller
+supplies the coprimality. -/
 theorem cyclotomic_frobenius_acts_as_norm_power
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
-    [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L))
-    [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
+    [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hcop : (Ideal.absNorm 𝔭).Coprime m)
+    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     ∀ ζ : L, ζ ∈ primitiveRoots m L →
       frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ζ
         = ζ ^ Ideal.absNorm 𝔭 := by
-  sorry
+  intro ζ hζmem
+  set hram := UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP with hram_def
+  set φ := frobeniusAt K L 𝔓 hram with hφ_def
+  have hζ : IsPrimitiveRoot ζ m := (mem_primitiveRoots (NeZero.pos m)).mp hζmem
+  set z : 𝓞 L := hζ.toInteger with hz_def
+  have hzc : (algebraMap (𝓞 L) L) z = ζ := rfl
+  have hzpr : IsPrimitiveRoot z m := hζ.toInteger_isPrimitiveRoot
+  have hzpow : z ^ m = 1 := hzpr.pow_eq_one
+  have hunder : 𝔓.under (𝓞 K) = 𝔭 := (Ideal.LiesOver.over (p := 𝔭) (P := 𝔓)).symm
+  set q := Ideal.absNorm 𝔭 with hq_def
+  have hspec := (frobeniusAt_spec K L 𝔓 hram).2 z
+  rw [hunder] at hspec
+  have h𝔭ne : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
+  have hcopP : (Ideal.absNorm 𝔓).Coprime m := by
+    rw [Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver 𝔓 𝔭 ‹𝔭.IsPrime› h𝔭ne]
+    exact Nat.Coprime.pow_left _ hcop
+  have hN1 : Ideal.absNorm 𝔓 ≠ 1 := fun h => ‹𝔓.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  have hinj := Ideal.rootsOfUnityMapQuot_injective (I := 𝔓) m hN1 hcopP
+  have hLpow : (φ • z) ^ m = 1 := by rw [← smul_pow', hzpow, smul_one]
+  have hRpow : (z ^ q) ^ m = 1 := by rw [← pow_mul, mul_comm, pow_mul, hzpow, one_pow]
+  set uL := rootsOfUnity.mkOfPowEq (φ • z) hLpow with huL
+  set uR := rootsOfUnity.mkOfPowEq (z ^ q) hRpow with huR
+  have hcoeL : ((uL : (𝓞 L)ˣ) : 𝓞 L) = φ • z := rootsOfUnity.coe_mkOfPowEq _
+  have hcoeR : ((uR : (𝓞 L)ˣ) : 𝓞 L) = z ^ q := rootsOfUnity.coe_mkOfPowEq _
+  have hmapeq : Ideal.rootsOfUnityMapQuot 𝔓 m uL = Ideal.rootsOfUnityMapQuot 𝔓 m uR := by
+    apply Units.ext
+    rw [Ideal.rootsOfUnityMapQuot_apply 𝔓 m uL.2, Ideal.rootsOfUnityMapQuot_apply 𝔓 m uR.2,
+      hcoeL, hcoeR]
+    exact hspec
+  have hfinal : φ • z = z ^ q := by rw [← hcoeL, ← hcoeR, hinj hmapeq]
+  have hmap : (algebraMap (𝓞 L) L) (φ • z) = (algebraMap (𝓞 L) L) (z ^ q) := by rw [hfinal]
+  rwa [show (algebraMap (𝓞 L) L) (φ • z) = φ ζ from rfl, map_pow, hzc] at hmap
 
 /-- Sharifi 7.2.1 step (ii) — log of an Artin L-function on the
 half-plane `Re s > 1` (p. 142). Verbatim source quote: "log L(χ,s) ~
