@@ -47,14 +47,12 @@ variable (K : Type*) [Field K] [NumberField K] {S : Set (Ideal (𝓞 K))} {δ : 
 
 /-- Partial Dirichlet series `Σ_{𝔭 ∈ S} N𝔭^{-s}` over nonzero prime ideals
 `𝔭` of `𝓞 K` lying in the set `S`. -/
-def primeIdealZetaSum
-    (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
+def primeIdealZetaSum (S : Set (Ideal (𝓞 K))) (s : ℝ) : ℝ :=
   ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
     (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
 
 /-- Equation lemma unfolding `primeIdealZetaSum` to its defining `tsum`. -/
-theorem primeIdealZetaSum_def
-    (S : Set (Ideal (𝓞 K))) (s : ℝ) :
+theorem primeIdealZetaSum_def (S : Set (Ideal (𝓞 K))) (s : ℝ) :
     primeIdealZetaSum K S s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := rfl
@@ -63,8 +61,7 @@ theorem primeIdealZetaSum_def
 the ratio of partial sums tends to `δ` as `s ↓ 1`.
 
 Sharifi 7.1.13: `δ(S) = lim_{s → 1⁺} (Σ_{𝔭 ∈ S} N𝔭^{-s}) / (Σ_𝔭 N𝔭^{-s})`. -/
-def HasDirichletDensity
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+def HasDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   Tendsto
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
     (𝓝[>] 1) (𝓝 δ)
@@ -83,8 +80,7 @@ standard convention, so:
   "upper Dirichlet density" and notates `δ_inf`.
 
 When transcribing Sharifi's `δ_inf` to Lean, use `HasLowerDirichletDensity`. -/
-def HasUpperDirichletDensity
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+def HasUpperDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   limsup
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
     (𝓝[>] 1) = δ
@@ -93,8 +89,7 @@ def HasUpperDirichletDensity
 `HasUpperDirichletDensity` for the convention note: this matches
 Sharifi's `δ_inf` notation despite Sharifi's labelling
 inversion. -/
-def HasLowerDirichletDensity
-    (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
+def HasLowerDirichletDensity (S : Set (Ideal (𝓞 K))) (δ : ℝ) : Prop :=
   liminf
     (fun s : ℝ ↦ primeIdealZetaSum K S s / primeIdealZetaSum K univ s)
     (𝓝[>] 1) = δ
