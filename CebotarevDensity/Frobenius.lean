@@ -5,6 +5,8 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.NumberTheory.RamificationInertia.Unramified
+public import Mathlib.RingTheory.DedekindDomain.Different
+public import Mathlib.RingTheory.DedekindDomain.Factorization
 public import Mathlib.RingTheory.Frobenius
 public import Mathlib.RingTheory.Ideal.Pointwise
 public import Mathlib.RingTheory.RamificationInertia.Inertia
@@ -192,6 +194,28 @@ theorem frobeniusClass_eq_mk_frobeniusAt
 theorem finite_ramifiedIn
     [IsGalois K L] :
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭}.Finite := by
-  sorry
+  letI : Algebra (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
+    FractionRing.liftAlgebra (𝓞 K) (FractionRing (𝓞 L))
+  haveI : IsScalarTower (𝓞 K) (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
+    FractionRing.isScalarTower_liftAlgebra (𝓞 K) (FractionRing (𝓞 L))
+  haveI : Algebra.IsSeparable (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) := inferInstance
+  have hbot : differentIdeal (𝓞 K) (𝓞 L) ≠ 0 := by
+    rw [Ideal.zero_eq_bot]; exact differentIdeal_ne_bot
+  apply Set.Finite.subset
+    ((Ideal.finite_factors hbot).image (fun v => (v.asIdeal).under (𝓞 K)))
+  rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
+  rw [UnramifiedIn, not_and, not_forall] at hnunr
+  obtain ⟨𝔓, h𝔓⟩ := hnunr h𝔭bot
+  rw [not_forall] at h𝔓
+  obtain ⟨h𝔓max, h𝔓⟩ := h𝔓
+  rw [not_forall] at h𝔓
+  obtain ⟨h𝔓lo, h𝔓nu⟩ := h𝔓
+  haveI := h𝔓max.isPrime
+  haveI := h𝔓lo
+  have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭bot 𝔓
+  have hdvd : 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
+    by_contra h
+    exact h𝔓nu (not_dvd_differentIdeal_iff.mp h)
+  exact ⟨⟨𝔓, h𝔓max.isPrime, h𝔓bot⟩, hdvd, h𝔓lo.over.symm⟩
 
 end Chebotarev
