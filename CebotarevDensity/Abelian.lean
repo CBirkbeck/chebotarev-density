@@ -2,6 +2,7 @@ module
 
 public import CebotarevDensity.Cyclotomic
 public import Mathlib.NumberTheory.LSeries.PrimesInAP
+public import Mathlib.Topology.Algebra.Order.LiminfLimsup
 
 /-!
 # Chebotarev's theorem: abelian case
@@ -189,16 +190,152 @@ theorem ratioSum_frobeniusFibres_tendsto_one
       (𝓝[>] 1) (𝓝 1) := by
   sorry
 
+section LiminfSumGlue
+
+/-! Generic real-analysis helpers for the pigeonhole glue below. They live in a
+conditionally complete linearly ordered topological additive group; the only
+instance we apply them at is `ℝ`. -/
+
+variable {ι α : Type*} [AddCommGroup α] [ConditionallyCompleteLinearOrder α]
+  [DenselyOrdered α] [AddLeftMono α] {l : Filter ι} [l.NeBot]
+
+omit [DenselyOrdered α] [l.NeBot] in
+/-- A finite sum of below-bounded functions is below-bounded. -/
+private lemma sum_isBoundedUnder_ge {κ : Type*} (g : κ → ι → α) (t : Finset κ)
+    (h : ∀ j ∈ t, l.IsBoundedUnder (· ≥ ·) (g j)) :
+    l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ t, g j x) := by
+  classical
+  induction t using Finset.induction with
+  | empty => simpa using (isBoundedUnder_const (r := (· ≥ ·)) (l := l) (a := (0 : α)))
+  | insert a s ha ih =>
+      have := isBoundedUnder_ge_add (h a (Finset.mem_insert_self a s))
+        (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
+      simpa [Finset.sum_insert ha, Pi.add_def] using this
+
+omit [DenselyOrdered α] [l.NeBot] in
+/-- A finite sum of above-bounded functions is above-bounded. -/
+private lemma sum_isBoundedUnder_le {κ : Type*} (g : κ → ι → α) (t : Finset κ)
+    (h : ∀ j ∈ t, l.IsBoundedUnder (· ≤ ·) (g j)) :
+    l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ t, g j x) := by
+  classical
+  induction t using Finset.induction with
+  | empty => simpa using (isBoundedUnder_const (r := (· ≤ ·)) (l := l) (a := (0 : α)))
+  | insert a s ha ih =>
+      have := isBoundedUnder_le_add (h a (Finset.mem_insert_self a s))
+        (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
+      simpa [Finset.sum_insert ha, Pi.add_def] using this
+
+/-- Superadditivity of `liminf` over a `Finset.sum`: the sum of the `liminf`s is
+at most the `liminf` of the sum. Proved by induction from the two-function case
+`le_liminf_add`, feeding the partial-sum boundedness from the two lemmas above. -/
+private lemma sum_liminf_le_liminf_sum {κ : Type*} (g : κ → ι → α) (t : Finset κ)
+    (hbelow : ∀ j ∈ t, l.IsBoundedUnder (· ≥ ·) (g j))
+    (habove : ∀ j ∈ t, l.IsBoundedUnder (· ≤ ·) (g j)) :
+    ∑ j ∈ t, liminf (g j) l ≤ liminf (fun x ↦ ∑ j ∈ t, g j x) l := by
+  classical
+  induction t using Finset.induction with
+  | empty => simp
+  | insert a s ha ih =>
+      rw [Finset.sum_insert ha]
+      have hbS : l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ s, g j x) :=
+        sum_isBoundedUnder_ge g s (fun j hj ↦ hbelow j (Finset.mem_insert_of_mem hj))
+      have haS : l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ s, g j x) :=
+        sum_isBoundedUnder_le g s (fun j hj ↦ habove j (Finset.mem_insert_of_mem hj))
+      have step : liminf (g a) l + liminf (fun x ↦ ∑ j ∈ s, g j x) l
+          ≤ liminf (fun x ↦ g a x + ∑ j ∈ s, g j x) l :=
+        le_liminf_add (hbelow a (Finset.mem_insert_self a s))
+          (habove a (Finset.mem_insert_self a s)) hbS (IsBoundedUnder.isCoboundedUnder_ge haS)
+      calc liminf (g a) l + ∑ j ∈ s, liminf (g j) l
+          ≤ liminf (g a) l + liminf (fun x ↦ ∑ j ∈ s, g j x) l := by
+            gcongr
+            exact ih (fun j hj ↦ hbelow j (Finset.mem_insert_of_mem hj))
+              (fun j hj ↦ habove j (Finset.mem_insert_of_mem hj))
+        _ ≤ liminf (fun x ↦ g a x + ∑ j ∈ s, g j x) l := step
+        _ = liminf (fun x ↦ ∑ j ∈ insert a s, g j x) l := by simp_rw [Finset.sum_insert ha]
+
+end LiminfSumGlue
+
 /-- Pure real-analysis glue: a finite family `gᵢ` of functions, each with
-`liminf gᵢ ≥ 1/N` (where `N` is the family size), whose sum tends to `1`,
-must each tend to `1/N`. (The lower bounds and the sum-limit pin every
-`gᵢ` to `1/N` by a pigeonhole on `liminf`/`limsup`.) -/
+`liminf gᵢ ≥ 1/N` (where `N` is the family size) and bounded below, whose sum
+tends to `1`, must each tend to `1/N`. (The lower bounds and the sum-limit pin
+every `gᵢ` to `1/N` by a pigeonhole on `liminf`/`limsup`.)
+
+The below-boundedness hypothesis `hbelow` is genuinely needed: a finite `liminf`
+lower bound alone does not force below-boundedness in a conditionally complete
+order, so without it the statement is false (one `gᵢ` could dip to `-∞` while
+keeping a spurious `liminf` and the sum still converging). At the only call site
+(`chebotarev_abelian`) each `gᵢ` is a ratio of nonnegative Dirichlet sums, hence
+`0 ≤ gᵢ`, so `hbelow` is immediate. -/
 theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
     {ι : Type*} [Fintype ι] (g : ι → ℝ → ℝ)
     (hlo : ∀ i, (Fintype.card ι : ℝ)⁻¹ ≤ Filter.liminf (g i) (𝓝[>] (1 : ℝ)))
+    (hbelow : ∀ i, Filter.IsBoundedUnder (· ≥ ·) (𝓝[>] (1 : ℝ)) (g i))
     (hsum : Filter.Tendsto (fun s ↦ ∑ i, g i s) (𝓝[>] (1 : ℝ)) (𝓝 1)) (i₀ : ι) :
     Filter.Tendsto (g i₀) (𝓝[>] (1 : ℝ)) (𝓝 (Fintype.card ι : ℝ)⁻¹) := by
-  sorry
+  classical
+  set l : Filter ℝ := 𝓝[>] (1 : ℝ) with hl
+  set N : ℕ := Fintype.card ι with hN
+  set F : ℝ → ℝ := fun s ↦ ∑ i, g i s with hF
+  have hFle : l.IsBoundedUnder (· ≤ ·) F := hsum.isBoundedUnder_le
+  have hFlimsup : limsup F l = 1 := hsum.limsup_eq
+  -- Each `g i` is bounded above, via `g i = F - ∑_{j ≠ i} g j`.
+  have hgle : ∀ i, l.IsBoundedUnder (· ≤ ·) (g i) := by
+    intro i
+    have hdecomp : ∀ s, g i s = F s - ∑ j ∈ Finset.univ.erase i, g j s := by
+      intro s
+      have := Finset.add_sum_erase Finset.univ (fun j ↦ g j s) (Finset.mem_univ i)
+      simp only [hF]
+      linarith [this]
+    obtain ⟨a, ha⟩ := hFle.eventually_le
+    have hrestge : l.IsBoundedUnder (· ≥ ·) (fun s ↦ ∑ j ∈ Finset.univ.erase i, g j s) :=
+      sum_isBoundedUnder_ge g (Finset.univ.erase i) (fun j _ ↦ hbelow j)
+    obtain ⟨b, hb⟩ := hrestge.eventually_ge
+    refine isBoundedUnder_of_eventually_le (a := a - b) ?_
+    filter_upwards [ha, hb] with s hsa hsb
+    rw [hdecomp s]; linarith
+  haveI : Nonempty ι := ⟨i₀⟩
+  have hNpos : 0 < N := Fintype.card_pos
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hNpos
+  set t : Finset ι := Finset.univ.erase i₀ with ht
+  have hrestge : l.IsBoundedUnder (· ≥ ·) (fun s ↦ ∑ j ∈ t, g j s) :=
+    sum_isBoundedUnder_ge g t (fun j _ ↦ hbelow j)
+  have hrestle : l.IsBoundedUnder (· ≤ ·) (fun s ↦ ∑ j ∈ t, g j s) :=
+    sum_isBoundedUnder_le g t (fun j _ ↦ hgle j)
+  have hcard : t.card = N - 1 := Finset.card_erase_of_mem (Finset.mem_univ i₀)
+  -- `liminf (∑_{j ≠ i₀} g j) ≥ (N-1)/N` from superadditivity and the lower bounds.
+  have hliminf_rest : ((N : ℝ) - 1) / N ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l := by
+    have hsuper : ∑ j ∈ t, liminf (g j) l ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l :=
+      sum_liminf_le_liminf_sum g t (fun j _ ↦ hbelow j) (fun j _ ↦ hgle j)
+    have hlb : ∑ j ∈ t, ((N : ℝ))⁻¹ ≤ ∑ j ∈ t, liminf (g j) l :=
+      Finset.sum_le_sum (fun j _ ↦ hlo j)
+    have hconst : ∑ _j ∈ t, ((N : ℝ))⁻¹ = (t.card : ℝ) * (N : ℝ)⁻¹ := by
+      rw [Finset.sum_const, nsmul_eq_mul]
+    rw [hconst, hcard] at hlb
+    have hcast : ((N : ℝ) - 1) / N = ((N - 1 : ℕ) : ℝ) * (N : ℝ)⁻¹ := by
+      have hsub : ((N - 1 : ℕ) : ℝ) = (N : ℝ) - 1 := by
+        have : (1 : ℕ) ≤ N := hNpos
+        push_cast [Nat.cast_sub this]; ring
+      rw [hsub]; ring
+    rw [hcast]
+    exact le_trans hlb hsuper
+  -- `limsup (g i₀) + liminf (∑_{j ≠ i₀} g j) ≤ limsup F = 1`.
+  have hFeq : (fun s ↦ g i₀ s + ∑ j ∈ t, g j s) = F := by
+    funext s
+    rw [hF]
+    exact Finset.add_sum_erase Finset.univ (fun j ↦ g j s) (Finset.mem_univ i₀)
+  have hadd : limsup (g i₀) l + liminf (fun s ↦ ∑ j ∈ t, g j s) l
+      ≤ limsup (fun s ↦ g i₀ s + ∑ j ∈ t, g j s) l :=
+    le_limsup_add (hgle i₀) (IsBoundedUnder.isCoboundedUnder_le (hbelow i₀)) hrestle hrestge
+  rw [hFeq, hFlimsup] at hadd
+  -- Hence `limsup (g i₀) ≤ 1 - (N-1)/N = 1/N`.
+  have hlimsup_le : limsup (g i₀) l ≤ (N : ℝ)⁻¹ := by
+    have hrest_le : liminf (fun s ↦ ∑ j ∈ t, g j s) l ≤ 1 - limsup (g i₀) l := by linarith
+    have h1 : limsup (g i₀) l ≤ 1 - ((N : ℝ) - 1) / N := by
+      linarith [le_trans hliminf_rest hrest_le]
+    have h2 : 1 - ((N : ℝ) - 1) / N = (N : ℝ)⁻¹ := by field_simp; ring
+    rw [h2] at h1; exact h1
+  -- `1/N ≤ liminf (g i₀) ≤ limsup (g i₀) ≤ 1/N` pins the limit.
+  exact tendsto_of_le_liminf_of_limsup_le (hlo i₀) hlimsup_le (hgle i₀) (hbelow i₀)
 
 /-- **Chebotarev's theorem, abelian case** (Sharifi 7.2.2 Step 2).
 
@@ -224,8 +361,15 @@ theorem chebotarev_abelian
           {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
             frobeniusClass K L 𝔭 = ConjClasses.mk τ} s
         / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
-    (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
-  simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
+    (fun τ ↦ ?_) (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
+  · simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
+  -- each ratio of nonnegative Dirichlet sums is `≥ 0`, hence bounded below by `0`
+  · have hzeta_nonneg : ∀ (S : Set (Ideal (𝓞 K))) (s : ℝ), 0 ≤ primeIdealZetaSum S s := by
+      intro S s
+      rw [primeIdealZetaSum_def]
+      exact tsum_nonneg fun _ ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _
+    exact isBoundedUnder_of_eventually_ge (a := 0)
+      (Filter.Eventually.of_forall fun s ↦ div_nonneg (hzeta_nonneg _ s) (hzeta_nonneg _ s))
 
 /-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` from the full abelian
 density, extracted via `HasDirichletDensity.hasLower`. -/
