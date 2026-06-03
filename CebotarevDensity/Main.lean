@@ -120,12 +120,10 @@ theorem orderOf_frobeniusAt_eq_finrank
       IsArithFrobAt.arithFrobAt_mem_stabilizer (𝓞 K) Gal(L/K) 𝔓⟩ with hg₀
   have hres : Ideal.Quotient.stabilizerHom 𝔓 (𝔓.under (𝓞 K)) Gal(L/K) g₀
       = FiniteField.frobeniusAlgEquivOfAlgebraic (𝓞 K ⧸ 𝔓.under (𝓞 K)) (𝓞 L ⧸ 𝔓) := by
-    have hcard : Fintype.card (𝓞 K ⧸ 𝔓.under (𝓞 K)) = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K)) :=
-      (Nat.card_eq_fintype_card).symm
     ext x
     obtain ⟨b, rfl⟩ := Ideal.Quotient.mk_surjective x
     rw [hg₀, Ideal.Quotient.stabilizerHom_apply,
-      FiniteField.coe_frobeniusAlgEquivOfAlgebraic, hcard]
+      FiniteField.coe_frobeniusAlgEquivOfAlgebraic, ← Nat.card_eq_fintype_card]
     exact (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).mk_apply b
   have hinj : Function.Injective (Ideal.Quotient.stabilizerHom 𝔓 (𝔓.under (𝓞 K)) Gal(L/K)) := by
     rw [← MonoidHom.ker_eq_bot_iff, Ideal.Quotient.ker_stabilizerHom,
@@ -175,8 +173,7 @@ theorem card_primesAbove_mul_finrank_eq
     · haveI := hlo'
       exact ⟨hp, hunder ▸ hlo', Ideal.ne_bot_of_liesOver_of_ne_bot hp_under_bot 𝔓⟩
     · exact ⟨hp, hunder ▸ hlo'⟩
-  rw [hset, ← Nat.card_coe_set_eq] at H
-  exact H
+  rwa [hset, ← Nat.card_coe_set_eq] at H
 
 /-- The residue degree `[κ(𝔓) : κ(𝔭)]` at an unramified prime `𝔓` above `𝔭`, whose
 Frobenius class is `C = [σ]`, equals `orderOf σ`: `Frob_𝔓` generates `D_𝔓` of order `f`
@@ -225,8 +222,7 @@ theorem frobeniusFibre_card_eq_of_isConj
       = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'} := by
   obtain ⟨c, hc⟩ := isConj_iff.mp hc
-  apply Nat.card_congr
-  refine Equiv.subtypeEquiv (MulAction.toPerm c) fun 𝔓 => ?_
+  refine Nat.card_congr (Equiv.subtypeEquiv (MulAction.toPerm c) fun 𝔓 ↦ ?_)
   simp only [MulAction.toPerm_apply]
   constructor
   · rintro ⟨hp, hP, hne, hfrob⟩

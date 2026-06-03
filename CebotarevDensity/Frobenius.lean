@@ -90,7 +90,6 @@ theorem UnramifiedIn.ramificationIdx_eq_one
     [IsGalois K L]
     {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
-  haveI := hP
   have h𝔓 : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔓
   exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp
     (hunr.2 𝔓 (‹𝔓.IsPrime›.isMaximal h𝔓) hP)
@@ -249,12 +248,8 @@ theorem finite_ramifiedIn
   apply Set.Finite.subset
     ((Ideal.finite_factors hbot).image (fun v => (v.asIdeal).under (𝓞 K)))
   rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
-  rw [UnramifiedIn, not_and, not_forall] at hnunr
-  obtain ⟨𝔓, h𝔓⟩ := hnunr h𝔭bot
-  rw [not_forall] at h𝔓
-  obtain ⟨h𝔓max, h𝔓⟩ := h𝔓
-  rw [not_forall] at h𝔓
-  obtain ⟨h𝔓lo, h𝔓nu⟩ := h𝔓
+  simp only [UnramifiedIn, not_and, not_forall] at hnunr
+  obtain ⟨𝔓, h𝔓max, h𝔓lo, h𝔓nu⟩ := hnunr h𝔭bot
   haveI := h𝔓max.isPrime
   haveI := h𝔓lo
   have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭bot 𝔓

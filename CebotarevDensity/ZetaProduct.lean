@@ -80,38 +80,27 @@ lemma norm_sum_range_smul_le_of_antitone_of_nonneg_of_bounded
     calc
       ‖∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
           ≤ ∑ i ∈ Finset.range (n - 1),
-              ‖(a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ := by
-            simpa using norm_sum_le (Finset.range (n - 1))
-              (fun i => (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j)
+              ‖(a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ :=
+            norm_sum_le _ _
       _ ≤ ∑ i ∈ Finset.range (n - 1), B * (a i - a (i + 1)) := by
             refine Finset.sum_le_sum fun i _ => ?_
-            have hdiff_nonpos : a (i + 1) - a i ≤ 0 := sub_nonpos.mpr (ha (Nat.le_succ i))
             calc
               ‖(a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
-                  = |a (i + 1) - a i| * ‖∑ j ∈ Finset.range (i + 1), z j‖ := by
-                      rw [norm_smul, Real.norm_eq_abs]
-              _ = (a i - a (i + 1)) * ‖∑ j ∈ Finset.range (i + 1), z j‖ := by
-                    rw [abs_of_nonpos hdiff_nonpos]; ring
+                  = (a i - a (i + 1)) * ‖∑ j ∈ Finset.range (i + 1), z j‖ := by
+                      rw [norm_smul, Real.norm_eq_abs,
+                        abs_of_nonpos (sub_nonpos.mpr (ha (Nat.le_succ i)))]
+                      ring
               _ ≤ (a i - a (i + 1)) * B := by
                     gcongr
                     · exact sub_nonneg.mpr (ha (Nat.le_succ i))
                     · exact hbound (i + 1)
               _ = B * (a i - a (i + 1)) := by ring
       _ = B * (a 0 - a (n - 1)) := by
-            rw [← Finset.mul_sum]
-            have htel : ∑ i ∈ Finset.range (n - 1), (a i - a (i + 1)) = a 0 - a (n - 1) := by
-              calc
-                ∑ i ∈ Finset.range (n - 1), (a i - a (i + 1))
-                    = -∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) := by
-                        rw [← Finset.sum_neg_distrib]; exact Finset.sum_congr rfl fun i _ => by ring
-                _ = a 0 - a (n - 1) := by
-                      rw [Finset.sum_range_sub (f := a) (n := n - 1)]; ring
-            rw [htel]
+            rw [← Finset.mul_sum, Finset.sum_range_sub']
   have hfirst : ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ ≤ B * a (n - 1) := by
     calc
-      ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ = |a (n - 1)| * ‖∑ i ∈ Finset.range n, z i‖ := by
-        rw [norm_smul, Real.norm_eq_abs]
-      _ = a (n - 1) * ‖∑ i ∈ Finset.range n, z i‖ := by rw [abs_of_nonneg (ha_nonneg _)]
+      ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ = a (n - 1) * ‖∑ i ∈ Finset.range n, z i‖ := by
+        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (ha_nonneg _)]
       _ ≤ a (n - 1) * B := by gcongr; exacts [ha_nonneg _, hbound n]
       _ = B * a (n - 1) := by ring
   calc
@@ -119,10 +108,8 @@ lemma norm_sum_range_smul_le_of_antitone_of_nonneg_of_bounded
         ∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
         ≤ ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ +
             ‖∑ i ∈ Finset.range (n - 1),
-                (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ := by
-            simpa [sub_eq_add_neg] using
-              norm_sub_le (a (n - 1) • ∑ i ∈ Finset.range n, z i)
-                (∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j)
+                (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ :=
+            norm_sub_le _ _
     _ ≤ B * a (n - 1) + B * (a 0 - a (n - 1)) := add_le_add hfirst hsum_le
     _ = B * a 0 := by ring
 
@@ -133,15 +120,13 @@ lemma norm_sum_range_shift_le_of_bounded
     (hbound : ∀ n, ‖∑ i ∈ Finset.range n, z i‖ ≤ B) (m n : ℕ) :
     ‖∑ i ∈ Finset.range n, z (m + i)‖ ≤ 2 * B := by
   have hshift : ∑ i ∈ Finset.range n, z (m + i) =
-      ∑ i ∈ Finset.range (m + n), z i - ∑ i ∈ Finset.range m, z i := by
-    apply eq_sub_iff_add_eq.mpr
-    simpa [add_comm, add_left_comm, add_assoc] using (Finset.sum_range_add z m n).symm
+      ∑ i ∈ Finset.range (m + n), z i - ∑ i ∈ Finset.range m, z i :=
+    eq_sub_iff_add_eq.mpr <| (add_comm _ _).trans (Finset.sum_range_add z m n).symm
   rw [hshift]
   calc
     ‖∑ i ∈ Finset.range (m + n), z i - ∑ i ∈ Finset.range m, z i‖
-        ≤ ‖∑ i ∈ Finset.range (m + n), z i‖ + ‖∑ i ∈ Finset.range m, z i‖ := by
-            simpa [sub_eq_add_neg] using
-              norm_sub_le (∑ i ∈ Finset.range (m + n), z i) (∑ i ∈ Finset.range m, z i)
+        ≤ ‖∑ i ∈ Finset.range (m + n), z i‖ + ‖∑ i ∈ Finset.range m, z i‖ :=
+            norm_sub_le _ _
     _ ≤ B + B := add_le_add (hbound _) (hbound _)
     _ = 2 * B := by ring
 

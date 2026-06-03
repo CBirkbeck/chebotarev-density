@@ -89,15 +89,15 @@ theorem cyclotomic_frobenius_acts_as_norm_power
       frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ζ
         = ζ ^ Ideal.absNorm 𝔭 := by
   intro ζ hζmem
-  set hram := UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP with hram_def
-  set φ := frobeniusAt K L 𝔓 hram with hφ_def
+  set hram := UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP
+  set φ := frobeniusAt K L 𝔓 hram
   have hζ : IsPrimitiveRoot ζ m := (mem_primitiveRoots (NeZero.pos m)).mp hζmem
-  set z : 𝓞 L := hζ.toInteger with hz_def
+  set z : 𝓞 L := hζ.toInteger
   have hzc : (algebraMap (𝓞 L) L) z = ζ := rfl
   have hzpr : IsPrimitiveRoot z m := hζ.toInteger_isPrimitiveRoot
   have hzpow : z ^ m = 1 := hzpr.pow_eq_one
   have hunder : 𝔓.under (𝓞 K) = 𝔭 := (Ideal.LiesOver.over (p := 𝔭) (P := 𝔓)).symm
-  set q := Ideal.absNorm 𝔭 with hq_def
+  set q := Ideal.absNorm 𝔭
   have hspec := (frobeniusAt_spec K L 𝔓 hram).2 z
   rw [hunder] at hspec
   have h𝔭ne : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
@@ -108,15 +108,14 @@ theorem cyclotomic_frobenius_acts_as_norm_power
   have hinj := Ideal.rootsOfUnityMapQuot_injective (I := 𝔓) m hN1 hcopP
   have hLpow : (φ • z) ^ m = 1 := by rw [← smul_pow', hzpow, smul_one]
   have hRpow : (z ^ q) ^ m = 1 := by rw [← pow_mul, mul_comm, pow_mul, hzpow, one_pow]
-  set uL := rootsOfUnity.mkOfPowEq (φ • z) hLpow with huL
-  set uR := rootsOfUnity.mkOfPowEq (z ^ q) hRpow with huR
+  set uL := rootsOfUnity.mkOfPowEq (φ • z) hLpow
+  set uR := rootsOfUnity.mkOfPowEq (z ^ q) hRpow
   have hcoeL : ((uL : (𝓞 L)ˣ) : 𝓞 L) = φ • z := rootsOfUnity.coe_mkOfPowEq _
   have hcoeR : ((uR : (𝓞 L)ˣ) : 𝓞 L) = z ^ q := rootsOfUnity.coe_mkOfPowEq _
   have hmapeq : Ideal.rootsOfUnityMapQuot 𝔓 m uL = Ideal.rootsOfUnityMapQuot 𝔓 m uR := by
     apply Units.ext
-    rw [Ideal.rootsOfUnityMapQuot_apply 𝔓 m uL.2, Ideal.rootsOfUnityMapQuot_apply 𝔓 m uR.2,
+    rwa [Ideal.rootsOfUnityMapQuot_apply 𝔓 m uL.2, Ideal.rootsOfUnityMapQuot_apply 𝔓 m uR.2,
       hcoeL, hcoeR]
-    exact hspec
   have hfinal : φ • z = z ^ q := by rw [← hcoeL, ← hcoeR, hinj hmapeq]
   have hmap : (algebraMap (𝓞 L) L) (φ • z) = (algebraMap (𝓞 L) L) (z ^ q) := by rw [hfinal]
   rwa [show (algebraMap (𝓞 L) L) (φ • z) = φ ζ from rfl, map_pow, hzc] at hmap
@@ -142,9 +141,9 @@ algebraically closed. -/
 private theorem sum_galoisCharacter_eq_card_or_zero
     (G : Type*) [Group G] [IsMulCommutative G] [Finite G] [Fintype (G →* ℂˣ)] (g : G) :
     (∑ χ : G →* ℂˣ, (χ g : ℂ)) = if g = 1 then (Nat.card G : ℂ) else 0 := by
-  letI : CommGroup G := { mul_comm := mul_comm' }
-  haveI : NeZero (Monoid.exponent G) := ⟨Monoid.exponent_ne_zero_of_finite⟩
-  haveI : HasEnoughRootsOfUnity ℂ (Monoid.exponent G) := inferInstance
+  let : CommGroup G := { mul_comm := mul_comm' }
+  have : NeZero (Monoid.exponent G) := ⟨Monoid.exponent_ne_zero_of_finite⟩
+  have : HasEnoughRootsOfUnity ℂ (Monoid.exponent G) := inferInstance
   by_cases hg : g = 1
   · subst hg
     rw [if_pos rfl]
@@ -172,7 +171,7 @@ theorem character_orthogonality_cyclotomic_eq
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹)
       = (Nat.card Gal(L/K) : ℂ) := by
-  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
   set τ := (frobeniusClass K L 𝔭).out
   have hsummand : ∀ χ : galoisCharacter K L,
       (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
@@ -196,7 +195,7 @@ theorem character_orthogonality_cyclotomic_ne
     (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
         (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹) = 0 := by
-  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
   set τ := (frobeniusClass K L 𝔭).out
   have hsummand : ∀ χ : galoisCharacter K L,
       (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
