@@ -1,8 +1,8 @@
 module
 
 public import CebotarevDensity.Cyclotomic
-public import Mathlib.NumberTheory.LSeries.PrimesInAP
 public import Mathlib.NumberTheory.ArithmeticFunction.Carmichael
+public import Mathlib.NumberTheory.LSeries.PrimesInAP
 public import Mathlib.RingTheory.ZMod.UnitsCyclic
 public import Mathlib.Topology.Algebra.Order.LiminfLimsup
 
@@ -156,10 +156,8 @@ The key is a *uniform* (cyclicity-free) torsion bound `torsion_card_le`, fed at 
 exponent `E = λ(n^k)`. The `p = 2` non-cyclic prime power needs no special handling:
 the argument stays at the level of the relatively-negligible "bad" set. -/
 
-/-- Uniform torsion bound, valid in *any* finite commutative group (no cyclicity).
-For the `M`-power endomorphism `x ↦ xᴹ`, the order of the maximal element `g`
-(`ord g = exponent`) gives `ord (gᴹ) = E / gcd(E, M)` inside the image, so
-`#{x : xᴹ = 1} · (E / gcd(E, M)) ≤ |G|` via `|ker| · |range| = |G|`. -/
+/-- Uniform torsion bound in any finite commutative group:
+`#{x : xᴹ = 1} · (E / gcd(E, M)) ≤ |G|`, where `E = Monoid.exponent G`. -/
 private theorem torsion_card_le (G : Type*) [CommGroup G] [Finite G] (M : ℕ) :
     Nat.card {x : G // x ^ M = 1} * (Monoid.exponent G / Nat.gcd (Monoid.exponent G) M)
       ≤ Nat.card G := by
@@ -202,8 +200,8 @@ private theorem dvd_capped (E d p v : ℕ) (hp : p.Prime) (hE : E ≠ 0) (hd : d
     exact (Nat.factorization_le_iff_dvd hdne hE).mpr hd q
 
 /-- The capped modulus `ordCompl[p] E * p ^ (v - 1)` divides `E` when `v - 1 ≤ v_p(E)`. -/
-private theorem M_dvd_E (E p v : ℕ) (hp : p.Prime) (hE : E ≠ 0)
-    (hle : v - 1 ≤ E.factorization p) : ordCompl[p] E * p ^ (v - 1) ∣ E := by
+private theorem M_dvd_E (E p v : ℕ) (hp : p.Prime) (hE : E ≠ 0) (hle : v - 1 ≤ E.factorization p) :
+    ordCompl[p] E * p ^ (v - 1) ∣ E := by
   have hMne : ordCompl[p] E * p ^ (v - 1) ≠ 0 :=
     mul_ne_zero (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)
   rw [← Nat.factorization_le_iff_dvd hMne hE]
@@ -223,9 +221,8 @@ private theorem E_eq_M_mul (E p v : ℕ) (hle : v - 1 ≤ E.factorization p) :
     show v - 1 + (E.factorization p - (v - 1)) = E.factorization p by omega,
     mul_comm (ordCompl[p] E), Nat.ordProj_mul_ordCompl_eq_self]
 
-/-- The Carmichael function (group exponent of the units) grows at each prime:
-`p ^ (k · v_p(n) - 2) ∣ λ(n^k)`, via `λ(p^{k v}) ∣ λ(n^k)` and the explicit prime-power
-Carmichael values (`p ^ (j - 2)` for `p = 2`, `φ(p^j)` for odd `p`). -/
+/-- For a prime `p ∣ n`, the Carmichael function satisfies
+`p ^ (k · v_p(n) - 2) ∣ λ(n^k)`. -/
 private theorem pk_dvd_carmichael (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) :
     p ^ (k * n.factorization p - 2) ∣ ArithmeticFunction.carmichael (n ^ k) := by
   set v := n.factorization p with hv
@@ -305,7 +302,7 @@ private theorem summand_tendsto (p v : ℕ) (hp : 2 ≤ p) (hv : 1 ≤ v) :
       (tendsto_sub_atTop_nat (v + 1))
     have : k ≤ k * v := Nat.le_mul_of_pos_right k hv; omega
   refine (hbase.comp hexp).congr (fun k => ?_)
-  simp only [Function.comp_apply, one_div, inv_pow]
+  simp [Function.comp_apply, one_div, inv_pow]
 
 /-- The "bad" ratio is bounded by the sum of per-prime tails: from a cover
 `bad ≤ Σ_p badp` and the per-prime bounds `badp · P p ^ e ≤ total`, conclude
@@ -329,10 +326,8 @@ private theorem ratio_bound (bad total : ℕ) (s : Finset ℕ) (badp : ℕ → �
               push_cast; ring
           _ ≤ (total : ℝ) := by exact_mod_cast hbound p hps
 
-/-- The per-prime bound feeding `ratio_bound`: the number of units with `p ^ v_p(n) ∤
-ord τ` times `p ^ (k v - v - 1)` is at most `φ(n^k)`. Obtained by landing every such
-`τ` in the `M`-torsion subgroup (`M` the capped modulus) and applying `torsion_card_le`
-together with `E / M ≥ p ^ (k v - v - 1)` (from `pk_dvd_carmichael`). -/
+/-- The number of units of `ZMod (n^k)` with `p ^ v_p(n) ∤ ord τ`, times
+`p ^ (k v_p(n) - v_p(n) - 1)`, is at most `φ(n^k)`. -/
 private theorem perprime_bound (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) (hn2 : 2 ≤ n) (hk : 2 ≤ k) :
     Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ p ^ n.factorization p ∣ orderOf τ}
       * p ^ (k * n.factorization p - n.factorization p - 1)
@@ -375,24 +370,15 @@ private theorem perprime_bound (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) (hn2
 
 /-- Sharifi 7.2.2 Step 2 sub-lemma (v) — `|H_n|/|H| → 1` as `m ≡ 1 mod
 n^k` for `k → ∞`. Verbatim source quote: "so `|H_n|/|H|` tends to 1 as
-`j` increases".
-
-Proof (direct, CRT-free). Writing `total k = φ(n^k)`, `good k = #{τ : n ∣ ord τ}`,
-`bad k = #{τ : n ∤ ord τ}`, we have `good + bad = total`, so it suffices to show
-`bad k / total k → 0`. Covering the bad set by `⋃_{p ∣ n} {τ : p^{v_p} ∤ ord τ}` and
-applying the per-prime bound `perprime_bound` gives
-`bad k / total k ≤ Σ_{p ∣ n} 1 / p^{k v_p - v_p - 1}`, a finite sum of geometric tails
-each tending to `0`. The `n = 1` case is the constant sequence `1`. -/
-theorem H_n_over_H_tends_to_one
-    (n : ℕ) (_hn : 1 ≤ n) :
+`j` increases". -/
+theorem H_n_over_H_tends_to_one (n : ℕ) (_hn : 1 ≤ n) :
     Tendsto
       (fun k : ℕ ↦ (Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} : ℝ)
         / Nat.card ((ZMod (n ^ k))ˣ))
       Filter.atTop (𝓝 1) := by
   classical
   rcases eq_or_lt_of_le _hn with hn1 | hn2'
-  · -- `n = 1`: `1 ∣ ord τ` always, so the ratio is the constant `1`.
-    have hn1' : n = 1 := hn1.symm
+  · have hn1' : n = 1 := hn1.symm
     subst hn1'
     have hconst : ∀ k : ℕ, (Nat.card {τ : (ZMod (1 ^ k))ˣ // (1 : ℕ) ∣ orderOf τ} : ℝ)
         / Nat.card ((ZMod (1 ^ k))ˣ) = 1 := by
@@ -405,8 +391,7 @@ theorem H_n_over_H_tends_to_one
       have hpos : 0 < Nat.card ((ZMod (1 ^ k))ˣ) := Nat.card_pos
       field_simp
     rw [tendsto_congr hconst]; exact tendsto_const_nhds
-  · -- `n ≥ 2`: squeeze `bad / total → 0`.
-    have hn2 : 2 ≤ n := hn2'
+  · have hn2 : 2 ≤ n := hn2'
     set total : ℕ → ℕ := fun k => Nat.card ((ZMod (n ^ k))ˣ) with htotal
     set good : ℕ → ℕ := fun k => Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} with hgood
     set bad : ℕ → ℕ := fun k => Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ n ∣ orderOf τ} with hbad
@@ -495,25 +480,21 @@ theorem ratioSum_frobeniusFibres_tendsto_one
   set R : Set (Ideal (𝓞 K)) :=
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} with hR
   set D : ℝ → ℝ := primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) with hD
-  -- `ConjClasses.mk` is injective on the abelian group `Gal(L/K)`.
   have hmk_inj : Function.Injective (ConjClasses.mk : Gal(L/K) → ConjClasses Gal(L/K)) := by
     intro a b hab
     obtain ⟨c, hc⟩ : IsConj a b := ConjClasses.mk_eq_mk_iff_isConj.mp hab
     rw [SemiconjBy, mul_comm' (c : Gal(L/K))] at hc
     exact mul_right_cancel hc
-  -- The fibres `S σ` are pairwise disjoint (distinct Frobenius classes).
   have hpd : ((Finset.univ : Finset Gal(L/K)) : Set Gal(L/K)).PairwiseDisjoint S := by
     intro a _ b _ hab
     refine Set.disjoint_left.mpr fun 𝔭 ha hb => hab (hmk_inj ?_)
     rw [hS] at ha hb
     exact ha.2.2.symm.trans hb.2.2
-  -- `⋃_σ S σ` is disjoint from the ramified set `R`.
   have hdisjR : Disjoint (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) R := by
     refine Set.disjoint_left.mpr fun 𝔭 hmem hbad => ?_
     simp only [Set.mem_iUnion] at hmem
     obtain ⟨σ, -, hσ⟩ := hmem
     exact hbad.2.2 (hS ▸ hσ).2.1
-  -- Every nonzero prime lies in `(⋃_σ S σ) ∪ R`.
   have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ →
       𝔭 ∈ (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) ∪ R := by
     intro 𝔭 hp hne
@@ -522,25 +503,19 @@ theorem ratioSum_frobeniusFibres_tendsto_one
       exact Or.inl <| Set.mem_iUnion.mpr ⟨σ, Set.mem_iUnion.mpr ⟨Finset.mem_univ σ,
         hS ▸ ⟨hp, hunr, hσ.symm⟩⟩⟩
     · exact Or.inr ⟨hp, hne, hunr⟩
-  -- `R` is finite, so its density ratio tends to `0`.
   have hRfin : R.Finite := finite_ramifiedIn K L
   have hR0 : Filter.Tendsto (fun s ↦ primeIdealZetaSum R s / D s) (𝓝[>] 1) (𝓝 0) :=
     hasDirichletDensity_of_finite K hRfin
-  -- The denominator `D s` is eventually positive (it diverges to `+∞`).
   have hDpos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < D s :=
     (primeIdealZetaSum_univ_tendsto_atTop K).eventually_gt_atTop 0
-  -- The comparison function `1 - Z(R) s / D s` tends to `1 - 0 = 1`.
   have hcomp : Filter.Tendsto (fun s ↦ 1 - primeIdealZetaSum R s / D s) (𝓝[>] 1) (𝓝 1) := by
     simpa using hR0.const_sub 1
-  -- On `s > 1`, the σ-sum equals `1 - Z(R) s / D s`.
   refine hcomp.congr' ?_
   filter_upwards [hDpos, self_mem_nhdsWithin] with s hpos hs1
   simp only [Set.mem_Ioi] at hs1
-  -- The σ-sum of fibre series is the series over their (disjoint) union.
   have hsum : ∑ σ : Gal(L/K), primeIdealZetaSum (S σ) s
       = primeIdealZetaSum (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) s :=
     (primeIdealZetaSum_biUnion_of_pairwiseDisjoint Finset.univ S hpd hs1).symm
-  -- That union plus the ramified set recovers all nonzero primes.
   have hadd : primeIdealZetaSum (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) s
       + primeIdealZetaSum R s = D s := by
     rw [← primeIdealZetaSum_union_of_disjoint hdisjR hs1, hD]
@@ -567,9 +542,9 @@ private lemma sum_isBoundedUnder_ge {κ : Type*} (g : κ → ι → α) (t : Fin
   induction t using Finset.induction with
   | empty => simpa using (isBoundedUnder_const (r := (· ≥ ·)) (l := l) (a := (0 : α)))
   | insert a s ha ih =>
-      have := isBoundedUnder_ge_add (h a (Finset.mem_insert_self a s))
-        (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
-      simpa [Finset.sum_insert ha, Pi.add_def] using this
+      simpa [Finset.sum_insert ha, Pi.add_def] using
+        isBoundedUnder_ge_add (h a (Finset.mem_insert_self a s))
+          (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
 
 omit [DenselyOrdered α] [l.NeBot] in
 /-- A finite sum of above-bounded functions is above-bounded. -/
@@ -580,13 +555,12 @@ private lemma sum_isBoundedUnder_le {κ : Type*} (g : κ → ι → α) (t : Fin
   induction t using Finset.induction with
   | empty => simpa using (isBoundedUnder_const (r := (· ≤ ·)) (l := l) (a := (0 : α)))
   | insert a s ha ih =>
-      have := isBoundedUnder_le_add (h a (Finset.mem_insert_self a s))
-        (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
-      simpa [Finset.sum_insert ha, Pi.add_def] using this
+      simpa [Finset.sum_insert ha, Pi.add_def] using
+        isBoundedUnder_le_add (h a (Finset.mem_insert_self a s))
+          (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
 
 /-- Superadditivity of `liminf` over a `Finset.sum`: the sum of the `liminf`s is
-at most the `liminf` of the sum. Proved by induction from the two-function case
-`le_liminf_add`, feeding the partial-sum boundedness from the two lemmas above. -/
+at most the `liminf` of the sum. -/
 private lemma sum_liminf_le_liminf_sum {κ : Type*} (g : κ → ι → α) (t : Finset κ)
     (hbelow : ∀ j ∈ t, l.IsBoundedUnder (· ≥ ·) (g j))
     (habove : ∀ j ∈ t, l.IsBoundedUnder (· ≤ ·) (g j)) :
@@ -625,8 +599,7 @@ order, so without it the statement is false (one `gᵢ` could dip to `-∞` whil
 keeping a spurious `liminf` and the sum still converging). At the only call site
 (`chebotarev_abelian`) each `gᵢ` is a ratio of nonnegative Dirichlet sums, hence
 `0 ≤ gᵢ`, so `hbelow` is immediate. -/
-theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
-    {ι : Type*} [Fintype ι] (g : ι → ℝ → ℝ)
+theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one {ι : Type*} [Fintype ι] (g : ι → ℝ → ℝ)
     (hlo : ∀ i, (Fintype.card ι : ℝ)⁻¹ ≤ Filter.liminf (g i) (𝓝[>] (1 : ℝ)))
     (hbelow : ∀ i, Filter.IsBoundedUnder (· ≥ ·) (𝓝[>] (1 : ℝ)) (g i))
     (hsum : Filter.Tendsto (fun s ↦ ∑ i, g i s) (𝓝[>] (1 : ℝ)) (𝓝 1)) (i₀ : ι) :
@@ -637,7 +610,6 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
   set F : ℝ → ℝ := fun s ↦ ∑ i, g i s with hF
   have hFle : l.IsBoundedUnder (· ≤ ·) F := hsum.isBoundedUnder_le
   have hFlimsup : limsup F l = 1 := hsum.limsup_eq
-  -- Each `g i` is bounded above, via `g i = F - ∑_{j ≠ i} g j`.
   have hgle : ∀ i, l.IsBoundedUnder (· ≤ ·) (g i) := by
     intro i
     have hdecomp : ∀ s, g i s = F s - ∑ j ∈ Finset.univ.erase i, g j s := by
@@ -661,7 +633,6 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
   have hrestle : l.IsBoundedUnder (· ≤ ·) (fun s ↦ ∑ j ∈ t, g j s) :=
     sum_isBoundedUnder_le g t (fun j _ ↦ hgle j)
   have hcard : t.card = N - 1 := Finset.card_erase_of_mem (Finset.mem_univ i₀)
-  -- `liminf (∑_{j ≠ i₀} g j) ≥ (N-1)/N` from superadditivity and the lower bounds.
   have hliminf_rest : ((N : ℝ) - 1) / N ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l := by
     have hsuper : ∑ j ∈ t, liminf (g j) l ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l :=
       sum_liminf_le_liminf_sum g t (fun j _ ↦ hbelow j) (fun j _ ↦ hgle j)
@@ -677,7 +648,6 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
       rw [hsub]; ring
     rw [hcast]
     exact le_trans hlb hsuper
-  -- `limsup (g i₀) + liminf (∑_{j ≠ i₀} g j) ≤ limsup F = 1`.
   have hFeq : (fun s ↦ g i₀ s + ∑ j ∈ t, g j s) = F := by
     funext s
     rw [hF]
@@ -686,14 +656,12 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one
       ≤ limsup (fun s ↦ g i₀ s + ∑ j ∈ t, g j s) l :=
     le_limsup_add (hgle i₀) (IsBoundedUnder.isCoboundedUnder_le (hbelow i₀)) hrestle hrestge
   rw [hFeq, hFlimsup] at hadd
-  -- Hence `limsup (g i₀) ≤ 1 - (N-1)/N = 1/N`.
   have hlimsup_le : limsup (g i₀) l ≤ (N : ℝ)⁻¹ := by
     have hrest_le : liminf (fun s ↦ ∑ j ∈ t, g j s) l ≤ 1 - limsup (g i₀) l := by linarith
     have h1 : limsup (g i₀) l ≤ 1 - ((N : ℝ) - 1) / N := by
       linarith [le_trans hliminf_rest hrest_le]
     have h2 : 1 - ((N : ℝ) - 1) / N = (N : ℝ)⁻¹ := by field_simp; ring
     rw [h2] at h1; exact h1
-  -- `1/N ≤ liminf (g i₀) ≤ limsup (g i₀) ≤ 1/N` pins the limit.
   exact tendsto_of_le_liminf_of_limsup_le (hlo i₀) hlimsup_le (hgle i₀) (hbelow i₀)
 
 /-- **Chebotarev's theorem, abelian case** (Sharifi 7.2.2 Step 2).

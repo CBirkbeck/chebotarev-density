@@ -211,8 +211,7 @@ theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : 
   rfl
 
 /-- The partial Dirichlet series over the empty set is `0`. -/
-theorem primeIdealZetaSum_empty (s : ℝ) :
-    primeIdealZetaSum (∅ : Set (Ideal (𝓞 K))) s = 0 := by
+theorem primeIdealZetaSum_empty (s : ℝ) : primeIdealZetaSum (∅ : Set (Ideal (𝓞 K))) s = 0 := by
   have : IsEmpty {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (∅ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
     ⟨fun x => x.2.1⟩
   rw [primeIdealZetaSum_def, tsum_empty]
