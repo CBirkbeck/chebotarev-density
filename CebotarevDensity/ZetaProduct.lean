@@ -72,14 +72,31 @@ noncomputable def galoisCharacterOnIdeal (K L : Type*) [Field K] [NumberField K]
       ^ (UniqueFactorizationMonoid.normalizedFactors 𝔞).count 𝔭
 
 open Classical in
-/-- On a prime `𝔭`, the ideal character `χ(𝔭)` is `χ(Frob 𝔭)` when `𝔭` is unramified in `L`
-and `0` otherwise (Sharifi Notation 7.1.17). -/
+/-- `galoisCharacterOnIdeal` written as the product over the prime factors **with
+multiplicity** — i.e. a `Multiset.map`-product over `normalizedFactors 𝔞` — rather than the
+`toFinset`+`count` form of the definition. This form makes the multiplicativity proof immediate
+(`Multiset.map_add` + `Multiset.prod_add`). -/
+private theorem galoisCharacterOnIdeal_eq_map_prod
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (𝔞 : Ideal (𝓞 K)) :
+    galoisCharacterOnIdeal K L χ 𝔞 =
+      ((UniqueFactorizationMonoid.normalizedFactors 𝔞).map
+        (fun 𝔭 => if UnramifiedIn K L 𝔭 then (χ (frobeniusClass K L 𝔭).out : ℂ) else 0)).prod := by
+  rw [galoisCharacterOnIdeal, Finset.prod_multiset_map_count]
+
+open Classical in
+/-- On a nonzero prime `𝔭`, the ideal character `χ(𝔭)` is `χ(Frob 𝔭)` when `𝔭` is unramified in
+`L` and `0` otherwise (Sharifi Notation 7.1.17). The hypothesis `𝔭 ≠ ⊥` is needed: at the zero
+ideal the product is the empty product `1`, whereas the right-hand side is `0` (the zero ideal
+is never unramified). -/
 theorem galoisCharacterOnIdeal_apply_prime
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (χ : galoisCharacter K L) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] :
+    (χ : galoisCharacter K L) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) :
     galoisCharacterOnIdeal K L χ 𝔭 =
       if UnramifiedIn K L 𝔭 then (χ (frobeniusClass K L 𝔭).out : ℂ) else 0 := by
-  sorry
+  rw [galoisCharacterOnIdeal_eq_map_prod, UniqueFactorizationMonoid.normalizedFactors_irreducible
+    (Ideal.prime_of_isPrime h𝔭 ‹_›).irreducible, normalize_eq, Multiset.map_singleton,
+    Multiset.prod_singleton]
 
 /-- The ideal character is completely multiplicative: `χ(𝔞 * 𝔟) = χ(𝔞) · χ(𝔟)` for nonzero
 ideals `𝔞`, `𝔟` (Sharifi Notation 7.1.17). -/
@@ -88,14 +105,17 @@ theorem galoisCharacterOnIdeal_mul
     (χ : galoisCharacter K L) {𝔞 𝔟 : Ideal (𝓞 K)} (h𝔞 : 𝔞 ≠ ⊥) (h𝔟 : 𝔟 ≠ ⊥) :
     galoisCharacterOnIdeal K L χ (𝔞 * 𝔟) =
       galoisCharacterOnIdeal K L χ 𝔞 * galoisCharacterOnIdeal K L χ 𝔟 := by
-  sorry
+  rw [galoisCharacterOnIdeal_eq_map_prod, galoisCharacterOnIdeal_eq_map_prod,
+    galoisCharacterOnIdeal_eq_map_prod, UniqueFactorizationMonoid.normalizedFactors_mul h𝔞 h𝔟,
+    Multiset.map_add, Multiset.prod_add]
 
 /-- The ideal character of the unit ideal `⊤` is `1` (empty product). -/
 theorem galoisCharacterOnIdeal_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) :
     galoisCharacterOnIdeal K L χ ⊤ = 1 := by
-  sorry
+  rw [galoisCharacterOnIdeal_eq_map_prod, ← Ideal.one_eq_top,
+    UniqueFactorizationMonoid.normalizedFactors_one, Multiset.map_zero, Multiset.prod_zero]
 
 /-- Summation-by-parts (Dirichlet-test) bound: if `a` is antitone and nonnegative and the
 partial sums of `z` are bounded by `B`, then `‖∑_{i<n} a i • z i‖ ≤ B · a 0`. This is the
@@ -207,19 +227,81 @@ sub-lemma is supported by a verbatim source quote in
     argument.
 -/
 
+/-- The value of a Galois character on the representative of a conjugacy class has norm `1`:
+it is a root of unity, since `Gal(L/K)` is finite. -/
+private theorem norm_galoisCharacter_out
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (c : ConjClasses Gal(L/K)) :
+    ‖(χ c.out : ℂ)‖ = 1 := by
+  obtain ⟨n, hn, hpow⟩ := isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite c.out)
+  refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
+  simpa using congrArg (Units.val) (show (χ c.out) ^ n = 1 by rw [← map_pow, hpow, map_one])
+
+open Classical in
+/-- The ideal character has norm `≤ 1`: each prime-factor contribution is either `0` (ramified)
+or a norm-`1` root of unity (unramified), so the product over factors has norm `≤ 1`. -/
+private theorem norm_galoisCharacterOnIdeal_le_one
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (𝔞 : Ideal (𝓞 K)) :
+    ‖galoisCharacterOnIdeal K L χ 𝔞‖ ≤ 1 := by
+  rw [galoisCharacterOnIdeal, norm_prod]
+  refine Finset.prod_le_one (fun i _ => norm_nonneg _) (fun 𝔭 _ => ?_)
+  rw [norm_pow]
+  by_cases h : UnramifiedIn K L 𝔭
+  · rw [if_pos h, norm_galoisCharacter_out, one_pow]
+  · rw [if_neg h, norm_zero]
+    rcases Nat.eq_zero_or_pos
+        ((UniqueFactorizationMonoid.normalizedFactors 𝔞).count 𝔭) with hc | hc
+    · rw [hc, pow_zero]
+    · rw [zero_pow (by lia)]; norm_num
+
 /-- Sharifi 7.1.18 (p. 141): Euler product for an abelian Galois
 character `χ : Gal(L/K) → ℂ^×`. For `Re s > 1` the Euler product over unramified primes
 equals the Dirichlet series `Σ_𝔞 χ(𝔞) N𝔞^{-s}`, where `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞`
-is the completely-multiplicative ideal character. -/
+is the completely-multiplicative ideal character.
+
+The proof instantiates the generic weighted prime-ideal Euler product
+`weighted_eulerProduct_eq_tsum` with the weight `w = galoisCharacterOnIdeal K L χ`
+(completely multiplicative with `‖w‖ ≤ 1`). The product on the left ranges over *unramified*
+primes, whereas the weighted Euler product ranges over *all* nonzero primes; the two agree
+because `w(𝔭) = 0` at a ramified prime, so its local factor `(1 - 0)⁻¹ = 1` drops out of the
+product. At an unramified prime `w(𝔭) = χ(Frob 𝔭)` by `galoisCharacterOnIdeal_apply_prime`. -/
 theorem exists_artinLSeries_eulerProduct_abelian
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
+    [FiniteDimensional K L] [_hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∀ s : ℂ, 1 < s.re →
       (∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
         = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
             galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
-  sorry
+  intro s hs
+  set w : Ideal (𝓞 K) → ℂ := galoisCharacterOnIdeal K L χ with hw
+  rw [← weighted_eulerProduct_eq_tsum K (s := s) hs w (galoisCharacterOnIdeal_one K L χ)
+    (fun {𝔞 𝔟} h𝔞 h𝔟 => galoisCharacterOnIdeal_mul K L χ h𝔞 h𝔟)
+    (norm_galoisCharacterOnIdeal_le_one K L χ)]
+  -- The weighted product over all nonzero primes restricts to the unramified ones: at a ramified
+  -- prime the weight is `0`, so the local factor is `1`.
+  set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} →
+      {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := fun 𝔭 => ⟨𝔭.1, 𝔭.2.1, 𝔭.2.2.ne_bot⟩ with hg
+  set f : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℂ :=
+    fun 𝔭 => (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ with hf
+  have hg_inj : Function.Injective g := fun a b hab =>
+    Subtype.ext (congrArg (fun x : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} => x.1) hab)
+  have hsupp : Function.mulSupport f ⊆ Set.range g := by
+    intro 𝔭 hmem
+    simp only [Function.mem_mulSupport, hf] at hmem
+    haveI := 𝔭.2.1
+    have hunr : UnramifiedIn K L 𝔭.1 := by
+      by_contra hnr
+      apply hmem
+      rw [hw, galoisCharacterOnIdeal_apply_prime K L χ 𝔭.1 𝔭.2.2, if_neg hnr, zero_mul, sub_zero,
+        inv_one]
+    exact ⟨⟨𝔭.1, 𝔭.2.1, hunr⟩, rfl⟩
+  rw [← hg_inj.tprod_eq hsupp]
+  refine tprod_congr fun 𝔭 => ?_
+  simp only [hf, hg, hw]
+  haveI := 𝔭.2.1
+  rw [galoisCharacterOnIdeal_apply_prime K L χ 𝔭.1 𝔭.2.2.ne_bot, if_pos 𝔭.2.2]
 
 /-- Sharifi 7.1.16 (p. 141) local step: the local Euler factor at an
 unramified prime `𝔭` of `K` factors as a product over characters.

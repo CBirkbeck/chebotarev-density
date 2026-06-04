@@ -764,6 +764,193 @@ theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
     (fun x y h => Subtype.ext (congrArg (fun z : {x // x ∉ F} => (z : NonzeroIdeal L)) h))
     (fun _ _ => norm_nonneg _) (fun _ => le_rfl) (hnormD.subtype _)
 
+/-! ### Weighted prime-ideal Euler product
+
+A completely-multiplicative weight `w : Ideal (𝓞 L) → ℂ` with `‖w 𝔞‖ ≤ 1` twists the
+prime-ideal Euler product into the weighted Dirichlet series
+`Σ_𝔞 w(𝔞) N𝔞^{-s} = ∏_𝔭 (1 - w(𝔭) N𝔭^{-s})^{-1}`. With `w = 1` this is
+`dedekindZeta_eq_tprod_primeIdeal`; the χ-twist `w = galoisCharacterOnIdeal K L χ` powers the
+abelian Euler product (Sharifi 7.1.18). The proof mirrors the `w = 1` case verbatim, carrying
+the multiplicative weight through the finite-`S` partial product and the `S ↑ ⊤` limit. -/
+
+omit [NumberField L] in
+/-- A completely-multiplicative weight `w` is multiplicative on prime-power products:
+`w(∏_𝔭 𝔭^{e 𝔭}) = ∏_𝔭 w(𝔭)^{e 𝔭}`. The exponent is indexed over the subtype `S` to match
+`prod_absNorm_cpow_eq_absNorm_prod_pow_cpow`. -/
+private theorem weight_prod_primePow (w : Ideal (𝓞 L) → ℂ) (hw_one : w ⊤ = 1)
+    (hw_mul : ∀ {𝔞 𝔟 : Ideal (𝓞 L)}, 𝔞 ≠ ⊥ → 𝔟 ≠ ⊥ → w (𝔞 * 𝔟) = w 𝔞 * w 𝔟)
+    (S : Finset {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}) (e : S → ℕ) :
+    w (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ e 𝔭) = ∏ 𝔭 ∈ S.attach, (w 𝔭.1.1) ^ e 𝔭 := by
+  classical
+  have wpow : ∀ (𝔭 : Ideal (𝓞 L)) (_ : 𝔭 ≠ ⊥) (k : ℕ), w (𝔭 ^ k) = (w 𝔭) ^ k := by
+    intro 𝔭 h𝔭 k
+    induction k with
+    | zero => simpa using hw_one
+    | succ n ih => rw [pow_succ, hw_mul (pow_ne_zero _ h𝔭) h𝔭, ih, pow_succ]
+  have key : ∀ T : Finset S, w (∏ 𝔭 ∈ T, 𝔭.1.1 ^ e 𝔭) = ∏ 𝔭 ∈ T, (w 𝔭.1.1) ^ e 𝔭 := by
+    intro T
+    induction T using Finset.induction with
+    | empty => simpa using hw_one
+    | insert a t ha ih =>
+      rw [Finset.prod_insert ha, Finset.prod_insert ha,
+        hw_mul (pow_ne_zero _ a.1.2.2)
+          (Finset.prod_ne_zero_iff.mpr (fun 𝔭 _ => pow_ne_zero _ 𝔭.1.2.2)),
+        wpow a.1.1 a.1.2.2, ih]
+  exact key S.attach
+
+/-- The weighted finite Euler-factor identity: for the ratio `g 𝔭 = w(𝔭) N𝔭^{-s}`, the finite
+product `∏_{𝔭 ∈ S} (1 - g 𝔭)⁻¹` is the Dirichlet partial sum `∑_𝔞 w(𝔞) N𝔞^{-s}` over the
+`S`-factored ideals `𝔞 = ∏_𝔭 𝔭^{e 𝔭}`. -/
+private theorem weighted_prod_eulerFactor_eq_tsum {s : ℂ} (hs : 1 < s.re)
+    (w : Ideal (𝓞 L) → ℂ) (hw_one : w ⊤ = 1)
+    (hw_mul : ∀ {𝔞 𝔟 : Ideal (𝓞 L)}, 𝔞 ≠ ⊥ → 𝔟 ≠ ⊥ → w (𝔞 * 𝔟) = w 𝔞 * w 𝔟)
+    (hw_norm : ∀ 𝔞, ‖w 𝔞‖ ≤ 1)
+    (S : Finset {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})
+    (idealOfExp : (S →₀ ℕ) → NonzeroIdeal L)
+    (hidealOfExp : ∀ e : S →₀ ℕ,
+      (idealOfExp e).1 = ∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ e 𝔭)
+    (hinj : Function.Injective idealOfExp) :
+    (∏ 𝔭 ∈ S, (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
+      = ∑' 𝔞 : Set.range idealOfExp,
+          w 𝔞.1.1 * (Ideal.absNorm 𝔞.1.1 : ℂ) ^ (-s) := by
+  classical
+  have hg : ∀ 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+      ‖w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ < 1 := fun 𝔭 => by
+    rw [norm_mul]
+    calc ‖w 𝔭.1‖ * ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖
+        ≤ 1 * ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ := by gcongr; exact hw_norm _
+      _ = ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ := one_mul _
+      _ < 1 := norm_absNorm_cpow_neg_lt_one L hs 𝔭
+  have hHS := (finsetGeometricProd_summable_and_hasSum
+    (fun 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)) hg S).2
+  -- The summand over exponent vectors equals `w(𝔞) N𝔞^{-s}` for `𝔞 = idealOfExp e`.
+  have hsummand : ∀ e : S →₀ ℕ,
+      (∏ 𝔭 ∈ S.attach, (w 𝔭.1.1 * (Ideal.absNorm 𝔭.1.1 : ℂ) ^ (-s)) ^ e 𝔭)
+        = w (idealOfExp e).1 * (Ideal.absNorm (idealOfExp e).1 : ℂ) ^ (-s) := fun e => by
+    simp_rw [mul_pow]
+    rw [Finset.prod_mul_distrib,
+      show (∏ 𝔭 ∈ S.attach, ((Ideal.absNorm 𝔭.1.1 : ℂ) ^ (-s)) ^ e 𝔭)
+        = ∏ 𝔭 ∈ S.attach, (Ideal.absNorm 𝔭.1.1 : ℂ) ^ (-(e 𝔭 : ℂ) * s) from
+      Finset.prod_congr rfl fun 𝔭 _ => by rw [← Complex.cpow_nat_mul]; ring_nf,
+      prod_absNorm_cpow_eq_absNorm_prod_pow_cpow L S (fun 𝔭 => e 𝔭),
+      ← weight_prod_primePow L w hw_one hw_mul S (fun 𝔭 => e 𝔭), hidealOfExp e]
+  -- Re-index the geometric `HasSum` over `S → ℕ` as a `HasSum` over `S →₀ ℕ`, then identify the
+  -- summand with `Dw (idealOfExp e)` and convert to a sum over the range of `idealOfExp`.
+  have hHS' : HasSum
+      (fun e : S →₀ ℕ => w (idealOfExp e).1 * (Ideal.absNorm (idealOfExp e).1 : ℂ) ^ (-s))
+      (∏ 𝔭 ∈ S, (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹) := by
+    have hbase := (Finsupp.equivFunOnFinite (α := S) (M := ℕ)).hasSum_iff.mpr hHS
+    refine hbase.congr_fun fun e => ?_
+    simp only [Function.comp_apply, Finsupp.equivFunOnFinite_apply]
+    exact (hsummand e).symm
+  rw [← hHS'.tsum_eq]
+  exact (tsum_range
+    (fun 𝔞 : NonzeroIdeal L => w 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) hinj).symm
+
+open UniqueFactorizationMonoid in
+/-- **Weighted prime-ideal Euler product**: for a completely-multiplicative weight `w` with
+`‖w 𝔞‖ ≤ 1` and `1 < Re s`,
+`∑_𝔞 w(𝔞) N𝔞^{-s} = ∏_𝔭 (1 - w(𝔭) N𝔭^{-s})^{-1}` over the nonzero prime ideals. This is the
+`w`-twisted analogue of `dedekindZeta_eq_tprod_primeIdeal` (Sharifi 7.1.18). -/
+theorem weighted_eulerProduct_eq_tsum {s : ℂ} (hs : 1 < s.re)
+    (w : Ideal (𝓞 L) → ℂ) (hw_one : w ⊤ = 1)
+    (hw_mul : ∀ {𝔞 𝔟 : Ideal (𝓞 L)}, 𝔞 ≠ ⊥ → 𝔟 ≠ ⊥ → w (𝔞 * 𝔟) = w 𝔞 * w 𝔟)
+    (hw_norm : ∀ 𝔞, ‖w 𝔞‖ ≤ 1) :
+    (∏' 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
+      = ∑' 𝔞 : NonzeroIdeal L, w 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
+  classical
+  set P := {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}
+  set Dw : NonzeroIdeal L → ℂ := fun 𝔞 => w 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) with hDw
+  set idealOfExp : (S : Finset P) → (S →₀ ℕ) → NonzeroIdeal L :=
+    fun S e => ⟨∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ e 𝔭,
+      Finset.prod_ne_zero_iff.mpr (fun 𝔭 _ => pow_ne_zero _ 𝔭.1.2.2)⟩ with hidealOfExp
+  have hnormD : Summable fun 𝔞 : NonzeroIdeal L => ‖Dw 𝔞‖ := by
+    refine ((hasSum_nonzeroIdeal_absNorm_cpow L hs).summable.norm).of_nonneg_of_le
+      (fun _ => norm_nonneg _) (fun 𝔞 => ?_)
+    rw [hDw, norm_mul]
+    calc ‖w 𝔞.1‖ * ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖
+        ≤ 1 * ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ := by gcongr; exact hw_norm _
+      _ = ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ := one_mul _
+  have hinj : ∀ S : Finset P, Function.Injective (idealOfExp S) := by
+    intro S e e' h
+    rw [hidealOfExp, Subtype.mk.injEq] at h
+    ext 𝔮
+    have key : ∀ f : S →₀ ℕ,
+        factorization (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭) 𝔮.1.1 = f 𝔮 := by
+      intro f
+      have hprod : (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔭.1)
+          = ∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭 :=
+        Finset.prod_congr rfl fun 𝔭 _ => by simp only [dif_pos 𝔭.2]
+      rw [← hprod, factorization_prod_primePow_eq L S
+        (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔮.1, if_pos 𝔮.2, dif_pos 𝔮.2]
+    rw [← key e, ← key e', h]
+  have hmem : ∀ (S : Finset P) (𝔞 : NonzeroIdeal L),
+      (∀ p ∈ normalizedFactors 𝔞.1, ∃ 𝔭 ∈ S, 𝔭.1 = p) →
+      𝔞 ∈ Set.range (idealOfExp S) := by
+    intro S 𝔞 hsupp
+    refine ⟨Finsupp.onFinset S.attach
+      (fun 𝔭 => (normalizedFactors 𝔞.1).count 𝔭.1.1) (by simp), ?_⟩
+    have hreconstruct :
+        (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1) = 𝔞.1 := by
+      rw [show (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1)
+          = ∏ p ∈ S.image (fun 𝔭 : P => 𝔭.1),
+              p ^ (normalizedFactors 𝔞.1).count p from by
+        rw [Finset.prod_image (fun x _ y _ h => Subtype.ext h), ← Finset.prod_attach S
+          (fun p => p.1 ^ (normalizedFactors 𝔞.1).count p.1)]]
+      rw [← Finset.prod_subset
+        (s₁ := (normalizedFactors 𝔞.1).toFinset)
+        (s₂ := S.image (fun 𝔭 : P => 𝔭.1))
+        (fun p hp => by
+          rw [Multiset.mem_toFinset] at hp
+          obtain ⟨𝔭, h𝔭S, rfl⟩ := hsupp p hp
+          exact Finset.mem_image.mpr ⟨𝔭, h𝔭S, rfl⟩)
+        (fun p _ hp => by
+          rw [Multiset.mem_toFinset] at hp
+          rw [Multiset.count_eq_zero_of_notMem hp, pow_zero])]
+      conv_rhs => rw [← finprod_pow_count_eq_of_subsingleton_units 𝔞.2]
+      exact (finprod_eq_finsetProd_of_mulSupport_subset _ (by
+        intro p hp
+        simp only [Function.mem_mulSupport] at hp
+        rw [Finset.mem_coe, Multiset.mem_toFinset]
+        by_contra hc
+        rw [Multiset.count_eq_zero_of_notMem hc, pow_zero] at hp
+        exact hp rfl)).symm
+    rw [hidealOfExp, Subtype.ext_iff]
+    simp only [Finsupp.onFinset_apply]
+    exact hreconstruct
+  have hpartial : ∀ S : Finset P,
+      (∏ 𝔭 ∈ S, (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
+        = ∑' 𝔞 : Set.range (idealOfExp S), Dw 𝔞.1 := by
+    intro S
+    exact weighted_prod_eulerFactor_eq_tsum L hs w hw_one hw_mul hw_norm S (idealOfExp S)
+      (fun e => rfl) (hinj S)
+  refine HasProd.tprod_eq ?_
+  rw [HasProd, SummationFilter.unconditional, Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨F, hF⟩ := ((tendsto_tsum_compl_atTop_zero (fun 𝔞 => ‖Dw 𝔞‖)).eventually
+    (gt_mem_nhds hε)).exists
+  refine ⟨F.biUnion (primeFactorsOf L), fun S hS => ?_⟩
+  have hF_sub : ∀ 𝔞 ∈ F, 𝔞 ∈ Set.range (idealOfExp S) := by
+    intro 𝔞 h𝔞F
+    refine hmem S 𝔞 fun p hp => ?_
+    obtain ⟨𝔭, h𝔭, rfl⟩ := mem_primeFactorsOf L 𝔞 p hp
+    exact ⟨𝔭, hS (Finset.mem_biUnion.mpr ⟨𝔞, h𝔞F, h𝔭⟩), rfl⟩
+  rw [dist_eq_norm, hpartial S]
+  have hsplit : ∑' 𝔞 : NonzeroIdeal L, Dw 𝔞 =
+      (∑' 𝔞 : Set.range (idealOfExp S), Dw 𝔞.1) +
+        ∑' 𝔞 : ↥(Set.range (idealOfExp S))ᶜ, Dw 𝔞.1 :=
+    (hnormD.of_norm.tsum_subtype_add_tsum_subtype_compl _).symm
+  rw [hsplit, sub_add_cancel_left, norm_neg]
+  refine (norm_tsum_le_tsum_norm (hnormD.subtype _)).trans_lt ?_
+  refine lt_of_le_of_lt ?_ hF
+  refine (hnormD.subtype _).tsum_le_tsum_of_inj
+    (fun 𝔞 : ↥(Set.range (idealOfExp S))ᶜ =>
+      (⟨𝔞.1, fun h => 𝔞.2 (hF_sub 𝔞.1 h)⟩ : {x // x ∉ F}))
+    (fun x y h => Subtype.ext (congrArg (fun z : {x // x ∉ F} => (z : NonzeroIdeal L)) h))
+    (fun _ _ => norm_nonneg _) (fun _ => le_rfl) (hnormD.subtype _)
+
 /-- For real `s > 1`, `ζ_K(s)` is a positive real (Sharifi Def 7.1.11, p. 140). -/
 theorem dedekindZeta_re_pos_of_one_lt (s : ℝ) (hs : 1 < s) :
     0 < (NumberField.dedekindZeta L (s : ℂ)).re := by
