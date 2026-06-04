@@ -141,19 +141,17 @@ theorem orderOf_frobeniusAt_eq_finrank
 The number of primes of `𝓞 L` above `𝔭` times the residue degree `[κ(𝔓₀) : κ(𝔭)]` of any
 prime `𝔓₀` above `𝔭` equals `|Gal(L/K)|`. Discharged by mathlib's
 `Ideal.ncard_primesOver_mul_card_inertia_mul_finrank` (orbit–stabilizer) with trivial
-inertia (`Ideal.card_inertia_eq_ramificationIdxIn` + unramifiedness ⟹ `e = 1`), after
+inertia (`Ideal.card_inertia_eq_ramificationIdxIn` + `UnramifiedIn` ⟹ `e = 1`), after
 identifying `{𝔓 // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}` with `𝔭.primesOver (𝓞 L)`. -/
 theorem card_primesAbove_mul_finrank_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (𝔓₀ : Ideal (𝓞 L)) [𝔓₀.IsPrime] (hlo : 𝔓₀.LiesOver 𝔭) :
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
         * Module.finrank (𝓞 K ⧸ 𝔓₀.under (𝓞 K)) (𝓞 L ⧸ 𝔓₀) = Nat.card Gal(L/K) := by
-  have hpbot : 𝔭 ≠ ⊥ := hunr.1
+  have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
   have he : Ideal.ramificationIdx (𝔓₀.under (𝓞 K)) 𝔓₀ = 1 :=
-    ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓₀ hlo
+    UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓₀ hlo
   have hP0bot : 𝔓₀ ≠ ⊥ := ne_bot_of_ramificationIdx_eq_one K L he
   have hunder : 𝔓₀.under (𝓞 K) = 𝔭 := hlo.over.symm
   have hp_under_bot : 𝔓₀.under (𝓞 K) ≠ ⊥ := hunder ▸ hpbot
@@ -184,18 +182,15 @@ Frobenius class is `C = [σ]`, equals `orderOf σ`: `Frob_𝔓` generates `D_�
 theorem finrank_residue_eq_orderOf
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
-    (hCfrob : frobeniusClass K L 𝔭 = C)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hCfrob : frobeniusClass K L 𝔭 = C)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hlo : 𝔓.LiesOver 𝔭) :
     Module.finrank (𝓞 K ⧸ 𝔓.under (𝓞 K)) (𝓞 L ⧸ 𝔓) = orderOf σ := by
   obtain ⟨c, hc⟩ : IsConj
-      (frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hlo)) σ := by
+      (frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hlo)) σ := by
     rw [← ConjClasses.mk_eq_mk_iff_isConj,
       ← frobeniusClass_eq_mk_frobeniusAt K L 𝔭 hunr 𝔓 hlo, hCfrob, hσ]
   rw [← hc.orderOf_eq,
-    orderOf_frobeniusAt_eq_finrank K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hlo)]
+    orderOf_frobeniusAt_eq_finrank K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hlo)]
 
 /-- **Orbit–stabilizer for the primes above `𝔭`** (Sharifi 7.2.2 Step 1, p. 143). The
 Galois group acts transitively on the primes of `𝓞 L` above `𝔭`, with stabiliser the
@@ -205,13 +200,11 @@ decomposition group `D_𝔓`; for an unramified prime `D_𝔓` is cyclic of orde
 theorem card_primesAbove_mul_orderOf_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} * orderOf σ
       = Nat.card Gal(L/K) := by
-  obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 hunr.1
+  obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 (UnramifiedIn.ne_bot K L hunr)
   rw [← finrank_residue_eq_orderOf K L σ C _hσ 𝔭 hunr _hCfrob 𝔓₀ hlo₀]
   exact card_primesAbove_mul_finrank_eq K L 𝔭 hunr 𝔓₀ hlo₀
 
@@ -222,14 +215,12 @@ above `𝔭` with `Frob_𝔓 = σ` and those with `Frob_𝔓 = σ'` (via `froben
 two Frobenius fibres have equal cardinality. -/
 theorem frobeniusFibre_card_eq_of_isConj
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (σ σ' : Gal(L/K)) (hc : IsConj σ σ') :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-        frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ}
+        frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ}
       = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-        frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ'} := by
+        frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'} := by
   obtain ⟨c, hc⟩ := isConj_iff.mp hc
   refine Nat.card_congr (Equiv.subtypeEquiv (MulAction.toPerm c) fun 𝔓 ↦ ?_)
   simp only [MulAction.toPerm_apply]
@@ -241,7 +232,7 @@ theorem frobeniusFibre_card_eq_of_isConj
     · rw [← Ideal.smul_bot c]
       exact (MulAction.injective c).ne hne
     · rw [frobeniusAt_conj_eq K L 𝔓 (c • 𝔓)
-        (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) _ c rfl, hfrob, hc]
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) _ c rfl, hfrob, hc]
   · rintro ⟨hp, hP, hne, hfrob⟩
     haveI := hp
     haveI := hP
@@ -253,8 +244,8 @@ theorem frobeniusFibre_card_eq_of_isConj
       exact (MulAction.injective c⁻¹).ne hne
     refine ⟨hp', hP', hne', ?_⟩
     rw [frobeniusAt_conj_eq K L (c • 𝔓) 𝔓
-      (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr (c • 𝔓) hP)
-      (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP') c⁻¹ hsmul, hfrob, ← hc]
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr (c • 𝔓) hP)
+      (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP') c⁻¹ hsmul, hfrob, ← hc]
     group
 
 /-- **Balanced fibre count.** If every prime above `𝔭` has Frobenius in the class `C = [σ]`
@@ -264,21 +255,18 @@ Frobenius via `Finset.card_eq_sum_card_fiberwise`, then `Finset.sum_const` using
 theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
-    (hCfrob : frobeniusClass K L 𝔭 = C)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hCfrob : frobeniusClass K L 𝔭 = C)
     (hequi : ∀ σ' : Gal(L/K), IsConj σ σ' →
       Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-          frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ}
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ}
         = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-          frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ'}) :
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ'}) :
     Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
       = Nat.card C.carrier
         * Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-          frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ} := by
+          frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ} := by
   classical
-  have hpbot : 𝔭 ≠ ⊥ := hunr.1
+  have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
   haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal hpbot
   haveI : Finite (𝔭.primesOver (𝓞 L)) := (IsDedekindDomain.primesOver_finite 𝔭 (𝓞 L)).to_subtype
   haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
@@ -288,7 +276,7 @@ theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
       fun _ _ hab => Subtype.ext (by simpa using hab)
   haveI : Fintype C.carrier := Fintype.ofFinite _
   have hmem : ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭),
-      frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) ∈ C.carrier := by
+      frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ∈ C.carrier := by
     intro 𝔓 _ hP
     rw [ConjClasses.mem_carrier_iff_mk_eq, ← frobeniusClass_eq_mk_frobeniusAt K L 𝔭 hunr 𝔓 hP,
       hCfrob]
@@ -298,13 +286,13 @@ theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
     exact ConjClasses.mk_eq_mk_iff_isConj.mp (hσ.trans hg.symm)
   let F : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} → C.carrier := fun 𝔓 =>
     haveI := 𝔓.2.1
-    ⟨frobeniusAt K L 𝔓.1 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓.1 𝔓.2.2.1),
+    ⟨frobeniusAt K L 𝔓.1 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓.1 𝔓.2.2.1),
       hmem 𝔓.1 𝔓.2.2.1⟩
   rw [← Nat.card_congr (Equiv.sigmaFiberEquiv F), Nat.card_sigma]
   have hfib : ∀ g : C.carrier,
       Nat.card {𝔓 // F 𝔓 = g}
         = Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
-            frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP) = σ} := by
+            frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) = σ} := by
     intro g
     rw [hequi g.1 (hconj g)]
     refine Nat.card_congr ⟨fun x => ⟨x.1.1, x.1.2.1, x.1.2.2.1, x.1.2.2.2, ?_⟩,
@@ -322,14 +310,12 @@ the total number of primes above `𝔭`. -/
 theorem count_frobenius_eq_sigma_mul_card_carrier
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓
-            (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP)
+            (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
           = σ}
       * Nat.card C.carrier
       = Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
@@ -351,14 +337,12 @@ together with `Σ N𝔭^{-s} ~ Σ NP^{-s}` (Sharifi 7.1.12 applied to both
 theorem count_primes_above_with_frobenius_eq_sigma
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (hP : 𝔓.LiesOver 𝔭)
         (_ : 𝔓 ≠ ⊥),
         frobeniusAt K L 𝔓
-            (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP)
+            (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)
           = σ}
       * orderOf σ * Nat.card C.carrier
       = Nat.card Gal(L/K) := by
@@ -386,13 +370,11 @@ theorem density_lift_through_fixedField
     [FiniteDimensional K L] (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
     (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
     (_hab : HasDirichletDensity
-        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ (P ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-            𝔓.LiesOver P → Algebra.IsUnramifiedAt (𝓞 ↥E) 𝔓) ∧
+        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E L P ∧
           frobeniusClass ↥E L P = ConjClasses.mk σE}
         ((Nat.card Gal(L/E) : ℝ)⁻¹)) :
     HasDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card Gal(L/K)) := by
   sorry
@@ -406,8 +388,7 @@ and a conjugacy class `C ⊆ G`, the Dirichlet density of the set of primes
 theorem chebotarev_density
     [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
@@ -439,8 +420,7 @@ extension `L/K`, the Dirichlet density of primes `𝔭` of `𝓞 K` unramified i
 theorem chebotarev_density_of_comm
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
@@ -467,8 +447,7 @@ theorem ConjClasses_carrier_card_pos
 theorem infinite_setOf_frobenius_class
     [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
     Set.Infinite
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C} := by
   refine infinite_of_hasDirichletDensity_pos (chebotarev_density C) ?_
   apply div_pos
@@ -490,8 +469,7 @@ The Dirichlet density of primes `𝔭` of `𝓞 K` that split completely in `L`
 equals `1 / [L : K]`. -/
 theorem density_split_completely :
     HasDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk 1}
       ((Module.finrank K L : ℝ)⁻¹) := by
   have h := chebotarev_density (ConjClasses.mk (1 : Gal(L/K)))
