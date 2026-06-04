@@ -338,3 +338,44 @@ tower K⊂E⊂L layer absent from mathlib:
 (a) `density_lift_through_fixedField` → the **E-bridge** above (~200–400 LOC tower NT);
 (b) ZetaProduct→Cyclotomic→Abelian per-`m`→`dirichlet_primes_in_AP` → the **Z3** geometry-of-numbers
 error term. No quick wins remain — both are dedicated multi-leaf efforts.
+
+## CORRECTION (2026-06-04): the E-bridge `hnum` was FALSE — asymptotic route required
+
+The first E-bridge attempt (commit `45fb5d6`, since reverted) reduced `density_lift_through_fixedField`
+to a private leaf `primeIdealZetaSum_S_eq_smul_primeIdealZetaSum_T` (`hnum`) asserting the **exact**
+finite-`s` identity `Σ_{𝔭∈S} N𝔭⁻ˢ = (f·|C|/|G|)·Σ_{P∈T} NP⁻ˢ` for all `s>1`. **This is false.**
+
+- **Counterexample.** `G=ℤ/4=⟨a⟩`, `σ=a²` (order 2), `E=L^⟨σ⟩` (`[L:E]=[E:K]=2`). A prime `𝔭` of `K`
+  **inert** in `L` (`Frob^K_𝔓=a`, density `1/4>0`, so abundant) gives `P=𝔓∩E ∈ T` with
+  `f(P/𝔭)=f(𝔓/𝔭)/f(𝔓/P)=4/2=2`, so `NP=N𝔭² ≠ N𝔭`. These degree-≥2 primes in `T` add a
+  `Θ(Σ N𝔭⁻²ˢ)` term with no LHS counterpart, so the exact equality fails.
+- **Source confirms asymptotic, not exact.** Sharifi p.143 writes the relation as a LIMIT:
+  `δ(S) = lim_{s→1⁺} (Σ_{𝔭∈S}N𝔭⁻ˢ)/(Σ_𝔭 N𝔭⁻ˢ) = (f|C|/|G|)·lim_{s→1⁺}(Σ_{P∈T}NP⁻ˢ)/(Σ_P NP⁻ˢ)`,
+  "recalling once again that `Σ_𝔭 N𝔭⁻ˢ ~ Σ_P NP⁻ˢ`" (`~` = asymptotic, NOT equality). The exact
+  finite-`s` factorisation was an over-factorisation introduced when this leaf was decomposed —
+  a left-the-source artifact (quote-or-delete rule). The decomposition drifted from Sharifi here.
+
+### Correct route (asymptotic; the redraft to implement)
+Prove `density_lift_through_fixedField` directly via the density-ratio limit, **adding the
+hypothesis `σE.restrictScalars K = σ`** (holds by `rfl` at the unique call site in
+`chebotarev_density`, where `σE = subgroupEquivAlgEquiv (zpowers σ) ⟨σ,_⟩`):
+
+1. Split `T = T₁ ⊔ T_{≥2}` by `inertiaDeg (P.under 𝓞 K) P` (= 1 vs ≥ 2).
+2. **`T₁` (degree-1) carries the main term.** Bijection `T₁ ≃ {𝔓 of L : Frob^K_𝔓=σ ∧ 𝔓∩K∈S}`
+   (`P ↦` unique L-prime over `P`; `P` inert in `L` since `Frob_𝔓=σ` generates `Gal(L/E)`),
+   with `NP = N(𝔓∩K) = N𝔭` (degree-1) and the **proven** fibre count
+   `count_primes_above_with_frobenius_eq_sigma` (`|G|/(f|C|)` primes per `𝔭∈S`):
+   `Σ_{T₁} NP⁻ˢ = (|G|/(f|C|))·Σ_{𝔭∈S} N𝔭⁻ˢ`.
+3. **`T_{≥2}` vanishes in the ratio.** `Σ_{T_{≥2}} NP⁻ˢ ≤ Σ N⁻²ˢ` is bounded (cf.
+   `primeIdealZetaHigherTail_bounded`), so `Σ_{T_{≥2}}/Σ_univ^E → 0` as `s↓1`.
+4. Assemble with the **proven** `univ_ratio_E_K_tendsto_one` (`Σ_univ^E/Σ_univ^K → 1`) and the
+   `hab : δ_E(T)=1/f` hypothesis: `lim Σ_S/Σ_univ^K = (f|C|/|G|)·(1/f) = |C|/|G|`.
+
+### Reusable proven ingredients (in git `45fb5d6`, cherry-pick or re-derive)
+- `frobeniusAt_restrictScalars_eq` — tower-Frobenius restriction `(arithFrobAt 𝓞E Gal(L/E) 𝔓).restrictScalars K
+  = arithFrobAt 𝓞K Gal(L/K) 𝔓` for unramified 𝔓 with equal residue cards (clean axioms). **Correct, keep.**
+- `univ_ratio_E_K_tendsto_one` — `Σ_univ^E/Σ_univ^K → 1` (clean). **Correct, keep.**
+- The **degree-1 leaf, correctly scoped**: `inertiaDeg (𝔓.under 𝓞K) (𝔓.under 𝓞E) = 1` must be indexed by
+  the **K-side** hypothesis `Frob^K_𝔓 = σ` (gives `stab_K 𝔓 = zpowers σ ⊆ fixingSubgroup E`, then
+  `card_stabilizer_eq_card_inertia_mul_finrank` + `inertiaDeg_algebra_tower` + trivial inertia ⟹ `f(P/𝔭)=1`).
+  It is NOT derivable from `P∈T` (i.e. `Frob^E_𝔓=σE`) alone — that is the same defect that makes `hnum` false.
