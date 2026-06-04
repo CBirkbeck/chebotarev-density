@@ -174,7 +174,7 @@ private theorem primeIdealZetaSum_le_univ {s : ℝ} (hs : 1 < s) :
 /-- The partial Dirichlet series over `S ⊆ T` is bounded above by the one over
 `T`, for `1 < s`: the `S`-prime subtype injects into the `T`-prime subtype, the
 terms agree, and both families are summable. -/
-private theorem primeIdealZetaSum_le_of_subset {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {s : ℝ}
+theorem primeIdealZetaSum_le_of_subset {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {s : ℝ}
     (hs : 1 < s) :
     primeIdealZetaSum S s ≤ primeIdealZetaSum T s := by
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
@@ -680,6 +680,26 @@ theorem hasDirichletDensity_of_finite (hS : S.Finite) :
     simp only [mem_Ioi] at hs1
     exact (div_le_div_iff_of_pos_right hpos).mpr
       (primeIdealZetaSum_le_card_of_finite K hS (by linarith))
+
+/-- **Squeeze to zero density from a constant numerator bound.** If the partial sum
+`Σ_{𝔭 ∈ U} N𝔭⁻ˢ` is bounded above by a fixed constant `C` for all `s` near `1` (from the
+right), then the density ratio `Σ_U / Σ_univ → 0`, since the denominator `→ ∞`. This is the
+common engine behind `hasDirichletDensity_of_finite` (where `C = |U|`) and the
+degree-`≥ 2` / ramified tail bound in the Chebotarev fixed-field reduction. -/
+theorem tendsto_primeIdealZetaSum_div_univ_zero_of_le_const (U : Set (Ideal (𝓞 K))) (C : ℝ)
+    (hbd : ∀ᶠ s in 𝓝[>] (1 : ℝ), primeIdealZetaSum U s ≤ C) :
+    Tendsto (fun s : ℝ ↦ primeIdealZetaSum U s
+      / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s) (𝓝[>] 1) (𝓝 0) := by
+  have hUniv := primeIdealZetaSum_univ_tendsto_atTop K
+  have hUnivPos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s :=
+    hUniv.eventually_gt_atTop 0
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' (g := fun _ ↦ (0 : ℝ))
+    (h := fun s ↦ C / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
+    tendsto_const_nhds (tendsto_const_nhds.div_atTop hUniv) ?_ ?_
+  · filter_upwards [hUnivPos] with s hpos
+    exact div_nonneg (primeIdealZetaSum_nonneg U s) hpos.le
+  · filter_upwards [hUnivPos, hbd] with s hpos hle
+    exact (div_le_div_iff_of_pos_right hpos).mpr hle
 
 /-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`: the ratio
 `Σ_𝔭 N𝔭⁻ˢ / Σ_𝔭 N𝔭⁻ˢ` is eventually `1` since the denominator is eventually nonzero

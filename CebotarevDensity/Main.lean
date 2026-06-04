@@ -51,6 +51,8 @@ noncomputable section
 
 open Filter NumberField Topology Set
 
+open scoped ENNReal
+
 namespace Chebotarev
 
 variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L]
@@ -1036,6 +1038,187 @@ private theorem primeIdealZetaSum_fibre_eq_smul
     rw [← hcard]; push_cast; ring
   rw [tsum_congr hinner, tsum_mul_left]
 
+/-! ### Sub-lemmas for `primeIdealZetaSum_T2_div_univ_tendsto_zero` (LEAF B)
+
+The complement `T₂ = T ∖ T₁` of degree-one primes splits into
+
+* `A`: primes `P` of `𝓞 E` whose underlying `K`-prime `𝔭 = P ∩ 𝓞 K` is unramified in `L` but
+  whose inertia degree `f(P ∣ 𝔭) ≥ 2`, so `N P = N𝔭^f ≥ N𝔭²` and `N P^{-s} ≤ N𝔭^{-2}`; and
+* `B`: primes `P` over one of the finitely many `K`-primes ramified in `L`.
+
+The sum over `A` is bounded by `[E:K]·Σ_𝔭 N𝔭^{-2}` (a fibre-counting argument: each `𝔭` has at
+most `[E:K]` primes of `𝓞 E` above it, by `Ideal.card_primesOverFinset_le_finrank`), and the sum
+over `B` is bounded by the finite cardinality of `B`. Both are constants in `s`, so
+`Σ_{T₂} s ≤ C` for all `s > 1`, whence `Σ_{T₂}/Σ_univ^E → 0` since `Σ_univ^E → ∞`. -/
+
+/-- **Fibre-counting bound for `ℝ≥0∞`-valued sums.** If every fibre `g ⁻¹' {y}` is finite with at
+most `d` elements, then `Σ_b f(g b) ≤ d · Σ_y f y`: group `b` by its image `g b`, on each fibre
+the summand is the constant `f y`, and the fibre has `≤ d` terms. -/
+private theorem tsum_comp_le_card_fibre_mul {β γ : Type*} (g : β → γ) (f : γ → ℝ≥0∞) (d : ℕ)
+    (hfin : ∀ y, Finite (g ⁻¹' {y} : Set β))
+    (hfib : ∀ y, Nat.card (g ⁻¹' {y} : Set β) ≤ d) :
+    ∑' b, f (g b) ≤ (d : ℝ≥0∞) * ∑' y, f y := by
+  rw [← ENNReal.tsum_fiberwise (fun b => f (g b)) g, ← ENNReal.tsum_mul_left]
+  refine ENNReal.tsum_le_tsum (fun y => ?_)
+  have hconst : ∀ b : (g ⁻¹' {y} : Set β), f (g b) = f y := fun b => by
+    have hb : g b.1 = y := b.2
+    rw [hb]
+  rw [tsum_congr hconst]
+  haveI := hfin y
+  letI := Fintype.ofFinite (g ⁻¹' {y} : Set β)
+  rw [tsum_fintype, Finset.sum_const, Finset.card_univ, ← Nat.card_eq_fintype_card, nsmul_eq_mul]
+  have hcast : ((Nat.card (g ⁻¹' {y} : Set β) : ℕ) : ℝ≥0∞) ≤ (d : ℝ≥0∞) := by exact_mod_cast hfib y
+  gcongr
+
+open scoped Pointwise in
+/-- **The degree-`≥ 2` part of `T₂` is bounded by a constant.** For `1 < s`, the partial sum over
+the set `A` of primes `P` of `𝓞 E` whose underlying `K`-prime is unramified in `L` but of inertia
+degree `≥ 2` is bounded by `[E:K]·Σ_𝔭 N𝔭^{-2}`. Indeed `N P = N𝔭^{f}` with `f ≥ 2`
+(`Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver`), so `N P^{-s} ≤ N𝔭^{-2}` for `s ≥ 1` and
+`N𝔭 ≥ 2`; grouping the `E`-primes by their `K`-prime fibre (each of size `≤ [E:K]` via
+`Ideal.card_primesOverFinset_le_finrank`) gives the bound. -/
+private theorem primeIdealZetaSum_degTwo_le [FiniteDimensional K L] (σ : Gal(L/K)) {s : ℝ}
+    (hs : 1 < s) (Aset : Set (Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))))
+    (hA : Aset = {P | P.IsPrime ∧ P ≠ ⊥ ∧
+      UnramifiedIn K L (P.under (𝓞 K)) ∧ 2 ≤ (P.under (𝓞 K)).inertiaDeg P}) :
+    primeIdealZetaSum Aset s
+      ≤ (Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) : ℝ)
+        * primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) 2 := by
+  classical
+  letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
+    (IntermediateField.fixedField (Subgroup.zpowers σ)).isScalarTower_mid'
+  haveI : NoZeroSMulDivisors (𝓞 K)
+      (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) :=
+    ⟨fun {c x} h => by
+      rw [Algebra.smul_def, mul_eq_zero] at h
+      exact h.imp (fun h => RingOfIntegers.algebraMap.injective K _ (by rwa [map_zero])) id⟩
+  set AP := {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) //
+    P ∈ Aset ∧ P.IsPrime ∧ P ≠ ⊥} with hAP
+  set KP := {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (univ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} with hKP
+  have hunder : ∀ P : AP, (P.1.under (𝓞 K)).IsPrime ∧ P.1.under (𝓞 K) ≠ ⊥ := by
+    rintro ⟨P, hPA, hPp, hPb⟩; haveI := hPp
+    exact ⟨inferInstance, Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPb⟩
+  set g : AP → KP := fun P => ⟨P.1.under (𝓞 K), mem_univ _, (hunder P).1, (hunder P).2⟩ with hg
+  set FA : AP → ℝ≥0∞ := fun P => ENNReal.ofReal ((Ideal.absNorm P.1 : ℝ) ^ (-s)) with hFA
+  set FK : KP → ℝ≥0∞ := fun 𝔭 => ENNReal.ofReal ((Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ))) with hFK
+  -- per-term: `N P^{-s} ≤ N(P ∩ 𝓞 K)^{-2}`.
+  have hterm : ∀ P : AP, FA P ≤ FK (g P) := by
+    rintro ⟨P, hPA, hPp, hPb⟩
+    haveI := hPp
+    rw [hA] at hPA
+    obtain ⟨-, -, _, hdeg⟩ := hPA
+    have hppr : (P.under (𝓞 K)).IsPrime := inferInstance
+    have hpbot : P.under (𝓞 K) ≠ ⊥ := Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPb
+    haveI : P.LiesOver (P.under (𝓞 K)) := Ideal.over_under (A := 𝓞 K) (P := P)
+    have hpow := Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver P (P.under (𝓞 K)) hppr hpbot
+    have hn2 : 2 ≤ Ideal.absNorm (P.under (𝓞 K)) := by
+      have h0 : Ideal.absNorm (P.under (𝓞 K)) ≠ 0 := by
+        rw [Ne, Ideal.absNorm_eq_zero_iff]; exact hpbot
+      have h1 : Ideal.absNorm (P.under (𝓞 K)) ≠ 1 := by
+        rw [Ne, Ideal.absNorm_eq_one_iff]; exact hppr.ne_top
+      omega
+    change ENNReal.ofReal ((Ideal.absNorm P : ℝ) ^ (-s))
+      ≤ ENNReal.ofReal ((Ideal.absNorm (P.under (𝓞 K)) : ℝ) ^ (-(2 : ℝ)))
+    refine ENNReal.ofReal_le_ofReal ?_
+    rw [hpow]
+    set n := Ideal.absNorm (P.under (𝓞 K))
+    set f := (P.under (𝓞 K)).inertiaDeg P
+    have hn1 : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast Nat.one_le_of_lt hn2
+    have hnpos : (0 : ℝ) < (n : ℝ) := by positivity
+    rw [Nat.cast_pow, ← Real.rpow_natCast (n : ℝ) f, ← Real.rpow_mul hnpos.le]
+    refine Real.rpow_le_rpow_of_exponent_le hn1 ?_
+    have hfs : (2 : ℝ) ≤ (f : ℝ) * s := by
+      calc (2 : ℝ) = 2 * 1 := by ring
+        _ ≤ (f : ℝ) * s := mul_le_mul (by exact_mod_cast hdeg) hs.le (by norm_num) (by positivity)
+    nlinarith [hfs]
+  -- each `K`-prime fibre is finite with `≤ [E:K]` primes of `𝓞 E` above it.
+  have hinj : ∀ 𝔭 : KP, Finite (g ⁻¹' {𝔭} : Set AP) ∧
+      Nat.card (g ⁻¹' {𝔭} : Set AP)
+        ≤ Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) := by
+    intro 𝔭
+    haveI := 𝔭.2.2.1
+    haveI : 𝔭.1.IsMaximal := 𝔭.2.2.1.isMaximal 𝔭.2.2.2
+    set PO := {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) //
+      P.IsPrime ∧ P.LiesOver 𝔭.1} with hPO
+    have hmem : ∀ P : (g ⁻¹' {𝔭} : Set AP), P.1.1.IsPrime ∧ P.1.1.LiesOver 𝔭.1 := by
+      rintro ⟨⟨P, hPA, hPp, hPb⟩, hgP⟩
+      haveI := hPp
+      have hund : P.under (𝓞 K) = 𝔭.1 := congrArg Subtype.val hgP
+      exact ⟨hPp, ⟨hund ▸ (Ideal.over_under (A := 𝓞 K) (P := P)).over⟩⟩
+    set hmap : (g ⁻¹' {𝔭} : Set AP) → PO := fun P => ⟨P.1.1, hmem P⟩ with hhmap
+    have hmapinj : Function.Injective hmap := by
+      rintro ⟨⟨P, hP⟩, hgP⟩ ⟨⟨Q, hQ⟩, hgQ⟩ hPQ
+      have hPeqQ : P = Q := congrArg Subtype.val hPQ
+      exact Subtype.ext (Subtype.ext hPeqQ)
+    haveI hPOfin : Finite PO :=
+      (IsDedekindDomain.primesOver_finite 𝔭.1
+        (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))).to_subtype
+    refine ⟨Finite.of_injective hmap hmapinj, (Nat.card_le_card_of_injective hmap hmapinj).trans ?_⟩
+    have hcard : Nat.card PO
+        = (IsDedekindDomain.primesOverFinset 𝔭.1
+            (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))).card := by
+      rw [show PO = ↥(𝔭.1.primesOver
+          (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))) from rfl,
+        Nat.card_coe_set_eq, ← IsDedekindDomain.coe_primesOverFinset 𝔭.2.2.2,
+        Set.ncard_coe_finset]
+    rw [hcard]
+    exact Ideal.card_primesOverFinset_le_finrank (R := 𝓞 K)
+      (S := 𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))
+      (K := K) (L := ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) 𝔭.2.2.2
+  -- convert both sums to `ℝ≥0∞` and chain the bounds.
+  have hsummA : Summable (fun P : AP => (Ideal.absNorm P.1 : ℝ) ^ (-s)) :=
+    summable_prime_absNorm_rpow Aset (by linarith)
+  have hsummK : Summable (fun 𝔭 : KP => (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ))) :=
+    summable_prime_absNorm_rpow (univ : Set (Ideal (𝓞 K))) (by norm_num)
+  have hnonnegA : ∀ P : AP, 0 ≤ (Ideal.absNorm P.1 : ℝ) ^ (-s) := fun P => by positivity
+  have hnonnegK : ∀ 𝔭 : KP, 0 ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 => by positivity
+  have hAreal : primeIdealZetaSum Aset s = (∑' P : AP, FA P).toReal := by
+    rw [primeIdealZetaSum_def, hFA, ← ENNReal.ofReal_tsum_of_nonneg hnonnegA hsummA,
+      ENNReal.toReal_ofReal (tsum_nonneg hnonnegA)]
+  have hKreal : primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) 2 = (∑' 𝔭 : KP, FK 𝔭).toReal := by
+    rw [primeIdealZetaSum_def, hFK, ← ENNReal.ofReal_tsum_of_nonneg hnonnegK hsummK,
+      ENNReal.toReal_ofReal (tsum_nonneg hnonnegK)]
+  have hchain : ∑' P : AP, FA P
+      ≤ (Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) : ℝ≥0∞)
+        * ∑' 𝔭 : KP, FK 𝔭 :=
+    calc ∑' P : AP, FA P ≤ ∑' P : AP, FK (g P) := ENNReal.tsum_le_tsum hterm
+      _ ≤ (Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) : ℝ≥0∞)
+            * ∑' 𝔭 : KP, FK 𝔭 :=
+          tsum_comp_le_card_fibre_mul g FK _ (fun 𝔭 => (hinj 𝔭).1) (fun 𝔭 => (hinj 𝔭).2)
+  rw [hAreal, hKreal]
+  have hfin : ∑' 𝔭 : KP, FK 𝔭 ≠ ∞ := by
+    rw [hFK, ← ENNReal.ofReal_tsum_of_nonneg hnonnegK hsummK]; exact ENNReal.ofReal_ne_top
+  have hbtop : (Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) : ℝ≥0∞)
+      * ∑' 𝔭 : KP, FK 𝔭 ≠ ∞ := ENNReal.mul_ne_top (by simp) hfin
+  refine le_of_le_of_eq (ENNReal.toReal_mono hbtop hchain) ?_
+  rw [ENNReal.toReal_mul, ENNReal.toReal_natCast]
+
+open scoped Pointwise in
+/-- **The ramified part of `T₂` is a finite set.** The primes `P` of `𝓞 E` whose underlying
+`K`-prime is ramified in `L` lie over one of the finitely many ramified `K`-primes
+(`finite_ramifiedIn`), and each `K`-prime has finitely many primes of `𝓞 E` above it
+(`IsDedekindDomain.primesOver_finite`); hence the set is finite. -/
+private theorem ramifiedBelow_finite [FiniteDimensional K L] (σ : Gal(L/K))
+    (Bset : Set (Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))))
+    (hB : Bset = {P | P.IsPrime ∧ P ≠ ⊥ ∧ ¬ UnramifiedIn K L (P.under (𝓞 K))}) :
+    Bset.Finite := by
+  classical
+  have hram : {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭}.Finite :=
+    finite_ramifiedIn K L
+  apply Set.Finite.subset (hram.biUnion (t := fun 𝔭 =>
+    (𝔭.primesOver (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))))) ?_)
+  · rw [hB]
+    rintro P ⟨hPp, hPb, hPnu⟩
+    haveI := hPp
+    have hppr : (P.under (𝓞 K)).IsPrime := inferInstance
+    have hpbot : P.under (𝓞 K) ≠ ⊥ := Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPb
+    exact Set.mem_biUnion ⟨hppr, hpbot, hPnu⟩
+      ⟨hPp, Ideal.over_under (A := 𝓞 K) (P := P)⟩
+  · rintro 𝔭 ⟨hp, hb, -⟩
+    haveI := hp
+    haveI : 𝔭.IsMaximal := hp.isMaximal hb
+    exact IsDedekindDomain.primesOver_finite 𝔭 _
+
 open scoped Pointwise in
 /-- **LEAF B: the degree-`≥ 2` part of `T` vanishes in the density ratio** (Sharifi 7.2.2
 p. 143, "`Σ_𝔭 N𝔭⁻ˢ ~ Σ_P NP⁻ˢ`"). The complement `T₂ = T ∖ T₁` consists of primes `P` of `𝓞 E`
@@ -1063,7 +1246,53 @@ private theorem primeIdealZetaSum_T2_div_univ_tendsto_zero
     Tendsto (fun s : ℝ ↦ primeIdealZetaSum T₂set s
       / primeIdealZetaSum (univ : Set (Ideal (𝓞 ↥(IntermediateField.fixedField
         (Subgroup.zpowers σ))))) s) (𝓝[>] 1) (𝓝 0) := by
-  sorry
+  haveI : IsGalois ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
+    IsGalois.tower_top_intermediateField _
+  -- `T₂ ⊆ A ∪ B` (disjoint): `A` = unramified-below but inertia degree `≥ 2`; `B` = ramified below.
+  set Aset := {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) |
+    P.IsPrime ∧ P ≠ ⊥ ∧ UnramifiedIn K L (P.under (𝓞 K)) ∧
+    2 ≤ (P.under (𝓞 K)).inertiaDeg P} with hAdef
+  set Bset := {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) |
+    P.IsPrime ∧ P ≠ ⊥ ∧ ¬ UnramifiedIn K L (P.under (𝓞 K))} with hBdef
+  have hsub : T₂set ⊆ Aset ∪ Bset := by
+    rw [hT₂]
+    rintro P ⟨⟨hPp, hPunr, hPfr⟩, hPnotT1⟩
+    haveI := hPp
+    simp only [Set.mem_setOf_eq, not_and] at hPnotT1
+    have hPb : P ≠ ⊥ := UnramifiedIn.ne_bot _ L hPunr
+    by_cases hunrK : UnramifiedIn K L (P.under (𝓞 K))
+    · -- unramified below `K` but not degree one: inertia degree `≥ 2`.
+      refine Or.inl ⟨hPp, hPb, hunrK, ?_⟩
+      have hdegne : (P.under (𝓞 K)).inertiaDeg P ≠ 1 := fun hdeg1 =>
+        hPnotT1 ⟨hPp, hPunr, hPfr⟩ hdeg1 hunrK
+      have hppr : (P.under (𝓞 K)).IsPrime := inferInstance
+      have hpbot : P.under (𝓞 K) ≠ ⊥ := Ideal.IsIntegral.comap_ne_bot (𝓞 K) hPb
+      haveI : (P.under (𝓞 K)).IsMaximal := hppr.isMaximal hpbot
+      haveI : P.LiesOver (P.under (𝓞 K)) := Ideal.over_under (A := 𝓞 K) (P := P)
+      have hpos : 0 < (P.under (𝓞 K)).inertiaDeg P := Ideal.inertiaDeg_pos' _ _
+      omega
+    · exact Or.inr ⟨hPp, hPb, hunrK⟩
+  have hdisj : Disjoint Aset Bset := by
+    rw [Set.disjoint_left]
+    rintro P ⟨-, -, hunrK, -⟩ ⟨-, -, hnunrK⟩
+    exact hnunrK hunrK
+  have hBfin : Bset.Finite := ramifiedBelow_finite σ Bset hBdef
+  -- the uniform constant `C = [E:K]·Σ_𝔭 N𝔭^{-2} + |B|` bounding `Σ_{T₂} s` for all `s > 1`.
+  refine tendsto_primeIdealZetaSum_div_univ_zero_of_le_const
+    (↥(IntermediateField.fixedField (Subgroup.zpowers σ))) T₂set
+    ((Module.finrank K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) : ℝ)
+        * primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) 2
+      + (Nat.card {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) //
+          P ∈ Bset ∧ P.IsPrime ∧ P ≠ ⊥} : ℝ)) ?_
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  simp only [Set.mem_Ioi] at hs
+  calc primeIdealZetaSum T₂set s ≤ primeIdealZetaSum (Aset ∪ Bset) s :=
+        primeIdealZetaSum_le_of_subset hsub hs
+    _ = primeIdealZetaSum Aset s + primeIdealZetaSum Bset s :=
+        primeIdealZetaSum_union_of_disjoint hdisj hs
+    _ ≤ _ := add_le_add (primeIdealZetaSum_degTwo_le σ hs Aset hAdef)
+        (primeIdealZetaSum_le_card_of_finite
+          (↥(IntermediateField.fixedField (Subgroup.zpowers σ))) hBfin (by linarith))
 
 /-- **Density-lift through the fixed-field subextension** (Sharifi 7.2.2
 Step 1, p. 143). Let `σ ∈ Gal(L/K)`, `E = L^⟨σ⟩` the fixed field of the
