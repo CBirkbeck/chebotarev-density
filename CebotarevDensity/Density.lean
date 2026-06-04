@@ -143,7 +143,7 @@ private theorem summable_nonzeroIdeal_absNorm_rpow {s : ℝ} (hs : 1 < s) :
 `Σ_𝔭 N𝔭^{-s}` is summable for `1 < s`: the prime subtype injects into the
 nonzero-ideal type, where summability holds by
 `summable_nonzeroIdeal_absNorm_rpow`. -/
-private theorem summable_prime_absNorm_rpow (S : Set (Ideal (𝓞 K))) {s : ℝ} (hs : 1 < s) :
+theorem summable_prime_absNorm_rpow (S : Set (Ideal (𝓞 K))) {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) := by
   have hi : Function.Injective
