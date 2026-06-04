@@ -420,10 +420,7 @@ theorem primeIdealZetaHigherTail_bounded :
     _ = 2 * ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
           (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := tsum_mul_left
 
-/-- The partial Dirichlet sum over `univ`, re-indexed over the bare nonzero-prime subtype (the
-membership-in-`univ` conjunct is trivial). This is the index type shared with the Euler-product
-log identity, so the assembly of `logDedekindZeta_sub_primeIdealZetaSum_bounded` runs over a single
-`tsum`. -/
+/-- The partial Dirichlet sum over `univ`, re-indexed over the bare nonzero-prime subtype. -/
 private theorem primeIdealZetaSum_univ_eq_tsum_prime2 (s : ℝ) :
     primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
@@ -437,8 +434,7 @@ private theorem primeIdealZetaSum_univ_eq_tsum_prime2 (s : ℝ) :
   rw [← e.tsum_eq (fun 𝔭 => (Ideal.absNorm (𝔭.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
   rfl
 
-/-- For a nonzero prime `𝔭` and `1 < s`, the Euler-factor denominator `1 - N𝔭^{-s}` is positive
-(in fact in `(0, 1)`): `N𝔭 ≥ 2 > 1` with a negative exponent gives `0 < N𝔭^{-s} < 1`. -/
+/-- For a nonzero prime `𝔭` and `1 < s`, the Euler-factor denominator `1 - N𝔭^{-s}` is positive. -/
 private theorem one_sub_absNorm_rpow_pos {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥)
     {s : ℝ} (hs : 1 < s) : (0 : ℝ) < 1 - (Ideal.absNorm 𝔭 : ℝ) ^ (-s) := by
   have h2 : (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) := two_le_absNorm_of_prime K hp hne
@@ -446,25 +442,18 @@ private theorem one_sub_absNorm_rpow_pos {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPr
     (by linarith : -s < 0)
   linarith
 
-/-- Termwise Taylor estimate for the Euler-product log tail. For `0 ≤ x < 1`,
-`0 ≤ -log(1 - x) - x ≤ x²/(1 - x)`: the lower bound is `log(1 - x) ≤ -x`
-(`Real.log_le_sub_one_of_pos`), the upper bound is the `n = 1` case of the Taylor remainder
-`Real.abs_log_sub_add_sum_range_le` (with `Σ_{i<1} xⁱ⁺¹/(i+1) = x`). With `x = N𝔭^{-s}` this
-feeds the geometric tail bound `primeIdealZetaHigherTail_bounded`. -/
+/-- For `0 ≤ x < 1`, `0 ≤ -log(1 - x) - x ≤ x²/(1 - x)`. -/
 private theorem neg_log_one_sub_sub_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
     0 ≤ - Real.log (1 - x) - x ∧ - Real.log (1 - x) - x ≤ x ^ 2 / (1 - x) := by
   have hden : 0 < 1 - x := by linarith
-  have habs : |x| < 1 := by rw [abs_of_nonneg hx0]; exact hx1
+  have habs : |x| < 1 := by rwa [abs_of_nonneg hx0]
   refine ⟨by have := Real.log_le_sub_one_of_pos hden; linarith, ?_⟩
   have key := Real.abs_log_sub_add_sum_range_le habs 1
   simp only [Finset.range_one, Finset.sum_singleton, pow_one, Nat.cast_zero, zero_add,
     div_one, abs_of_nonneg hx0, show (1 : ℕ) + 1 = 2 from rfl] at key
   linarith [(abs_le.mp key).1]
 
-/-- The logarithms of the real Euler factors `-log(1 - N𝔭^{-s})` form a summable family for
-`1 < s`: writing `1 - N𝔭^{-s} = 1 + (-N𝔭^{-s})` with `Σ_𝔭 N𝔭^{-s}` summable
-(`summable_prime2_absNorm_rpow`), `Real.summable_log_one_add_of_summable` gives summability of
-`log(1 - N𝔭^{-s})`, and negating yields the claim. -/
+/-- For `1 < s`, the factor logs `-log(1 - N𝔭^{-s})` are summable over nonzero primes. -/
 private theorem summable_neg_log_one_sub_absNorm_rpow {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
       - Real.log (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))) := by
@@ -473,11 +462,7 @@ private theorem summable_neg_log_one_sub_absNorm_rpow {s : ℝ} (hs : 1 < s) :
   refine ((Real.summable_log_one_add_of_summable hsum).neg).congr (fun 𝔭 => ?_)
   rw [sub_eq_add_neg]
 
-/-- Sharifi 7.1.12 proof (p. 140), real-log of the Euler product. For real `s > 1`,
-`log ζ_K(s) = Σ_𝔭 -log(1 - N𝔭^{-s})`. The product `ζ_K(s) = ∏_𝔭 (1 - N𝔭^{-s})⁻¹`
-(`dedekindZeta_eq_tprod_primeIdeal`) is the cast of the positive real product over the same factors
-(each factor is real and positive for `s > 1`); `Real.hasProd_of_hasSum_log` identifies its log
-with the convergent sum of factor-logs. -/
+/-- For real `s > 1`, `log ζ_K(s) = Σ_𝔭 -log(1 - N𝔭^{-s})` (Sharifi 7.1.12, p. 140). -/
 private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < s) :
     Real.log (dedekindZeta K (s : ℂ)).re =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
@@ -485,7 +470,8 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
   set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
     fun 𝔭 => (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))⁻¹ with hg
   have hgpos : ∀ 𝔭, 0 < g 𝔭 := fun 𝔭 => by
-    rw [hg]; exact inv_pos.mpr (one_sub_absNorm_rpow_pos K 𝔭.2.1 𝔭.2.2 hs)
+    rw [hg]
+    exact inv_pos.mpr (one_sub_absNorm_rpow_pos K 𝔭.2.1 𝔭.2.2 hs)
   have hlogsum : Summable (fun 𝔭 => Real.log (g 𝔭)) := by
     refine (summable_neg_log_one_sub_absNorm_rpow K hs).congr (fun 𝔭 => ?_)
     rw [hg, Real.log_inv]
@@ -494,9 +480,11 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
   have hfeq : (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} => ((g 𝔭 : ℝ) : ℂ))
       = (fun 𝔭 => (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹) := by
     funext 𝔭
-    rw [hg]; push_cast
+    rw [hg]
+    push_cast
     rw [Complex.ofReal_cpow (by positivity)]
-    push_cast; ring
+    push_cast
+    ring
   have hCprod : HasProd (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
       (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹)
       ((Real.exp (∑' 𝔭, Real.log (g 𝔭)) : ℝ) : ℂ) := by
@@ -504,7 +492,8 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
       (show Continuous Complex.ofReal from Complex.continuous_ofReal)
     rw [Function.comp_def] at hmap
     simp only [Complex.ofRealHom_eq_coe] at hmap
-    rw [← hfeq]; exact hmap
+    rw [← hfeq]
+    exact hmap
   have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
   have hzeta : dedekindZeta K (s : ℂ) = ((Real.exp (∑' 𝔭, Real.log (g 𝔭)) : ℝ) : ℂ) := by
     rw [dedekindZeta_eq_tprod_primeIdeal K hs']
@@ -515,10 +504,7 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
   refine tsum_congr (fun 𝔭 => ?_)
   rw [hg, Real.log_inv]
 
-/-- Sharifi 7.1.12 proof (p. 140), the `O(1)` remainder. The difference between the Euler-product
-log and the bare Dirichlet sum, `Σ_𝔭 (-log(1 - N𝔭^{-s}) - N𝔭^{-s})`, is bounded uniformly near
-`s = 1`. Termwise it is nonnegative and `≤ N𝔭^{-2s}/(1 - N𝔭^{-s})` (`neg_log_one_sub_sub_le`),
-whose `tsum` is bounded by `primeIdealZetaHigherTail_bounded`. -/
+/-- The remainder `Σ_𝔭 (-log(1 - N𝔭^{-s}) - N𝔭^{-s})` is bounded near `s = 1` (Sharifi 7.1.12). -/
 private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
     ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ),
       |∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
@@ -530,10 +516,8 @@ private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
   simp only [mem_Ioi] at hs1
   set f : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
     fun 𝔭 => - Real.log (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
-    with hf
   set h : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
-    fun 𝔭 => (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))
-    with hh
+    fun 𝔭 => (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) with hh
   have hxbound : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) < 1 := fun 𝔭 =>
     Real.rpow_lt_one_of_one_lt_of_neg
@@ -559,10 +543,8 @@ private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
   calc ∑' 𝔭, f 𝔭 ≤ ∑' 𝔭, h 𝔭 := hsummf.tsum_le_tsum hfle hsummh
     _ ≤ C := hs_tail
 
-/-- Sharifi 7.1.12 proof (p. 140), Euler-product-log identity:
-`log ζ_K(s) = Σ_𝔭 N𝔭^{-s} + O(1)` as `s ↓ 1`. The `O(1)` is the
-higher-power tail `Σ_{𝔭,k≥2} N𝔭^{-ks}/k`, bounded by
-`primeIdealZetaHigherTail_bounded`. Source: "`log ζ_K(s) ~ Σ_𝔭 N𝔭^{-s}`". -/
+/-- Euler-product-log identity: `log ζ_K(s) = Σ_𝔭 N𝔭^{-s} + O(1)` as `s ↓ 1`
+(Sharifi 7.1.12, p. 140). -/
 theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
     ∃ C : ℝ, ∀ᶠ (s : ℝ) in 𝓝[>] (1 : ℝ), |Real.log (dedekindZeta K (s : ℂ)).re
       - primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s| ≤ C := by
