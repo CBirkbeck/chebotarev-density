@@ -1,9 +1,7 @@
 module
 
 public import CebotarevDensity.ForMathlib.LogOneDivSubOne
-public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.NumberTheory.NumberField.DedekindZeta
-public import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 /-!
 # Dirichlet density of a set of prime ideals

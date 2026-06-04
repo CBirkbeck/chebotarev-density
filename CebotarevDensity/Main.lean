@@ -5,11 +5,8 @@ public import CebotarevDensity.Frobenius
 /-!
 # Chebotarev's density theorem — statement
 
-The theorem-level statement of Chebotarev's density theorem. The
-supporting notions `HasDirichletDensity`, `UnramifiedIn`, and
-`frobeniusClass` are the **real definitions** from
-`CebotarevDensity.Density` and `CebotarevDensity.Frobenius` (no axioms);
-the proof is left as `sorry`.
+The statement of Chebotarev's density theorem in conjugacy-class form,
+`Chebotarev.chebotarev_density`; the proof is left as `sorry`.
 -/
 
 @[expose] public section
