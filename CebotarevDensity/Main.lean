@@ -6,7 +6,7 @@ public import CebotarevDensity.Frobenius
 # Chebotarev's density theorem — statement
 
 The theorem-level statement of Chebotarev's density theorem. The
-supporting notions `HasDirichletDensity`, `UnramifiedIn`, and
+supporting notions `HasDirichletDensity`, the unramified condition, and
 `frobeniusClass` are the **real definitions** from
 `CebotarevDensity.Density` and `CebotarevDensity.Frobenius` (no axioms);
 the proof is left as `sorry`.
@@ -30,7 +30,8 @@ theorem chebotarev_density
     {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (C : ConjClasses Gal(L/K)) :
     HasDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
+          𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓) ∧
         frobeniusClass K L 𝔭 = C}
       ((Nat.card C.carrier : ℝ) / Nat.card Gal(L/K)) := by
   sorry
