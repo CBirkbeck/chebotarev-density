@@ -379,3 +379,120 @@ hypothesis `σE.restrictScalars K = σ`** (holds by `rfl` at the unique call sit
   the **K-side** hypothesis `Frob^K_𝔓 = σ` (gives `stab_K 𝔓 = zpowers σ ⊆ fixingSubgroup E`, then
   `card_stabilizer_eq_card_inertia_mul_finrank` + `inertiaDeg_algebra_tower` + trivial inertia ⟹ `f(P/𝔭)=1`).
   It is NOT derivable from `P∈T` (i.e. `Frob^E_𝔓=σE`) alone — that is the same defect that makes `hnum` false.
+
+# L-function chain decomposition (`/develop --decompose`, 2026-06-04, ADVERSARIAL)
+
+**Target:** the analytic chain `ZetaProduct` (7 sorries) → `Cyclotomic` (2) → `Abelian` (3)
+feeding `chebotarev_abelian` (consumed by `chebotarev_density` via the now-proven E-bridge).
+**Sources (read directly, not from memory):** Sharifi *Algebraic Number Theory* §7.1–7.2
+(`docs/algnum.pdf`, book pp. 137–144 = PDF pp. 137–144, verified); Stevenhagen–Lenstra appendix
+(`docs/cheb.pdf`, p. 18).
+
+## Source-faithfulness verdict
+The existing skeleton **mirrors Sharifi's proof structure exactly** — confirmed by reading
+Sharifi's full proofs of 7.1.16, 7.1.18, 7.1.19, 7.2.1, 7.2.2. The two-step split of 7.1.19
+(step 1 analytic extension via geometry-of-numbers; step 2 non-vanishing via pole-order
+counting) matches the `artinLSeries_analytic_extension` / `artinLSeries_one_ne_zero` split.
+No invented leaves; no quote-or-delete failures. **Unlike `hnum`, the adversarial pass found
+no false leaf.** b2_log consulted (1 entry, `…_S_eq_smul_…`) — no name/shape match.
+
+## THE decisive finding (feasibility bottleneck)
+The make-or-break leaf is **NOT** the non-vanishing `L(χ,1)≠0` (elementary, project-internal —
+see L5). It is the **geometry-of-numbers ideal count** (L3). Reframe:
+- mathlib has L(χ,1)≠0 **only over ℚ** (`DirichletCharacter.LFunction_apply_one_ne_zero`,
+  characters of `(ZMod N)ˣ`); **no Hecke/Artin L-functions over a general number field**, **no
+  `ζ_K=∏_χ L(χ)`** exist in mathlib (exhaustive grep). The ℚ-only non-vanishing is **useless**
+  here — but the project doesn't need it.
+- Sharifi proves L(χ,1)≠0 **from scratch** via a pole-order argument (`log ζ_L=Σ_χ log L_χ`; a
+  vanishing factor over-cancels ζ_L's simple pole). Project-internal + feasible.
+- The ONE substantial mathlib gap the chain bottoms out at is **L3** — the character-class-uniform
+  count `#{𝔞:N𝔞≤N,χ(𝔞)=ζ}=CN+O(N^{1−1/d})`, `C` independent of `ζ`. mathlib has the **leading
+  term** (Dedekind-zeta residue / `tendsto_sub_one_mul_dedekindZeta_nhdsGT`) but **not the
+  `O(N^{1−1/d})` error term**, nor the character-class refinement. Weber/Landau-scale.
+
+## Dependency DAG
+```
+L3 geom-of-numbers ─→ L4 analytic_extension ─→ L5 one_ne_zero ─┐
+L1 euler_product ─────────────────────────────────────────────┤
+L2 local_factor ──────────────────────────────────────────────┴→ L6 factorisation
+                                                                     ├→ L7 cyclotomic_residue
+Cyclotomic: L8 log_asymp ─→ L9 frobeniusFibre_asymp ─→ chebotarev_cyclotomic [proven assembly]
+Abelian: L10 (uses chebotarev_cyclotomic) + L11 H_n_bound ─→ L12 liminf_ge_inv_G ─→ chebotarev_abelian
+```
+Already-proven helpers: `character_orthogonality_cyclotomic_eq`/`_ne`,
+`cyclotomic_density_from_two_sided_asymp`, `H_n_over_H_tends_to_one`,
+`ratioSum_frobeniusFibres_tendsto_one`, `tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one`,
+`cyclic_subgroup_meets_G_times_one_trivially`.
+
+## Leaves (locator · verbatim quote · discharge · attacks)
+
+### L3 — `character_sum_geometry_of_numbers_bound`  ⛰️ **API GAP (the bottleneck)**
+- Source: **Sharifi Prop 7.1.19 step 1, p. 142.** Verbatim: *"the number of ideals `𝔞` of `𝓞_K`
+  with `N𝔞 ≤ N` … and `χ(𝔞)=ζ` is `CN + O(N^{1−d^{-1}})`, where `C` is a constant independent of
+  `ζ`. Given this … `Σ_{N𝔞≤N} χ(𝔞) = … = O(N^{1−d^{-1}})`."*
+- Lean↔source: Lean `∃C,∀N,‖Σ_{N𝔞≤N}χ(𝔞)‖≤C·N^{1−1/d}` = the displayed `=O(N^{1−1/d})`; the
+  `Σ_{ζ∈μ_n}ζ=0` cancellation of the `CN` term (needs `C` indep of `ζ`) is why it's small.
+- Discharge: **NEITHER mathlib nor project** — substantial new content (lattice-point counting +
+  ideal–lattice dictionary + error term). mathlib gives the leading term only.
+- Attacks: [1] no counterexample (classical, Weber). [2] edge `χ=1` EXCLUDED (`_hχ:χ≠1`); for
+  `χ=1` the sum `~CN` not `O(N^{1−1/d})`, so the hypothesis is necessary. [3] exponent
+  `1−1/d`, `d=finrank ℚ K` ✓. [4] Lean asserts only the summed bound — *weaker* than the source's
+  per-class CN-count, hence safe. [5] confirmed ABSENT in mathlib.
+- Verdict: TRUE, source-faithful, **irreducible API gap** — a `/beastmode` run hits a multi-week
+  geom-of-numbers sub-project here, or hard-stops.
+
+### L4 — `artinLSeries_analytic_extension`  ⚠️ minor sub-gap (Lemma 7.1.5)
+- Source: **7.1.19 step 1b, p. 142 + Lemma 7.1.5, p. 138.** Verbatim: *"By Lemma 7.1.5, … `Σ_{𝔞}
+  χ(𝔞)N𝔞^{-s}` converges absolutely and uniformly on every compact subset of `Z(1−d^{-1})`."*
+- Discharge: project (given L3) + the generic criterion 7.1.5 (partial-sum `O(n^u)` ⟹ Dirichlet
+  series converges on `Re s>u`). Verify mathlib `LSeries.abscissaOfAbsConv` covers 7.1.5; else
+  short project lemma. Attacks: [2] `χ=1` excluded; [3] `1−1/d<1` so the extension passes s=1 ✓.
+- Verdict: feasible once L3 lands; resolve 7.1.5 sub-leaf.
+
+### L5 — `artinLSeries_one_ne_zero`  ✅ project-internal (the "famous" result is the easy part)
+- Source: **7.1.19 step 2, p. 142.** Verbatim: *"write `log ζ_L(t)=Σ_χ log L(χ,t)` … the latter
+  sum has absolute value at least `(1−Σ_χ m_χ)log(t−1)^{-1}`, where `m_χ` is the order of vanishing
+  … But if some `m_χ≥1`, then `1−Σ_χ m_χ≤0`, which is impossible since `log ζ_L(s)∼log(s−1)^{-1}`."*
+- Discharge: **project-internal** — Euler-product factorisation (L1/L2 at log level) + each χ's L4
+  extension + ζ_L simple pole (`dedekindZeta_residue` / `primeIdealZetaSum_univ_tendsto_log`). NO
+  mathlib non-vanishing.
+- Attacks: [1] none. [2] `χ=1` excluded (`L(1,·)=ζ_K` has the pole). [3] **circularity**: L5 uses
+  L1/L2/L4, NOT L6 (which it feeds) — no cycle. [4] **isolation**: per-χ statement proved via the
+  GLOBAL `Σ_χ m_χ=0 ⟹ each m_χ=0` (since `m_χ≥0`) — sound. [5] ζ_L pole available.
+- Verdict: SURVIVED. Feasible project-internal; ~10-source-line pole-order proof, no mathlib gap.
+
+### L1 `exists_artinLSeries_eulerProduct_abelian` (Prop 7.1.18, p.141) ✅ project — *"`L(χ,s)=∏_𝔭
+(1−χ(𝔭)N𝔭^{-s})^{-1}=Σ_{𝔞}χ(𝔞)N𝔞^{-s}`"*; same UFD pattern as proven `dedekindZeta_eq_tprod_primeIdeal`,
+χ multiplicative. Attacks: needs χ mult. (Notn 7.1.17)✓, Re>1✓. Feasible.
+### L2 `dedekindZeta_local_factor_eq_product_artin_local` (Prop 7.1.16 local, p.141) ✅ project —
+finite abelian char theory: `∏_χ(1−χ(σ)X)=(1−X^{ord σ})^{|G|/ord σ}` matches the split of 𝔭. Attacks:
+unramified-only (`_hunr`)✓, abelian needed✓. Feasible.
+### L6 `exists_dedekindZeta_factorisation` (7.1.16+7.1.19, p.141-2) ✅ project assembly of L1+L2+L5,
+`L_1=ζ_K`. Feasible once L1/L2/L5 land.
+### L7 `exists_chebotarev_cyclotomic_residue_identity` (Prop 7.2.1, p.142-3) ✅ project — *"`Σ_χ
+χ(σ)^{-1}log L(χ,s)∼|G|Σ_{N𝔭≡a}N𝔭^{-s}`"* and *"`∼log ζ_K(s)∼log(s−1)^{-1}` since `L(χ,1)≠0`"*;
+orthogonality `DirichletCharacter.sum_char_inv_mul_char_eq` (auto over ℂ) + L8 + L5. Feasible.
+### L8 `log_artinLSeries_asymp_character_sum` (7.2.1 ii, p.142) ✅ project — *"`log L(χ,s)∼Σ_𝔭
+χ(𝔭)N𝔭^{-s}`"*; same as proven `log_dedekindZeta_re_eq_tsum_neg_log_one_sub`. Feasible.
+### L9 `primeIdealZetaSum_frobeniusFibre_asymp` (7.2.1 iv-a, p.143) ✅ project assembly L8+orthog+L5
+→ fibre density `1/|G|`. Feasible.
+### L10 `liminf_density_S_sigma_ge_card_H_n_div_GH` (Thm 7.2.2 Step 2, p.144) ✅ project — *"`δ_inf(S_σ)
+≥|H_n|/(|G||H|)`"* via `⟨(σ,τ)⟩∩(G×{1})=1⟹L(μ_m)=F(μ_m)` cyclotomic; proven
+`cyclic_subgroup_meets_G_times_one_trivially`+`chebotarev_cyclotomic`. Feasible.
+### L11 `H_n_over_H_lower_bound_via_prime_factorisation` (Thm 7.2.2 Step 2, p.144) ✅ elementary —
+*"`|H_n|/|H|=∏_i(1−p_i^{k_i−1}/p_i^{j_i k_i})≥∏_i(1−1/p^{(j−1)k_i+1})`"*; `(ZMod m)ˣ` order-counting.
+Feasible (wire into `H_n_over_H_tends_to_one`).
+### L12 `liminf_ratio_ge_inv_card_G` (Thm 7.2.2 Step 2, p.144) ✅ project — `m→∞` limit of L10 via
+proven `H_n_over_H_tends_to_one`. Feasible once L10 lands.
+
+## Feasibility assessment
+Source-faithful; **10/12 leaves feasible project-internal + mathlib** (orthogonality, ζ_K
+residue/pole, Dirichlet-AP all in mathlib; the Euler-product/log-asymptotic patterns are already
+proven for ζ_K and transcribe to L(χ,·)). The famous `L(χ,1)≠0` is the *easy* part (elementary
+pole-order, L5) and does NOT need mathlib's ℚ-only non-vanishing (which wouldn't apply to
+general-K characters anyway). **The chain bottoms out at one irreducible API gap: L3, the
+geometry-of-numbers ideal count, feeding L4→L5→everything.** Secondary small sub-gap: Lemma 7.1.5
+inside L4 (likely mathlib `LSeries.abscissaOfAbsConv` or a short lemma — verify).
+**Recommendation:** the 10 non-L3 leaves are ready to ticket/prove (mirroring the proven ζ_K
+infrastructure); L3 is its own decomposed sub-project (geometry of numbers) or a user decision —
+it is the project's single largest remaining analytic investment. No false leaves.
