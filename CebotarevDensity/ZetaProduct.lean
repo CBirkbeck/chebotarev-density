@@ -60,6 +60,43 @@ abbrev galoisCharacter
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
     Type _ := Gal(L/K) →* ℂˣ
 
+open Classical in
+/-- The multiplicative extension of a Galois character `χ` to the nonzero ideals of `𝓞 K`
+(Sharifi Notation 7.1.17): on a prime `𝔭` it is `χ(Frob 𝔭)` if `𝔭` is unramified in `L` and `0`
+otherwise, extended completely multiplicatively via the prime factorisation. The L-function
+coefficient `χ(𝔞)`. -/
+noncomputable def galoisCharacterOnIdeal (K L : Type*) [Field K] [NumberField K] [Field L]
+    [NumberField L] [Algebra K L] [IsGalois K L] (χ : galoisCharacter K L) (𝔞 : Ideal (𝓞 K)) : ℂ :=
+  ∏ 𝔭 ∈ (UniqueFactorizationMonoid.normalizedFactors 𝔞).toFinset,
+    (if UnramifiedIn K L 𝔭 then (χ (frobeniusClass K L 𝔭).out : ℂ) else 0)
+      ^ (UniqueFactorizationMonoid.normalizedFactors 𝔞).count 𝔭
+
+open Classical in
+/-- On a prime `𝔭`, the ideal character `χ(𝔭)` is `χ(Frob 𝔭)` when `𝔭` is unramified in `L`
+and `0` otherwise (Sharifi Notation 7.1.17). -/
+theorem galoisCharacterOnIdeal_apply_prime
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] :
+    galoisCharacterOnIdeal K L χ 𝔭 =
+      if UnramifiedIn K L 𝔭 then (χ (frobeniusClass K L 𝔭).out : ℂ) else 0 := by
+  sorry
+
+/-- The ideal character is completely multiplicative: `χ(𝔞 * 𝔟) = χ(𝔞) · χ(𝔟)` for nonzero
+ideals `𝔞`, `𝔟` (Sharifi Notation 7.1.17). -/
+theorem galoisCharacterOnIdeal_mul
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) {𝔞 𝔟 : Ideal (𝓞 K)} (h𝔞 : 𝔞 ≠ ⊥) (h𝔟 : 𝔟 ≠ ⊥) :
+    galoisCharacterOnIdeal K L χ (𝔞 * 𝔟) =
+      galoisCharacterOnIdeal K L χ 𝔞 * galoisCharacterOnIdeal K L χ 𝔟 := by
+  sorry
+
+/-- The ideal character of the unit ideal `⊤` is `1` (empty product). -/
+theorem galoisCharacterOnIdeal_one
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) :
+    galoisCharacterOnIdeal K L χ ⊤ = 1 := by
+  sorry
+
 /-- Summation-by-parts (Dirichlet-test) bound: if `a` is antitone and nonnegative and the
 partial sums of `z` are bounded by `B`, then `‖∑_{i<n} a i • z i‖ ≤ B · a 0`. This is the
 convergence input (Sharifi Lemma 7.1.5) used to extend `L(χ,·)` past `Re s = 1`. Ported from
@@ -171,15 +208,17 @@ sub-lemma is supported by a verbatim source quote in
 -/
 
 /-- Sharifi 7.1.18 (p. 141): Euler product for an abelian Galois
-character `χ : Gal(L/K) → ℂ^×`. The Lean statement asserts existence of
-the L-function and its Euler product on `Re s > 1`. -/
+character `χ : Gal(L/K) → ℂ^×`. For `Re s > 1` the Euler product over unramified primes
+equals the Dirichlet series `Σ_𝔞 χ(𝔞) N𝔞^{-s}`, where `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞`
+is the completely-multiplicative ideal character. -/
 theorem exists_artinLSeries_eulerProduct_abelian
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
-    ∃ Lf : ℂ → ℂ,
-      ∀ s : ℂ, 1 < s.re →
-        Lf s = ∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
-          (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
+    ∀ s : ℂ, 1 < s.re →
+      (∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
+        = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+            galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
   sorry
 
 /-- Sharifi 7.1.16 (p. 141) local step: the local Euler factor at an
@@ -197,7 +236,8 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
   sorry
 
 /-- Sharifi 7.1.19 step 1 (p. 142): geometry-of-numbers bound. The
-partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` is `O(N^{1-1/[K:ℚ]})` for a
+partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` (with `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞` the
+completely-multiplicative ideal character) is `O(N^{1-1/[K:ℚ]})` for a
 nontrivial character `χ`. This is the convergence input that extends
 `L(χ,·)` to `Z(1 - [K:ℚ]^{-1})`. -/
 theorem character_sum_geometry_of_numbers_bound
@@ -207,7 +247,7 @@ theorem character_sum_geometry_of_numbers_bound
     ∃ C : ℝ, ∀ N : ℕ,
       ‖∑' 𝔞 : {𝔞 : Ideal (𝓞 K) //
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
-        (χ (frobeniusClass K L 𝔞.1).out : ℂ)‖
+        galoisCharacterOnIdeal K L χ 𝔞.1‖
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   sorry
 
@@ -238,7 +278,7 @@ theorem artinLSeries_analytic_extension
       (∀ s : ℂ, 1 < s.re →
         Lf s =
           ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
-            (χ (frobeniusClass K L 𝔞.1).out : ℂ) *
+            galoisCharacterOnIdeal K L χ 𝔞.1 *
               (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) := by
   sorry
 
@@ -257,7 +297,7 @@ theorem artinLSeries_one_ne_zero
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} →
       (∀ s : ℂ, 1 < s.re →
         Lf s = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
-          (χ (frobeniusClass K L 𝔞.1).out : ℂ) * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) →
+          galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) →
       Lf 1 ≠ 0 := by
   sorry
 
