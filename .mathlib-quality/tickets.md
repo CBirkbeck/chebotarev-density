@@ -51,7 +51,7 @@ For a `Finset S` of nonzero prime ideals and `1 < s.re`: `∏ 𝔭 ∈ S, (1 - (
 `L` number field; `s : ℂ`.
 
 ### [T04] log_dedekindZeta_re_eq_tsum_neg_log_one_sub (L2)
-- **Status**: open
+- **Status**: done — proven as helper `log_dedekindZeta_re_eq_tsum_neg_log_one_sub` inside T06; Density sorry-free
 - **File**: CebotarevDensity/Density.lean
 - **Depends on**: T01, T03
 - **Type**: theorem
@@ -66,7 +66,7 @@ For a `Finset S` of nonzero prime ideals and `1 < s.re`: `∏ 𝔭 ∈ S, (1 - (
 `K` number field; `s : ℝ`.
 
 ### [T05] abs_tsum_neg_log_one_sub_sub_rpow_le (L3 — the O(1) tail)
-- **Status**: open
+- **Status**: done — proven as helper `abs_tsum_neg_log_one_sub_sub_rpow_le` inside T06; Density sorry-free
 - **File**: CebotarevDensity/Density.lean
 - **Depends on**: none (uses proven `primeIdealZetaHigherTail_bounded`)
 - **Type**: theorem
