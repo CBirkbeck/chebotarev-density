@@ -85,21 +85,20 @@ theorem cyclotomic_frobenius_acts_as_norm_power
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
     [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hcop : (Ideal.absNorm 𝔭).Coprime m)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
+    haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
+      (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
     ∀ ζ : L, ζ ∈ primitiveRoots m L →
-      frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP) ζ
-        = ζ ^ Ideal.absNorm 𝔭 := by
+      arithFrobAt (𝓞 K) Gal(L/K) 𝔓 ζ = ζ ^ Ideal.absNorm 𝔭 := by
+  haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
+    (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
   intro ζ hζmem
-  set hram := UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP
-  set φ := frobeniusAt K L 𝔓 hram
+  set φ := arithFrobAt (𝓞 K) Gal(L/K) 𝔓
   have hζ : IsPrimitiveRoot ζ m := (mem_primitiveRoots (NeZero.pos m)).mp hζmem
   set z : 𝓞 L := hζ.toInteger
   have hzc : (algebraMap (𝓞 L) L) z = ζ := rfl
   have hzpr : IsPrimitiveRoot z m := hζ.toInteger_isPrimitiveRoot
   have hzpow : z ^ m = 1 := hzpr.pow_eq_one
-  have hunder : 𝔓.under (𝓞 K) = 𝔭 := (Ideal.LiesOver.over (p := 𝔭) (P := 𝔓)).symm
   set q := Ideal.absNorm 𝔭
-  have hspec := (frobeniusAt_spec K L 𝔓 hram).2 z
-  rw [hunder] at hspec
   have h𝔭ne : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
   have hcopP : (Ideal.absNorm 𝔓).Coprime m := by
     rw [Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver 𝔓 𝔭 ‹𝔭.IsPrime› h𝔭ne]
@@ -112,6 +111,16 @@ theorem cyclotomic_frobenius_acts_as_norm_power
   set uR := rootsOfUnity.mkOfPowEq (z ^ q) hRpow
   have hcoeL : ((uL : (𝓞 L)ˣ) : 𝓞 L) = φ • z := rootsOfUnity.coe_mkOfPowEq _
   have hcoeR : ((uR : (𝓞 L)ˣ) : 𝓞 L) = z ^ q := rootsOfUnity.coe_mkOfPowEq _
+  -- `φ • z ≡ z^q (mod 𝔓)`: the residue characterisation of `arithFrobAt` (`mk_apply`), with
+  -- `q = N𝔭 = N(𝔓 ∩ 𝓞 K) = Nat.card (𝓞 K ⧸ 𝔓 ∩ 𝓞 K)`.
+  have hqcard : q = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K)) := by
+    show Ideal.absNorm 𝔭 = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))
+    rw [show 𝔭 = 𝔓.under (𝓞 K) from (Ideal.LiesOver.over (p := 𝔭) (P := 𝔓)),
+      Ideal.absNorm_apply, Submodule.cardQuot_apply]
+  have hmkeq : Ideal.Quotient.mk 𝔓 (arithFrobAt (𝓞 K) Gal(L/K) 𝔓 • z)
+      = Ideal.Quotient.mk 𝔓 (z ^ q) := by
+    rw [Ideal.Quotient.eq, hqcard]
+    exact IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓 z
   have hmapeq : Ideal.rootsOfUnityMapQuot 𝔓 m uL = Ideal.rootsOfUnityMapQuot 𝔓 m uR := by
     apply Units.ext
     rwa [Ideal.rootsOfUnityMapQuot_apply 𝔓 m uL.2, Ideal.rootsOfUnityMapQuot_apply 𝔓 m uR.2,
