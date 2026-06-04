@@ -99,7 +99,7 @@ residue action `hres` of `Frob_𝔓 = arithFrobAt` is the finite-field Frobenius
 `FiniteField.frobeniusAlgEquivOfAlgebraic` (both raise a class to the `N𝔭`-th power:
 `IsArithFrobAt.mk_apply` resp. `FiniteField.coe_frobeniusAlgEquivOfAlgebraic`), whose order is the
 residue degree by `FiniteField.orderOf_frobeniusAlgEquivOfAlgebraic`. -/
-theorem orderOf_frobeniusAt_eq_finrank
+theorem orderOf_eq_finrank_of_isArithFrobAt
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (h : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1) (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) :
@@ -183,7 +183,7 @@ theorem card_primesAbove_mul_finrank_eq
 
 /-- The residue degree `[κ(𝔓) : κ(𝔭)]` at an unramified prime `𝔓` above `𝔭`, whose
 Frobenius class is `C = [σ]`, equals `orderOf σ`: `Frob_𝔓 = arithFrobAt 𝔓` generates `D_𝔓` of
-order `f` (`orderOf_frobeniusAt_eq_finrank`) and is conjugate to `σ`
+order `f` (`orderOf_eq_finrank_of_isArithFrobAt`) and is conjugate to `σ`
 (`frobeniusClass_eq_mk_of_isArithFrobAt`), so the orders agree. -/
 theorem finrank_residue_eq_orderOf
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
@@ -199,7 +199,7 @@ theorem finrank_residue_eq_orderOf
       ← frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 hunr _ 𝔓
         (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓) hlo, hCfrob, hσ]
   rw [← hc.orderOf_eq,
-    orderOf_frobeniusAt_eq_finrank K L _ 𝔓 hra (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓)]
+    orderOf_eq_finrank_of_isArithFrobAt K L _ 𝔓 hra (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓)]
 
 /-- **Orbit–stabilizer for the primes above `𝔭`** (Sharifi 7.2.2 Step 1, p. 143). The
 Galois group acts transitively on the primes of `𝓞 L` above `𝔭`, with stabiliser the
@@ -399,7 +399,7 @@ residue classes to the `N(𝔓 ∩ 𝓞 K)`-th power too, i.e. it is a `K`-Frobe
 
 mathlib has only `isConj_arithFrobAt` (conjugacy of `arithFrobAt` at primes over the same
 base); the restriction-through-a-subextension identity is the new tower content. -/
-theorem frobeniusAt_restrictScalars_eq [FiniteDimensional K L] (E : IntermediateField K L)
+theorem arithFrobAt_restrictScalars_eq [FiniteDimensional K L] (E : IntermediateField K L)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunrK : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1)
     (_hunrE : Ideal.ramificationIdx (𝔓.under (𝓞 ↥E)) 𝔓 = 1)
     (hnorm : Nat.card (𝓞 ↥E ⧸ 𝔓.under (𝓞 ↥E)) = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))) :
@@ -465,7 +465,7 @@ private theorem stabilizer_intermediate_eq_top_of_frobenius
   -- `D_𝔓 = ⟨σ⟩`: both have order `f` and `σ ∈ D_𝔓`.
   have hmem : σ ∈ MulAction.stabilizer Gal(L/K) 𝔓 := hfrob.mem_stabilizer
   have hinertK : (𝔓.under (𝓞 K)).inertiaDeg 𝔓 = orderOf σ := by
-    rw [Ideal.inertiaDeg_algebraMap, orderOf_frobeniusAt_eq_finrank K L σ 𝔓 hraK hfrob]
+    rw [Ideal.inertiaDeg_algebraMap, orderOf_eq_finrank_of_isArithFrobAt K L σ 𝔓 hraK hfrob]
   have hcardstab' : Nat.card (MulAction.stabilizer Gal(L/K) 𝔓) = orderOf σ := by
     rw [Ideal.card_stabilizer_eq (𝔓.under (𝓞 K)) hpbot 𝔓,
       Ideal.ramificationIdxIn_eq_ramificationIdx (𝔓.under (𝓞 K)) 𝔓 Gal(L/K), hraK, one_mul,
@@ -550,7 +550,7 @@ private theorem inertiaDeg_under_E_eq_one_of_frobenius
       Ideal.inertiaDeg_eq_inertiaDeg' (𝔓.under (𝓞 ↥E)) 𝔓]
     exact Ideal.inertiaDeg'_tower (R := 𝓞 K) (S := 𝓞 ↥E) (𝔓.under (𝓞 ↥E)) 𝔓
   have hinertK : (𝔓.under (𝓞 K)).inertiaDeg 𝔓 = orderOf σ := by
-    rw [Ideal.inertiaDeg_algebraMap, orderOf_frobeniusAt_eq_finrank K L σ 𝔓 hraK hfrob]
+    rw [Ideal.inertiaDeg_algebraMap, orderOf_eq_finrank_of_isArithFrobAt K L σ 𝔓 hraK hfrob]
   have hfPE : (𝔓.under (𝓞 ↥E)).inertiaDeg 𝔓 = orderOf σ := by
     rw [Ideal.inertiaDeg_algebraMap, ← hcardE, horderE]
   have hpos : 0 < orderOf σ := by rw [orderOf_pos_iff]; exact isOfFinOrder_of_finite σ
@@ -600,7 +600,7 @@ open scoped Pointwise in
 `𝔓` with `Frob^K_𝔓 = σ` lying over a degree-one (over `K`) prime `P = 𝔓 ∩ 𝓞 E`, the
 `E`-Frobenius `Frob^E_𝔓` restricts to `σ`, hence (as `σ_E` also restricts to `σ` and
 `restrictScalars` is injective) `Frob^E_𝔓 = σ_E`. -/
-private theorem frobeniusAt_E_eq_of_frobenius
+private theorem arithFrobAt_E_eq_of_isArithFrobAt
     [FiniteDimensional K L] (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (hσE : letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
@@ -634,7 +634,7 @@ private theorem frobeniusAt_E_eq_of_frobenius
     (Algebra.isUnramifiedAt_iff_of_isDedekindDomain hPbot).mpr
       (UnramifiedIn.ramificationIdx_eq_one K L hunrK 𝔓 hPK)
   -- `Frob^E_𝔓` and `σ_E` both restrict to `σ`; `restrictScalars` is injective.
-  have hbridge := frobeniusAt_restrictScalars_eq
+  have hbridge := arithFrobAt_restrictScalars_eq
     (IntermediateField.fixedField (Subgroup.zpowers σ)) 𝔓
     (UnramifiedIn.ramificationIdx_eq_one K L hunrK 𝔓 hPK) hraE hnorm
   rw [(eq_arithFrobAt_of_isArithFrobAt K L 𝔓 σ hfrob).symm] at hbridge
@@ -692,7 +692,7 @@ private theorem card_fibre_E_eq_card_fibre_L
     haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓 hPbot
     obtain ⟨hraE, hinPK, hnorm⟩ :=
       inertiaDeg_under_E_eq_one_of_frobenius σ 𝔓 hunrK inferInstance hfrob horderE
-    have hfrE := frobeniusAt_E_eq_of_frobenius σ σE hσE 𝔓 hunrK inferInstance hfrob horderE
+    have hfrE := arithFrobAt_E_eq_of_isArithFrobAt σ σE hσE 𝔓 hunrK inferInstance hfrob horderE
       hraE hnorm
     have hunram : UnramifiedIn ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L
         (𝔓.under (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))) := by
@@ -796,7 +796,7 @@ private theorem card_fibre_E_eq_card_fibre_L
       exact isConj_iff_eq.mp (ConjClasses.mk_eq_mk_iff_isConj.mp hcl.symm)
     -- the `K`-Frobenius `arithFrobAt 𝔓` equals `σ` (bridge + `σ_E ↾ K = σ`).
     have hfrobK : arithFrobAt (𝓞 K) Gal(L/K) 𝔓 = σ := by
-      have hbridge := frobeniusAt_restrictScalars_eq
+      have hbridge := arithFrobAt_restrictScalars_eq
         (IntermediateField.fixedField (Subgroup.zpowers σ)) 𝔓
         (UnramifiedIn.ramificationIdx_eq_one K L hunrK 𝔓 inferInstance) hraE hnorm
       rw [hfrEeqσE, hσE] at hbridge
@@ -869,7 +869,7 @@ private theorem frobeniusClass_under_eq_of_mem_fibre
     rw [hPfrob] at hcl
     exact isConj_iff_eq.mp (ConjClasses.mk_eq_mk_iff_isConj.mp hcl.symm)
   have hfrobK : arithFrobAt (𝓞 K) Gal(L/K) 𝔓 = σ := by
-    have hbridge := frobeniusAt_restrictScalars_eq
+    have hbridge := arithFrobAt_restrictScalars_eq
       (IntermediateField.fixedField (Subgroup.zpowers σ)) 𝔓
       (UnramifiedIn.ramificationIdx_eq_one K L hunrK 𝔓 inferInstance) hraE hnorm
     rw [hfrEeqσE, hσE] at hbridge
