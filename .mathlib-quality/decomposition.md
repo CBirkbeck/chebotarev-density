@@ -307,3 +307,34 @@ The cyclotomic case is feasible MODULO **Z3** (the geometry-of-numbers error ter
 else is reuse (Z1↩L1), standard character theory (Z2), composition (Z4/Z6/Z7 on proven
 orthogonality), or the restated non-vanishing (Z5). Z3 is the single hard wall — flag for a
 dedicated effort or expert-review on whether mathlib's limit-level asymptotics can be sharpened.
+
+---
+
+# Decomposition — `density_lift_through_fixedField` (Sharifi 7.2.2 Step 1) — pass 2026-06-04
+
+Given `_hab : HasDirichletDensity (E-fibre of σE) (1/|Gal(L/E)|)`, prove
+`HasDirichletDensity (K-class-fibre of σ) (|C|/|G|)`. A post-linchpin delegated attempt
+**reduced the whole theorem to ONE sub-goal `hnum`** and proved the rest (verified on scratch).
+
+## Proven (ready to paste into Main.lean)
+- **`univ_ratio_E_K_tendsto_one`** (reusable `private` helper): `Σ_univ^{↥E} / Σ_univ^K → 1` as `s↓1`,
+  from `primeIdealZetaSum_univ_tendsto_log` at both `K` and `↥E` (`NumberField.of_intermediateField`
+  gives the `↥E` instance). The denominator asymptotic `Σ_𝔭 ~ Σ_P` the linchpin unblocked.
+- **order fact** `(Nat.card Gal(L/E):ℝ) = orderOf σ` (`IntermediateField.subgroupEquivAlgEquiv` + `Nat.card_zpowers`).
+- **assembly**: `density_lift…` closes given `hnum` via `_hab.mul univ_ratio…`, `Tendsto.const_mul (f|C|/|G|)`,
+  `congr'` by `hnum`, `field_simp` — limit `(f|C|/|G|)·(1/f)·1 = |C|/|G|`.
+
+## The single remaining leaf — `hnum` (numerator identity = an E-bridge API gap)
+`∀ s>1, primeIdealZetaSum S s = ((orderOf σ)·|C|/|G|)·primeIdealZetaSum_{↥E} T s`. Source p.143: each
+`𝔭∈S` has `|G|/(f|C|)` primes `P∈T` over it, each degree-1 over K (`NP=N𝔭`). **The project's proven
+counting lemmas only relate L-primes over K-primes — none involve E.** Closing `hnum` needs a new
+tower K⊂E⊂L layer absent from mathlib:
+- **`frobeniusAt_restrictScalars_eq`** (the new piece): degree-1 `𝔓` ⟹ `(arithFrobAt (𝓞 ↥E) Gal(L/E) 𝔓).restrictScalars K = arithFrobAt (𝓞 K) Gal(L/K) 𝔓` (mathlib has only `isConj_arithFrobAt`, no restriction).
+- degree-1 `NP = N(P↓K)` (`Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver`, `inertiaDeg_algebra_tower`);
+  `mem_S_of_mem_T`; prime bijection `T ≃ Σ_{𝔭∈S} {𝔓 over 𝔭 : Frob=σ}`; then `hnum` = tsum reindex.
+- ≈200–400 LOC, self-contained tower NT (the E-version of the already-done L/K counting layer).
+
+## Whole remaining tree — every sorry is now a characterized infrastructure sub-project
+(a) `density_lift_through_fixedField` → the **E-bridge** above (~200–400 LOC tower NT);
+(b) ZetaProduct→Cyclotomic→Abelian per-`m`→`dirichlet_primes_in_AP` → the **Z3** geometry-of-numbers
+error term. No quick wins remain — both are dedicated multi-leaf efforts.
