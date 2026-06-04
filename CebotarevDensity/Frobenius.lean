@@ -31,6 +31,7 @@ exploiting the `Pointwise` action `Ideal.pointwiseDistribMulAction`.
 
 ## Main definitions
 
+* `Chebotarev.UnramifiedIn` — `𝔭` is unramified in `L`.
 * `Chebotarev.frobeniusAt` — the Frobenius automorphism at
   an unramified prime `𝔓`, namely mathlib's `arithFrobAt` for the
   action of `Gal(L/K)` on `𝓞 L`.
@@ -56,6 +57,18 @@ namespace Chebotarev
 
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
 
+/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if it is nonzero and every **maximal** prime
+`𝔓` of `𝓞 L` lying over `𝔭` is unramified over `𝓞 K` (`Algebra.IsUnramifiedAt`). The `∀ 𝔓`
+clause has the same shape as the unramified condition in mathlib's
+`NumberField.not_dvd_discr_iff_forall_liesOver`. The `𝔭 ≠ ⊥` clause (on the base prime) is
+kept because the `frobeniusAt` construction below needs a finite residue field; for nonzero
+`𝔭` the maximal primes over `𝔭` are exactly its prime divisors, so each has `e(𝔓 ∣ 𝔭) = 1`
+(`Algebra.isUnramifiedAt_iff_of_isDedekindDomain`). -/
+def UnramifiedIn
+    [IsGalois K L]
+    (𝔭 : Ideal (𝓞 K)) : Prop :=
+  𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
+
 omit [NumberField K] [NumberField L] in
 /-- A prime of `𝓞 L` with ramification index `1` over its image in `𝓞 K` is nonzero:
 the zero ideal has ramification index `0` (`Ideal.ramificationIdx_bot`). -/
@@ -64,17 +77,20 @@ theorem ne_bot_of_ramificationIdx_eq_one
   rintro rfl
   simp at hunr
 
-/-- For a prime `𝔓` of `𝓞 L` lying over a nonzero prime `𝔭` of `𝓞 K`, all of whose maximal
-primes over `𝔭` are unramified over `𝓞 K` (`Algebra.IsUnramifiedAt`), the ramification index
-`e(𝔓 ∣ 𝔭)` equals `1`. The nonzeroness of `𝔭` forces `𝔓 ≠ ⊥` (hence `𝔓` maximal), and then
-`Algebra.isUnramifiedAt_iff_of_isDedekindDomain` converts unramifiedness to `e = 1`. -/
-theorem ramificationIdx_eq_one_of_isUnramifiedAt
+omit [NumberField K] [NumberField L] in
+/-- An unramified prime is nonzero — the first clause of `UnramifiedIn`. -/
+theorem UnramifiedIn.ne_bot
     [IsGalois K L]
-    {𝔭 : Ideal (𝓞 K)}
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
-    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
-    Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
+    {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) : 𝔭 ≠ ⊥ :=
+  hunr.1
+
+/-- For a prime `𝔓` of `𝓞 L` lying over an unramified prime `𝔭` of `𝓞 K`,
+the ramification index `e(𝔓 ∣ 𝔭)` equals `1`. -/
+theorem UnramifiedIn.ramificationIdx_eq_one
+    [IsGalois K L]
+    {𝔭 : Ideal (𝓞 K)} (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    (hP : 𝔓.LiesOver 𝔭) : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
+  haveI := hP
   have h𝔓 : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔓
   exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp
     (hunr.2 𝔓 (‹𝔓.IsPrime›.isMaximal h𝔓) hP)
@@ -108,17 +124,14 @@ above `𝔭` are conjugate in `Gal(L/K)`: both are `arithFrobAt` at primes lying
 same prime `𝔭`, so `isConj_arithFrobAt` applies. -/
 theorem frobeniusAt_isConj_of_liesOver
     [IsGalois K L]
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime] (hP : 𝔓.LiesOver 𝔭) (hP' : 𝔓'.LiesOver 𝔭) :
-    IsConj (frobeniusAt K L 𝔓 (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP))
-      (frobeniusAt K L 𝔓' (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓' hP')) := by
+    IsConj (frobeniusAt K L 𝔓 (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
+      (frobeniusAt K L 𝔓' (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP')) := by
   haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
-    (ne_bot_of_ramificationIdx_eq_one K L (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP))
+    (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
   haveI : Finite (𝓞 L ⧸ 𝔓') := Ideal.finiteQuotientOfFreeOfNeBot 𝔓'
-    (ne_bot_of_ramificationIdx_eq_one K L
-      (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓' hP'))
+    (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP'))
   exact isConj_arithFrobAt (𝓞 K) Gal(L/K) 𝔓 𝔓' (hP.over.symm.trans hP'.over)
 
 omit [NumberField K] [NumberField L] in
@@ -138,16 +151,14 @@ conjugacy class of an unramified prime `𝔭` of `𝓞 K`.
 Sharifi §7.2 + SL Appendix paragraph 1. -/
 theorem exists_frobeniusClass
     [IsGalois K L]
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓) :
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) :
     ∃ C : ConjClasses Gal(L/K),
       ∀ (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭),
         C = ConjClasses.mk (frobeniusAt K L 𝔓
-          (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP)) := by
-  obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 hunr.1
+          (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)) := by
+  obtain ⟨𝔓₀, hp₀, hlo₀, _⟩ := exists_prime_liesOver K L 𝔭 (UnramifiedIn.ne_bot K L hunr)
   refine ⟨ConjClasses.mk (frobeniusAt K L 𝔓₀
-    (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓₀ hlo₀)), ?_⟩
+    (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓₀ hlo₀)), ?_⟩
   intro 𝔓 _ hP
   exact ConjClasses.mk_eq_mk_iff_isConj.mpr (frobeniusAt_isConj_of_liesOver K L 𝔭 hunr 𝔓₀ 𝔓 hlo₀ hP)
 
@@ -161,8 +172,7 @@ def frobeniusClass
     [IsGalois K L]
     (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K) :=
   open Classical in
-  if h : 𝔭.IsPrime ∧ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓) then
+  if h : 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 then
     haveI := h.1
     (exists_frobeniusClass K L 𝔭 h.2).choose
   else
@@ -172,21 +182,18 @@ def frobeniusClass
 prime `𝔓` of `𝓞 L` above `𝔭`. -/
 theorem frobeniusClass_eq_mk_frobeniusAt
     [IsGalois K L]
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (hunr : 𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 →
-      Algebra.IsUnramifiedAt (𝓞 K) 𝔓)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     frobeniusClass K L 𝔭 =
       ConjClasses.mk (frobeniusAt K L 𝔓
-        (ramificationIdx_eq_one_of_isUnramifiedAt K L hunr 𝔓 hP)) := by
+        (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP)) := by
   rw [frobeniusClass, dif_pos ⟨‹𝔭.IsPrime›, hunr⟩]
   exact (exists_frobeniusClass K L 𝔭 hunr).choose_spec 𝔓 hP
 
 /-- Only finitely many nonzero primes of `K` ramify in `L`. -/
 theorem finite_ramifiedIn
     [IsGalois K L] :
-    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (𝔭 ≠ ⊥ ∧ ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal),
-      𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓)}.Finite := by
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭}.Finite := by
   letI : Algebra (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
     FractionRing.liftAlgebra (𝓞 K) (FractionRing (𝓞 L))
   haveI : IsScalarTower (𝓞 K) (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
@@ -197,7 +204,7 @@ theorem finite_ramifiedIn
   apply Set.Finite.subset
     ((Ideal.finite_factors hbot).image (fun v => (v.asIdeal).under (𝓞 K)))
   rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
-  rw [not_and, not_forall] at hnunr
+  rw [UnramifiedIn, not_and, not_forall] at hnunr
   obtain ⟨𝔓, h𝔓⟩ := hnunr h𝔭bot
   rw [not_forall] at h𝔓
   obtain ⟨h𝔓max, h𝔓⟩ := h𝔓
