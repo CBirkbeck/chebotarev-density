@@ -332,6 +332,18 @@ lemma dedekindZeta_eq_tprod_primePowerSeries {s : ℂ} (hs : 1 < s.re) :
   rw [dedekindZeta_eq_tsum_idealNormMultiplicity L hs,
     ← EulerProduct.eulerProduct_tprod hf_one hf_mul hf_sum hf_zero]
 
+/-- **Prime-ideal Euler product** (Sharifi, *Algebraic Number Theory*, Theorem 7.1.12,
+p. 140): for `1 < Re s`, `ζ_K(s) = ∏_𝔭 (1 - N𝔭^{-s})^{-1}` over the nonzero prime ideals.
+Keystone leaf of `logDedekindZeta_sub_primeIdealZetaSum_bounded`; to be proven Sharifi's way
+(finite-set comparison à la Prop 7.1.9, UFD multiplicativity of ideals), NOT via the
+rational-prime regrouping `dedekindZeta_eq_tprod_primePowerSeries`. See
+`.mathlib-quality/decomposition.md`. -/
+theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
+    NumberField.dedekindZeta L s =
+      ∏' 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
+  sorry
+
 end NumberFieldEulerProduct
 
 end Chebotarev

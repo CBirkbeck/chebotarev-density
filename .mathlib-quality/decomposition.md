@@ -182,3 +182,59 @@ abelian subtree `Abelian → Cyclotomic → ZetaProduct → Density`, and `finit
 Open leaves so far: `orderOf_frobeniusAt_eq_finrank` (API-gap),
 `card_primesAbove_mul_finrank_eq`, `frobeniusFibre_card_eq_of_isConj`,
 `card_primesAbove_eq_card_carrier_mul_frobeniusFibre`.
+
+---
+
+# Decomposition — `logDedekindZeta_sub_primeIdealZetaSum_bounded` (Sharifi 7.1.12) — pass 2026-06-04
+
+Goal (Density.lean): `∃ C, ∀ᶠ s in 𝓝[>] 1, |Real.log (dedekindZeta K s).re − primeIdealZetaSum univ s| ≤ C`,
+i.e. `log ζ_K(s) = Σ_𝔭 N𝔭⁻ˢ + O(1)` as `s ↓ 1`.
+
+## Route correction (red flag: a prior pass left the source)
+A prior pass routed through the project's **rational-prime** Euler product
+(`dedekindZeta_eq_tprod_primePowerSeries`, `ζ_K = ∏'_q [local factor at q]`) and was forced
+into the "local factor identity" `Σ_k mult(qᵏ)(qᵏ)⁻ˢ = ∏_{𝔭∣q}(1−N𝔭⁻ˢ)⁻¹` — an ideal↔
+prime-exponent bijection mathlib lacks, ≈400 LOC. Per the `/develop` red-flag rule (a leaf
+needing substantial mathlib-absent infrastructure ⇒ the route left the source), I re-read
+Sharifi 7.1.12's proof (p.140). **Sharifi never groups by rational primes.** He builds the
+prime-ideal Euler product directly by finite-set comparison (Prop 7.1.9's method, p.139,
+applied to ideals). So the keystone is the *direct* prime-ideal Euler product, provable from
+mathlib's Dedekind-domain ideal-factorisation API — the rational-prime bridge is dropped.
+
+Verbatim (Sharifi 7.1.12 proof, p.140): "we consider the logarithm of the Euler product,
+noting that **log ζ_K(s) ∼ Σ_𝔭 N𝔭⁻ˢ** … We can then compare the Euler product over a finite
+sum of primes with the partial sum in the Dirichlet series over **ideals divisible only by
+those primes** to obtain equality." `∼` = "differ by a function analytic at 1" (Notation
+7.1.10, p.140) ⇒ the bounded difference the linchpin asserts.
+
+## Leaves
+- **L1** (API-GAP keystone) `dedekindZeta_eq_tprod_primeIdeal`: for `1<s.re`,
+  `dedekindZeta K s = ∏' 𝔭:{IsPrime ∧ ≠⊥}, (1−(absNorm 𝔭)⁻ˢ)⁻¹`. Sharifi 7.1.12 product
+  formula (p.140, verbatim): "ζ_K(s) = ∏_𝔭 (1−Np⁻ˢ)⁻¹, where the product runs over all nonzero
+  prime ideals p". Internal — sub-decomposes (Sharifi's finite-S route, template Prop 7.1.9):
+  - **L1.1** `prod_eulerFactor_eq_tsum_of_factors_subset`: finite `S` ⟹ `∏_{𝔭∈S}(1−N𝔭⁻ˢ)⁻¹ =
+    Σ' over ideals with all prime factors in S of N𝔞⁻ˢ`. Source Prop 7.1.9 (p.139, verbatim):
+    "Let S be a finite set of prime numbers and I_S the semigroup they generate. Then
+    ∏_{p∈S}(1−p⁻ˢ)⁻¹ = Σ_{n∈I_S} n⁻ˢ." Discharge: `tsum_geometric` per factor +
+    `tsum_prod`/`Finset.prod_tsum` over `(S →₀ ℕ)` + UFD bijection {factors ⊆ S} ≃ (S→₀ℕ)
+    (`UniqueFactorizationMonoid`, `Ideal.absNorm_mul` multiplicative). ≈80–120 LOC, standard.
+  - **L1.2**: `S ↑ ⊤` limit. Source (p.139): "ζ(s)=∏_p(1−p⁻ˢ)⁻¹ … by taking the limit over all
+    S." Discharge: `Multipliable`/`HasProd` from absolute convergence + finite→`tprod`/`tsum`
+    limits. ≈60–90 LOC.
+- **L2** `log_dedekindZeta_re_eq_tsum_neg_log_one_sub`: real `s>1` ⟹ `Real.log (dedekindZeta K s).re
+  = Σ'_𝔭 −Real.log(1−(absNorm 𝔭)⁻ˢ)`. Discharge: L1 + L4 + `Real.log` of a positive convergent
+  `tprod` = `tsum` of logs (`Real.hasSum_log`/`Real.log_inv`). ≈40 LOC.
+- **L3** `abs_tsum_neg_log_one_sub_sub_rpow_le`: `∃ C, ∀ᶠ s in 𝓝[>] 1, |Σ'_𝔭(−log(1−N𝔭⁻ˢ)−N𝔭⁻ˢ)| ≤ C`.
+  Discharge: **`primeIdealZetaHigherTail_bounded` (PROVEN, Density.lean:387)** + elementary
+  `0 ≤ −log(1−x)−x ≤ x²/(1−x)` for `0≤x<1`. ≈50 LOC. (This is the `∼`/`O(1)` step.)
+- **L4** `dedekindZeta_re_pos_of_one_lt`: real `s>1` ⟹ `0<(dedekindZeta K s).re`. Source Def
+  7.1.11: `ζ_K(s)=Σ_𝔞 (N𝔞)⁻ˢ` > 0 at real `s>1`. Discharge: `dedekindZeta_eq_tsum_idealNormMultiplicity`
+  (project) + `tsum_pos`. ≈30 LOC.
+- **Assembly** (parent, sorry-free once leaves land): for real `s>1`, `log(ζ_K).re =[L2] Σ −log(1−N𝔭⁻ˢ)`;
+  subtract `Σ N𝔭⁻ˢ = primeIdealZetaSum univ s`; bound by L3. Done.
+
+## Provability / feasibility
+Proven: L3's tail (`primeIdealZetaHigherTail_bounded`). mathlib ≤3-lemma: L2, L4. API gap:
+L1.1+L1.2 = the **direct prime-ideal Euler product** ≈150–210 LOC of standard UFD/Dirichlet
+bookkeeping (Sharifi's own finite-S route), NOT the ≈400-LOC absent ideal↔exponent global
+equivalence. Belongs in `NumberFieldEulerProduct.lean`; upstreamable. **Feasible**, ≈300 LOC total.
