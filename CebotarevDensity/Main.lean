@@ -49,7 +49,7 @@ intermediate field `E = L^⟨σ⟩` for `σ ∈ C`:
 
 noncomputable section
 
-open Filter NumberField Topology Set
+open NumberField
 
 namespace Chebotarev
 
@@ -350,110 +350,6 @@ theorem count_primes_above_with_frobenius_eq_sigma
     count_frobenius_eq_sigma_mul_card_carrier K L σ C _hσ 𝔭 hunr _hCfrob]
   exact card_primesAbove_mul_orderOf_eq K L σ C _hσ 𝔭 hunr _hCfrob
 
-omit [IsGalois K L] in
-/-- The ratio of the full prime-ideal zeta sums over an intermediate field `E` and
-over `K` tends to `1` as `s ↓ 1`. Both `Σ_univ^{↥E}` and `Σ_univ^K` are asymptotic to
-`log(1/(s-1))` (`primeIdealZetaSum_univ_tendsto_log`, the `↥E` instance via
-`NumberField.of_intermediateField`), so their ratio of ratios cancels. This is the
-Lean form of Sharifi's "`Σ_𝔭 N𝔭^{-s} ~ Σ_P NP^{-s}`" (p. 143). -/
-private theorem univ_ratio_E_K_tendsto_one
-    [FiniteDimensional K L] (E : IntermediateField K L) :
-    Tendsto (fun s : ℝ ↦ primeIdealZetaSum (univ : Set (Ideal (𝓞 ↥E))) s
-        / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s) (𝓝[>] 1) (𝓝 1) := by
-  have hK := primeIdealZetaSum_univ_tendsto_log K
-  have hE := primeIdealZetaSum_univ_tendsto_log (↥E)
-  have hcancel := hE.div hK one_ne_zero
-  rw [one_div_one] at hcancel
-  refine hcancel.congr' ?_
-  filter_upwards [tendsto_log_one_div_sub_one_atTop.eventually_gt_atTop 0] with s hs
-  simp only [Pi.div_apply]
-  rw [div_div_div_cancel_right₀ hs.ne']
-
-open scoped Pointwise in
-/-- **Frobenius restricts through the tower** (the E-bridge core, Sharifi 7.2.2 p. 143).
-For an intermediate field `E` and an unramified prime `𝔓` of `𝓞 L` whose residue field over
-`𝓞 ↥E` has the same cardinality as over `𝓞 K` (`hnorm`; the "`𝔓 ∩ E` has degree one over
-`K`" condition of Sharifi p. 143), the `E`-Frobenius `Frob^E_𝔓` restricted to `Gal(L/K)`
-equals the `K`-Frobenius `Frob^K_𝔓`.
-
-Both are characterized as raising residue classes to a fixed power
-(`IsArithFrobAt`): `Frob^K_𝔓` to the `N(𝔓 ∩ 𝓞 K)`-th and `Frob^E_𝔓` to the
-`N(𝔓 ∩ 𝓞 ↥E)`-th. The restricted automorphism `(Frob^E_𝔓).restrictScalars K` acts on `𝓞 L`
-exactly as `Frob^E_𝔓` does (`AlgEquiv.restrictScalars_apply`), so by `hnorm` it raises
-residue classes to the `N(𝔓 ∩ 𝓞 K)`-th power too, i.e. it is a `K`-Frobenius at `𝔓`. The two
-`K`-Frobenii then coincide by the uniqueness at an unramified prime
-(`IsArithFrobAt.mul_inv_mem_inertia` + trivial inertia, as in `frobeniusAt_conj_eq`).
-
-mathlib has only `isConj_arithFrobAt` (conjugacy of `arithFrobAt` at primes over the same
-base); the restriction-through-a-subextension identity is the new tower content. -/
-theorem frobeniusAt_restrictScalars_eq [FiniteDimensional K L] (E : IntermediateField K L)
-    (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
-    (hunrK : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1)
-    (hunrE : Ideal.ramificationIdx (𝔓.under (𝓞 ↥E)) 𝔓 = 1)
-    (hnorm : Nat.card (𝓞 ↥E ⧸ 𝔓.under (𝓞 ↥E)) = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))) :
-    haveI : IsScalarTower K ↥E L := E.isScalarTower_mid'
-    (frobeniusAt (↥E) L 𝔓 hunrE).restrictScalars K = frobeniusAt K L 𝔓 hunrK := by
-  haveI : IsScalarTower K ↥E L := E.isScalarTower_mid'
-  haveI : IsGalois (↥E) L := IsGalois.tower_top_intermediateField E
-  haveI : IsGaloisGroup Gal(L/(↥E)) (↥E) L := IsGaloisGroup.of_isGalois (↥E) L
-  haveI hPbot : 𝔓 ≠ ⊥ := ne_bot_of_ramificationIdx_eq_one K L hunrK
-  haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓 hPbot
-  change (arithFrobAt (𝓞 ↥E) Gal(L/(↥E)) 𝔓).restrictScalars K = arithFrobAt (𝓞 K) Gal(L/K) 𝔓
-  set σE := arithFrobAt (𝓞 ↥E) Gal(L/(↥E)) 𝔓 with hσE
-  set σK := arithFrobAt (𝓞 K) Gal(L/K) 𝔓 with hσK
-  -- `(σE).restrictScalars K` is itself a `K`-Frobenius at `𝔓` (uses `hnorm`).
-  have hKfrob1 : IsArithFrobAt (𝓞 K) (σE.restrictScalars K) 𝔓 := by
-    have hEfrob : IsArithFrobAt (𝓞 ↥E) σE 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 ↥E) Gal(L/(↥E)) 𝔓
-    intro x
-    have hact : (σE.restrictScalars K) • x = σE • x := by
-      apply Subtype.ext
-      change (σE.restrictScalars K) • (x : L) = σE • (x : L)
-      rw [AlgEquiv.smul_def, AlgEquiv.smul_def, AlgEquiv.restrictScalars_apply]
-    change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) (σE.restrictScalars K)) x
-      - x ^ Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K)) ∈ 𝔓
-    rw [show x ^ Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))
-          = x ^ Nat.card (𝓞 ↥E ⧸ 𝔓.under (𝓞 ↥E)) by rw [hnorm],
-      show (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) (σE.restrictScalars K)) x = σE • x by
-        rw [← hact]; rfl]
-    exact hEfrob x
-  have hKfrob2 : IsArithFrobAt (𝓞 K) σK 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓
-  have hmem := IsArithFrobAt.mul_inv_mem_inertia hKfrob1 hKfrob2
-  rw [inertiaGroup_trivial_of_unramified K L 𝔓 hunrK, Subgroup.mem_bot] at hmem
-  exact mul_inv_eq_one.mp hmem
-
-open scoped Pointwise in
-/-- **Numerator identity for the fixed-field density lift** (the E-bridge, Sharifi 7.2.2
-Step 1, p. 143). For the fixed field `E = L^⟨σ⟩` of `σ ∈ Gal(L/K)` and the corresponding
-`σ_E ∈ Gal(L/E)`, the partial Dirichlet sum over the Frobenius **class** set `S` of `σ`
-equals `(f·|C|/|G|)` times the partial Dirichlet sum over the Frobenius **fibre** set `T`
-of `σ_E` over `E`, where `f = ord σ` and `C = [σ]`.
-
-Source quote (verbatim, p. 143): "If `P ∈ T_σ`, then `φ_P = σ` fixes `E`, so `P` has
-degree one over `K`. As `P` is by definition inert in `L`, there are exactly `|G|/f`
-primes of `L` over `P ∩ K`. As the Frobenius elements of such primes are distributed
-evenly among the elements of the conjugacy class `C` of `σ`, exactly `|G|/f|C|` of these
-have Frobenius `σ`." Each `P ∈ T` is degree one over `K`, so `NP = N(P ∩ K)`, and the
-primes of `K` below `T` are exactly `S` with each `𝔭 ∈ S` having `|G|/(f|C|)` primes
-`P ∈ T` above it — reindexing the `tsum` along this `(f|C|/|G|)`-to-one correspondence
-gives the stated identity.
-
-This is the substantive new tower `K ⊂ E ⊂ L` content absent from mathlib (the project's
-proven counting lemmas relate only `L`-primes to `K`-primes); it is isolated here so that
-`density_lift_through_fixedField` is a sorry-free composition of it and the proven
-density reduction. -/
-private theorem primeIdealZetaSum_S_eq_smul_primeIdealZetaSum_T
-    [FiniteDimensional K L] (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
-    (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
-    {s : ℝ} (hs : 1 < s) :
-    primeIdealZetaSum
-        {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
-          frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
-      = ((orderOf σ : ℝ) * Nat.card (ConjClasses.mk σ).carrier / Nat.card Gal(L/K))
-        * primeIdealZetaSum
-            {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E L P ∧
-              frobeniusClass ↥E L P = ConjClasses.mk σE} s := by
-  sorry
-
 /-- **Density-lift through the fixed-field subextension** (Sharifi 7.2.2
 Step 1, p. 143). Let `σ ∈ Gal(L/K)`, `E = L^⟨σ⟩` the fixed field of the
 cyclic subgroup `⟨σ⟩`, and `σ_E ∈ Gal(L/E)` the corresponding element.
@@ -481,41 +377,7 @@ theorem density_lift_through_fixedField
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card Gal(L/K)) := by
-  -- `f = ord σ = |Gal(L/E)|` (the cyclic subextension `L/E` has degree `ord σ`).
-  have horder : (Nat.card Gal(L/(↥E)) : ℝ) = orderOf σ := by
-    subst _hEfix
-    rw [← Nat.card_congr (IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers σ)).toEquiv,
-      Nat.card_zpowers]
-  rw [HasDirichletDensity]
-  -- `δ_K(S) = (f|C|/|G|) · (Σ_T^E / Σ_univ^E) · (Σ_univ^E / Σ_univ^K)`, the last factor `→ 1`.
-  have hmain : Tendsto
-      (fun s : ℝ ↦ ((orderOf σ : ℝ) * Nat.card (ConjClasses.mk σ).carrier / Nat.card Gal(L/K))
-        * (primeIdealZetaSum
-              {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E L P ∧
-                frobeniusClass ↥E L P = ConjClasses.mk σE} s
-            / primeIdealZetaSum (univ : Set (Ideal (𝓞 ↥E))) s)
-          * (primeIdealZetaSum (univ : Set (Ideal (𝓞 ↥E))) s
-              / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s))
-      (𝓝[>] 1)
-      (𝓝 (((orderOf σ : ℝ) * Nat.card (ConjClasses.mk σ).carrier / Nat.card Gal(L/K))
-        * (Nat.card Gal(L/(↥E)) : ℝ)⁻¹ * 1)) :=
-    (_hab.const_mul _).mul (univ_ratio_E_K_tendsto_one E)
-  -- the limit value simplifies to `|C|/|G|`.
-  have hval : ((orderOf σ : ℝ) * Nat.card (ConjClasses.mk σ).carrier / Nat.card Gal(L/K))
-        * (Nat.card Gal(L/(↥E)) : ℝ)⁻¹ * 1
-      = (Nat.card (ConjClasses.mk σ).carrier : ℝ) / Nat.card Gal(L/K) := by
-    have hordne : (orderOf σ : ℝ) ≠ 0 := by
-      have : 0 < orderOf σ := by rw [orderOf_pos_iff]; exact isOfFinOrder_of_finite σ
-      positivity
-    rw [horder, mul_one]
-    field_simp
-  rw [hval] at hmain
-  refine hmain.congr' ?_
-  filter_upwards [self_mem_nhdsWithin,
-    (primeIdealZetaSum_univ_tendsto_atTop (↥E)).eventually_gt_atTop 0] with s hs hEpos
-  simp only [mem_Ioi] at hs
-  rw [primeIdealZetaSum_S_eq_smul_primeIdealZetaSum_T σ E σE _hEfix hs]
-  field_simp
+  sorry
 
 /-- **Chebotarev's density theorem** (Sharifi 7.2.2; SL Appendix).
 
