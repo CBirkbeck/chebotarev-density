@@ -35,7 +35,7 @@ For a `Finset S` of nonzero prime ideals and `1 < s.re`: `∏ 𝔭 ∈ S, (1 - (
 `L` number field; `S : Finset {𝔭 // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}`.
 
 ### [T03] dedekindZeta_eq_tprod_primeIdeal (L1 — keystone, limit over S)
-- **Status**: open
+- **Status**: done — proven via HasProd + S↑⊤ limit (6 private helpers); NumberFieldEulerProduct.lean sorry-free; axioms clean. Commit 80a0f1e.
 - **File**: CebotarevDensity/NumberFieldEulerProduct.lean  (skeleton already stated)
 - **Depends on**: T02
 - **Type**: theorem
@@ -82,7 +82,7 @@ For a `Finset S` of nonzero prime ideals and `1 < s.re`: `∏ 𝔭 ∈ S, (1 - (
 `K` number field.
 
 ### [T06] logDedekindZeta_sub_primeIdealZetaSum_bounded (LINCHPIN — assembly)
-- **Status**: open
+- **Status**: done — PROVEN. Density.lean sorry-free; #print axioms fully clean (no sorryAx). Downstream hasDirichletDensity_of_finite + ratioSum_frobeniusFibres_tendsto_one DETAINTED (sorryAx cleared). (T04/L2 + T05/L3 absorbed as helpers in this proof.)
 - **File**: CebotarevDensity/Density.lean
 - **Depends on**: T04, T05, T01
 - **Type**: theorem
