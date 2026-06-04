@@ -253,7 +253,12 @@ theorem artinLSeries_one_ne_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
     (_hχ : χ ≠ 1) :
-    ∃ Lf : ℂ → ℂ, Lf 1 ≠ 0 := by
+    ∀ Lf : ℂ → ℂ,
+      AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} →
+      (∀ s : ℂ, 1 < s.re →
+        Lf s = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+          (χ (frobeniusClass K L 𝔞.1).out : ℂ) * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) →
+      Lf 1 ≠ 0 := by
   sorry
 
 /-- **Zeta factorisation for an abelian extension** (Sharifi 7.1.16 + 7.1.19).

@@ -238,3 +238,72 @@ Proven: L3's tail (`primeIdealZetaHigherTail_bounded`). mathlib ≤3-lemma: L2, 
 L1.1+L1.2 = the **direct prime-ideal Euler product** ≈150–210 LOC of standard UFD/Dirichlet
 bookkeeping (Sharifi's own finite-S route), NOT the ≈400-LOC absent ideal↔exponent global
 equivalence. Belongs in `NumberFieldEulerProduct.lean`; upstreamable. **Feasible**, ≈300 LOC total.
+
+---
+
+# Decomposition — ZetaProduct subtree (abelian L-functions, Sharifi 7.1.16–7.1.19, 7.2.1) — pass 2026-06-04
+
+Top results the cyclotomic case needs: `exists_dedekindZeta_factorisation` (`ζ_L = ∏_χ L(χ)`,
+7.1.16) and `exists_chebotarev_cyclotomic_residue_identity` (the orthogonality, 7.2.1).
+Sharifi pp. 141–142 read in full. Two structural findings up front:
+
+- **REUSE**: the χ-twisted Euler product `exists_artinLSeries_eulerProduct_abelian`
+  (`L(χ,s)=∏'_𝔭 (1−χ(σ_𝔭)N𝔭⁻ˢ)⁻¹`, Sharifi 7.1.18) is the **same keystone as the linchpin's L1**
+  (prime-ideal Euler product) twisted by χ — building L1 (finite-S route) gives 7.1.18 by the
+  identical method. Not a separate ~400-LOC gap.
+- **API GAP (the genuine wall of the abelian case)**: `character_sum_geometry_of_numbers_bound`
+  (7.1.19 input). Sharifi DEFERS it: "The geometry of numbers can be used to show that the number
+  of ideals 𝔞 of 𝒪_K with N𝔞 ≤ N … and χ(𝔞)=ζ is **CN + O(N^{1−d⁻¹})**, where C is a constant
+  independent of ζ" (p.142). mathlib's `NumberField.Ideal.Asymptotics` gives only the **limit**
+  (`tendsto_norm_le_div_atTop`: `#{N𝔞≤N}/N → c`), NOT the explicit `O(N^{1−1/d})` **error term**.
+  The error term is essential (it makes `Σ_{N𝔞≤N} χ(𝔞) = O(N^{1−1/d})` sub-linear ⇒ Lemma 7.1.5
+  convergence past `Re s = 1`). This is a real geometry-of-numbers API gap, not in mathlib.
+
+## Leaves
+- **Z1** `exists_artinLSeries_eulerProduct_abelian` (ZetaProduct.lean:183) — Sharifi 7.1.18 (p.141,
+  verbatim): "L(χ,s)=∏_𝔭 (1−χ(𝔭)N𝔭⁻ˢ)⁻¹ = Σ_𝔞 χ(𝔞)N𝔞⁻ˢ for Re(s)>1." **REUSE L1** (χ-twisted
+  finite-S Euler product). Not vacuous (Lf constrained `= ∏'` for s>1). ≈ L1 + χ bookkeeping.
+- **Z2** `dedekindZeta_local_factor_eq_product_artin_local` (ZetaProduct.lean:197) — Sharifi 7.1.16
+  local step. The character-theory identity: at unramified 𝔭 with Frob σ of order f, g=|G|/f
+  primes above of degree f, `∏_{𝔓∣𝔭}(1−N𝔓⁻ˢ)⁻¹ = (1−N𝔭^{−fs})^{−g}` and
+  `∏_χ(1−χ(σ)N𝔭⁻ˢ)⁻¹ = ∏_{ζ^f=1}(1−ζ·N𝔭⁻ˢ)^{−g} = (1−N𝔭^{−fs})^{−g}` (the n=gf characters of the
+  cyclic ⟨σ⟩-quotient send σ to each f-th root of unity g times; `∏_{ζ^f=1}(1−ζx)=1−xᶠ`). Leaf,
+  mathlib: cyclotomic factorisation (`Polynomial.prod_X_sub_C_eq`/`Complex.prod_one_sub`…) +
+  splitting count (`Ideal.ncard_primesOver…`, already used). ≈80 LOC.
+- **Z3** `character_sum_geometry_of_numbers_bound` (ZetaProduct.lean:212) — **API GAP** (above).
+  Sharifi 7.1.19 step 1 (p.142). Route once the per-class error `CN+O(N^{1−1/d})` exists:
+  `Σ_{N𝔞≤N} χ(𝔞) = Σ_ζ ζ·#{class ζ} = CN·Σζ + O(N^{1−1/d}) = O(N^{1−1/d})` since `Σ_{ζ^n=1} ζ = 0`
+  for nontrivial χ. **Hardest leaf** — the effective ideal-counting error bound (not in mathlib).
+- **Z4** `artinLSeries_analytic_extension` (ZetaProduct.lean:243) — Sharifi 7.1.19 step 1b. Z3 +
+  Sharifi Lemma 7.1.5 (p.138; mathlib analogue `LSeries.summable_of_…rpow`-style). Composition.
+- **Z5** `artinLSeries_one_ne_zero` (ZetaProduct.lean:257) — **DEFECT: vacuous** (`∃ Lf, Lf 1 ≠ 0`,
+  trivially `⟨fun _↦1, _⟩`). Source 7.1.19 step 2 (p.142, verbatim): "But if some m_χ ≥ 1, then
+  1 − Σ_χ m_χ ≤ 0, which is impossible since log ζ_L(s) ∼ log(s−1)⁻¹." **Restated** (this pass) to
+  the real non-vanishing: any analytic extension Lf agreeing with `Σ_𝔞 χ(𝔞)N𝔞⁻ˢ` on `Re s>1` has
+  `Lf 1 ≠ 0`. No code callers (only docstrings) ⇒ safe restate. Discharge: the log-orders argument
+  (`Σ_χ m_χ ≤ 0` impossible) using `exists_dedekindZeta_factorisation` + `ζ_L`'s simple pole.
+- **Z6** `exists_dedekindZeta_factorisation` (ZetaProduct.lean:279) — Sharifi 7.1.16 (p.141,
+  verbatim): "ζ_L(s) = ∏_χ L(χ,s)^{χ(1)}." Abelian ⇒ χ(1)=1. Internal: Z2 globally (product over 𝔭
+  of the local identity) + Z1 (each L(χ) as its Euler product) + L1 (ζ_L Euler product). Not vacuous.
+- **Z7** `exists_chebotarev_cyclotomic_residue_identity` (ZetaProduct.lean:299) — Sharifi 7.2.1
+  (p.142, verbatim): "Σ_χ χ(σ)⁻¹ log L(χ,s) ∼ Σ_χ Σ_𝔭 χ(σ)⁻¹χ(𝔭) N𝔭⁻ˢ ∼ |G| Σ_{N𝔭≡a mod m} N𝔭⁻ˢ."
+  Internal: log of Z1 (`~ Σ_𝔭 χ(𝔭)N𝔭⁻ˢ`, reuses L2/L3) + character orthogonality
+  `Σ_χ χ(σ)⁻¹χ(𝔭) = |G|·[σ_𝔭=σ]` (already proven: `character_orthogonality_cyclotomic_eq/_ne`,
+  Cyclotomic.lean).
+
+## Provability summary (ZetaProduct subtree)
+- Proven (project): the orthogonality sums (Z7's core), `character_orthogonality_cyclotomic_eq/_ne`.
+- Reuse of linchpin L1: Z1 (and L1 itself underpins Z6).
+- mathlib/standard: Z2 (char theory), Z4 (Dirichlet convergence), Z6/Z7 (compositions).
+- **API GAP: Z3** = geometry-of-numbers error bound `CN+O(N^{1−1/d})` per ideal class — Sharifi's
+  own deferred input, NOT in mathlib's `Ideal.Asymptotics` (which has only the limit). This is the
+  abelian case's analogue of the linchpin keystone: the one genuinely-new analytic-number-theory
+  leaf. Either develop it (effective ideal counting / class-counting error term, substantial) or
+  `/expert-review` whether a weaker bound suffices.
+- **DEFECT fixed: Z5** restated from vacuous to the real non-vanishing.
+
+## Feasibility
+The cyclotomic case is feasible MODULO **Z3** (the geometry-of-numbers error term). Everything
+else is reuse (Z1↩L1), standard character theory (Z2), composition (Z4/Z6/Z7 on proven
+orthogonality), or the restated non-vanishing (Z5). Z3 is the single hard wall — flag for a
+dedicated effort or expert-review on whether mathlib's limit-level asymptotics can be sharpened.
