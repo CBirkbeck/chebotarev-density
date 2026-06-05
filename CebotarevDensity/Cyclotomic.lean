@@ -290,62 +290,206 @@ theorem character_orthogonality_cyclotomic_ne
   simp_rw [hsummand]
   rw [sum_galoisCharacter_eq_card_or_zero Gal(L/K) (σ * τ⁻¹), if_neg hne]
 
-/-- **Complex-analytic bridge of Dirichlet's argument (the substantive content of the cyclotomic
-case).** Given the analytic extension `Lf` of `L(χ,·)` — analytic on `Z(1-[K:ℚ]⁻¹)` and agreeing
-with the ideal Dirichlet series on `Re s > 1` (the `artinLSeries_analytic_extension` / LF4 leaf) —
-which is nonzero at `s = 1` (`artinLSeries_one_ne_zero` / LF5), the twisted prime sum
-`Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`.
+/-! ### Complex-analytic core of the cyclotomic χ≠1 bound
 
-Proof (pure complex analysis; see decomposition.md "χ≠1 chain"): write `P_χ(s) = g_χ(s) - R_χ(s)`
-with `g_χ(s) = Σ_𝔭 -Log(1 - χ(Frob 𝔭) N𝔭⁻ˢ)` and `R_χ` the prime-power tail
-(`‖R_χ‖ ≤ Σ_𝔭 N𝔭⁻² < ∞`, uniformly on `Re s ≥ 1`). By the Euler product
-(`exists_artinLSeries_eulerProduct_abelian`) and `Complex.cexp_tsum_eq_tprod`, `exp(g_χ(s)) = Lf(s)`
-on `Re s > 1`, so `g_χ' = logDeriv Lf = Lf'/Lf`, continuous at `1` (`Lf` analytic, `Lf 1 ≠ 0`) hence
-bounded near `1`; the mean value inequality (`Convex.norm_image_sub_le_of_norm_deriv_le`) then
-bounds `g_χ`. The derivative is single-valued, sidestepping the branch/monodromy of `log Lf`. -/
-private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (hχ : χ ≠ 1) (Lf : ℂ → ℂ)
-    (hLf_an : AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re})
-    (hLf_eq : ∀ s : ℂ, 1 < s.re →
-      Lf s = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
-        galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s))
-    (hLf0 : Lf 1 ≠ 0) :
-    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
-          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
-  sorry
+These `private` helpers carry out the pure complex analysis behind
+`artinLSeries_prime_sum_bounded_of_analytic_extension`. They are stated abstractly over an index
+type `ι` with a "norm exponent base" `N : ι → ℕ` (`2 ≤ N i`) and a unit-norm coefficient
+`c : ι → ℂ`. The substrate is `g(s) = Σ_i -Log(1 - c i · N i⁻ˢ)` (the "log sum") and the per-term
+weight `w i s = c i · N i⁻ˢ`. -/
 
-/-- **Analytic input of the cyclotomic case (Dirichlet's argument).** For a nontrivial abelian
-character `χ`, the twisted prime sum `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. Now discharged
-modulo the complex-analytic bridge: produce the analytic extension `Lf` (LF4
-`artinLSeries_analytic_extension`, itself ⟸ the geometry-of-numbers leaf
-`character_sum_geometry_of_numbers_bound`), note `Lf 1 ≠ 0` (LF5 `artinLSeries_one_ne_zero`), and
-feed both to `artinLSeries_prime_sum_bounded_of_analytic_extension`. So this gap is **downstream of
-the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the bridge. -/
-private theorem artinLSeries_prime_sum_bounded_of_ne_one
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (hχ : χ ≠ 1) :
-    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
-          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
-  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L χ hχ
-  exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
-    (artinLSeries_one_ne_zero K L χ hχ Lf hLf_an hLf_eq)
+/-- The per-term log-sum function `s ↦ -Log(1 - c·N⁻ˢ)` is differentiable on `s > 1` and the log
+sum `g(s) = Σ_i -Log(1 - c i · N i⁻ˢ)` is differentiable at each `s₀ > 1`. The derivative bound
+`‖d/ds (-Log(1-w))‖ ≤ 2·log N · N⁻ˢ` is summable on a half-line `(1+ε, ∞) ∋ s₀` by dominating
+`log N ≤ N^{ε/2}/(ε/2)`, reducing to `Σ_i N i^{-(1+ε/2)} < ∞`. -/
+private theorem differentiableAt_logSum_of_two_le
+    {ι : Type*} (N : ι → ℕ) (c : ι → ℂ) (s₀ : ℝ) (hs₀ : 1 < s₀)
+    (hN : ∀ i, 2 ≤ N i) (hc : ∀ i, ‖c i‖ = 1)
+    (hsummr : ∀ r : ℝ, 1 < r → Summable (fun i => (N i : ℝ) ^ (-r))) :
+    DifferentiableAt ℝ
+      (fun s : ℝ => ∑' i, -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) s₀ := by
+  set ε : ℝ := (s₀ - 1) / 2 with hε
+  have hεpos : 0 < ε := by rw [hε]; linarith
+  set t : Set ℝ := Set.Ioi (1 + ε) with ht
+  have htopen : IsOpen t := isOpen_Ioi
+  have htconn : IsPreconnected t := (convex_Ioi _).isPreconnected
+  have hs₀t : s₀ ∈ t := by rw [ht]; simp only [Set.mem_Ioi]; rw [hε]; linarith
+  set g : ι → ℝ → ℂ := fun i s => -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ))) with hg
+  set g' : ι → ℝ → ℂ := fun i s =>
+    -((-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) /
+        (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) with hg'
+  set u : ι → ℝ := fun i => 2 * Real.log (N i) * (N i : ℝ) ^ (-(1 + ε)) with hu
+  have hNRpos : ∀ i, (0 : ℝ) < N i := fun i => by have := hN i; positivity
+  have hN1 : ∀ i, (1 : ℝ) ≤ N i := fun i => by have := hN i; exact_mod_cast Nat.one_le_of_lt this
+  have hlog0 : ∀ i, 0 ≤ Real.log (N i) := fun i => Real.log_nonneg (hN1 i)
+  have hwn : ∀ i, ∀ s : ℝ, ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ = (N i : ℝ) ^ (-s) := fun i s => by
+    rw [norm_mul, hc, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN i; omega),
+      Complex.neg_re, Complex.ofReal_re]
+  have hN2s : ∀ i, ∀ s : ℝ, 1 ≤ s → (2 : ℝ) ≤ (N i : ℝ) ^ s := fun i s hs => by
+    have h2N : (2 : ℝ) ≤ N i := by have := hN i; exact_mod_cast this
+    calc (2 : ℝ) ≤ (N i : ℝ) := h2N
+      _ = (N i : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
+      _ ≤ (N i : ℝ) ^ s := Real.rpow_le_rpow_of_exponent_le (by linarith) hs
+  have hwle : ∀ i, ∀ s ∈ t, ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ ≤ 1 / 2 := by
+    intro i s hst
+    simp only [ht, Set.mem_Ioi] at hst
+    rw [hwn, Real.rpow_neg (hNRpos i).le,
+      inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos i) _) (by norm_num)]
+    linarith [hN2s i s (by linarith)]
+  have hslit : ∀ i, ∀ s ∈ t, (1 - c i * (N i : ℂ) ^ (-(s : ℂ))) ∈ Complex.slitPlane := by
+    intro i s hst
+    have hlt : ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ < 1 := lt_of_le_of_lt (hwle i s hst) (by norm_num)
+    rw [sub_eq_add_neg]
+    exact Complex.mem_slitPlane_of_norm_lt_one
+      (z := -(c i * (N i : ℂ) ^ (-(s : ℂ)))) (by simpa using hlt)
+  have husum : Summable u := by
+    have hδpos : 0 < ε / 2 := by linarith
+    have hr'1 : 1 < (1 + ε) - ε / 2 := by linarith
+    refine Summable.of_nonneg_of_le ?_ ?_ ((hsummr ((1 + ε) - ε / 2) hr'1).mul_left (2 / (ε / 2)))
+    · intro i; rw [hu]; have := hlog0 i; positivity
+    · intro i
+      rw [hu]
+      set n : ℝ := (N i : ℝ) with hn
+      have hlog : Real.log n ≤ n ^ (ε / 2) / (ε / 2) := Real.log_le_rpow_div (hNRpos i).le hδpos
+      have hrn : 0 ≤ n ^ (-(1 + ε)) := Real.rpow_nonneg (hNRpos i).le _
+      calc 2 * Real.log n * n ^ (-(1 + ε)) ≤ 2 * (n ^ (ε / 2) / (ε / 2)) * n ^ (-(1 + ε)) := by
+            gcongr
+        _ = (2 / (ε / 2)) * n ^ (-((1 + ε) - ε / 2)) := by
+              rw [show -((1 + ε) - ε / 2) = (ε / 2) + (-(1 + ε)) by ring, Real.rpow_add (hNRpos i)]
+              field_simp
+              ring
+  have hderiv : ∀ i, ∀ s ∈ t, HasDerivAt (g i) (g' i s) s := by
+    intro i s hst
+    have hN0 : (N i : ℂ) ≠ 0 := by exact_mod_cast (by have := hN i; omega : N i ≠ 0)
+    have hpow : HasDerivAt (fun z : ℂ => (N i : ℂ) ^ (-z))
+        ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)) (s : ℂ) := by
+      have houter : HasDerivAt (fun z : ℂ => (N i : ℂ) ^ z)
+          ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ)) (-(s : ℂ)) :=
+        (Complex.hasStrictDerivAt_const_cpow (Or.inl hN0)).hasDerivAt
+      exact houter.comp (s : ℂ) (hasDerivAt_neg' (s : ℂ))
+    have hin : HasDerivAt (fun z : ℂ => 1 - c i * (N i : ℂ) ^ (-z))
+        (-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) (s : ℂ) := by
+      simpa using (hpow.const_mul (c i)).const_sub 1
+    have hlog : HasDerivAt (fun z : ℂ => Complex.log (1 - c i * (N i : ℂ) ^ (-z)))
+        ((-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) /
+          (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) (s : ℂ) := hin.clog (by simpa using hslit i s hst)
+    exact (hlog.neg).comp_ofReal
+  have hbound : ∀ i, ∀ s ∈ t, ‖g' i s‖ ≤ u i := by
+    intro i s hst
+    simp only [ht, Set.mem_Ioi] at hst
+    set w : ℂ := c i * (N i : ℂ) ^ (-(s : ℂ)) with hw
+    have hwlei : ‖w‖ ≤ 1 / 2 := hwle i s (by simp [ht, hst])
+    have hden : (1 : ℝ) / 2 ≤ ‖1 - w‖ := by
+      have : (1 : ℝ) - ‖w‖ ≤ ‖1 - w‖ := by have := norm_sub_norm_le (1 : ℂ) w; simpa using this
+      linarith
+    have hdenpos : 0 < ‖1 - w‖ := by linarith
+    have hnum : ‖(-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1))))‖
+        = (N i : ℝ) ^ (-s) * Real.log (N i) := by
+      rw [show c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1))
+          = -(c i * (N i : ℂ) ^ (-(s : ℂ))) * Complex.log (N i : ℂ) by ring]
+      rw [norm_neg, norm_mul, norm_neg, ← hw, hwn,
+        show Complex.log (N i : ℂ) = ((Real.log (N i) : ℝ) : ℂ) by
+          rw [← Complex.ofReal_natCast, Complex.ofReal_log (hNRpos i).le],
+        Complex.norm_real, Real.norm_of_nonneg (hlog0 i)]
+    rw [hg', norm_neg, norm_div, hnum, hu, div_le_iff₀ hdenpos]
+    have hrns : 0 ≤ (N i : ℝ) ^ (-s) := Real.rpow_nonneg (hNRpos i).le _
+    have hmono : (N i : ℝ) ^ (-s) ≤ (N i : ℝ) ^ (-(1 + ε)) := by
+      apply Real.rpow_le_rpow_of_exponent_le (hN1 i); linarith
+    have hrn1 : 0 ≤ (N i : ℝ) ^ (-(1 + ε)) := Real.rpow_nonneg (hNRpos i).le _
+    nlinarith [hden, hlog0 i, hrns, hmono, mul_nonneg hrns (hlog0 i), mul_nonneg hrn1 (hlog0 i)]
+  have hg0 : Summable fun i => g i s₀ := by
+    have hbase : Summable (fun i => (N i : ℝ) ^ (-s₀)) := hsummr s₀ hs₀
+    refine Summable.of_norm ?_
+    refine Summable.of_nonneg_of_le (fun i => norm_nonneg _) ?_ (hbase.mul_left 2)
+    intro i
+    set w : ℂ := c i * (N i : ℂ) ^ (-(s₀ : ℂ)) with hw
+    have hwlei : ‖w‖ ≤ 1 / 2 := hwle i s₀ hs₀t
+    have hwlt : ‖w‖ < 1 := lt_of_le_of_lt hwlei (by norm_num)
+    have hslitw : (1 - w) ∈ Complex.slitPlane := hslit i s₀ hs₀t
+    have harg : (1 - w).arg ≠ Real.pi := Complex.slitPlane_arg_ne_pi hslitw
+    have hlogi : Complex.log (1 - w)⁻¹ = -Complex.log (1 - w) := Complex.log_inv _ harg
+    have hkey := Complex.norm_log_one_sub_inv_sub_self_le hwlt
+    rw [hlogi] at hkey
+    have h1w : (1 - ‖w‖)⁻¹ ≤ 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
+    have hsq : ‖-Complex.log (1 - w) - w‖ ≤ ‖w‖ ^ 2 := by
+      refine hkey.trans ?_; nlinarith [sq_nonneg ‖w‖, h1w, norm_nonneg w]
+    have htri : ‖-Complex.log (1 - w)‖ ≤ ‖w‖ ^ 2 + ‖w‖ := by
+      calc ‖-Complex.log (1 - w)‖ = ‖(-Complex.log (1 - w) - w) + w‖ := by ring_nf
+        _ ≤ ‖-Complex.log (1 - w) - w‖ + ‖w‖ := norm_add_le _ _
+        _ ≤ ‖w‖ ^ 2 + ‖w‖ := by linarith
+    have hwnn : ‖w‖ = (N i : ℝ) ^ (-s₀) := hwn i s₀
+    rw [hg]
+    calc ‖-Complex.log (1 - w)‖ ≤ ‖w‖ ^ 2 + ‖w‖ := htri
+      _ ≤ 2 * ‖w‖ := by nlinarith [norm_nonneg w, hwlei]
+      _ = 2 * (N i : ℝ) ^ (-s₀) := by rw [hwnn]
+  exact (hasDerivAt_tsum_of_isPreconnected husum htopen htconn hderiv hbound hs₀t hg0
+    hs₀t).differentiableAt
 
-/-! ### Assembly helpers for `primeIdealZetaSum_frobeniusFibre_asymp`
+/-- `exp(g(s)) = ∏_i (1 - w i s)⁻¹` for the log sum `g`, when the weights `w i = c i · N i⁻ˢ` are
+summable and `1 - w i` avoids the slit. Uses `Complex.cexp_tsum_eq_tprod` with `f i = (1-w i)⁻¹`
+and `Log(f i) = -Log(1 - w i)`. -/
+private theorem cexp_logSum_eq_tprod
+    {ι : Type*} (w : ι → ℂ) (hsumw : Summable w) (hslit : ∀ i, (1 - w i) ∈ Complex.slitPlane) :
+    Complex.exp (∑' i, -Complex.log (1 - w i)) = ∏' i, (1 - w i)⁻¹ := by
+  set f : ι → ℂ := fun i => (1 - w i)⁻¹ with hf
+  have hfn : ∀ i, f i ≠ 0 := fun i => inv_ne_zero (Complex.slitPlane_ne_zero (hslit i))
+  have hlogf : ∀ i, Complex.log (f i) = -Complex.log (1 - w i) := fun i => by
+    rw [hf, Complex.log_inv _ (Complex.slitPlane_arg_ne_pi (hslit i))]
+  have hsumlog : Summable (fun i => Complex.log (f i)) :=
+    (hsumw.clog_one_sub.neg).congr fun i => (hlogf i).symm
+  rw [show (fun i => -Complex.log (1 - w i)) = (fun i => Complex.log (f i)) from
+    funext fun i => (hlogf i).symm]
+  exact Complex.cexp_tsum_eq_tprod hfn hsumlog
 
-The orthogonality collapse runs the character sum `∑_χ (χ σ)⁻¹ · (∑'_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ)` two ways:
+/-- The derivative of the log sum `g` at `s₀ > 1` equals the logarithmic derivative `Lf'/Lf` of any
+function `Lf` with `exp(g s) = Lf ↑s` near `s₀`, differentiable at `↑s₀` with `Lf ↑s₀ ≠ 0`.
+Differentiate both sides of `exp(g s) = Lf ↑s`: the single-valued derivative sidesteps the branch
+ambiguity of `log Lf`. -/
+private theorem hasDerivAt_logSum_eq_logDeriv
+    (G : ℝ → ℂ) (G' : ℂ) (s₀ : ℝ) (hs₀ : 1 < s₀) (Lf : ℂ → ℂ) (hG : HasDerivAt G G' s₀)
+    (hLfdiff : DifferentiableAt ℂ Lf (s₀ : ℂ))
+    (heq : ∀ s : ℝ, 1 < s → Complex.exp (G s) = Lf (s : ℂ)) (hLf0 : Lf (s₀ : ℂ) ≠ 0) :
+    G' = deriv Lf (s₀ : ℂ) / Lf (s₀ : ℂ) := by
+  have hexpG : HasDerivAt (fun s : ℝ => Complex.exp (G s)) (G' * Complex.exp (G s₀)) s₀ := by
+    simpa [mul_comm] using hG.cexp
+  have hLfreal : HasDerivAt (fun s : ℝ => Lf (s : ℂ)) (deriv Lf (s₀ : ℂ)) s₀ :=
+    (hLfdiff.hasDerivAt).comp_ofReal
+  have hev : (fun s : ℝ => Complex.exp (G s)) =ᶠ[𝓝 s₀] (fun s : ℝ => Lf (s : ℂ)) := by
+    filter_upwards [Ioi_mem_nhds hs₀] with s hs using heq s hs
+  have hdereq : G' * Complex.exp (G s₀) = deriv Lf (s₀ : ℂ) :=
+    hexpG.unique (hLfreal.congr_of_eventuallyEq hev)
+  rw [heq s₀ hs₀] at hdereq
+  field_simp at hdereq ⊢
+  linear_combination hdereq
 
-* interchanging the finite `∑_χ` with the prime `∑'_𝔭` and collapsing the inner character sum by
-  orthogonality gives `|G| · P_σ(s)` (the fibre prime sum, real and nonnegative);
-* splitting `∑_χ` into the trivial character `χ = 1` (contributing `∑'_𝔭 N𝔭⁻ˢ` over unramified
-  primes, asymptotic to `log(1/(s-1))`) and the nontrivial characters (each bounded by
-  `artinLSeries_prime_sum_bounded_of_ne_one`).
-
-Comparing the two yields `|G| · P_σ(s) = log(1/(s-1)) + O(1)`, hence `P_σ(s)/log → 1/|G|`. -/
+/-- Mean-value packaging: if `G` is differentiable on `(1, ∞)` with derivative `F`, and `F` is
+continuous on the compact `[1, 2]`, then `‖G‖` is bounded as `s ↓ 1` (by `‖G 2‖ + M` where `M`
+bounds `‖F‖` on `[1, 2]`), via `Convex.norm_image_sub_le_of_norm_deriv_le` on `[s, 2]`. -/
+private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
+    (G : ℝ → ℂ) (F : ℝ → ℂ) (hGderiv : ∀ s : ℝ, 1 < s → HasDerivAt G (F s) s)
+    (hFcont : ContinuousOn F (Set.Icc 1 2)) :
+    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ‖G s‖ ≤ C := by
+  obtain ⟨M, hM⟩ : ∃ M : ℝ, ∀ s ∈ Set.Icc (1 : ℝ) 2, ‖F s‖ ≤ M :=
+    isCompact_Icc.exists_bound_of_continuousOn hFcont
+  refine ⟨‖G 2‖ + M * 1, ?_⟩
+  have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 := nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
+  filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
+  simp only [Set.mem_Ioi] at hs1
+  have hsub : Set.Icc s 2 ⊆ Set.Icc (1 : ℝ) 2 := Set.Icc_subset_Icc hs1.le le_rfl
+  have hdiff : ∀ x ∈ Set.Icc s 2, DifferentiableAt ℝ G x := fun x hx =>
+    (hGderiv x (lt_of_lt_of_le hs1 hx.1)).differentiableAt
+  have hbnd : ∀ x ∈ Set.Icc s 2, ‖deriv G x‖ ≤ M := fun x hx => by
+    rw [(hGderiv x (lt_of_lt_of_le hs1 hx.1)).deriv]; exact hM x (hsub hx)
+  have hmvt : ‖G s - G 2‖ ≤ M * ‖s - 2‖ :=
+    Convex.norm_image_sub_le_of_norm_deriv_le hdiff hbnd (convex_Icc s 2)
+      (Set.right_mem_Icc.mpr hs2.le) (Set.left_mem_Icc.mpr hs2.le)
+  have hsm : ‖s - 2‖ ≤ 1 := by rw [Real.norm_eq_abs, abs_le]; constructor <;> linarith
+  have hMnn : 0 ≤ M := le_trans (norm_nonneg _) (hM 1 (by norm_num))
+  calc ‖G s‖ = ‖(G s - G 2) + G 2‖ := by ring_nf
+    _ ≤ ‖G s - G 2‖ + ‖G 2‖ := norm_add_le _ _
+    _ ≤ M * ‖s - 2‖ + ‖G 2‖ := by linarith
+    _ ≤ M * 1 + ‖G 2‖ := by nlinarith [hsm]
+    _ = ‖G 2‖ + M * 1 := by ring
 
 /-- The twisted prime sum `∑'_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` over the unramified primes, as a complex function of
 `s`. The `χ = 1` value is the real prime sum `∑'_𝔭 N𝔭⁻ˢ`; the `χ ≠ 1` values are bounded near
@@ -386,6 +530,268 @@ private theorem summable_twistedPrimeSum
     rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
       Complex.ofReal_re]
   exact Summable.of_norm (hs0.congr fun 𝔭 => (hnormterm 𝔭).symm)
+
+/-- For nonzero prime ideals `𝔭` (so `𝔭 ≠ ⊤` and `N𝔭 ≠ 0`), the absolute norm is `≥ 2`. -/
+private theorem two_le_absNorm_prime
+    (K : Type*) [Field K] [NumberField K] (𝔭 : Ideal (𝓞 K)) (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+    2 ≤ Ideal.absNorm 𝔭 := by
+  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => hne (Ideal.absNorm_eq_zero_iff.mp h)
+  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  omega
+
+/-- **Complex-analytic bridge of Dirichlet's argument (the substantive content of the cyclotomic
+case).** Given the analytic extension `Lf` of `L(χ,·)` — analytic on `Z(1-[K:ℚ]⁻¹)` and agreeing
+with the ideal Dirichlet series on `Re s > 1` (the `artinLSeries_analytic_extension` / LF4 leaf) —
+which is nonzero at `s = 1` (`artinLSeries_one_ne_zero` / LF5), the twisted prime sum
+`Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`.
+
+Proof (pure complex analysis; see decomposition.md "χ≠1 chain"): write `P_χ(s) = g_χ(s) - R_χ(s)`
+with `g_χ(s) = Σ_𝔭 -Log(1 - χ(Frob 𝔭) N𝔭⁻ˢ)` and `R_χ` the prime-power tail
+(`‖R_χ‖ ≤ Σ_𝔭 N𝔭⁻² < ∞`, uniformly on `Re s ≥ 1`). By the Euler product
+(`exists_artinLSeries_eulerProduct_abelian`) and `Complex.cexp_tsum_eq_tprod`, `exp(g_χ(s)) = Lf(s)`
+on `Re s > 1`, so `g_χ' = logDeriv Lf = Lf'/Lf`, continuous at `1` (`Lf` analytic, `Lf 1 ≠ 0`) hence
+bounded near `1`; the mean value inequality (`Convex.norm_image_sub_le_of_norm_deriv_le`) then
+bounds `g_χ`. The derivative is single-valued, sidestepping the branch/monodromy of `log Lf`. -/
+private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (_hχ : χ ≠ 1) (Lf : ℂ → ℂ)
+    (hLf_an : AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re})
+    (hLf_eq : ∀ s : ℂ, 1 < s.re →
+      Lf s = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+        galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s))
+    (hLf0 : Lf 1 ≠ 0) :
+    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
+  classical
+  -- Index, "norm base" `N`, unit-norm coefficient `c`, the weight `w` and the log sum `G`.
+  set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hιdef
+  set N : ι → ℕ := fun 𝔭 => Ideal.absNorm 𝔭.1 with hN
+  set c : ι → ℂ := fun 𝔭 => (χ (frobeniusClass K L 𝔭.1).out : ℂ) with hc
+  set G : ℝ → ℂ := fun s => ∑' 𝔭 : ι, -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) with hGdef
+  have hc1 : ∀ 𝔭 : ι, ‖c 𝔭‖ = 1 := fun 𝔭 => by
+    rw [hc]
+    obtain ⟨n, hn, hpow⟩ :=
+      isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite (frobeniusClass K L 𝔭.1).out)
+    refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
+    simpa using congrArg Units.val
+      (show (χ (frobeniusClass K L 𝔭.1).out) ^ n = 1 by rw [← map_pow, hpow, map_one])
+  have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 =>
+    two_le_absNorm_prime K 𝔭.1 𝔭.2.1 (UnramifiedIn.ne_bot K L 𝔭.2.2)
+  -- `Σ_𝔭 N𝔭⁻ʳ` is summable over the unramified subtype for every `r > 1`.
+  have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-r)) := by
+    intro r hr
+    set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
+    have hinj : Function.Injective
+        (fun 𝔭 : ι =>
+          (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+            {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+      fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
+    exact ((summable_prime_absNorm_rpow U hr).comp_injective hinj).congr fun 𝔭 => rfl
+  -- `‖w 𝔭 s‖ = N𝔭⁻ˢ`, and `‖w 𝔭 s‖ < 1` for `s > 1`; hence the slit-plane condition.
+  have hwn : ∀ 𝔭 : ι, ∀ s : ℝ, ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ = (N 𝔭 : ℝ) ^ (-s) := by
+    intro 𝔭 s
+    rw [norm_mul, hc1, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN2 𝔭; omega),
+      Complex.neg_re, Complex.ofReal_re]
+  have hslit : ∀ 𝔭 : ι, ∀ s : ℝ, 1 < s →
+      (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) ∈ Complex.slitPlane := by
+    intro 𝔭 s hs
+    have h1N : (1 : ℝ) < N 𝔭 := by have := hN2 𝔭; exact_mod_cast (by omega : 1 < N 𝔭)
+    have hlt : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ < 1 := by
+      rw [hwn]; exact Real.rpow_lt_one_of_one_lt_of_neg h1N (by linarith)
+    rw [sub_eq_add_neg]
+    exact Complex.mem_slitPlane_of_norm_lt_one
+      (z := -(c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) (by simpa using hlt)
+  -- `exp(G s) = Lf ↑s` for `s > 1`, via the Euler product and `cexp_logSum_eq_tprod`.
+  have hexpeq : ∀ s : ℝ, 1 < s → Complex.exp (G s) = Lf (s : ℂ) := by
+    intro s hs
+    have hsc : 1 < ((s : ℂ)).re := by simpa using hs
+    have hsumw : Summable (fun 𝔭 : ι => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
+      summable_twistedPrimeSum K L χ hs
+    rw [hGdef, cexp_logSum_eq_tprod _ hsumw (fun 𝔭 => hslit 𝔭 s hs)]
+    rw [show (fun 𝔭 : ι => (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))⁻¹)
+        = (fun 𝔭 : ι => (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ)
+            * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹) from rfl,
+      exists_artinLSeries_eulerProduct_abelian K L χ (s : ℂ) hsc, ← hLf_eq (s : ℂ) hsc]
+  -- `Lf ↑s ≠ 0` for `s ≥ 1`: at `s = 1` it is `hLf0`; for `s > 1` it is `exp(G s) ≠ 0`.
+  have hLf_ne : ∀ s : ℝ, 1 ≤ s → Lf (s : ℂ) ≠ 0 := by
+    intro s hs
+    rcases eq_or_lt_of_le hs with hs1 | hs1
+    · rw [← hs1]; simpa using hLf0
+    · rw [← hexpeq s hs1]; exact Complex.exp_ne_zero _
+  -- `F := s ↦ Lf'(↑s)/Lf(↑s)` is continuous on the compact `[1, 2]`.
+  set D : Set ℂ := {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} with hD
+  have hDopen : IsOpen D := by rw [hD]; exact isOpen_lt continuous_const Complex.continuous_re
+  have hanNhd : AnalyticOnNhd ℂ Lf D := (hDopen.analyticOn_iff_analyticOnNhd).mp hLf_an
+  have hmemD : ∀ s : ℝ, 1 ≤ s → (s : ℂ) ∈ D := fun s hs => by
+    rw [hD]; simp only [Set.mem_setOf_eq, Complex.ofReal_re]
+    have hfr : 0 < Module.finrank ℚ K := Module.finrank_pos
+    have : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by positivity
+    linarith
+  have hLfdiff : ∀ s : ℝ, 1 ≤ s → DifferentiableAt ℂ Lf (s : ℂ) := fun s hs =>
+    (hanNhd (s : ℂ) (hmemD s hs)).differentiableAt
+  set F : ℝ → ℂ := fun s => deriv Lf (s : ℂ) / Lf (s : ℂ) with hF
+  have hFcont : ContinuousOn F (Set.Icc 1 2) := by
+    have hLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ => Lf (s : ℂ)) s := fun s hs =>
+      ((hanNhd (s : ℂ) (hmemD s hs)).continuousAt).comp Complex.continuous_ofReal.continuousAt
+    have hdLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ => deriv Lf (s : ℂ)) s := fun s hs =>
+      (((hanNhd (s : ℂ) (hmemD s hs)).deriv).continuousAt).comp
+        Complex.continuous_ofReal.continuousAt
+    refine ContinuousOn.div ?_ ?_ (fun s hs => hLf_ne s hs.1)
+    · exact fun s hs => (hdLfca s hs.1).continuousWithinAt
+    · exact fun s hs => (hLfca s hs.1).continuousWithinAt
+  -- `G` is differentiable on `(1, ∞)` with `deriv G s = F s` (identified via `exp(G) = Lf`).
+  have hGderiv : ∀ s : ℝ, 1 < s → HasDerivAt G (F s) s := by
+    intro s hs
+    have hGdiff : DifferentiableAt ℝ G s :=
+      differentiableAt_logSum_of_two_le N c s hs hN2 hc1 hsummr
+    have hval : deriv G s = F s :=
+      hasDerivAt_logSum_eq_logDeriv G (deriv G s) s hs Lf hGdiff.hasDerivAt
+        (hLfdiff s hs.le) hexpeq (hLf_ne s hs.le)
+    rw [hF] at hval ⊢
+    rw [← hval]; exact hGdiff.hasDerivAt
+  -- `‖G s‖ ≤ C_g` eventually (mean value inequality).
+  obtain ⟨Cg, hCg⟩ := norm_bounded_nhdsGT_of_deriv_continuousOn G F hGderiv hFcont
+  -- `‖R_χ s‖ ≤ M_R` eventually: each `‖-Log(1-w) - w‖ ≤ N𝔭⁻²`, summed `≤ Σ_𝔭 N𝔭⁻²`.
+  set MR : ℝ := ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ)) with hMR
+  have hsumN2 : Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-(2 : ℝ))) := hsummr 2 one_lt_two
+  have hNRpos : ∀ 𝔭 : ι, (0 : ℝ) < N 𝔭 := fun 𝔭 => by have := hN2 𝔭; positivity
+  have hRbdd : ∀ s : ℝ, 1 < s →
+      ‖∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))‖ ≤ MR := by
+    intro s hs
+    set w : ι → ℂ := fun 𝔭 => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)) with hw
+    have hwle : ∀ 𝔭 : ι, ‖w 𝔭‖ ≤ 1 / 2 := fun 𝔭 => by
+      rw [hw, hwn]
+      have h2N : (2 : ℝ) ≤ N 𝔭 := by have := hN2 𝔭; exact_mod_cast this
+      have hNs : (2 : ℝ) ≤ (N 𝔭 : ℝ) ^ s := by
+        calc (2 : ℝ) ≤ (N 𝔭 : ℝ) := h2N
+          _ = (N 𝔭 : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
+          _ ≤ (N 𝔭 : ℝ) ^ s := Real.rpow_le_rpow_of_exponent_le (by linarith) hs.le
+      rw [Real.rpow_neg (hNRpos 𝔭).le,
+        inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos 𝔭) _) (by norm_num)]
+      linarith
+    have hterm : ∀ 𝔭 : ι, ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 => by
+      have hwlei := hwle 𝔭
+      have hlt : ‖w 𝔭‖ < 1 := by linarith
+      have hslitw : (1 - w 𝔭) ∈ Complex.slitPlane := hslit 𝔭 s hs
+      have hlogi : Complex.log (1 - w 𝔭)⁻¹ = -Complex.log (1 - w 𝔭) :=
+        Complex.log_inv _ (Complex.slitPlane_arg_ne_pi hslitw)
+      have hkey := Complex.norm_log_one_sub_inv_sub_self_le hlt
+      rw [hlogi] at hkey
+      have h1 : (1 - ‖w 𝔭‖)⁻¹ ≤ 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
+      have hsq : ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ ‖w 𝔭‖ ^ 2 := by
+        refine hkey.trans ?_; nlinarith [sq_nonneg ‖w 𝔭‖, h1, norm_nonneg (w 𝔭)]
+      have hwsq : ‖w 𝔭‖ ^ 2 = (N 𝔭 : ℝ) ^ (-(2 * s)) := by
+        rw [hw, hwn, ← Real.rpow_natCast ((N 𝔭 : ℝ) ^ (-s)) 2, ← Real.rpow_mul (hNRpos 𝔭).le]
+        ring_nf
+      have hmono : (N 𝔭 : ℝ) ^ (-(2 * s)) ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
+        apply Real.rpow_le_rpow_of_exponent_le
+          (by have := hN2 𝔭; exact_mod_cast Nat.one_le_of_lt this); linarith
+      calc ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ ‖w 𝔭‖ ^ 2 := hsq
+        _ = (N 𝔭 : ℝ) ^ (-(2 * s)) := hwsq
+        _ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hmono
+    have hsumR : Summable (fun 𝔭 : ι => -Complex.log (1 - w 𝔭) - w 𝔭) :=
+      Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) hterm hsumN2)
+    calc ‖∑' 𝔭 : ι, (-Complex.log (1 - w 𝔭) - w 𝔭)‖
+        ≤ ∑' 𝔭 : ι, ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ := norm_tsum_le_tsum_norm hsumR.norm
+      _ ≤ ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hsumR.norm.tsum_le_tsum hterm hsumN2
+      _ = MR := rfl
+  -- Assemble: `P_χ s = G s - R_χ s`, so `‖P_χ s‖ ≤ ‖G s‖ + ‖R_χ s‖ ≤ Cg + MR`.
+  refine ⟨Cg + MR, ?_⟩
+  filter_upwards [hCg, self_mem_nhdsWithin] with s hCgs hs1
+  simp only [Set.mem_Ioi] at hs1
+  -- `P_χ = G - R`, by `tsum_sub` (both summable).
+  have hsumw : Summable (fun 𝔭 : ι => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
+    summable_twistedPrimeSum K L χ hs1
+  have hsumG : Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) := by
+    have hsumR : Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+        - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := by
+      refine Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) ?_ hsumN2)
+      intro 𝔭
+      have hwle : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ≤ 1 / 2 := by
+        rw [hwn]
+        have h2N : (2 : ℝ) ≤ N 𝔭 := by have := hN2 𝔭; exact_mod_cast this
+        have hNs : (2 : ℝ) ≤ (N 𝔭 : ℝ) ^ s :=
+          le_trans h2N ((Real.rpow_one (N 𝔭 : ℝ)).symm.trans_le
+            (Real.rpow_le_rpow_of_exponent_le (by linarith) hs1.le))
+        rw [Real.rpow_neg (hNRpos 𝔭).le,
+          inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos 𝔭) _) (by norm_num)]
+        linarith
+      have hlt : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ < 1 := by linarith
+      have hslitw : (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) ∈ Complex.slitPlane := hslit 𝔭 s hs1
+      have hlogi : Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))⁻¹
+          = -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
+        Complex.log_inv _ (Complex.slitPlane_arg_ne_pi hslitw)
+      have hkey := Complex.norm_log_one_sub_inv_sub_self_le hlt
+      rw [hlogi] at hkey
+      have h1 : (1 - ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖)⁻¹ ≤ 2 := by
+        rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
+      have hsq : ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ≤ ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 := by
+        refine hkey.trans ?_
+        nlinarith [sq_nonneg ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖, h1,
+          norm_nonneg (c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))]
+      have hwsq : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 = (N 𝔭 : ℝ) ^ (-(2 * s)) := by
+        rw [hwn, ← Real.rpow_natCast ((N 𝔭 : ℝ) ^ (-s)) 2, ← Real.rpow_mul (hNRpos 𝔭).le]
+        ring_nf
+      have hmono : (N 𝔭 : ℝ) ^ (-(2 * s)) ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
+        apply Real.rpow_le_rpow_of_exponent_le
+          (by have := hN2 𝔭; exact_mod_cast Nat.one_le_of_lt this); linarith
+      calc ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+            - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖
+          ≤ ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 := hsq
+        _ = (N 𝔭 : ℝ) ^ (-(2 * s)) := hwsq
+        _ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hmono
+    simpa using hsumR.add hsumw
+  -- `P_χ s = G s - R_χ s`.
+  have hPsub : (∑' 𝔭 : ι, c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+      = G s - ∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := by
+    rw [hGdef, ← hsumG.tsum_sub
+      ((hsumG.sub hsumw).congr fun 𝔭 => rfl)]
+    refine tsum_congr fun 𝔭 => ?_
+    ring
+  calc ‖∑' 𝔭 : ι, (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖
+      = ‖∑' 𝔭 : ι, c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ := rfl
+    _ = ‖G s - ∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))‖ := by rw [hPsub]
+    _ ≤ ‖G s‖ + ‖∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))‖ := norm_sub_le _ _
+    _ ≤ Cg + MR := by
+        have := hRbdd s hs1
+        linarith
+
+/-- **Analytic input of the cyclotomic case (Dirichlet's argument).** For a nontrivial abelian
+character `χ`, the twisted prime sum `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. Now discharged
+modulo the complex-analytic bridge: produce the analytic extension `Lf` (LF4
+`artinLSeries_analytic_extension`, itself ⟸ the geometry-of-numbers leaf
+`character_sum_geometry_of_numbers_bound`), note `Lf 1 ≠ 0` (LF5 `artinLSeries_one_ne_zero`), and
+feed both to `artinLSeries_prime_sum_bounded_of_analytic_extension`. So this gap is **downstream of
+the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the bridge. -/
+private theorem artinLSeries_prime_sum_bounded_of_ne_one
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (hχ : χ ≠ 1) :
+    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
+  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L χ hχ
+  exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
+    (artinLSeries_one_ne_zero K L χ hχ Lf hLf_an hLf_eq)
+
+/-! ### Assembly helpers for `primeIdealZetaSum_frobeniusFibre_asymp`
+
+The orthogonality collapse runs the character sum `∑_χ (χ σ)⁻¹ · (∑'_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ)` two ways:
+
+* interchanging the finite `∑_χ` with the prime `∑'_𝔭` and collapsing the inner character sum by
+  orthogonality gives `|G| · P_σ(s)` (the fibre prime sum, real and nonnegative);
+* splitting `∑_χ` into the trivial character `χ = 1` (contributing `∑'_𝔭 N𝔭⁻ˢ` over unramified
+  primes, asymptotic to `log(1/(s-1))`) and the nontrivial characters (each bounded by
+  `artinLSeries_prime_sum_bounded_of_ne_one`).
+
+Comparing the two yields `|G| · P_σ(s) = log(1/(s-1)) + O(1)`, hence `P_σ(s)/log → 1/|G|`. -/
 
 /-- The character-twist orthogonality collapse, matching case. When `frobeniusClass K L 𝔭 =
 ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` equals `|G|`. Reindexes the proven
