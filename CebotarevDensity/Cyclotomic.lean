@@ -290,12 +290,40 @@ theorem character_orthogonality_cyclotomic_ne
   simp_rw [hsummand]
   rw [sum_galoisCharacter_eq_card_or_zero Gal(L/K) (σ * τ⁻¹), if_neg hne]
 
-/-- **Analytic gap (Dirichlet's argument):** for a nontrivial abelian character `χ`, the twisted
-prime sum `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. Equivalent to `log L(χ,s)` bounded near
-`s=1`, i.e. control of `arg L_χ` via the analytic extension + non-vanishing
-(`artinLSeries_analytic_extension` + `artinLSeries_one_ne_zero`). The substantive complex-analytic
-input of the cyclotomic case; left as the documented gap (cf. the geometry-of-numbers gap
-`character_sum_geometry_of_numbers_bound`). -/
+/-- **Complex-analytic bridge of Dirichlet's argument (the substantive content of the cyclotomic
+case).** Given the analytic extension `Lf` of `L(χ,·)` — analytic on `Z(1-[K:ℚ]⁻¹)` and agreeing
+with the ideal Dirichlet series on `Re s > 1` (the `artinLSeries_analytic_extension` / LF4 leaf) —
+which is nonzero at `s = 1` (`artinLSeries_one_ne_zero` / LF5), the twisted prime sum
+`Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`.
+
+Proof (pure complex analysis; see decomposition.md "χ≠1 chain"): write `P_χ(s) = g_χ(s) - R_χ(s)`
+with `g_χ(s) = Σ_𝔭 -Log(1 - χ(Frob 𝔭) N𝔭⁻ˢ)` and `R_χ` the prime-power tail
+(`‖R_χ‖ ≤ Σ_𝔭 N𝔭⁻² < ∞`, uniformly on `Re s ≥ 1`). By the Euler product
+(`exists_artinLSeries_eulerProduct_abelian`) and `Complex.cexp_tsum_eq_tprod`, `exp(g_χ(s)) = Lf(s)`
+on `Re s > 1`, so `g_χ' = logDeriv Lf = Lf'/Lf`, continuous at `1` (`Lf` analytic, `Lf 1 ≠ 0`) hence
+bounded near `1`; the mean value inequality (`Convex.norm_image_sub_le_of_norm_deriv_le`) then
+bounds `g_χ`. The derivative is single-valued, sidestepping the branch/monodromy of `log Lf`. -/
+private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (hχ : χ ≠ 1) (Lf : ℂ → ℂ)
+    (hLf_an : AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re})
+    (hLf_eq : ∀ s : ℂ, 1 < s.re →
+      Lf s = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+        galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s))
+    (hLf0 : Lf 1 ≠ 0) :
+    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
+  sorry
+
+/-- **Analytic input of the cyclotomic case (Dirichlet's argument).** For a nontrivial abelian
+character `χ`, the twisted prime sum `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. Now discharged
+modulo the complex-analytic bridge: produce the analytic extension `Lf` (LF4
+`artinLSeries_analytic_extension`, itself ⟸ the geometry-of-numbers leaf
+`character_sum_geometry_of_numbers_bound`), note `Lf 1 ≠ 0` (LF5 `artinLSeries_one_ne_zero`), and
+feed both to `artinLSeries_prime_sum_bounded_of_analytic_extension`. So this gap is **downstream of
+the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the bridge. -/
 private theorem artinLSeries_prime_sum_bounded_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
@@ -303,7 +331,9 @@ private theorem artinLSeries_prime_sum_bounded_of_ne_one
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
-  sorry
+  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L χ hχ
+  exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
+    (artinLSeries_one_ne_zero K L χ hχ Lf hLf_an hLf_eq)
 
 /-! ### Assembly helpers for `primeIdealZetaSum_frobeniusFibre_asymp`
 

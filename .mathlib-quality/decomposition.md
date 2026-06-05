@@ -592,3 +592,89 @@ character bound by an elementary `Σζ=0` computation):
   structural comment; the witness constant `(orderOf χ)·C'` is the real one. Remaining `sorry` =
   the elementary fibre-regroup + roots-of-unity-sum (a tickettable step, not the deep gap).
 - **LF4 unchanged**: still collapses to `LSeriesSummable_of_sum_norm_bigO` once leaf G lands.
+
+# χ≠1 chain: `artinLSeries_prime_sum_bounded_of_ne_one` (`/develop --decompose`, 2026-06-05, ADVERSARIAL)
+
+**Target (the cyclotomic case's analytic gap):** `artinLSeries_prime_sum_bounded_of_ne_one`
+(`Cyclotomic.lean`): for nontrivial abelian `χ`, the twisted prime sum `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` is
+`O(1)` as `s ↓ 1⁺` (full complex norm).
+
+## THE finding — this gap is NOT independent; it is downstream of leaf G + a mathlib bridge
+- **Gap is now DISCHARGED (no sorry of its own):** rewired to `obtain` LF4
+  (`artinLSeries_analytic_extension`) → `Lf`, note `Lf 1 ≠ 0` (LF5 `artinLSeries_one_ne_zero`), feed
+  both to the new bridge leaf. So `artinLSeries_prime_sum_bounded_of_ne_one =` LF4 ∘ LF5 ∘ bridge.
+- **LF4 ⟸ leaf G** (geometry of numbers) and **LF5 ⟸ LF4 ⟸ leaf G** (LF5 is proven *conditional* on
+  being handed the analytic extension). So this gap shares the SAME deep root as the L3 chain.
+- **The only new content is the bridge** `artinLSeries_prime_sum_bounded_of_analytic_extension`
+  (`Cyclotomic.lean ~300`, the single new `sorry`): pure complex analysis, conditional on `Lf`
+  analytic + `Lf 1 ≠ 0`, concluding the twisted prime sum bounded.
+
+## Why the gap needs the FULL complex norm (adversarial over-statement check — PASSED)
+The consumer `primeIdealZetaSum_frobeniusFibre_asymp` (Cyclotomic.lean ~620) bounds `‖B s‖`,
+`B = Σ_χ (χσ)⁻¹·twistedPrimeSum χ s`, then uses `(B s).re`. Because the `(χσ)⁻¹` are **complex**
+units, `(B s).re` mixes both `Re` and `Im` of the twisted prime sum. So bounding only `Re` would NOT
+suffice — the full complex bound is **necessary**, not over-specified. (This kills the tempting
+weakening "only bound the real part", which the project's existing `Real.log‖Lf‖` machinery — enough
+for LF5 — would give. The imaginary part / argument control is the real extra content.)
+
+## Bridge decomposition (`P_χ(s) = g_χ(s) − R_χ(s)`, `g_χ(s) = Σ_𝔭 −Log(1 − χ(Frob 𝔭)N𝔭⁻ˢ)`)
+Source: Sharifi p.142 "Much as before, we have `log L(χ,s) ~ Σ_𝔭 χ(𝔭)N𝔭⁻ˢ` for `Re(s)>1`" (the
+`g_χ ≈ P_χ` relation) + p.143 "since we know that `L(χ,1)≠0` for all nontrivial `χ`" (the
+boundedness). Sharifi black-boxes the analytic bridge; source-gap fallback = standard ANT (Serre,
+*A Course in Arithmetic* VI §3–4; Lang *ANT* VIII). ✅=mathlib/project verified by Explore agents.
+- **C1 tail split** `P_χ = g_χ − R_χ`, `R_χ(s) = Σ_𝔭 (−Log(1−w_𝔭) − w_𝔭)` — `tsum_sub`, both
+  summable for `Re s>1`. ✅ glue.
+- **C1a per-prime estimate** `‖−Log(1−w) − w‖ ≤ ‖w‖²` for `‖w‖ ≤ ½` — **the ONE possibly-new lemma**;
+  mathlib has the REAL `hasSum_pow_div_log_of_abs_lt_one` (Log/Deriv.lean:352), complex needs a
+  ~10-line adaptation. PARTIAL.
+- **C1b `R_χ` bounded** `‖R_χ(s)‖ ≤ Σ_𝔭 N𝔭⁻² < ∞` uniformly on `Re s ≥ 1` — ✅
+  `summable_prime_absNorm_rpow` (Density.lean:136), `one_lt_absNorm` (FinitePlace.lean:117),
+  `summable_one_div_nat_pow` (PSeries.lean:330), `tsum_geometric_of_norm_lt_one`.
+- **C2a `exp(g_χ(s)) = Lf(s)`** on `Re s>1` — ✅ Euler product `exists_artinLSeries_eulerProduct_abelian`
+  (ZetaProduct.lean:273) + `Complex.cexp_tsum_eq_tprod` (Log/Summable.lean:39); summability of
+  `log∘f` via `‖−Log(1−w)‖ ≤ 2‖w‖` (`Re s>1`).
+- **C2b `g_χ' = logDeriv Lf = Lf'/Lf`** — differentiate C2a; ✅ `logDeriv` API (LogDeriv.lean:34/37),
+  `AnalyticAt.clog`/local-branch for `g_χ` differentiable.
+- **C2c `logDeriv Lf` bounded near 1** — `Lf` analytic (LF4) + `Lf 1 ≠ 0` (LF5) ⟹ `deriv Lf / Lf`
+  continuous at 1 ⟹ bounded. ✅ `AnalyticAt.deriv`, `ContinuousAt`.
+- **C2d `g_χ` bounded near 1** — bounded derivative ⟹ bounded via MVT
+  `Convex.norm_image_sub_le_of_norm_deriv_le` (MeanValue.lean:728). ✅. (Only boundedness needed — no
+  boundary-limit lemma required, so the "PARTIAL extension-to-boundary" item is sidestepped.)
+
+## Adversarial attacks
+- **Monodromy/branch attack (the natural failure):** "bound `Complex.log(Lf s)`" FAILS if `Lf 1` is a
+  negative real (principal `log` discontinuous on the slit). **Defeated by the derivative route:**
+  `g_χ' = Lf'/Lf` is single-valued, so C2c/C2d never touch a branch cut. This is why the route is
+  C2b–d (bound the derivative), not "log bounded". Survives.
+- **C2a summability:** `cexp_tsum_eq_tprod` needs `Summable(log∘f)`; `‖−Log(1−w)‖ ≤ 2‖w‖ ≤ 2N𝔭⁻ᴿᵉˢ`,
+  summable for `Re s>1` (`summable_prime_absNorm_rpow`). Survives.
+- **Ramified-prime edge:** twisted prime sum, Euler product, and `g_χ` are ALL over the *unramified*
+  prime subtype `{𝔭 // IsPrime ∧ UnramifiedIn}`; `galoisCharacterOnIdeal` is `0` on ramified factors.
+  Indices match; no boundary mismatch. Survives.
+- **Discharge attack (verified by 2 Explore agents, signatures copied):** `logDeriv`+API, MVT
+  `Convex.norm_image_sub_le_of_norm_deriv_le`, `cexp_tsum_eq_tprod`, `summable_prime_absNorm_rpow`,
+  `one_lt_absNorm`, `AnalyticAt.clog` ALL exist at the cited file:line with matching types. Only
+  ABSENT/PARTIAL: complex `−log(1−z)` power series (C1a, real version exists). No over-claim.
+- **Prior-B2 (Step 4.6, `b2_log.jsonl` 2 entries):** no name/shape match for the gap or bridge. The
+  LF4 entry (junk-on-composites) is a DEPENDENCY — already FIXED via `galoisCharacterOnIdeal`; the
+  bridge's `hLf_eq` uses that corrected form, matching current LF4. Addressed, not reincarnated.
+
+## Lean skeleton (written 2026-06-05, `lake build` green 3768 jobs, axioms = standard + sorryAx)
+- **Bridge `artinLSeries_prime_sum_bounded_of_analytic_extension`** (`Cyclotomic.lean ~300`, the one
+  new `sorry`): takes `(Lf, hLf_an, hLf_eq, hLf0)` matching LF4's output + LF5's output exactly;
+  concludes the twisted prime sum bounded.
+- **Gap `artinLSeries_prime_sum_bounded_of_ne_one`** rewired: `obtain` LF4 → `exact bridge … (LF5 …)`
+  — **no sorry of its own** (real dependency edges to LF4, LF5, bridge). `chebotarev_cyclotomic`
+  `#print axioms` = `[propext, sorryAx, Classical.choice, Quot.sound]` (no custom axiom).
+
+## Feasibility verdict
+**The χ≠1 gap is a tractable, mostly-mathlib bridge — NOT an independent deep development.** Two
+structural facts: (1) it is downstream of the SAME geometry-of-numbers leaf G as the L3 chain (via
+LF4/LF5), so it adds no new *deep* mathematics; (2) its extra content — the complex-analytic bridge
+— is entirely dischargeable from mathlib (`logDeriv` + MVT + `cexp_tsum_eq_tprod` + the tail-bound
+lemmas) plus LF4/LF5, with the derivative trick sidestepping the monodromy that would otherwise make
+it hard, and only ONE tiny possibly-new estimate (C1a, complex `‖log(1−w)+w‖ ≤ ‖w‖²`). The bridge is
+a ~1–2 session `/beastmode` ticket, not multi-week. **Net: the whole project's remaining mathematical
+content collapses to essentially ONE deep gap — leaf G (geometry of numbers) — plus tractable glue
+(the bridge here, the §3 fibre-regroup for L3, the compositum crossing, the AP corollary).** No false
+leaves; the decomposition mirrors Sharifi p.142–143 + standard Dirichlet analytic number theory.
