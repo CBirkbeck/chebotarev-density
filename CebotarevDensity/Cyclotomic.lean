@@ -380,8 +380,7 @@ private theorem differentiableAt_logSum_of_two_le
     set w : ℂ := c i * (N i : ℂ) ^ (-(s : ℂ)) with hw
     have hwlei : ‖w‖ ≤ 1 / 2 := hwle i s (by simp [ht, hst])
     have hden : (1 : ℝ) / 2 ≤ ‖1 - w‖ := by
-      have : (1 : ℝ) - ‖w‖ ≤ ‖1 - w‖ := by have := norm_sub_norm_le (1 : ℂ) w; simpa using this
-      linarith
+      have := norm_sub_norm_le (1 : ℂ) w; rw [norm_one] at this; linarith
     have hdenpos : 0 < ‖1 - w‖ := by linarith
     have hnum : ‖(-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1))))‖
         = (N i : ℝ) ^ (-s) * Real.log (N i) := by
@@ -404,24 +403,19 @@ private theorem differentiableAt_logSum_of_two_le
     intro i
     set w : ℂ := c i * (N i : ℂ) ^ (-(s₀ : ℂ)) with hw
     have hwlei : ‖w‖ ≤ 1 / 2 := hwle i s₀ hs₀t
-    have hwlt : ‖w‖ < 1 := lt_of_le_of_lt hwlei (by norm_num)
-    have hslitw : (1 - w) ∈ Complex.slitPlane := hslit i s₀ hs₀t
-    have harg : (1 - w).arg ≠ Real.pi := Complex.slitPlane_arg_ne_pi hslitw
-    have hlogi : Complex.log (1 - w)⁻¹ = -Complex.log (1 - w) := Complex.log_inv _ harg
-    have hkey := Complex.norm_log_one_sub_inv_sub_self_le hwlt
+    have hlogi : Complex.log (1 - w)⁻¹ = -Complex.log (1 - w) :=
+      Complex.log_inv _ (Complex.slitPlane_arg_ne_pi (hslit i s₀ hs₀t))
+    have hkey := Complex.norm_log_one_sub_inv_sub_self_le (lt_of_le_of_lt hwlei (by norm_num))
     rw [hlogi] at hkey
     have h1w : (1 - ‖w‖)⁻¹ ≤ 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
     have hsq : ‖-Complex.log (1 - w) - w‖ ≤ ‖w‖ ^ 2 := by
       refine hkey.trans ?_; nlinarith [sq_nonneg ‖w‖, h1w, norm_nonneg w]
-    have htri : ‖-Complex.log (1 - w)‖ ≤ ‖w‖ ^ 2 + ‖w‖ := by
-      calc ‖-Complex.log (1 - w)‖ = ‖(-Complex.log (1 - w) - w) + w‖ := by ring_nf
-        _ ≤ ‖-Complex.log (1 - w) - w‖ + ‖w‖ := norm_add_le _ _
-        _ ≤ ‖w‖ ^ 2 + ‖w‖ := by linarith
-    have hwnn : ‖w‖ = (N i : ℝ) ^ (-s₀) := hwn i s₀
     rw [hg]
-    calc ‖-Complex.log (1 - w)‖ ≤ ‖w‖ ^ 2 + ‖w‖ := htri
+    calc ‖-Complex.log (1 - w)‖ = ‖(-Complex.log (1 - w) - w) + w‖ := by ring_nf
+      _ ≤ ‖-Complex.log (1 - w) - w‖ + ‖w‖ := norm_add_le _ _
+      _ ≤ ‖w‖ ^ 2 + ‖w‖ := by linarith
       _ ≤ 2 * ‖w‖ := by nlinarith [norm_nonneg w, hwlei]
-      _ = 2 * (N i : ℝ) ^ (-s₀) := by rw [hwnn]
+      _ = 2 * (N i : ℝ) ^ (-s₀) := by rw [hwn i s₀]
   exact (hasDerivAt_tsum_of_isPreconnected husum htopen htconn hderiv hbound hs₀t hg0
     hs₀t).differentiableAt
 
@@ -657,47 +651,44 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   set MR : ℝ := ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ)) with hMR
   have hsumN2 : Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-(2 : ℝ))) := hsummr 2 one_lt_two
   have hNRpos : ∀ 𝔭 : ι, (0 : ℝ) < N 𝔭 := fun 𝔭 => by have := hN2 𝔭; positivity
+  -- Per-term tail bound `‖-Log(1-w 𝔭) - w 𝔭‖ ≤ N𝔭⁻²` (uniform in `s > 1`), used for both the
+  -- `R_χ` norm bound and the summability of the log sum.
+  have hterm : ∀ s : ℝ, 1 < s → ∀ 𝔭 : ι,
+      ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖
+        ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
+    intro s hs 𝔭
+    set w : ℂ := c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)) with hw
+    have h2N : (2 : ℝ) ≤ N 𝔭 := by have := hN2 𝔭; exact_mod_cast this
+    have hwle : ‖w‖ ≤ 1 / 2 := by
+      rw [hw, hwn]
+      have hNs : (2 : ℝ) ≤ (N 𝔭 : ℝ) ^ s :=
+        le_trans h2N ((Real.rpow_one (N 𝔭 : ℝ)).symm.trans_le
+          (Real.rpow_le_rpow_of_exponent_le (by linarith) hs.le))
+      rw [Real.rpow_neg (hNRpos 𝔭).le,
+        inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos 𝔭) _) (by norm_num)]
+      linarith
+    have hlt : ‖w‖ < 1 := by linarith
+    have hlogi : Complex.log (1 - w)⁻¹ = -Complex.log (1 - w) :=
+      Complex.log_inv _ (Complex.slitPlane_arg_ne_pi (hslit 𝔭 s hs))
+    have hkey := Complex.norm_log_one_sub_inv_sub_self_le hlt
+    rw [hlogi] at hkey
+    have h1 : (1 - ‖w‖)⁻¹ ≤ 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
+    have hsq : ‖-Complex.log (1 - w) - w‖ ≤ ‖w‖ ^ 2 := by
+      refine hkey.trans ?_; nlinarith [sq_nonneg ‖w‖, h1, norm_nonneg w]
+    have hwsq : ‖w‖ ^ 2 = (N 𝔭 : ℝ) ^ (-(2 * s)) := by
+      rw [hw, hwn, ← Real.rpow_natCast ((N 𝔭 : ℝ) ^ (-s)) 2, ← Real.rpow_mul (hNRpos 𝔭).le]
+      ring_nf
+    exact hsq.trans (hwsq.trans_le (Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)))
+  have hsumtail : ∀ s : ℝ, 1 < s →
+      Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+        - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := fun s hs =>
+    Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) (hterm s hs) hsumN2)
   have hRbdd : ∀ s : ℝ, 1 < s →
       ‖∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
           - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))‖ ≤ MR := by
     intro s hs
-    set w : ι → ℂ := fun 𝔭 => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)) with hw
-    have hwle : ∀ 𝔭 : ι, ‖w 𝔭‖ ≤ 1 / 2 := fun 𝔭 => by
-      rw [hw, hwn]
-      have h2N : (2 : ℝ) ≤ N 𝔭 := by have := hN2 𝔭; exact_mod_cast this
-      have hNs : (2 : ℝ) ≤ (N 𝔭 : ℝ) ^ s := by
-        calc (2 : ℝ) ≤ (N 𝔭 : ℝ) := h2N
-          _ = (N 𝔭 : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
-          _ ≤ (N 𝔭 : ℝ) ^ s := Real.rpow_le_rpow_of_exponent_le (by linarith) hs.le
-      rw [Real.rpow_neg (hNRpos 𝔭).le,
-        inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos 𝔭) _) (by norm_num)]
-      linarith
-    have hterm : ∀ 𝔭 : ι, ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 => by
-      have hwlei := hwle 𝔭
-      have hlt : ‖w 𝔭‖ < 1 := by linarith
-      have hslitw : (1 - w 𝔭) ∈ Complex.slitPlane := hslit 𝔭 s hs
-      have hlogi : Complex.log (1 - w 𝔭)⁻¹ = -Complex.log (1 - w 𝔭) :=
-        Complex.log_inv _ (Complex.slitPlane_arg_ne_pi hslitw)
-      have hkey := Complex.norm_log_one_sub_inv_sub_self_le hlt
-      rw [hlogi] at hkey
-      have h1 : (1 - ‖w 𝔭‖)⁻¹ ≤ 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
-      have hsq : ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ ‖w 𝔭‖ ^ 2 := by
-        refine hkey.trans ?_; nlinarith [sq_nonneg ‖w 𝔭‖, h1, norm_nonneg (w 𝔭)]
-      have hwsq : ‖w 𝔭‖ ^ 2 = (N 𝔭 : ℝ) ^ (-(2 * s)) := by
-        rw [hw, hwn, ← Real.rpow_natCast ((N 𝔭 : ℝ) ^ (-s)) 2, ← Real.rpow_mul (hNRpos 𝔭).le]
-        ring_nf
-      have hmono : (N 𝔭 : ℝ) ^ (-(2 * s)) ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
-        apply Real.rpow_le_rpow_of_exponent_le
-          (by have := hN2 𝔭; exact_mod_cast Nat.one_le_of_lt this); linarith
-      calc ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ ≤ ‖w 𝔭‖ ^ 2 := hsq
-        _ = (N 𝔭 : ℝ) ^ (-(2 * s)) := hwsq
-        _ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hmono
-    have hsumR : Summable (fun 𝔭 : ι => -Complex.log (1 - w 𝔭) - w 𝔭) :=
-      Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) hterm hsumN2)
-    calc ‖∑' 𝔭 : ι, (-Complex.log (1 - w 𝔭) - w 𝔭)‖
-        ≤ ∑' 𝔭 : ι, ‖-Complex.log (1 - w 𝔭) - w 𝔭‖ := norm_tsum_le_tsum_norm hsumR.norm
-      _ ≤ ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hsumR.norm.tsum_le_tsum hterm hsumN2
-      _ = MR := rfl
+    refine (norm_tsum_le_tsum_norm (hsumtail s hs).norm).trans ?_
+    exact (hsumtail s hs).norm.tsum_le_tsum (hterm s hs) hsumN2
   -- Assemble: `P_χ s = G s - R_χ s`, so `‖P_χ s‖ ≤ ‖G s‖ + ‖R_χ s‖ ≤ Cg + MR`.
   refine ⟨Cg + MR, ?_⟩
   filter_upwards [hCg, self_mem_nhdsWithin] with s hCgs hs1
@@ -706,45 +697,7 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   have hsumw : Summable (fun 𝔭 : ι => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
     summable_twistedPrimeSum K L χ hs1
   have hsumG : Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) := by
-    have hsumR : Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
-        - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := by
-      refine Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) ?_ hsumN2)
-      intro 𝔭
-      have hwle : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ≤ 1 / 2 := by
-        rw [hwn]
-        have h2N : (2 : ℝ) ≤ N 𝔭 := by have := hN2 𝔭; exact_mod_cast this
-        have hNs : (2 : ℝ) ≤ (N 𝔭 : ℝ) ^ s :=
-          le_trans h2N ((Real.rpow_one (N 𝔭 : ℝ)).symm.trans_le
-            (Real.rpow_le_rpow_of_exponent_le (by linarith) hs1.le))
-        rw [Real.rpow_neg (hNRpos 𝔭).le,
-          inv_le_comm₀ (Real.rpow_pos_of_pos (hNRpos 𝔭) _) (by norm_num)]
-        linarith
-      have hlt : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ < 1 := by linarith
-      have hslitw : (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) ∈ Complex.slitPlane := hslit 𝔭 s hs1
-      have hlogi : Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))⁻¹
-          = -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
-        Complex.log_inv _ (Complex.slitPlane_arg_ne_pi hslitw)
-      have hkey := Complex.norm_log_one_sub_inv_sub_self_le hlt
-      rw [hlogi] at hkey
-      have h1 : (1 - ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖)⁻¹ ≤ 2 := by
-        rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
-      have hsq : ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
-          - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ≤ ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 := by
-        refine hkey.trans ?_
-        nlinarith [sq_nonneg ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖, h1,
-          norm_nonneg (c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))]
-      have hwsq : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 = (N 𝔭 : ℝ) ^ (-(2 * s)) := by
-        rw [hwn, ← Real.rpow_natCast ((N 𝔭 : ℝ) ^ (-s)) 2, ← Real.rpow_mul (hNRpos 𝔭).le]
-        ring_nf
-      have hmono : (N 𝔭 : ℝ) ^ (-(2 * s)) ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
-        apply Real.rpow_le_rpow_of_exponent_le
-          (by have := hN2 𝔭; exact_mod_cast Nat.one_le_of_lt this); linarith
-      calc ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
-            - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖
-          ≤ ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ ^ 2 := hsq
-        _ = (N 𝔭 : ℝ) ^ (-(2 * s)) := hwsq
-        _ ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := hmono
-    simpa using hsumR.add hsumw
+    simpa using (hsumtail s hs1).add hsumw
   -- `P_χ s = G s - R_χ s`.
   have hPsub : (∑' 𝔭 : ι, c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
       = G s - ∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
