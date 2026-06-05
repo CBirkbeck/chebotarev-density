@@ -16,15 +16,20 @@ the chain is sorry-free *modulo L3*.
 - File: ZetaProduct.lean:189 · Depends on: none · Discharge: project (finite abelian char theory)
 - Sketch: decomposition.md L2 (Prop 7.1.16 local) — `∏_χ(1-χ(σ)X)=(1-X^{ordσ})^{|G|/ordσ}` matches split of 𝔭.
 
-### [LF3] character_sum_geometry_of_numbers_bound — Status: blocked (deep input PROVEN; awaits B2 fix)
-- File: ZetaProduct.lean:203 · Discharge: geometry-of-numbers ideal count `CN+O(N^{1-1/d})`.
-- **The geom-of-numbers mountain is now CLIMBED**: its deep lattice-count input = L1 = Widmer
-  (`exists_card_inter_smul_lattice_sub_volume_mul_pow_le`, ForMathlib/LatticePointCount.lean) is
-  PROVEN sorry-free + axiom-clean (2026-06-05, /beastmode, commit b1cbc5f). LF3 can now be reduced
-  to L1 via the Frobenius-fibre count + congruence cosets + orthogonality-over-G.
-- BLOCKED-NEXT on the documented B2 (b2_log, LF4/LF1/LF3): the leaf uses `frobeniusClass.out`, junk on
-  composite ideals; needs the multiplicative `galoisCharacterOnIdeal` def + restatement before the
-  L1 reduction lands. User/scope decision — see /beastmode report.
+### [LF3] character_sum_geometry_of_numbers_bound — Status: done (2026-06-05, /beastmode)
+- File: ZetaProduct.lean:1084 · Discharge: PROVED — partition-by-value + leaf G + `Σ_{ζ^n=1} ζ = 0`.
+- **Progress**:
+  - 2026-06-05: PROVED. Partition `Σ_{N𝔞≤N} χ(𝔞)` by value `v ∈ {0} ∪ μ_n` (`n = orderOf χ ≥ 2`,
+    fiberwise over `insert 0 (nthRootsFinset n 1)`), 0-fibre drops, per-fibre count from leaf G
+    (`exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`), leading term cancels via the new
+    sorry-free helper `sum_nthRootsFinset_eq_zero` (mult-by-ζ₀ permutation; mathlib has only the
+    geom-series form — upstream candidate). `C = orderOf χ · C'`. /cleanup ran (3 private helpers
+    extracted, body 137→39 lines, all gates pass). Verified: lake env lean + axioms
+    `[propext, sorryAx, Classical.choice, Quot.sound]` (sorryAx = the 2 intended deep gaps only;
+    helpers sorry-free). Elaboration pitfall recorded: annotate `Finset.univ` type under `with`
+    binders or `Fintype {𝔞 // ?p}` instance search whnf-times-out.
+- The stale BLOCKED-NEXT B2 note (frobeniusClass.out junk-on-composites) was already resolved by
+  the `galoisCharacterOnIdeal`/`frobeniusIdeal` defs (commit 8f33578) — see HANDOVER §6.
 
 ### [LF4] artinLSeries_analytic_extension — Status: open
 - File: ZetaProduct.lean:232 · Depends on: LF3(sorried) · Discharge: project + Lemma 7.1.5 (verify mathlib `LSeries.abscissaOfAbsConv`)

@@ -983,6 +983,99 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
     _ = (κ₀ : ℝ) * C₂ * P := by
           rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, hcardℝ]; ring
 
+private theorem sum_nthRootsFinset_eq_zero {R : Type*} [CommRing R] [IsDomain R]
+    {ζ : R} {n : ℕ} (hζ : IsPrimitiveRoot ζ n) (hn : 1 < n) :
+    ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v = 0 := by
+  classical
+  have hn0 : n ≠ 0 := by omega
+  have hζ0 : ζ ≠ 0 := hζ.ne_zero hn0
+  have hmem : ∀ {z : R}, z ∈ Polynomial.nthRootsFinset n (1 : R) ↔ z ^ n = 1 := fun {z} =>
+    Polynomial.mem_nthRootsFinset (Nat.pos_of_ne_zero hn0) 1
+  have himg : (Polynomial.nthRootsFinset n (1 : R)).image (ζ * ·) =
+      Polynomial.nthRootsFinset n 1 := by
+    refine Finset.eq_of_subset_of_card_le (fun x hx => ?_)
+      (Finset.card_image_of_injective _ (mul_right_injective₀ hζ0)).ge
+    obtain ⟨v, hv, rfl⟩ := Finset.mem_image.mp hx
+    exact hmem.mpr (by rw [mul_pow, hζ.pow_eq_one, one_mul, hmem.mp hv])
+  have hshift : ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v =
+      ζ * ∑ v ∈ Polynomial.nthRootsFinset n 1, v := by
+    nth_rewrite 1 [← himg]
+    rw [Finset.sum_image fun a _ b _ h => mul_right_injective₀ hζ0 h, Finset.mul_sum]
+  rcases mul_eq_zero.mp (by rw [sub_mul, one_mul, ← hshift, sub_self] :
+      (ζ - 1) * ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v = 0) with h | h
+  · exact absurd (sub_eq_zero.mp h) (hζ.ne_one hn)
+  · exact h
+
+private theorem galoisCharacterOnIdeal_mem_insert_zero_nthRootsFinset
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (𝔞 : Ideal (𝓞 K)) :
+    galoisCharacterOnIdeal K L χ 𝔞 ∈
+      insert (0 : ℂ) (Polynomial.nthRootsFinset (orderOf χ) 1) := by
+  classical
+  by_cases hU : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭
+  · refine Finset.mem_insert_of_mem
+      (Polynomial.mem_nthRootsFinset (orderOf_pos_iff.mpr (isOfFinOrder_of_finite χ)) 1 |>.mpr ?_)
+    rw [galoisCharacterOnIdeal_eq_char_frobeniusIdeal K L m χ hU,
+      ← Units.val_pow_eq_pow_val, ← MonoidHom.pow_apply, pow_orderOf_eq_one,
+      MonoidHom.one_apply, Units.val_one]
+  · push Not at hU
+    obtain ⟨𝔭, h𝔭, hram⟩ := hU
+    rw [galoisCharacterOnIdeal_eq_map_prod,
+      Multiset.prod_eq_zero (Multiset.mem_map.mpr ⟨𝔭, h𝔭, if_neg hram⟩)]
+    exact Finset.mem_insert_self _ _
+
+private theorem sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (hord2 : 1 < orderOf χ) (C₀ : ℝ)
+    (N : ℕ) [Fintype {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N}] :
+    ∑ 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
+        galoisCharacterOnIdeal K L χ 𝔞.1
+      = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1,
+          (((Nat.card {𝔞 : Ideal (𝓞 K) //
+            𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
+              - C₀ * N : ℝ) : ℂ) * v := by
+  classical
+  obtain ⟨ζ₀, hζ₀⟩ : ∃ z : ℂ, IsPrimitiveRoot z (orderOf χ) :=
+    ⟨_, Complex.isPrimitiveRoot_exp _ (by omega)⟩
+  have h0R : (0 : ℂ) ∉ Polynomial.nthRootsFinset (orderOf χ) 1 := fun h => by
+    rw [Polynomial.mem_nthRootsFinset (by omega) 1, zero_pow (by omega)] at h
+    exact zero_ne_one h
+  calc ∑ 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
+        galoisCharacterOnIdeal K L χ 𝔞.1
+      = ∑ v ∈ insert (0 : ℂ) (Polynomial.nthRootsFinset (orderOf χ) 1),
+          ∑ 𝔞 ∈ (Finset.univ : Finset {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N})
+            with galoisCharacterOnIdeal K L χ 𝔞.1 = v, v :=
+        (Finset.sum_fiberwise_of_maps_to'
+          (fun 𝔞 _ => galoisCharacterOnIdeal_mem_insert_zero_nthRootsFinset K L m χ 𝔞.1)
+          fun z : ℂ => z).symm
+    _ = ∑ v ∈ insert (0 : ℂ) (Polynomial.nthRootsFinset (orderOf χ) 1),
+          (Nat.card {𝔞 : Ideal (𝓞 K) //
+            𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℂ) * v := by
+        refine Finset.sum_congr rfl fun v _ => ?_
+        rw [Finset.sum_const, nsmul_eq_mul]
+        refine congrArg (· * v) (congrArg (Nat.cast : ℕ → ℂ) ?_)
+        rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+        exact Nat.card_congr ((Equiv.subtypeSubtypeEquivSubtypeInter
+          (fun 𝔞 : Ideal (𝓞 K) => 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N)
+          (fun 𝔞 => galoisCharacterOnIdeal K L χ 𝔞 = v)).trans
+          (Equiv.subtypeEquivRight fun 𝔞 => and_assoc))
+    _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, (Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℂ) * v := by
+        rw [Finset.sum_insert h0R, mul_zero, zero_add]
+    _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, ((((Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
+            - C₀ * N : ℝ) : ℂ) * v + ((C₀ * N : ℝ) : ℂ) * v) := by
+        refine Finset.sum_congr rfl fun v _ => ?_
+        push_cast
+        ring
+    _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, (((Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
+            - C₀ * N : ℝ) : ℂ) * v := by
+        rw [Finset.sum_add_distrib, ← Finset.mul_sum,
+          sum_nthRootsFinset_eq_zero hζ₀ hord2, mul_zero, add_zero]
+
 /-- Sharifi 7.1.19 step 1 (p. 142): geometry-of-numbers bound. The
 partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` (with `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞` the
 completely-multiplicative ideal character) is `O(N^{1-1/[K:ℚ]})` for a
@@ -997,14 +1090,45 @@ theorem character_sum_geometry_of_numbers_bound
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
         galoisCharacterOnIdeal K L χ 𝔞.1‖
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  -- Two steps (Sharifi p. 142). (1) Geometry of numbers
-  -- (`exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`): for every `n`-th root of unity
-  -- `ζ` (`n = orderOf χ`), `#{N𝔞 ≤ N | χ(𝔞) = ζ} = C·N + O(N^{1-1/d})` with `C` independent of
-  -- `ζ`. (2) Cancellation: `Σ_{N𝔞 ≤ N} χ(𝔞) = Σ_{ζ^n = 1} ζ · #fibre_ζ`, and the leading term
-  -- vanishes because `Σ_{ζ^n = 1} ζ = 0` for `n ≥ 2`, leaving the `O(N^{1-1/d})` tail.
-  obtain ⟨_C, C', _hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m χ _hχ
+  classical
+  obtain ⟨C₀, C', hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m χ _hχ
   refine ⟨(orderOf χ : ℝ) * C', fun N => ?_⟩
-  sorry
+  have hC' : 0 ≤ C' := (abs_nonneg _).trans (by simpa using hcount 1 (one_pow _) 1 le_rfl)
+  rcases Nat.eq_zero_or_pos N with rfl | hN1
+  · haveI : IsEmpty {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ 0} :=
+      ⟨fun 𝔞 => 𝔞.2.1 (Ideal.absNorm_eq_zero_iff.mp (Nat.le_zero.mp 𝔞.2.2))⟩
+    rw [tsum_empty, norm_zero]
+    positivity
+  have hord0 : orderOf χ ≠ 0 := (orderOf_pos_iff.mpr (isOfFinOrder_of_finite χ)).ne'
+  have hord2 : 1 < orderOf χ :=
+    lt_of_le_of_ne (Nat.one_le_iff_ne_zero.mpr hord0) fun h => _hχ (orderOf_eq_one_iff.mp h.symm)
+  obtain ⟨ζ₀, hζ₀⟩ : ∃ z : ℂ, IsPrimitiveRoot z (orderOf χ) :=
+    ⟨_, Complex.isPrimitiveRoot_exp _ hord0⟩
+  set R : Finset ℂ := Polynomial.nthRootsFinset (orderOf χ) (1 : ℂ) with hR
+  have hmemR : ∀ {z : ℂ}, z ∈ R ↔ z ^ orderOf χ = 1 := fun {z} =>
+    Polynomial.mem_nthRootsFinset (Nat.pos_of_ne_zero hord0) 1
+  haveI hfinN : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N} :=
+    (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
+  haveI : Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N} :=
+    Finite.of_injective
+      (fun a => (⟨a.1, a.2.2⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N}))
+      fun _ _ hab => Subtype.ext (by simpa using hab)
+  haveI := Fintype.ofFinite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N}
+  rw [tsum_fintype, sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul K L m χ hord2 C₀ N]
+  calc ‖∑ v ∈ R, (((Nat.card {𝔞 : Ideal (𝓞 K) //
+        𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
+          - C₀ * N : ℝ) : ℂ) * v‖
+      ≤ ∑ v ∈ R, ‖(((Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
+            - C₀ * N : ℝ) : ℂ) * v‖ := norm_sum_le _ _
+    _ ≤ ∑ _v ∈ R, C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+        refine Finset.sum_le_sum fun v hv => ?_
+        rw [norm_mul, Complex.norm_eq_one_of_pow_eq_one (hmemR.mp hv) hord0, mul_one,
+          Complex.norm_real, Real.norm_eq_abs]
+        exact hcount v (hmemR.mp hv) N hN1
+    _ = (orderOf χ : ℝ) * C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+        rw [Finset.sum_const, hR, hζ₀.card_nthRootsFinset, nsmul_eq_mul]
+        ring
 
 /-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
 Combining the geometry-of-numbers bound
