@@ -1282,6 +1282,43 @@ private theorem lseries_galoisCharacterCoeff_eq_tsum
     hsummable_sigma.tsum_sigma]
   exact (tsum_congr hfiber_val).symm
 
+open MeasureTheory Set in
+private theorem setIntegral_Ioi_one_mul_cpow_eq_mellin (S : ℝ → ℂ) (hS : ∀ t < 1, S t = 0) (s : ℂ) :
+    ∫ t in Ioi (1 : ℝ), S t * (t : ℂ) ^ (-(s + 1)) = mellin S (-s) := by
+  rw [mellin, show (∫ t in Ioi (0 : ℝ), (t : ℂ) ^ (-s - 1) • S t) =
+      ∫ t in Ioi (1 : ℝ), (t : ℂ) ^ (-s - 1) • S t from ?_]
+  · refine setIntegral_congr_fun measurableSet_Ioi fun t _ => ?_
+    rw [smul_eq_mul, mul_comm]
+    ring_nf
+  · have hinter : Ioi (0 : ℝ) ∩ Ioi (1 : ℝ) = Ioi (1 : ℝ) :=
+      inter_eq_right.mpr (Ioi_subset_Ioi (by norm_num))
+    rw [← hinter, ← setIntegral_indicator measurableSet_Ioi]
+    refine setIntegral_congr_ae measurableSet_Ioi ?_
+    filter_upwards [show ∀ᵐ t : ℝ ∂volume, t ≠ 1 from
+      ae_iff.mpr (by simp : volume {x : ℝ | ¬x ≠ 1} = 0)] with t ht _
+    rw [indicator_apply]
+    by_cases h1 : t ∈ Ioi (1 : ℝ)
+    · rw [if_pos h1]
+    · rw [if_neg h1, hS t (lt_of_le_of_ne (not_lt.mp (by simpa using h1)) ht), smul_zero]
+
+open MeasureTheory Set in
+private theorem locallyIntegrableOn_Ioi_comp_nat_floor (g : ℕ → ℂ) :
+    LocallyIntegrableOn (fun t : ℝ => g ⌊t⌋₊) (Ioi (0 : ℝ)) := by
+  have hmeas : Measurable fun t : ℝ => g ⌊t⌋₊ :=
+    (measurable_from_top (f := g)).comp Nat.measurable_floor
+  rw [locallyIntegrableOn_iff isOpen_Ioi.isLocallyClosed]
+  intro k _ hkcomp
+  obtain ⟨b, hb⟩ := hkcomp.isBounded.subset_closedBall 0
+  refine Measure.integrableOn_of_bounded hkcomp.measure_lt_top.ne hmeas.aestronglyMeasurable
+    (M := (Finset.Icc 0 ⌊b⌋₊).sup' (by simp) fun n => ‖g n‖) ?_
+  rw [ae_restrict_iff' hkcomp.measurableSet]
+  filter_upwards with t ht
+  have htb : t ≤ b := (le_abs_self t).trans <| by
+    have := hb ht
+    rwa [Metric.mem_closedBall, Real.dist_eq, sub_zero] at this
+  exact Finset.le_sup' (fun n => ‖g n‖)
+    (Finset.mem_Icc.mpr ⟨Nat.zero_le _, Nat.floor_le_floor htb⟩)
+
 open Filter Topology Set MeasureTheory Asymptotics in
 /-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
 Combining the geometry-of-numbers bound
@@ -1326,80 +1363,36 @@ theorem artinLSeries_analytic_extension
     rw [hr_def, sub_nonneg, inv_le_one_iff₀]; right; exact_mod_cast Module.finrank_pos
   have hr1 : r < 1 := by rw [hr_def]; linarith
   set S : ℝ → ℂ := fun t => ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k with hS_def
-  -- `S` vanishes below 1 (floor is 0), is measurable, and is bounded on every compact set.
   have hS_zero : ∀ t : ℝ, t < 1 → S t = 0 := fun t ht => by
     change ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k = 0
     rw [Nat.floor_eq_zero.mpr ht, Finset.Icc_eq_empty (by norm_num), Finset.sum_empty]
-  have hS_meas : Measurable S :=
-    (measurable_from_top
-      (f := fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)).comp
-      Nat.measurable_floor
-  have hS_bdd : ∀ k : Set ℝ, IsCompact k → ∃ C : ℝ, ∀ t ∈ k, ‖S t‖ ≤ C := fun k hk => by
-    obtain ⟨b, hb⟩ := hk.isBounded.subset_closedBall 0
-    refine ⟨(Finset.Icc 0 ⌊b⌋₊).sup' (by simp)
-      fun n => ‖∑ j ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ j‖, fun t ht => ?_⟩
-    have htb : t ≤ b := by
-      have := hb ht
-      rw [Metric.mem_closedBall, Real.dist_eq, sub_zero] at this
-      exact (le_abs_self t).trans this
-    have hfloor : ⌊t⌋₊ ∈ Finset.Icc 0 ⌊b⌋₊ :=
-      Finset.mem_Icc.mpr ⟨Nat.zero_le _, Nat.floor_le_floor htb⟩
-    exact Finset.le_sup'
-      (fun n => ‖∑ j ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ j‖) hfloor
-  -- `S` is `O(t^r)` at `∞` (the LF3 partial-sum bound pushed through `⌊·⌋₊`).
   have hS_bigO : S =O[Filter.atTop] (fun t : ℝ => t ^ r) :=
     (((sum_galoisCharacterCoeff_isBigO K L m χ _hχ).comp_tendsto tendsto_nat_floor_atTop).trans <|
       isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0))
-  -- The closed form `Lf s = s · 𝓜S(-s)` is analytic on the half-plane and equals the integral
-  -- representation of the L-series, hence the ideal sum, on `Re s > 1`.
-  have hbridge : ∀ s : ℂ,
-      ∫ t in Set.Ioi (1 : ℝ), S t * (t : ℂ) ^ (-(s + 1)) = mellin S (-s) := fun s => by
-    rw [mellin]
-    rw [show (∫ t in Set.Ioi (0 : ℝ), (t : ℂ) ^ (-s - 1) • S t) =
-        ∫ t in Set.Ioi (1 : ℝ), (t : ℂ) ^ (-s - 1) • S t from ?_]
-    · refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioi fun t _ => ?_
-      rw [smul_eq_mul, mul_comm]; ring_nf
-    · have hinter : Set.Ioi (0 : ℝ) ∩ Set.Ioi (1 : ℝ) = Set.Ioi (1 : ℝ) := by
-        rw [Set.inter_eq_right]; exact Set.Ioi_subset_Ioi (by norm_num)
-      rw [← hinter, ← MeasureTheory.setIntegral_indicator measurableSet_Ioi]
-      refine MeasureTheory.setIntegral_congr_ae measurableSet_Ioi ?_
-      have hae : ∀ᵐ t : ℝ ∂volume, t ≠ 1 :=
-        MeasureTheory.ae_iff.mpr (by simp : volume {x : ℝ | ¬x ≠ 1} = 0)
-      filter_upwards [hae] with t ht _
-      rw [Set.indicator_apply]
-      by_cases h1 : t ∈ Set.Ioi (1 : ℝ)
-      · rw [if_pos h1]
-      · rw [if_neg h1, hS_zero t (lt_of_le_of_ne (not_lt.mp (by simpa using h1)) ht), smul_zero]
   refine ⟨fun s => s * mellin S (-s), ?_, fun s hs => ?_⟩
-  · -- Analyticity: differentiable at every point of the (open) half-plane.
-    refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
+  · refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
       (isOpen_lt continuous_const Complex.continuous_re)
     have hs₀' : r < s₀.re := hs₀
-    have hfc : MeasureTheory.LocallyIntegrableOn S (Set.Ioi (0 : ℝ)) := by
-      rw [MeasureTheory.locallyIntegrableOn_iff isOpen_Ioi.isLocallyClosed]
-      intro k _ hkcomp
-      obtain ⟨C, hC⟩ := hS_bdd k hkcomp
-      refine MeasureTheory.Measure.integrableOn_of_bounded hkcomp.measure_lt_top.ne
-        hS_meas.aestronglyMeasurable (M := C) ?_
-      rw [MeasureTheory.ae_restrict_iff' hkcomp.measurableSet]
-      exact Filter.Eventually.of_forall hC
+    have hfc : LocallyIntegrableOn S (Ioi (0 : ℝ)) :=
+      locallyIntegrableOn_Ioi_comp_nat_floor fun n => ∑ k ∈ Finset.Icc 1 n,
+        galoisCharacterCoeff K L χ k
     have hf_top : S =O[Filter.atTop] (fun t : ℝ => t ^ (-(-r))) := by rw [neg_neg]; exact hS_bigO
     have hf_bot : S =O[𝓝[>] (0 : ℝ)] (fun t : ℝ => t ^ (-(-s₀.re - 1))) :=
-      (Filter.EventuallyEq.trans_isBigO
+      Filter.EventuallyEq.trans_isBigO
         (by filter_upwards [Ioo_mem_nhdsGT one_pos] with t ht using
-          hS_zero t (Set.mem_Ioo.mp ht).2) (Asymptotics.isBigO_zero _ _))
+          hS_zero t (Set.mem_Ioo.mp ht).2) (Asymptotics.isBigO_zero _ _)
     have hmellin : DifferentiableAt ℂ (mellin S) (-s₀) :=
       mellin_differentiableAt_of_isBigO_rpow hfc hf_top (by rw [Complex.neg_re]; linarith)
         hf_bot (by rw [Complex.neg_re]; linarith)
     exact (differentiableAt_id.mul (hmellin.comp s₀ differentiableAt_id.neg)).differentiableWithinAt
-  · -- Agreement on `Re s > 1`: L-series → integral representation → mellin → ideal sum.
-    have hssum : LSeriesSummable (galoisCharacterCoeff K L χ) s :=
+  · have hssum : LSeriesSummable (galoisCharacterCoeff K L χ) s :=
       LSeriesSummable_of_sum_norm_bigO (sum_norm_galoisCharacterCoeff_isBigO K L χ) zero_le_one
         (by exact_mod_cast hs)
-    have hint := LSeries_eq_mul_integral (galoisCharacterCoeff K L χ) hr0
-      (lt_of_lt_of_le hr1 (by exact_mod_cast hs.le)) hssum
-      (sum_galoisCharacterCoeff_isBigO K L m χ _hχ)
-    rw [← lseries_galoisCharacterCoeff_eq_tsum K L χ s hs, hint, hbridge s]
+    rw [← lseries_galoisCharacterCoeff_eq_tsum K L χ s hs,
+      LSeries_eq_mul_integral (galoisCharacterCoeff K L χ) hr0
+        (lt_of_lt_of_le hr1 (by exact_mod_cast hs.le)) hssum
+        (sum_galoisCharacterCoeff_isBigO K L m χ _hχ),
+      setIntegral_Ioi_one_mul_cpow_eq_mellin S hS_zero s]
 
 /-! ### Sub-lemmas for `artinLSeries_one_ne_zero` (Sharifi 7.1.19 step 2, p. 142)
 
