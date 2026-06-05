@@ -817,3 +817,28 @@ generally-useful **mathlib PR** strengthening `tendsto_card_div_pow_atTop_volume
 Lipschitz-boundary form. THE one deep gap of the whole Chebotarev project; everything else is glue.
 First execution steps: add the `2 ≤ Fintype.card ι` precondition; state L1a/L1b/L1a' precisely; then
 prove L1a' (the heart) → L1a → L1b → L1.
+
+## STATUS: PROVED (2026-06-05, /beastmode) ✅
+L1 (`exists_card_inter_smul_lattice_sub_volume_mul_pow_le`) is fully proved, **sorry-free and
+axiom-clean** (`#print axioms` = `[propext, Classical.choice, Quot.sound]`). The boundary-cell route
+went through exactly as decomposed, via 5 helper lemmas in `ForMathlib/LatticePointCount.lean`:
+- `setFinite_index_image_of_isBounded` — index-image of a bounded set is finite.
+- `ncard_index_image_le_of_diam_le` — **bounded-diameter cell incidence**: a set of (sup-metric)
+  diameter `≤ r` meets `≤ (2⌈nr⌉₊+1)ᵈ` cells. Key simplification: `ι → ℝ` carries the **sup metric**
+  (mathlib `Pi` metric), so NO `√(d−1)` factor — cleaner than the GRS/Lang Euclidean version.
+- `ncard_index_image_chart_le` — **L1a'** (the heart): cover `[0,1]ᵈ⁻¹` by the `(n+1)ᵈ⁻¹` fibres of
+  `y ↦ (⌈n yₖ⌉)ₖ`, each of diam `≤ 1/n`; image diam `≤ M/n`; sum the incidence bound.
+- `ncard_index_image_frontier_le` — **L1a**: finite-cover sum over the `m` charts.
+- `abs_card_inter_sub_volume_mul_pow_le` — **L1b** (count↔volume bridge): the index-sets
+  `Inside ⊆ Tag ⊆ Meet ⊆ Inside ∪ Bd` put both the count `N` and the volume `V` in the interval
+  `[Inside.ncard, Inside.ncard + Bd.ncard]`, so `|N − V| ≤ Bd.ncard`. The straddling step uses cell
+  connectedness + `IsPreconnected.subset_or_subset`.
+
+**d≥2 flag RESOLVED:** the proof needs no `2 ≤ Fintype.card ι` (dropped). At `d=1`, `[0,1]ᵈ⁻¹=[0,1]⁰`
+is a point, so `hlip` forces `∂s` finite and the bound holds with `C=m` — the d≤1 case is harmless,
+exactly the flag's alternative resolution. L1 thus holds for all `d ≥ 1`, slightly stronger than
+Widmer's `n≥2`.
+
+Follow-ups for the eventual standalone mathlib PR (noted by /simplify altitude review, NOT blocking):
+an upstream `index`-difference lemma (would dedup the per-coordinate ceiling arithmetic) and
+`BoxIntegral.Box.convex_coe` (would make the cell-connectedness step a one-line citation).
