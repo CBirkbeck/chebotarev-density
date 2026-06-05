@@ -1130,6 +1130,159 @@ theorem character_sum_geometry_of_numbers_bound
         rw [Finset.sum_const, hR, hζ₀.card_nthRootsFinset, nsmul_eq_mul]
         ring
 
+/-- The `n`-th Dirichlet coefficient of the Artin L-series `L(χ,·)`, i.e. the sum of the ideal
+character `χ̃(𝔞)` over the (finitely many) nonzero ideals `𝔞` of `𝓞 K` with `N𝔞 = n`. This is the
+arithmetic function whose L-series is `∑_𝔞 χ̃(𝔞) N𝔞^{-s}`. -/
+private noncomputable def galoisCharacterCoeff
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (n : ℕ) : ℂ :=
+  ∑' 𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n}, galoisCharacterOnIdeal K L χ 𝔞.1.1
+
+/-- Each norm-fibre `{𝔞 : 𝓞 K // 𝔞 ≠ ⊥ ∧ N𝔞 = n}` is finite (there are finitely many ideals of
+bounded norm), so the defining `tsum` of `galoisCharacterCoeff` is over a finite type. -/
+private theorem finite_nonzeroIdeal_absNorm_eq
+    (K : Type*) [Field K] [NumberField K] (n : ℕ) :
+    Finite {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n} :=
+  Set.Finite.to_subtype <| Set.Finite.of_finite_image (f := fun I : NonzeroIdeal K => I.1)
+    ((Ideal.finite_setOf_absNorm_eq (S := 𝓞 K) n).subset (by rintro _ ⟨⟨I, _⟩, rfl, rfl⟩; rfl))
+    (fun _ _ _ _ => Subtype.ext)
+
+/-- The `0`-th coefficient vanishes: no nonzero ideal has norm `0`, so the fibre is empty. -/
+private theorem galoisCharacterCoeff_zero
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) : galoisCharacterCoeff K L χ 0 = 0 := by
+  have : IsEmpty {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = 0} :=
+    ⟨fun 𝔞 => 𝔞.1.2 (Ideal.absNorm_eq_zero_iff.mp 𝔞.2)⟩
+  rw [galoisCharacterCoeff, tsum_empty]
+
+/-- The `n`-th coefficient is bounded in norm by the ideal-norm multiplicity: each ideal character
+value has norm `≤ 1`, so the fibre sum has norm `≤` the number of fibre elements. -/
+private theorem norm_galoisCharacterCoeff_le
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (n : ℕ) :
+    ‖galoisCharacterCoeff K L χ n‖ ≤ (idealNormMultiplicity K n : ℝ) := by
+  haveI := finite_nonzeroIdeal_absNorm_eq K n
+  haveI := Fintype.ofFinite {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n}
+  calc ‖galoisCharacterCoeff K L χ n‖
+      ≤ ∑' 𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n},
+          ‖galoisCharacterOnIdeal K L χ 𝔞.1.1‖ :=
+        norm_tsum_le_tsum_norm Summable.of_finite
+    _ = ∑ 𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n},
+          ‖galoisCharacterOnIdeal K L χ 𝔞.1.1‖ := tsum_fintype _
+    _ ≤ ∑ _𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n}, (1 : ℝ) :=
+        Finset.sum_le_sum fun 𝔞 _ => norm_galoisCharacterOnIdeal_le_one K L χ 𝔞.1.1
+    _ = (idealNormMultiplicity K n : ℝ) := by
+        rw [Finset.sum_const, nsmul_eq_mul, mul_one, idealNormMultiplicity,
+          Nat.card_eq_fintype_card]
+        simp [Finset.card_univ]
+
+/-- The partial sum of the coefficients `∑_{k ≤ n} galoisCharacterCoeff k` equals the character sum
+`∑'_{N𝔞 ≤ n} χ̃(𝔞)` over nonzero ideals of bounded norm. Both sides are finite sums; the identity is
+the fibrewise regrouping of the bounded-norm ideal sum by the value of `N𝔞 ∈ [1, n]`, matched
+against the per-`n` fibre `tsum` defining each coefficient. -/
+private theorem sum_galoisCharacterCoeff_eq_tsum_absNorm_le
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (n : ℕ) :
+    ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k =
+      ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n},
+        galoisCharacterOnIdeal K L χ 𝔞.1 := by
+  classical
+  haveI hfinT : Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} := by
+    haveI : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ n} :=
+      (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) n).to_subtype
+    exact Finite.of_injective
+      (fun a => (⟨a.1, a.2.2⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ n}))
+      fun _ _ hab => Subtype.ext (by simpa using hab)
+  haveI := Fintype.ofFinite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n}
+  rw [tsum_fintype, ← Finset.sum_fiberwise_of_maps_to (t := Finset.Icc 1 n)
+      (g := fun 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} => Ideal.absNorm 𝔞.1)
+      (fun 𝔞 _ => Finset.mem_Icc.mpr
+        ⟨Nat.one_le_iff_ne_zero.mpr (mt Ideal.absNorm_eq_zero_iff.mp 𝔞.2.1), 𝔞.2.2⟩)
+      (fun 𝔞 => galoisCharacterOnIdeal K L χ 𝔞.1)]
+  refine Finset.sum_congr rfl fun k hk => ?_
+  rw [galoisCharacterCoeff, ← Finset.sum_subtype_eq_sum_filter, Finset.subtype_univ]
+  haveI := finite_nonzeroIdeal_absNorm_eq K k
+  haveI := Fintype.ofFinite {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = k}
+  rw [tsum_fintype]
+  exact Fintype.sum_equiv
+    { toFun := fun ⟨⟨𝔞, h𝔞ne⟩, hnorm⟩ =>
+        (⟨⟨𝔞, h𝔞ne, hnorm.le.trans (Finset.mem_Icc.mp hk).2⟩, hnorm⟩ :
+          {x : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} // Ideal.absNorm x.1 = k})
+      invFun := fun ⟨⟨𝔞, h𝔞⟩, hnorm⟩ => ⟨⟨𝔞, h𝔞.1⟩, hnorm⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl } _ _ fun _ => rfl
+
+/-- **Step 1 (the LF3 input).** The partial sums of the L-series coefficients grow like
+`O(n^{1-1/d})`, `d = [K:ℚ]`. This is the geometry-of-numbers character-sum bound
+`character_sum_geometry_of_numbers_bound` rewritten through the partial-sum bridge. -/
+private theorem sum_galoisCharacterCoeff_isBigO
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)
+      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) := by
+  obtain ⟨C, hC⟩ := character_sum_geometry_of_numbers_bound K L m χ _hχ
+  refine Asymptotics.isBigO_iff.mpr ⟨C, Filter.Eventually.of_forall fun n => ?_⟩
+  rw [sum_galoisCharacterCoeff_eq_tsum_absNorm_le K L χ n,
+    Real.norm_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n) _)]
+  exact hC n
+
+/-- **Step 2.** The partial sums of the coefficient *norms* grow like `O(n)`, the crude bound used
+for absolute (`LSeriesSummable`) convergence on `Re s > 1`. Pointwise `‖coeff k‖ ≤
+idealNormMultiplicity K k`, and the latter's partial sums are `O(n)` by
+`sum_idealNormMultiplicity_isBigO`. -/
+private theorem sum_norm_galoisCharacterCoeff_isBigO
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) :
+    (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, ‖galoisCharacterCoeff K L χ k‖)
+      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 : ℝ)) := by
+  refine (Asymptotics.isBigO_of_le Filter.atTop fun n => ?_).trans
+    (sum_idealNormMultiplicity_isBigO K)
+  rw [Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ => norm_nonneg _),
+    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ => Nat.cast_nonneg _)]
+  exact Finset.sum_le_sum fun k _ => norm_galoisCharacterCoeff_le K L χ k
+
+/-- **Step 3.** On `Re s > 1` the L-series of the coefficient function equals the absolutely
+convergent ideal sum `∑'_𝔞 χ̃(𝔞) N𝔞^{-s}`. The regrouping skeleton mirrors
+`hasSum_nonzeroIdeal_absNorm_cpow`: `Equiv.sigmaFiberEquiv` partitions the ideal sum by the value
+`N𝔞`, the per-fibre sum collapses to `galoisCharacterCoeff n · n^{-s}`, and `LSeries.term_def₀`
+(coefficient at `0` vanishes) identifies the L-series. Absolute summability is by termwise
+comparison `‖χ̃(𝔞) N𝔞^{-s}‖ ≤ N𝔞^{-s}` against `ζ_K`. -/
+private theorem lseries_galoisCharacterCoeff_eq_tsum
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (χ : galoisCharacter K L) (s : ℂ) (hs : 1 < s.re) :
+    LSeries (galoisCharacterCoeff K L χ) s =
+      ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
+        galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
+  classical
+  set e := Equiv.sigmaFiberEquiv (fun I : NonzeroIdeal K => Ideal.absNorm I.1) with he
+  have hsummable : Summable fun I : NonzeroIdeal K =>
+      ‖galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s)‖ := by
+    refine Summable.of_nonneg_of_le (fun _ => norm_nonneg _) (fun I => ?_)
+      (hasSum_nonzeroIdeal_absNorm_cpow K hs).summable.norm
+    rw [norm_mul]
+    exact mul_le_of_le_one_left (norm_nonneg _) (norm_galoisCharacterOnIdeal_le_one K L χ I.1)
+  have hsummable_sigma : Summable fun p : Σ n, {I : NonzeroIdeal K // Ideal.absNorm I.1 = n} =>
+      galoisCharacterOnIdeal K L χ (e p).1 * (Ideal.absNorm (e p).1 : ℂ) ^ (-s) :=
+    (e.summable_iff (f := fun I : NonzeroIdeal K =>
+      galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s))).mpr hsummable.of_norm
+  have hfiber_val : ∀ n : ℕ,
+      (∑' y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
+        galoisCharacterOnIdeal K L χ (y.1).1 * (Ideal.absNorm (y.1).1 : ℂ) ^ (-s))
+        = galoisCharacterCoeff K L χ n * (n : ℂ) ^ (-s) := fun n => by
+    have hconst : ∀ y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
+        galoisCharacterOnIdeal K L χ (y.1).1 * (Ideal.absNorm (y.1).1 : ℂ) ^ (-s) =
+          galoisCharacterOnIdeal K L χ (y.1).1 * (n : ℂ) ^ (-s) := fun y => by rw [y.2]
+    rw [tsum_congr hconst, tsum_mul_right, galoisCharacterCoeff]
+  rw [show LSeries (galoisCharacterCoeff K L χ) s =
+      ∑' n, galoisCharacterCoeff K L χ n * (n : ℂ) ^ (-s) from
+    tsum_congr fun n => LSeries.term_def₀ (galoisCharacterCoeff_zero K L χ) s n,
+    ← e.tsum_eq (fun I : NonzeroIdeal K =>
+      galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s)),
+    hsummable_sigma.tsum_sigma]
+  exact (tsum_congr hfiber_val).symm
+
+open Filter Topology Set MeasureTheory Asymptotics in
 /-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
 Combining the geometry-of-numbers bound
 `character_sum_geometry_of_numbers_bound`
@@ -1165,7 +1318,88 @@ theorem artinLSeries_analytic_extension
           ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
             galoisCharacterOnIdeal K L χ 𝔞.1 *
               (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)) := by
-  sorry
+  classical
+  set r : ℝ := 1 - (Module.finrank ℚ K : ℝ)⁻¹ with hr_def
+  have hrinv : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
+    rw [inv_pos]; exact_mod_cast Module.finrank_pos
+  have hr0 : 0 ≤ r := by
+    rw [hr_def, sub_nonneg, inv_le_one_iff₀]; right; exact_mod_cast Module.finrank_pos
+  have hr1 : r < 1 := by rw [hr_def]; linarith
+  set S : ℝ → ℂ := fun t => ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k with hS_def
+  -- `S` vanishes below 1 (floor is 0), is measurable, and is bounded on every compact set.
+  have hS_zero : ∀ t : ℝ, t < 1 → S t = 0 := fun t ht => by
+    change ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k = 0
+    rw [Nat.floor_eq_zero.mpr ht, Finset.Icc_eq_empty (by norm_num), Finset.sum_empty]
+  have hS_meas : Measurable S :=
+    (measurable_from_top
+      (f := fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)).comp
+      Nat.measurable_floor
+  have hS_bdd : ∀ k : Set ℝ, IsCompact k → ∃ C : ℝ, ∀ t ∈ k, ‖S t‖ ≤ C := fun k hk => by
+    obtain ⟨b, hb⟩ := hk.isBounded.subset_closedBall 0
+    refine ⟨(Finset.Icc 0 ⌊b⌋₊).sup' (by simp)
+      fun n => ‖∑ j ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ j‖, fun t ht => ?_⟩
+    have htb : t ≤ b := by
+      have := hb ht
+      rw [Metric.mem_closedBall, Real.dist_eq, sub_zero] at this
+      exact (le_abs_self t).trans this
+    have hfloor : ⌊t⌋₊ ∈ Finset.Icc 0 ⌊b⌋₊ :=
+      Finset.mem_Icc.mpr ⟨Nat.zero_le _, Nat.floor_le_floor htb⟩
+    exact Finset.le_sup'
+      (fun n => ‖∑ j ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ j‖) hfloor
+  -- `S` is `O(t^r)` at `∞` (the LF3 partial-sum bound pushed through `⌊·⌋₊`).
+  have hS_bigO : S =O[Filter.atTop] (fun t : ℝ => t ^ r) :=
+    (((sum_galoisCharacterCoeff_isBigO K L m χ _hχ).comp_tendsto tendsto_nat_floor_atTop).trans <|
+      isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0))
+  -- The closed form `Lf s = s · 𝓜S(-s)` is analytic on the half-plane and equals the integral
+  -- representation of the L-series, hence the ideal sum, on `Re s > 1`.
+  have hbridge : ∀ s : ℂ,
+      ∫ t in Set.Ioi (1 : ℝ), S t * (t : ℂ) ^ (-(s + 1)) = mellin S (-s) := fun s => by
+    rw [mellin]
+    rw [show (∫ t in Set.Ioi (0 : ℝ), (t : ℂ) ^ (-s - 1) • S t) =
+        ∫ t in Set.Ioi (1 : ℝ), (t : ℂ) ^ (-s - 1) • S t from ?_]
+    · refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioi fun t _ => ?_
+      rw [smul_eq_mul, mul_comm]; ring_nf
+    · have hinter : Set.Ioi (0 : ℝ) ∩ Set.Ioi (1 : ℝ) = Set.Ioi (1 : ℝ) := by
+        rw [Set.inter_eq_right]; exact Set.Ioi_subset_Ioi (by norm_num)
+      rw [← hinter, ← MeasureTheory.setIntegral_indicator measurableSet_Ioi]
+      refine MeasureTheory.setIntegral_congr_ae measurableSet_Ioi ?_
+      have hae : ∀ᵐ t : ℝ ∂volume, t ≠ 1 :=
+        MeasureTheory.ae_iff.mpr (by simp : volume {x : ℝ | ¬x ≠ 1} = 0)
+      filter_upwards [hae] with t ht _
+      rw [Set.indicator_apply]
+      by_cases h1 : t ∈ Set.Ioi (1 : ℝ)
+      · rw [if_pos h1]
+      · rw [if_neg h1, hS_zero t (lt_of_le_of_ne (not_lt.mp (by simpa using h1)) ht), smul_zero]
+  refine ⟨fun s => s * mellin S (-s), ?_, fun s hs => ?_⟩
+  · -- Analyticity: differentiable at every point of the (open) half-plane.
+    refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
+      (isOpen_lt continuous_const Complex.continuous_re)
+    have hs₀' : r < s₀.re := hs₀
+    have hfc : MeasureTheory.LocallyIntegrableOn S (Set.Ioi (0 : ℝ)) := by
+      rw [MeasureTheory.locallyIntegrableOn_iff isOpen_Ioi.isLocallyClosed]
+      intro k _ hkcomp
+      obtain ⟨C, hC⟩ := hS_bdd k hkcomp
+      refine MeasureTheory.Measure.integrableOn_of_bounded hkcomp.measure_lt_top.ne
+        hS_meas.aestronglyMeasurable (M := C) ?_
+      rw [MeasureTheory.ae_restrict_iff' hkcomp.measurableSet]
+      exact Filter.Eventually.of_forall hC
+    have hf_top : S =O[Filter.atTop] (fun t : ℝ => t ^ (-(-r))) := by rw [neg_neg]; exact hS_bigO
+    have hf_bot : S =O[𝓝[>] (0 : ℝ)] (fun t : ℝ => t ^ (-(-s₀.re - 1))) :=
+      (Filter.EventuallyEq.trans_isBigO
+        (by filter_upwards [Ioo_mem_nhdsGT one_pos] with t ht using
+          hS_zero t (Set.mem_Ioo.mp ht).2) (Asymptotics.isBigO_zero _ _))
+    have hmellin : DifferentiableAt ℂ (mellin S) (-s₀) :=
+      mellin_differentiableAt_of_isBigO_rpow hfc hf_top (by rw [Complex.neg_re]; linarith)
+        hf_bot (by rw [Complex.neg_re]; linarith)
+    exact (differentiableAt_id.mul (hmellin.comp s₀ differentiableAt_id.neg)).differentiableWithinAt
+  · -- Agreement on `Re s > 1`: L-series → integral representation → mellin → ideal sum.
+    have hssum : LSeriesSummable (galoisCharacterCoeff K L χ) s :=
+      LSeriesSummable_of_sum_norm_bigO (sum_norm_galoisCharacterCoeff_isBigO K L χ) zero_le_one
+        (by exact_mod_cast hs)
+    have hint := LSeries_eq_mul_integral (galoisCharacterCoeff K L χ) hr0
+      (lt_of_lt_of_le hr1 (by exact_mod_cast hs.le)) hssum
+      (sum_galoisCharacterCoeff_isBigO K L m χ _hχ)
+    rw [← lseries_galoisCharacterCoeff_eq_tsum K L χ s hs, hint, hbridge s]
 
 /-! ### Sub-lemmas for `artinLSeries_one_ne_zero` (Sharifi 7.1.19 step 2, p. 142)
 

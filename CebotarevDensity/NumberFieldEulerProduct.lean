@@ -264,8 +264,12 @@ lemma tsum_symGeometric (α : Type*) [Fintype α] [Finite α] {z : ℂ} (hz : �
     (∑' n : ℕ, (Fintype.card (Sym α n) : ℂ) * z ^ n) = ((1 - z)⁻¹) ^ Fintype.card α :=
   (summable_tsum_symGeometric α hz).2
 
-lemma summable_idealNormMultiplicity_mul_cpow_neg {s : ℂ} (hs : 1 < s.re) :
-    Summable fun n : ℕ => ‖(idealNormMultiplicity L n : ℂ) * (n : ℂ) ^ (-s)‖ := by
+/-- The partial sums of the ideal-norm multiplicity counting function grow like `O(n)`: the number
+of nonzero ideals of `𝓞 L` with norm `≤ n` is `∑_{k ≤ n} idealNormMultiplicity L k`, and
+`NumberField.Ideal.tendsto_norm_le_div_atTop₀` says this count is asymptotic to `c · n`. -/
+lemma sum_idealNormMultiplicity_isBigO :
+    (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, (idealNormMultiplicity L k : ℝ))
+      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 : ℝ)) := by
   classical
   have h_finite : ∀ (b : ℕ), {I : NonzeroIdeal L | Ideal.absNorm I.1 = b}.Finite := fun b =>
     Set.Finite.preimage (f := fun I : NonzeroIdeal L => I.1) (fun _ _ _ _ => Subtype.ext)
@@ -281,30 +285,33 @@ lemma summable_idealNormMultiplicity_mul_cpow_neg {s : ℂ} (hs : 1 < s.re) :
       exact ⟨fun h => h.2, fun h =>
         ⟨Nat.one_le_iff_ne_zero.mpr (mt Ideal.absNorm_eq_zero_iff.mp hI), h⟩⟩] at key
     exact key.symm
-  have h_bigO : (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, (idealNormMultiplicity L k : ℝ))
-      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 : ℝ)) := by
-    have h_card_bridge : ∀ n : ℕ,
-        Nat.card {I : NonzeroIdeal L // Ideal.absNorm I.1 ≤ n} =
-        Nat.card {I : (Ideal (𝓞 L))⁰ // ((Ideal.absNorm I.1 : ℕ) : ℝ) ≤ (n : ℝ)} :=
-      fun n => Nat.card_congr
-        { toFun := fun ⟨⟨I, hI⟩, hn⟩ =>
-            ⟨⟨I, mem_nonZeroDivisors_of_ne_zero hI⟩, by exact_mod_cast hn⟩
-          invFun := fun ⟨⟨I, hI⟩, hn⟩ =>
-            ⟨⟨I, mem_nonZeroDivisors_iff_ne_zero.mp hI⟩, by exact_mod_cast hn⟩
-          left_inv := fun _ => rfl
-          right_inv := fun _ => rfl }
-    refine Asymptotics.isBigO_atTop_natCast_rpow_of_tendsto_div_rpow
-      (((NumberField.Ideal.tendsto_norm_le_div_atTop₀ L).comp
-        tendsto_natCast_atTop_atTop).congr' ?_)
-    filter_upwards with n
-    simp only [Function.comp_apply, Real.rpow_one]
-    rw [← Nat.cast_sum, h_sum_card n, h_card_bridge n]
-    push_cast
-    rfl
+  have h_card_bridge : ∀ n : ℕ,
+      Nat.card {I : NonzeroIdeal L // Ideal.absNorm I.1 ≤ n} =
+      Nat.card {I : (Ideal (𝓞 L))⁰ // ((Ideal.absNorm I.1 : ℕ) : ℝ) ≤ (n : ℝ)} :=
+    fun n => Nat.card_congr
+      { toFun := fun ⟨⟨I, hI⟩, hn⟩ =>
+          ⟨⟨I, mem_nonZeroDivisors_of_ne_zero hI⟩, by exact_mod_cast hn⟩
+        invFun := fun ⟨⟨I, hI⟩, hn⟩ =>
+          ⟨⟨I, mem_nonZeroDivisors_iff_ne_zero.mp hI⟩, by exact_mod_cast hn⟩
+        left_inv := fun _ => rfl
+        right_inv := fun _ => rfl }
+  refine Asymptotics.isBigO_atTop_natCast_rpow_of_tendsto_div_rpow
+    (((NumberField.Ideal.tendsto_norm_le_div_atTop₀ L).comp
+      tendsto_natCast_atTop_atTop).congr' ?_)
+  filter_upwards with n
+  simp only [Function.comp_apply, Real.rpow_one]
+  rw [← Nat.cast_sum, h_sum_card n, h_card_bridge n]
+  push_cast
+  rfl
+
+lemma summable_idealNormMultiplicity_mul_cpow_neg {s : ℂ} (hs : 1 < s.re) :
+    Summable fun n : ℕ => ‖(idealNormMultiplicity L n : ℂ) * (n : ℂ) ^ (-s)‖ := by
+  classical
   have h_lss : LSeriesSummable (fun n : ℕ => ((idealNormMultiplicity L n : ℝ) : ℂ)) s :=
     LSeriesSummable_of_sum_norm_bigO_and_nonneg
       (f := fun n => (idealNormMultiplicity L n : ℝ))
-      h_bigO (fun _ => Nat.cast_nonneg _) zero_le_one (by exact_mod_cast hs)
+      (sum_idealNormMultiplicity_isBigO L) (fun _ => Nat.cast_nonneg _) zero_le_one
+      (by exact_mod_cast hs)
   have h_term_eq : LSeries.term (fun n : ℕ => ((idealNormMultiplicity L n : ℝ) : ℂ)) s =
       fun n => (idealNormMultiplicity L n : ℂ) * (n : ℂ) ^ (-s) := by
     funext n
