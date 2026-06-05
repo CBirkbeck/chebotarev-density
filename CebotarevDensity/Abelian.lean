@@ -100,6 +100,62 @@ theorem cyclic_subgroup_meets_G_times_one_trivially
   rw [Subgroup.mem_bot, Prod.mk_eq_one]
   exact ⟨by simpa [hg2] using (congrArg Prod.fst hk).symm, hh⟩
 
+/-- The Dirichlet density of a finite pairwise-disjoint union of sets, each of the
+*same* density `c`, is `|t| • c`. Pure `Density.lean`-API assembly (induction on `t`
+from `HasDirichletDensity.union_of_disjoint`), used to sum the `|H_n|` equal cyclotomic-
+crossing fibre densities `1/(|G|·|H|)` in `liminf_density_S_sigma_ge_card_H_n_div_GH`. -/
+private theorem hasDirichletDensity_biUnion_const {F : Type*} [Field F] [NumberField F]
+    {ι : Type*} (t : Finset ι) (S : ι → Set (Ideal (𝓞 F))) (c : ℝ)
+    (hdisj : (t : Set ι).PairwiseDisjoint S)
+    (hdens : ∀ i ∈ t, HasDirichletDensity (S i) c) :
+    HasDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) := by
+  classical
+  induction t using Finset.induction with
+  | empty => simpa using hasDirichletDensity_empty (K := F)
+  | insert a t ha ih =>
+      have hdisj' : (t : Set ι).PairwiseDisjoint S :=
+        hdisj.subset (Finset.coe_subset.mpr (Finset.subset_insert a t))
+      have hdisjUnion : Disjoint (S a) (⋃ i ∈ t, S i) :=
+        Set.disjoint_iUnion₂_right.2 fun i hi =>
+          hdisj (Finset.mem_insert_self a t) (Finset.mem_insert_of_mem hi) fun h => ha (h ▸ hi)
+      have hbase := hdens a (Finset.mem_insert_self a t)
+      have hrec := ih hdisj' (fun i hi => hdens i (Finset.mem_insert_of_mem hi))
+      have hcard : ((insert a t).card : ℝ) • c = c + (t.card : ℝ) • c := by
+        rw [Finset.card_insert_of_notMem ha]; push_cast; ring
+      rw [Finset.set_biUnion_insert, hcard]
+      exact hbase.union_of_disjoint hdisjUnion hrec
+
+/-- Sharifi 7.2.2 Step 2 cyclotomic-crossing core (p. 144). For `m ≥ 1` and `σ ∈ G`,
+there is a family of prime sets `S_{σ,τ}` of `K` indexed by `τ ∈ H_n(m) =
+{τ : (ℤ/mℤ)ˣ // |G| ∣ ord τ}`, pairwise disjoint, each contained in the Frobenius
+fibre `S_σ`, and each of Dirichlet density exactly `1/(|G|·|H(m)|)` (with
+`H(m) = (ℤ/mℤ)ˣ`).
+This is the substantive geometric content of the crossing: introduce the compositum
+`M = L(μ_m)` (`Gal(M/K) ≅ G × H` via the mod-`m` cyclotomic character, valid since `m`
+coprime to `disc L` makes `L` and `K(μ_m)` linearly disjoint over `K`). For each such
+`τ`, the subgroup `⟨(σ,τ)⟩` meets `G × {1}` trivially
+(`cyclic_subgroup_meets_G_times_one_trivially`), so `M = F(μ_m)` with
+`F = K(μ_m)^{⟨(σ,τ)⟩}`, making `M/F` cyclotomic; `chebotarev_cyclotomic` applied to
+`M/F` at `(σ,τ)` together with the Step-1 cyclic reduction through `F/K` gives a set
+`S_{σ,τ}` of primes of `K` with `Gal(M/K)`-Frobenius `(σ,τ)` of density
+`1/(|G|·|H|)`. Such primes have `Gal(L/K)`-Frobenius the `G`-projection `σ`, so
+`S_{σ,τ} ⊆ S_σ`; distinct `τ` give disjoint sets.
+
+This existence statement isolates the compositum infrastructure (`Gal(L(μ_m)/K) ≅ G × H`
+and the density transfer `F/K`) that is not yet available in mathlib/this project; the
+`liminf` lower bound `liminf_density_S_sigma_ge_card_H_n_div_GH` is assembled sorry-free
+around it (mirroring how the analytic gap is isolated in the cyclotomic case). -/
+private theorem exists_cyclotomicCrossing_fibres
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m) :
+    ∃ S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K)),
+      (Set.univ : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S ∧
+      (∀ τ, S τ ⊆ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
+          frobeniusClass K L 𝔭 = ConjClasses.mk σ}) ∧
+      (∀ τ, HasDirichletDensity (S τ)
+          ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
+  sorry
+
 /-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)`
 coming from one choice of cyclotomic crossing modulus `m`. Source quote
 (p. 144): "δ_inf(S_σ) ≥ |H_n|/(|G|·|H|)".
@@ -134,18 +190,37 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
                   frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
               / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
           (𝓝[>] 1) := by
-  sorry
-
-/-- Sharifi 7.2.2 Step 2 sub-lemma (iv) — explicit lower bound on
-`|H_n|/|H|` via the prime-power factorisation of `n` (p. 144).
-Verbatim source quote: "`|H_n|/|H| = ∏_{i=1}^r (1 - p_i^{k_i-1} /
-p_i^{j_i k_i}) ≥ ∏_{i=1}^r (1 - 1/p^{(j-1)k_i + 1})`". -/
-theorem H_n_over_H_lower_bound_via_prime_factorisation
-    (n m : ℕ) (hn : 1 ≤ n) (hm : 1 ≤ m) (_hm_one_mod : m % n = 1 % n) :
-    (Nat.card {τ : (ZMod m)ˣ // n ∣ orderOf τ} : ℝ) / Nat.card ((ZMod m)ˣ)
-      ≥ (n.factorization.support.prod fun p ↦
-          1 - 1 / (p : ℝ) ^ (Nat.factorization (m - 1) p - 1)) := by
-  sorry
+  classical
+  -- The Frobenius fibre `S_σ` and the crossing constant `c = 1/(|G|·|H|)`.
+  set Sσ : Set (Ideal (𝓞 K)) :=
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ frobeniusClass K L 𝔭 = ConjClasses.mk σ}
+    with hSσ
+  set c : ℝ := (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹ with hc
+  -- The cyclotomic-crossing fibres (substantive content isolated in the sub-lemma).
+  obtain ⟨S, hpd, hsub, hd⟩ := exists_cyclotomicCrossing_fibres K L σ m _hm
+  -- Index type `H_n(m)` is finite; work over its `Finset.univ`.
+  have : Fintype {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} := Fintype.ofFinite _
+  set t : Finset {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} := Finset.univ with ht
+  -- The finite disjoint union of the fibres has density `|t| • c = |H_n|/(|G|·|H|)`.
+  have hpd' : (t : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S := by
+    rw [ht, Finset.coe_univ]; exact hpd
+  have hUdens : HasDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) :=
+    hasDirichletDensity_biUnion_const t S c hpd' (fun i _ => hd i)
+  -- The union sits inside `S_σ`, so its lower density bounds `liminf(P_{S_σ}/P_univ)`.
+  have hUsub : (⋃ i ∈ t, S i) ⊆ Sσ := Set.iUnion₂_subset fun i _ => hsub i
+  have hUlow : HasLowerDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) := hUdens.hasLower
+  have hSσlow : HasLowerDirichletDensity Sσ
+      (Filter.liminf
+        (fun s : ℝ ↦ primeIdealZetaSum Sσ s / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
+        (𝓝[>] 1)) := rfl
+  have hmono := HasLowerDirichletDensity.mono hUsub hUlow hSσlow
+  -- Identify `|t| • c` with the goal's left-hand side `|H_n|/(|G|·|H|)`.
+  have htcard : (t.card : ℝ) • c
+      = (Nat.card {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} : ℝ)
+          / (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ)) := by
+    rw [ht, Finset.card_univ, hc, smul_eq_mul, ← Nat.card_eq_fintype_card, div_eq_mul_inv]
+  rw [htcard] at hmono
+  exact hmono
 
 /-! #### Number-theoretic helpers for `H_n_over_H_tends_to_one`
 
@@ -456,7 +531,44 @@ theorem liminf_ratio_ge_inv_card_G
                   frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
               / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
           (𝓝[>] 1) := by
-  sorry
+  set n : ℕ := Nat.card Gal(L/K) with hn
+  set L_inf : ℝ :=
+    Filter.liminf
+      (fun s : ℝ ↦
+        primeIdealZetaSum
+            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
+              frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
+          / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
+      (𝓝[>] 1) with hLinf
+  have hnpos : 0 < n := hn ▸ Nat.card_pos
+  have hn1 : 1 ≤ n := hnpos
+  -- Specialise the per-`m` bound (LF10) to `m = n ^ k`, giving a sequence of lower
+  -- bounds on `L_inf`.
+  have hbound : ∀ k : ℕ,
+      (Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} : ℝ)
+          / Nat.card ((ZMod (n ^ k))ˣ) * (n : ℝ)⁻¹ ≤ L_inf := by
+    intro k
+    have hk1 : 1 ≤ n ^ k := Nat.one_le_pow _ _ hnpos
+    have hLF10 := liminf_density_S_sigma_ge_card_H_n_div_GH K L σ (n ^ k) hk1
+    -- `liminf_density_S_sigma_ge_card_H_n_div_GH` is stated with `Nat.card Gal(L/K)`;
+    -- rewrite to `n` and reshape the LHS into `(|H_n|/|H|) · n⁻¹`.
+    rw [← hn] at hLF10
+    rw [← hLinf] at hLF10
+    refine le_trans (le_of_eq ?_) hLF10
+    have hHpos : (0 : ℝ) < Nat.card ((ZMod (n ^ k))ˣ) := by
+      have : NeZero (n ^ k) := ⟨pow_ne_zero k hnpos.ne'⟩
+      exact_mod_cast Nat.card_pos
+    have hnR : (n : ℝ) ≠ 0 := by exact_mod_cast hnpos.ne'
+    field_simp
+  -- The sequence of lower bounds tends to `n⁻¹ = (Nat.card Gal(L/K))⁻¹`.
+  have htends : Filter.Tendsto
+      (fun k : ℕ ↦ (Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} : ℝ)
+          / Nat.card ((ZMod (n ^ k))ˣ) * (n : ℝ)⁻¹)
+      Filter.atTop (𝓝 ((n : ℝ)⁻¹)) := by
+    have := (H_n_over_H_tends_to_one n hn1).mul_const ((n : ℝ)⁻¹)
+    simpa using this
+  -- Hence `n⁻¹ ≤ L_inf` by `le_of_tendsto` (the limit of the lower bounds is `n⁻¹`).
+  exact le_of_tendsto htends (Filter.Eventually.of_forall hbound)
 
 /-- The density ratios of the `|G|` Frobenius-fibres `S_σ` (over
 `σ ∈ Gal(L/K)`) sum to the ratio for the unramified primes, which tends
