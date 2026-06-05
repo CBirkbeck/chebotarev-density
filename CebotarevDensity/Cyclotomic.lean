@@ -309,7 +309,6 @@ private theorem differentiableAt_logSum_of_two_le
     DifferentiableAt ℝ
       (fun s : ℝ => ∑' i, -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) s₀ := by
   set ε : ℝ := (s₀ - 1) / 2 with hε
-  have hεpos : 0 < ε := by rw [hε]; linarith
   set t : Set ℝ := Set.Ioi (1 + ε) with ht
   have htopen : IsOpen t := isOpen_Ioi
   have htconn : IsPreconnected t := (convex_Ioi _).isPreconnected
@@ -351,7 +350,6 @@ private theorem differentiableAt_logSum_of_two_le
       rw [hu]
       set n : ℝ := (N i : ℝ) with hn
       have hlog : Real.log n ≤ n ^ (ε / 2) / (ε / 2) := Real.log_le_rpow_div (hNRpos i).le hδpos
-      have hrn : 0 ≤ n ^ (-(1 + ε)) := Real.rpow_nonneg (hNRpos i).le _
       calc 2 * Real.log n * n ^ (-(1 + ε)) ≤ 2 * (n ^ (ε / 2) / (ε / 2)) * n ^ (-(1 + ε)) := by
             gcongr
         _ = (2 / (ε / 2)) * n ^ (-((1 + ε) - ε / 2)) := by
@@ -431,8 +429,7 @@ private theorem cexp_logSum_eq_tprod
     rw [hf, Complex.log_inv _ (Complex.slitPlane_arg_ne_pi (hslit i))]
   have hsumlog : Summable (fun i => Complex.log (f i)) :=
     (hsumw.clog_one_sub.neg).congr fun i => (hlogf i).symm
-  rw [show (fun i => -Complex.log (1 - w i)) = (fun i => Complex.log (f i)) from
-    funext fun i => (hlogf i).symm]
+  simp_rw [← hlogf]
   exact Complex.cexp_tsum_eq_tprod hfn hsumlog
 
 /-- The derivative of the log sum `g` at `s₀ > 1` equals the logarithmic derivative `Lf'/Lf` of any
@@ -465,7 +462,7 @@ private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ‖G s‖ ≤ C := by
   obtain ⟨M, hM⟩ : ∃ M : ℝ, ∀ s ∈ Set.Icc (1 : ℝ) 2, ‖F s‖ ≤ M :=
     isCompact_Icc.exists_bound_of_continuousOn hFcont
-  refine ⟨‖G 2‖ + M * 1, ?_⟩
+  refine ⟨‖G 2‖ + M, ?_⟩
   have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 := nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
   filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
   simp only [Set.mem_Ioi] at hs1
@@ -479,11 +476,8 @@ private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
       (Set.right_mem_Icc.mpr hs2.le) (Set.left_mem_Icc.mpr hs2.le)
   have hsm : ‖s - 2‖ ≤ 1 := by rw [Real.norm_eq_abs, abs_le]; constructor <;> linarith
   have hMnn : 0 ≤ M := le_trans (norm_nonneg _) (hM 1 (by norm_num))
-  calc ‖G s‖ = ‖(G s - G 2) + G 2‖ := by ring_nf
-    _ ≤ ‖G s - G 2‖ + ‖G 2‖ := norm_add_le _ _
-    _ ≤ M * ‖s - 2‖ + ‖G 2‖ := by linarith
-    _ ≤ M * 1 + ‖G 2‖ := by nlinarith [hsm]
-    _ = ‖G 2‖ + M * 1 := by ring
+  calc ‖G s‖ ≤ ‖G s - G 2‖ + ‖G 2‖ := norm_le_norm_sub_add _ _
+    _ ≤ ‖G 2‖ + M := by nlinarith [hsm]
 
 /-- The twisted prime sum `∑'_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` over the unramified primes, as a complex function of
 `s`. The `χ = 1` value is the real prime sum `∑'_𝔭 N𝔭⁻ˢ`; the `χ ≠ 1` values are bounded near
@@ -531,7 +525,7 @@ private theorem two_le_absNorm_prime
     2 ≤ Ideal.absNorm 𝔭 := by
   have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => hne (Ideal.absNorm_eq_zero_iff.mp h)
   have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
-  omega
+  lia
 
 /-- **Complex-analytic bridge of Dirichlet's argument (the substantive content of the cyclotomic
 case).** Given the analytic extension `Lf` of `L(χ,·)` — analytic on `Z(1-[K:ℚ]⁻¹)` and agreeing
@@ -560,8 +554,8 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
   classical
   -- Index, "norm base" `N`, unit-norm coefficient `c`, the weight `w` and the log sum `G`.
-  set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hιdef
-  set N : ι → ℕ := fun 𝔭 => Ideal.absNorm 𝔭.1 with hN
+  set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
+  set N : ι → ℕ := fun 𝔭 => Ideal.absNorm 𝔭.1
   set c : ι → ℂ := fun 𝔭 => (χ (frobeniusClass K L 𝔭.1).out : ℂ) with hc
   set G : ℝ → ℂ := fun s => ∑' 𝔭 : ι, -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) with hGdef
   have hc1 : ∀ 𝔭 : ι, ‖c 𝔭‖ = 1 := fun 𝔭 => by
@@ -576,7 +570,7 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   -- `Σ_𝔭 N𝔭⁻ʳ` is summable over the unramified subtype for every `r > 1`.
   have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-r)) := by
     intro r hr
-    set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
+    set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
     have hinj : Function.Injective
         (fun 𝔭 : ι =>
           (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
@@ -586,12 +580,12 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   -- `‖w 𝔭 s‖ = N𝔭⁻ˢ`, and `‖w 𝔭 s‖ < 1` for `s > 1`; hence the slit-plane condition.
   have hwn : ∀ 𝔭 : ι, ∀ s : ℝ, ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ = (N 𝔭 : ℝ) ^ (-s) := by
     intro 𝔭 s
-    rw [norm_mul, hc1, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN2 𝔭; omega),
+    rw [norm_mul, hc1, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN2 𝔭; lia),
       Complex.neg_re, Complex.ofReal_re]
   have hslit : ∀ 𝔭 : ι, ∀ s : ℝ, 1 < s →
       (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) ∈ Complex.slitPlane := by
     intro 𝔭 s hs
-    have h1N : (1 : ℝ) < N 𝔭 := by have := hN2 𝔭; exact_mod_cast (by omega : 1 < N 𝔭)
+    have h1N : (1 : ℝ) < N 𝔭 := by have := hN2 𝔭; exact_mod_cast (by lia : 1 < N 𝔭)
     have hlt : ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ < 1 := by
       rw [hwn]; exact Real.rpow_lt_one_of_one_lt_of_neg h1N (by linarith)
     rw [sub_eq_add_neg]
@@ -648,7 +642,7 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   -- `‖G s‖ ≤ C_g` eventually (mean value inequality).
   obtain ⟨Cg, hCg⟩ := norm_bounded_nhdsGT_of_deriv_continuousOn G F hGderiv hFcont
   -- `‖R_χ s‖ ≤ M_R` eventually: each `‖-Log(1-w) - w‖ ≤ N𝔭⁻²`, summed `≤ Σ_𝔭 N𝔭⁻²`.
-  set MR : ℝ := ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ)) with hMR
+  set MR : ℝ := ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ))
   have hsumN2 : Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-(2 : ℝ))) := hsummr 2 one_lt_two
   have hNRpos : ∀ 𝔭 : ι, (0 : ℝ) < N 𝔭 := fun 𝔭 => by have := hN2 𝔭; positivity
   -- Per-term tail bound `‖-Log(1-w 𝔭) - w 𝔭‖ ≤ N𝔭⁻²` (uniform in `s > 1`), used for both the
