@@ -534,8 +534,10 @@ map `e ↦ ∏_𝔭 𝔭^{e 𝔭}` is injective with range exactly those `S`-fac
 (`UniqueFactorizationMonoid.factorization` of ideals); as `S ↑ ⊤` every nonzero ideal is
 eventually captured, so the partial sums tend to `∑_𝔞 N𝔞^{-s} = ζ_K(s)`. -/
 
-/-- For `1 < Re s`, `∑_𝔞 N𝔞^{-s}` over nonzero ideals of `𝓞 L` has sum `ζ_K(s)`. -/
-private theorem hasSum_nonzeroIdeal_absNorm_cpow {s : ℂ} (hs : 1 < s.re) :
+/-- For `1 < Re s`, `∑_𝔞 N𝔞^{-s}` over nonzero ideals of `𝓞 L` has sum `ζ_K(s)`. (Public: the
+abelian Euler-product factorisation in `ZetaProduct.lean` needs the `ζ_L = Σ_𝔞 N𝔞^{-s}` ideal-sum
+form both for multipliability of the prime product and for the `L_1 ≤ ζ_K` sub-product comparison.) -/
+theorem hasSum_nonzeroIdeal_absNorm_cpow {s : ℂ} (hs : 1 < s.re) :
     HasSum (fun I : NonzeroIdeal L => (Ideal.absNorm I.1 : ℂ) ^ (-s))
       (NumberField.dedekindZeta L s) := by
   classical
