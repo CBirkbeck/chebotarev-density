@@ -678,3 +678,80 @@ a ~1–2 session `/beastmode` ticket, not multi-week. **Net: the whole project's
 content collapses to essentially ONE deep gap — leaf G (geometry of numbers) — plus tractable glue
 (the bridge here, the §3 fibre-regroup for L3, the compositum crossing, the AP corollary).** No false
 leaves; the decomposition mirrors Sharifi p.142–143 + standard Dirichlet analytic number theory.
+
+# Frobenius-fibre chain: supersedes leaf G (REVISED leaner route, /develop --decompose, 2026-06-05)
+
+**This supersedes the abstract-ray-class framing above.** The expert review's mathematical correction
+(ray classes, not norm-residues — the ℚ(i) counterexample) is KEPT; but the formalisation does NOT
+need to build the abstract ray class group I(𝔮)/P_𝔮 (Sharifi §7.3). The cancellation is character
+orthogonality, and it runs over the **finite Galois group G = Gal(K(μ_m)/K)** (which mathlib
+supports), not over an abstract ray class group.
+
+## Why the abstract ray class group is avoidable
+Bound: Σ_{N𝔞≤N} χ̃(𝔞) = O(N^{1−1/d}), χ̃(𝔞)=χ(Frob_𝔞), χ nontrivial on G. Group by Frobenius value:
+Σ_{N𝔞≤N} χ̃(𝔞) = Σ_{g∈G} χ(g)·#{𝔞 : N𝔞≤N, Frob_𝔞=g}. If #{N𝔞≤N, Frob_𝔞=g} = κN + O(N^{1−1/d})
+with **κ independent of g**, the leading term is κN·Σ_{g∈G}χ(g) = 0 (orthogonality, χ nontrivial),
+leaving O(N^{1−1/d}). The REASON κ is g-independent is the ray-class fact (Frobenius-fibres are
+equal-sized unions of congruence cosets of equal covolume) — but that is a FACT ABOUT THE COUNT,
+proved via lattice cosets, not a group we must construct. Orthogonality is over the finite G
+(`AddChar.expect_eq_zero_iff_ne_zero`). The ℚ(i) trap (norm-residues not equidistributed) is avoided
+because we sum over g ∈ G (the Galois group / norm image), where κ_g IS uniform — never over all of
+(ℤ/m)ˣ.
+
+## The leaner chain (3 leaves)
+- **L1 (THE deep gap):** generic effective lattice-point count
+  #((v+Λ) ∩ tD) = (vol D/covol Λ)·tᵈ + O(tᵈ⁻¹), uniform in translates v, for Λ a full lattice and ∂D
+  covered by finitely many Lipschitz charts. ForMathlib. Source: Lang GTM110 Ch.V§2/p.129; GRS JNT
+  243(2023) §3.3 ("Lipschitz class of the boundary") + §3.5 ("Counting points"), Debaene's theorem.
+  mathlib: ABSENT (only the no-rate limit `tendsto_card_div_pow_atTop_volume`). A standalone mathlib-PR.
+- **L2 (Frobenius-fibre equidistribution, cyclotomic):** ∃ κ, ∀ g ∈ G, #{𝔞 : N𝔞≤N, Frob_𝔞=g} =
+  κN + O(N^{1−1/d}), κ independent of g. From L1 applied to the ideal lattice intersected with a
+  congruence sublattice (a Frobenius-fibre = a finite union of equal-covolume cosets ⟹ κ indep of g).
+  Source: GRS Thm 1 / §3.1+3.6 specialised (the class-independent main term), the project's existing
+  `cyclotomic_frobenius_acts_as_norm_power` (Frob_𝔭(ζ)=ζ^{N𝔭} ⟹ Frob_𝔞=g ⟺ N𝔞≡g mod m), and the
+  mathlib ideal↔lattice dictionary refined by the congruence.
+- **L3 (= `character_sum_geometry_of_numbers_bound`, restated cyclotomic):** Σ_{N𝔞≤N} χ̃(𝔞) =
+  O(N^{1−1/d}) from L2 + Σ_{g∈G} χ(g)=0 (`AddChar.expect_eq_zero_iff_ne_zero`, HAS) +
+  `cyclotomic_frobenius_acts_as_norm_power`. Elementary glue.
+
+## What this supersedes + the cyclotomic-restatement cascade
+The old general-abelian leaf `exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow` (false-
+generality value-fibre count) is DELETED; `character_sum_geometry_of_numbers_bound` is RESTATED with
+[IsCyclotomicExtension {m} K L] and re-derived from L2. Because LF4 (`artinLSeries_analytic_extension`)
+and the χ≠1 chain (gap `artinLSeries_prime_sum_bounded_of_ne_one`, the bridge) consume `character_sum`,
+they too gain [IsCyclotomicExtension {m} K L] (≈4 signatures + threading). Correct: those leaves are
+only ever instantiated cyclotomically (abelian → cyclotomic via the compositum crossing BEFORE the
+L-function machinery), so the restriction matches usage and is where the CFT-free route exists.
+LF1/LF2/LF5 stay general-abelian; the bridge's complex-analysis helpers stay generic. Execution work,
+~4-decl signature changes + the L1/L2 fills.
+
+## mathlib discharge status
+- L1: ABSENT — deep gap (ForMathlib / mathlib-PR). The ONLY genuinely deep piece.
+- L2: L1 + `idealSetEquivNorm`/`fundamentalCone`/`normLeOne` (HAS) + congruence-sublattice refinement
+  (new, moderate) + `cyclotomic_frobenius_acts_as_norm_power` (project HAS).
+- L3: `AddChar.expect_eq_zero_iff_ne_zero` (HAS) + `cyclotomic_frobenius_acts_as_norm_power` (HAS) + L2.
+
+## Adversarial attacks
+- **Orthogonality over G vs over (ℤ/m)ˣ:** must be over G (κ_g uniform), not (ℤ/m)ˣ (where ℚ(i)
+  non-uniformity bites). Skeleton sums over g ∈ G via the Galois group. Survives.
+- **κ-independence (load-bearing):** κ_g equal for all g∈G because Frobenius-fibres are equal-sized
+  unions of equal-covolume congruence cosets — the concrete content of GRS Thm 1's class-independent
+  main term, proved via L1 without naming Cl_𝔮. Survives.
+- **L1 truth/exponent:** classical Dedekind–Weber–Landau; tᵈ lead / tᵈ⁻¹ boundary, t=X^{1/d} ⟹
+  X^{1−1/d} ✓; ∂D Lipschitz (GRS §3.3). Survives.
+- **Does avoiding the abstract group hide a step?** κ-independence still needs the congruence-coset
+  structure; we keep the IDEA (cosets) but drop the abstract group + exact sequences + finiteness
+  (Sharifi §7.3): ~one new def (Frobenius-fibre-as-coset) vs the full ray-class-group development.
+  Survives as the leaner realisation.
+- **Prior-B2 (Step 4.6):** b2_log 2 entries; no name/shape match to L1/L2/L3. Clean.
+
+## Feasibility verdict
+**Leaner and honest: ONE deep gap (L1, the effective Lipschitz-boundary lattice count — a standalone
+mathlib-PR), plus L2 (the congruence-coset Frobenius-fibre count, moderate, on L1 + the existing
+mathlib dictionary + the project's cyclotomic-Frobenius lemma) and L3 (orthogonality glue over the
+finite Galois group, which mathlib already supports).** No abstract ray-class-group construction is
+needed — the expert review's correction (ray classes, not norm-residues) is honoured by proving the
+count via congruence cosets and running orthogonality over G. The only structural cost beyond L1 is
+the cyclotomic-restatement cascade (~4 signatures) matching where the chain is used. Substantially
+smaller than building Cl_𝔮; reuses `cyclotomic_frobenius_acts_as_norm_power` (project) and
+`AddChar.expect_eq_zero_iff_ne_zero` (mathlib). No false leaves; reviewer-confirmed, GRS/Lang-sourced.

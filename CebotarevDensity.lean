@@ -1,6 +1,7 @@
 module
 
 public import CebotarevDensity.Density
+public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.LogOneDivSubOne
 public import CebotarevDensity.Frobenius
 public import CebotarevDensity.ZetaProduct

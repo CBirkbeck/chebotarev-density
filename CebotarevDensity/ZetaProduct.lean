@@ -517,18 +517,18 @@ of `ζ`**. Verbatim (p. 142):
 > `N𝔞 ≤ N` for `N ≥ 1` and `χ(𝔞) = ζ` is `CN + O(N^{1−d⁻¹})`, where `C` is a constant
 > independent of `ζ`."
 
-The class-independent leading constant is the regulator/class-number constant of mathlib's
-`NumberField.Ideal.tendsto_norm_le_and_mk_eq_div_atTop` (whose limit carries no class
-dependence); the new content is the **effective `O(N^{1-1/d})` boundary rate** — the effective
-form of the lattice-point count `#(Λ ∩ t·X) = (vol X / covol Λ)·tⁿ + O(t^{n-1})` applied to the
-fundamental region `normLeOne K` (mathlib `volume_normLeOne`, `volume_frontier_normLeOne`,
-`fundamentalCone.idealSetEquivNorm`). This is the project's single deepest analytic gap: an
-independent geometry-of-numbers development, a mathlib-PR-able strengthening of
-`tendsto_card_div_pow_atTop_volume`. -/
+**Restated at cyclotomic generality** (expert review 2026-06-05): the general-abelian value-fibre
+count needs class field theory, but for `L = K(μ_m)` it is CFT-free — `χ(𝔞) = χ(Frob 𝔞) = χ(N𝔞 mod m)`
+(`cyclotomic_frobenius_acts_as_norm_power`), so a value-fibre is a Frobenius-fibre, equidistributed
+with `C` independent of the value because Frobenius-fibres are equal-covolume congruence cosets. The
+class-independent leading term is mathlib's `tendsto_norm_le_and_mk_eq_div_atTop`; the new content —
+the project's single deepest analytic gap — is the effective `O(N^{1-1/d})` boundary rate, supplied by
+`Chebotarev.exists_card_inter_smul_lattice_sub_volume_mul_pow_le` (the effective Lipschitz-boundary
+lattice-point count in `ForMathlib/LatticePointCount.lean`, a standalone mathlib-PR). -/
 theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (_hχ : χ ≠ 1) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ C C' : ℝ, ∀ ζ : ℂ, ζ ^ orderOf χ = 1 → ∀ N : ℕ, 1 ≤ N →
       |(Nat.card {𝔞 : Ideal (𝓞 K) //
             𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = ζ} : ℝ)
@@ -543,8 +543,8 @@ nontrivial character `χ`. This is the convergence input that extends
 `L(χ,·)` to `Z(1 - [K:ℚ]^{-1})`. -/
 theorem character_sum_geometry_of_numbers_bound
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (_hχ : χ ≠ 1) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ N : ℕ,
       ‖∑' 𝔞 : {𝔞 : Ideal (𝓞 K) //
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
@@ -555,7 +555,7 @@ theorem character_sum_geometry_of_numbers_bound
   -- `ζ` (`n = orderOf χ`), `#{N𝔞 ≤ N | χ(𝔞) = ζ} = C·N + O(N^{1-1/d})` with `C` independent of
   -- `ζ`. (2) Cancellation: `Σ_{N𝔞 ≤ N} χ(𝔞) = Σ_{ζ^n = 1} ζ · #fibre_ζ`, and the leading term
   -- vanishes because `Σ_{ζ^n = 1} ζ = 0` for `n ≥ 2`, leaving the `O(N^{1-1/d})` tail.
-  obtain ⟨_C, C', _hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L χ _hχ
+  obtain ⟨_C, C', _hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m χ _hχ
   refine ⟨(orderOf χ : ℝ) * C', fun N => ?_⟩
   sorry
 
