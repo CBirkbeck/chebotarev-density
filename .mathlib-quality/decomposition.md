@@ -496,3 +496,80 @@ inside L4 (likely mathlib `LSeries.abscissaOfAbsConv` or a short lemma — verif
 **Recommendation:** the 10 non-L3 leaves are ready to ticket/prove (mirroring the proven ζ_K
 infrastructure); L3 is its own decomposed sub-project (geometry of numbers) or a user decision —
 it is the project's single largest remaining analytic investment. No false leaves.
+
+# L3 sub-decomposition: `character_sum_geometry_of_numbers_bound` (`/develop --decompose`, 2026-06-05, ADVERSARIAL)
+
+**Target (the project's largest analytic gap):** `character_sum_geometry_of_numbers_bound`
+(`ZetaProduct.lean:517`): for nontrivial `χ`, `‖Σ_{N𝔞≤N} χ(𝔞)‖ ≤ C·N^{1−1/d}`, `d=[K:ℚ]`.
+
+## Source-faithfulness — Sharifi DEFERS this (no proof in the cited source)
+Sharifi 7.1.19 (p.142): *"The geometry of numbers can be used to show that the number of ideals 𝔞
+with N𝔞 ≤ N and χ(𝔞)=ζ is CN+O(N^{1−d⁻¹}), where C is independent of ζ"* — stated, not proved. Per
+the source-gap fallback, the real source is the **Dedekind–Weber ideal-counting theorem**:
+- **Murty–Van Order**, *Counting integral ideals in a number field*, Expo. Math. 25 (2007) 53–66
+  (elementary/effective, no Lipschitz — most formalisation-friendly; `/tmp/murty.txt`).
+- **Sutherland**, MIT 18.785 Lecture 19 (Lem 19.5, Cor 19.6, Thm 19.8 — Lipschitz-boundary).
+- **Lang**, *Algebraic Number Theory* (GTM 110) Ch. VI §3–§4 (canonical for the `O(N^{1−1/d})` term).
+
+## THE finding — mathlib has ~80%; the gap is ONE geometry-of-numbers error term
+- ✅ **Number-theoretic scaffold IN mathlib:** `NumberField.mixedEmbedding.fundamentalCone`,
+  `fundamentalCone.idealSetEquivNorm` (ideal-class ↔ lattice-points-in-cone, refined by norm),
+  `card_isPrincipal_norm_eq_mul_torsion`, `covolume(idealLattice)=N𝔞·2^{−r₂}√|d_K|`, Dirichlet
+  units, `regulator`, `volume_normLeOne`, `volume_frontier_normLeOne`,
+  `NumberField.Ideal.tendsto_norm_le_and_mk_eq_div_atTop` (per-class count, leading term).
+- ✅ **Leading-term lattice count IN mathlib:** `ZLattice.covolume.tendsto_card_div_pow{,',''}`
+  (`Mathlib/Algebra/Module/ZLattice/Covolume.lean`) — `#(s∩n⁻¹•L)/n^d → vol s/covol L`.
+- ✅ **BONUS — Sharifi's "Lemma 7.1.5" analytic bridge IS mathlib:** `LSeriesSummable_of_sum_norm_bigO`
+  (`Mathlib/NumberTheory/LSeries/SumCoeff.lean`): `Σ_{k≤n}‖f k‖=O(n^r) ⟹ LSeries f` converges on
+  `Re s>r`. **So `artinLSeries_analytic_extension` (LF4) collapses to a direct mathlib call once L3
+  lands — LF4 is NOT a separate development.**
+- ❌ **THE GAP — the `O(t^{d−1})` boundary error.** mathlib's `tendsto_card_div_pow` is a *limit*
+  (`BoxIntegral/UnitPartition.lean`, no-rate Riemann-sum squeeze; the `frontier`-measure-0 hypothesis
+  KILLS the boundary, doesn't estimate it). The effective count `#(tS∩Λ)=(vol/covol)tⁿ+O(t^{d−1})`
+  exists nowhere in mathlib. **This is the multi-week blocker.**
+
+## Decomposition (Murty spine; ✅=mathlib-discharged, ⛰️=the one new lemma)
+- **S0** ideal-class → principal-ideals-in-`𝔟` reduction — Murty §1 p.54 — ✅ `idealSetEquivNorm`.
+- **S1** Dirichlet-units generator selection → lattice cone `B₁` — Murty Prop.1 (1.1)-(1.4) p.54-56
+  — ✅ `fundamentalCone`.
+- **S2** `IsBounded` of the `norm≤1` truncation `normLeOne` of `fundamentalCone` — Murty §2/Thm1
+  p.56-57 — PARTIAL (mathlib has `volume_normLeOne`/`volume_frontier_normLeOne`; the bounded-slice
+  API is the small remainder). Moderate.
+- **S3** ⛰️ **GoN core `#(tS∩Λ)=(vol/covol)·tⁿ + O(t^{d−1})`** — Murty Lem 3.1-3.2+Thm 2-3 p.57-59
+  (route b: norm-form-polynomial MVT boundary bound, self-contained) OR Sutherland Lem 19.5 p.2
+  (route a: Lipschitz-boundary ε-net). **The one genuinely new lemma; mathlib-PR-able (strengthens
+  mathlib's own count). ~multi-day-to-2-week, 80% of the risk.**
+- **S4** substitute `t=x^{1/d}` (`t^d=x` leading, `t^{d−1}=x^{1−1/d}` error) — Murty Cor1+Thm3 p.59 —
+  short once S3 exists.
+- **S5-abstract** leading constant class-independent (`covol(𝔟)=N(𝔟)·covol` cancels the `N(𝔟)` in
+  `|Nγ|≤x·N(𝔟)`) — Murty §4 p.60-63 — **black-box the closed form**; only "C≥0 independent of class"
+  is needed → short (covol cancellation is in `idealSetEquivNorm`). NO Jacobian computation.
+- **§3 character step** (Sharifi 7.1.19, verbatim, elementary): fibre `{χ=ζ}` is a union of classes
+  each with the same `C` (S5); `Σ_{N𝔞≤N}χ(𝔞)=Σ_ζ ζ(CN+O(N^{1−1/d}))=O(N^{1−1/d})` since
+  `Σ_{ζ∈μ_n}ζ=0` (n≥2) — short (`rootsOfUnity` geometric sum).
+
+## Adversarial attacks
+- **S3 truth/exponent:** Dedekind–Weber is classical (no counterexample); `t^d` leading / `t^{d−1}`
+  boundary with `t=x^{1/d}` ⟹ exactly `x^{1−1/d}` ✓. Edge: needs a "nice boundary" — `normLeOne` is
+  semi-algebraic (norm-form polynomial), so route-b's MVT bound applies; route-a needs `∂`
+  Lipschitz-parametrizable (true for the cone slice). Survives.
+- **S5 `ζ`-independence of C (the load-bearing fact):** the ONLY `𝔟`-dependence is
+  `covol(𝔟)=N(𝔟)·covol(𝓞_K)`, cancelling the `N(𝔟)` in `|Nγ|≤x·N(𝔟)`; so the leading constant is
+  identical across classes, hence across `ζ`-fibres. Survives — exactly what `idealSetEquivNorm`'s
+  covolume bookkeeping encodes.
+- **Discharge attack (verified by grep):** `tendsto_card_div_pow` (Covolume/UnitPartition — leading
+  term ONLY, confirms S3 not done); `LSeriesSummable_of_sum_norm_bigO` (SumCoeff — confirms LF4 is a
+  mathlib call); `idealSetEquivNorm`/`tendsto_norm_le_and_mk_eq_div_atTop` (scaffold present, error
+  absent). No over-claimed discharge.
+- **Prior-B2 log:** no name/shape match.
+
+## Feasibility verdict
+**L3 is multi-week but sharply scoped: the entire critical path is ONE geometry-of-numbers lemma —
+the effective lattice-point count with `O(t^{d−1})` boundary error (S3) — plus a small boundedness
+lemma (S2).** Everything else (S0/S1 ideal↔lattice, S5 class-independence, S4 substitution, §3
+character sum) is glue over existing mathlib, and the residue constant is black-boxed. **Bonus: LF4
+is discharged by `LSeriesSummable_of_sum_norm_bigO` the moment L3 lands**, so the chain's analytic
+gaps reduce to {L3, the χ≠1 Dirichlet bound}. **S3 is independently mathlib-PR-able** (strengthens
+mathlib's `tendsto_card_div_pow`) — recommended path: develop S3 as a standalone geometry-of-numbers
+contribution (route b, self-contained Murty norm-form), then S2/S4/S5/§3 + LF4 close quickly. No
+false leaves; the decomposition mirrors Murty–Van Order's actual proof.
