@@ -31,38 +31,64 @@ the chain is sorry-free *modulo L3*.
 - The stale BLOCKED-NEXT B2 note (frobeniusClass.out junk-on-composites) was already resolved by
   the `galoisCharacterOnIdeal`/`frobeniusIdeal` defs (commit 8f33578) — see HANDOVER §6.
 
-### [LF4] artinLSeries_analytic_extension — Status: open
-- File: ZetaProduct.lean:232 · Depends on: LF3(sorried) · Discharge: project + Lemma 7.1.5 (verify mathlib `LSeries.abscissaOfAbsConv`)
-- Sketch: decomposition.md L4 — partial-sum bound (LF3) ⟹ Dirichlet series converges on `Z(1-1/d)`.
+### [LF4] artinLSeries_analytic_extension — Status: done (2026-06-05, /beastmode)
+- File: ZetaProduct.lean:~1320 · Depends on: LF3 (done) · Discharge: PROVED — Abel summation + Mellin.
+- **Progress**:
+  - 2026-06-05: restated at cyclotomic generality (m-threading through LF4/helper-ii/LF5/Cyclotomic
+    prime-sum lemma; commit 1761fbe) — same CFT-free rationale as leaf G's expert-review restatement.
+  - 2026-06-05: PROVED (commit 8f824c5, cleanup 69b8f8d). `Lf s := s · mellin S (-s)`,
+    `S t = Σ_{k ≤ ⌊t⌋} galoisCharacterCoeff k`. Coefficient partial sums = LF3 sum (fibrewise
+    regroup) ⟹ O(n^{1-1/d}); mathlib `LSeries_eq_mul_integral` (Roblot Abel summation) on
+    `Re s > 1`; `mellin_differentiableAt_of_isBigO_rpow` ⟹ analytic on `Re s > 1 - 1/d`.
+    Extracted `sum_idealNormMultiplicity_isBigO` (NumberFieldEulerProduct refactor). Axioms:
+    sorryAx only via the 2 deep gaps; all structural helpers sorry-free. Verified lake env lean.
 
-### [LF5] artinLSeries_one_ne_zero — Status: open
-- File: ZetaProduct.lean:252 · Depends on: LF4 · Discharge: project (pole-order, Sharifi 7.1.19 step 2)
-- Sketch: decomposition.md L5 — `log ζ_L=Σ_χ log L_χ`; vanishing factor over-cancels ζ_L simple pole ⟹ all `m_χ=0`.
+### [LF5] artinLSeries_one_ne_zero — Status: done (proven pre-2026-06-05; m-threaded 1761fbe)
+- File: ZetaProduct.lean:2125 · sorry-free in-file (carries sorryAx only via LF4 → deep gaps).
 
-### [LF6] exists_dedekindZeta_factorisation — Status: open
-- File: ZetaProduct.lean:277 · Depends on: LF1, LF2, LF5 · Discharge: project assembly
-- Sketch: decomposition.md L6 — package factorisation + `L_1=ζ_K` + non-vanishing.
+### [LF6] exists_dedekindZeta_factorisation — Status: superseded (board-stale)
+- Planned decl does not exist; its role is covered by `dedekindZeta_eq_prod_artinDirichletSeries`
+  (ZetaProduct, proven) + LF5 used directly at the call sites.
 
-### [LF7] exists_chebotarev_cyclotomic_residue_identity — Status: open
-- File: ZetaProduct.lean:293 · Depends on: LF6 · Discharge: project (orthogonality + L8 + LF5)
-- Sketch: decomposition.md L7 (Prop 7.2.1).
+### [LF7] exists_chebotarev_cyclotomic_residue_identity — Status: superseded (board-stale)
+- Planned decl does not exist; covered by the proven Cyclotomic.lean chain
+  (`sum_charTwist_eq/_ne`, `primeIdealZetaSum_frobeniusFibre_asymp`, `chebotarev_cyclotomic`).
 
-### [LF8] log_artinLSeries_asymp_character_sum — Status: open
-- File: Cyclotomic.lean:135 · Depends on: LF1 · Discharge: project (mirror `log_dedekindZeta_re_eq_tsum_neg_log_one_sub`)
-- Sketch: decomposition.md L8 — `log L(χ,s) ~ Σ_𝔭 χ(𝔭)N𝔭⁻ˢ`.
+### [LF8] log_artinLSeries_asymp_character_sum — Status: done (proven pre-2026-06-05)
+- File: Cyclotomic.lean:135 · sorry-free in-file.
 
-### [LF9] primeIdealZetaSum_frobeniusFibre_asymp — Status: open
-- File: Cyclotomic.lean:227 · Depends on: LF8, LF5 · Discharge: project (orthogonality assembly → density 1/|G|)
-- Sketch: decomposition.md L9.
+### [LF9] primeIdealZetaSum_frobeniusFibre_asymp — Status: done (proven pre-2026-06-05)
+- File: Cyclotomic.lean:947 · sorry-free in-file (m-threaded call updated, commit 1761fbe).
 
-### [LF10] liminf_density_S_sigma_ge_card_H_n_div_GH — Status: open
-- File: Abelian.lean:125 · Depends on: chebotarev_cyclotomic · Discharge: project (cyclotomic crossing)
-- Sketch: decomposition.md L10 (Thm 7.2.2 Step 2).
+### [LF10] liminf_density_S_sigma_ge_card_H_n_div_GH — Status: done modulo AB1
+- File: Abelian.lean:181 · assembled sorry-free around `exists_cyclotomicCrossing_fibres` (= AB1).
 
-### [LF11] H_n_over_H_lower_bound_via_prime_factorisation — Status: open
-- File: Abelian.lean:143 · Depends on: none · Discharge: project (elementary `(ZMod m)ˣ` order count)
-- Sketch: decomposition.md L11.
+### [LF11] H_n_over_H_lower_bound_via_prime_factorisation — Status: superseded (board-stale)
+- Planned decl does not exist; covered by the proven `H_n_over_H_tends_to_one` chain in Abelian.lean.
 
-### [LF12] liminf_ratio_ge_inv_card_G — Status: open
-- File: Abelian.lean:448 · Depends on: LF10, H_n_over_H_tends_to_one(proven) · Discharge: project assembly
+### [LF12] liminf_ratio_ge_inv_card_G — Status: done modulo AB1
+- File: Abelian.lean:523 · proven in-file; inherits AB1's sorryAx.
+
+## The real remaining work (the 4 project sorries, 2026-06-05 after LF3+LF4)
+
+### [GA] normLeOne_frontier_lipschitz (Gap A) — Status: in_progress (2026-06-05, /beastmode)
+- File: ZetaProduct.lean:793 (sorry at 799) · Depends on: none · THE foundational deep gap.
+- Statement: `frontier (normAtAllPlaces '' fundamentalCone.normLeOne K)` is covered by finitely
+  many Lipschitz images of `[0,1]^{r-1}`, `r = #InfinitePlace K` — L1's `hlip` hypothesis shape.
+- Source: Gun–Ramaré–Sivaraman JNT 243 (2023) §3.3 (Lemmas 5–8), after Debaene; mathlib has only
+  the measure-zero form `volume_frontier_normLeOne`. Fresh mathlib-PR-scale development on
+  `mixedEmbedding`/`fundamentalCone`/`logMap`/`expMapBasis`.
+
+### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: open
+- File: ZetaProduct.lean:831 (sorry at 842) · Depends on: GA + L1 (proven) · bad-prime split +
+  congruence-coset lattice counting; see L2 docstring + HANDOVER §5.2 (U-predicate, import cycle §5.3).
+
+### [AB1] exists_cyclotomicCrossing_fibres — Status: open
+- File: Abelian.lean:148 (sorry at 157) · Depends on: chebotarev_cyclotomic (proven mod gaps) ·
+  compositum `Gal(L(μ_m)/K) ≅ G × H` (linear disjointness, m coprime to disc(L)) + fixed-field
+  density transfer. Sharifi 7.2.2 Step 2 pp. 143–144.
+
+### [M1] chebotarev_density assembly — Status: open
+- File: Main.lean:~1370 (sorry at 1375) · Depends on: AB1 chain + fixed-field reduction (Main.lean
+  sub-lemmas) · Sharifi 7.2.2 Step 1 counting argument + assembly.
 - Sketch: decomposition.md L12.
