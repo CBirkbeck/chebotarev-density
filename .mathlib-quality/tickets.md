@@ -16,9 +16,15 @@ the chain is sorry-free *modulo L3*.
 - File: ZetaProduct.lean:189 · Depends on: none · Discharge: project (finite abelian char theory)
 - Sketch: decomposition.md L2 (Prop 7.1.16 local) — `∏_χ(1-χ(σ)X)=(1-X^{ordσ})^{|G|/ordσ}` matches split of 𝔭.
 
-### [LF3] character_sum_geometry_of_numbers_bound — Status: blocked (API GAP)
-- File: ZetaProduct.lean:203 · Discharge: NEITHER — geometry-of-numbers ideal count `CN+O(N^{1-1/d})`.
-- Left sorried; its own sub-project (decomposition.md L3). Do NOT attempt to build the geom-of-numbers mountain here.
+### [LF3] character_sum_geometry_of_numbers_bound — Status: blocked (deep input PROVEN; awaits B2 fix)
+- File: ZetaProduct.lean:203 · Discharge: geometry-of-numbers ideal count `CN+O(N^{1-1/d})`.
+- **The geom-of-numbers mountain is now CLIMBED**: its deep lattice-count input = L1 = Widmer
+  (`exists_card_inter_smul_lattice_sub_volume_mul_pow_le`, ForMathlib/LatticePointCount.lean) is
+  PROVEN sorry-free + axiom-clean (2026-06-05, /beastmode, commit b1cbc5f). LF3 can now be reduced
+  to L1 via the Frobenius-fibre count + congruence cosets + orthogonality-over-G.
+- BLOCKED-NEXT on the documented B2 (b2_log, LF4/LF1/LF3): the leaf uses `frobeniusClass.out`, junk on
+  composite ideals; needs the multiplicative `galoisCharacterOnIdeal` def + restatement before the
+  L1 reduction lands. User/scope decision — see /beastmode report.
 
 ### [LF4] artinLSeries_analytic_extension — Status: open
 - File: ZetaProduct.lean:232 · Depends on: LF3(sorried) · Discharge: project + Lemma 7.1.5 (verify mathlib `LSeries.abscissaOfAbsConv`)
