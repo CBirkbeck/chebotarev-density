@@ -32,14 +32,15 @@ how each `L(χ, ·)` is constructed.
 
 ## Main results
 
-* `Chebotarev.exists_dedekindZeta_factorisation` —
-  for an abelian extension `L/K`, there exist holomorphic functions
-  `L_χ : ℂ → ℂ` indexed by characters of `Gal(L/K)` such that
-  `ζ_L = ∏_χ L_χ` on `Re s > 1`, `L_1 = ζ_K`, and `L_χ(1) ≠ 0` for
-  `χ ≠ 1` (Sharifi 7.1.16 + 7.1.19).
-* `Chebotarev.exists_chebotarev_cyclotomic_residue_identity` —
-  the orthogonality-of-characters identity that the cyclotomic case of
-  Chebotarev hinges on (Sharifi 7.2.1).
+* `Chebotarev.exists_artinLSeries_eulerProduct_abelian` — the Euler product
+  `L(χ,s) = ∏_𝔭 (1 - χ(𝔭) N𝔭⁻ˢ)⁻¹ = Σ_𝔞 χ(𝔞) N𝔞⁻ˢ` of an abelian character
+  (Sharifi 7.1.18), with `χ(𝔞)` the multiplicative `galoisCharacterOnIdeal`.
+* `Chebotarev.dedekindZeta_local_factor_eq_product_artin_local` — the local
+  factorisation of `ζ_L` into Artin local factors at an unramified prime
+  (Sharifi 7.1.16).
+* `Chebotarev.artinLSeries_one_ne_zero` — non-vanishing `L(χ,1) ≠ 0` for
+  nontrivial `χ`, via the pole-order argument (Sharifi 7.1.19 step 2), modulo
+  the geometry-of-numbers analytic extension `artinLSeries_analytic_extension`.
 
 ## References
 
@@ -1411,47 +1412,5 @@ theorem artinLSeries_one_ne_zero
   have hcontra := (hB.eventually_ge_atTop ((∑ χ', C χ') + CR + 1)).and hbound
   obtain ⟨s, hge, hle⟩ := hcontra.exists
   linarith
-
-/-- **Zeta factorisation for an abelian extension** (Sharifi 7.1.16 + 7.1.19).
-
-For an abelian Galois extension `L/K` of number fields, there is a family
-of functions `L_χ : ℂ → ℂ` indexed by the characters of `Gal(L/K)`, each
-analytic on `Re s ≥ 1` (with `L_1` having a simple pole at `s = 1` matching
-`ζ_K`), such that:
-
-* `ζ_L(s) = ∏_χ L_χ(s)` for `Re s > 1`,
-* `L_1(s) = ζ_K(s)` (the trivial-character L-function is the Dedekind zeta
-  of `K`),
-* `L_χ(1) ≠ 0` for every nontrivial `χ`.
-
-The `L_χ` are the Artin / Hecke L-series of the abelian extension. -/
-theorem exists_dedekindZeta_factorisation
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
-    ∃ Lf : galoisCharacter K L → ℂ → ℂ,
-      (∀ s : ℂ, 1 < s.re → dedekindZeta L s = ∏' χ : galoisCharacter K L, Lf χ s) ∧
-      (∀ s : ℂ, Lf 1 s = dedekindZeta K s) ∧
-      (∀ χ : galoisCharacter K L, χ ≠ 1 → Lf χ 1 ≠ 0) := by
-  sorry
-
-/-- **Cyclotomic-case orthogonality identity** (Sharifi 7.2.1 step).
-
-For an abelian extension `L/K` with `L = K(μ_m)`, the family `Lf` from
-`exists_dedekindZeta_factorisation` satisfies the asymptotic
-`Σ_χ χ(σ)⁻¹ log L_χ(s) ∼ |G| · Σ_{𝔭 : σ_𝔭 = σ} N𝔭^{-s}` as `s ↓ 1`. This is
-the orthogonality identity that lets one extract the density of primes
-with a given Frobenius. -/
-theorem exists_chebotarev_cyclotomic_residue_identity
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
-    ∃ c : ℝ,
-      Filter.Tendsto
-        (fun s : ℝ ↦
-          primeIdealZetaSum
-            {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
-              frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
-            - (Nat.card Gal(L/K) : ℝ)⁻¹ * Real.log (1 / (s - 1)))
-        (nhdsWithin 1 (Set.Ioi 1)) (nhds c) := by
-  sorry
 
 end Chebotarev
