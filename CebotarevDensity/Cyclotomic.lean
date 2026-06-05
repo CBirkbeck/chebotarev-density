@@ -140,7 +140,82 @@ theorem log_artinLSeries_asymp_character_sum
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
             (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
         ≤ C * Real.log (1 / (s - 1)) + C := by
-  sorry
+  -- The value of `χ` on any conjugacy-class representative is a root of unity, hence norm `1`.
+  have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c => by
+    obtain ⟨n, hn, hpow⟩ := isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite c.out)
+    refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
+    simpa using congrArg (Units.val) (show (χ c.out) ^ n = 1 by rw [← map_pow, hpow, map_one])
+  obtain ⟨C, hC⟩ := primeIdealZetaSum_le_log_plus_bounded K
+  refine ⟨max C 1, ?_⟩
+  -- Near `s ↓ 1`, `1/(s-1) → +∞`, so `log (1/(s-1)) ≥ 0`.
+  have hlogpos : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), 0 ≤ Real.log (1 / (s - 1)) := by
+    have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 :=
+      nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
+    filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
+    simp only [Set.mem_Ioi] at hs1
+    have hpos : (0 : ℝ) < s - 1 := sub_pos.mpr hs1
+    exact Real.log_nonneg ((one_le_div₀ hpos).2 (by linarith))
+  filter_upwards [hC, hlogpos, self_mem_nhdsWithin] with s hCs hlog hs1
+  simp only [Set.mem_Ioi] at hs1
+  -- Triangle inequality: `‖∑' χ(Frob)·N𝔭⁻ˢ‖ ≤ ∑' ‖χ(Frob)·N𝔭⁻ˢ‖ = ∑' N𝔭⁻ˢ` (real, nonneg).
+  -- The summand norm `‖χ(Frob 𝔭) · N𝔭⁻ˢ‖ = N𝔭^{-s}` (since `‖χ(Frob)‖ = 1`).
+  have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ =
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 => by
+    have hpos : 0 < Ideal.absNorm 𝔭.1 := by
+      have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h =>
+        UnramifiedIn.ne_bot K L 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
+      lia
+    rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
+      Complex.ofReal_re]
+  -- Identify the bare unramified-prime tsum with `primeIdealZetaSum U s` for the unramified set `U`,
+  -- via a plain-lambda injection into the `U`-prime subtype (as in `summable_prime2_absNorm_rpow`):
+  -- the anonymous-constructor projection reduces by `rfl`, unlike an `Equiv` coercion, avoiding both
+  -- the leftover `↑(heU 𝔭)` mismatch and the heavy `comp_injective` whnf-explosion.
+  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
+  have hinj : Function.Injective
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+        (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
+  -- the injection is also surjective (`U`-membership gives prime + unramified), so it reindexes the
+  -- whole `U`-prime tsum.
+  have hsurj : Function.Surjective
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+        (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+    fun 𝔮 => ⟨⟨𝔮.1, 𝔮.2.1.1, 𝔮.2.1.2⟩, Subtype.ext rfl⟩
+  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
+    ((summable_prime_absNorm_rpow U hs1).comp_injective hinj).congr fun 𝔭 => rfl
+  have hUtsum : primeIdealZetaSum U s =
+      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
+    rw [primeIdealZetaSum_def]
+    exact (hinj.tsum_eq (f := fun 𝔮 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s))
+      (by rw [hsurj.range_eq]; exact Set.subset_univ _)).symm
+  have hsumnorm : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+      ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖) :=
+    hs0.congr fun 𝔭 => (hnormterm 𝔭).symm
+  -- `∑' N𝔭⁻ˢ` over unramified primes = `primeIdealZetaSum U s ≤ primeIdealZetaSum univ s`.
+  have hle : (∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
+    rw [← hUtsum]
+    exact primeIdealZetaSum_le_of_subset (Set.subset_univ U) hs1
+  calc ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
+      ≤ ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ :=
+        norm_tsum_le_tsum_norm hsumnorm
+    _ = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+          (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := tsum_congr hnormterm
+    _ ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := hle
+    _ ≤ Real.log (1 / (s - 1)) + C := hCs
+    _ ≤ max C 1 * Real.log (1 / (s - 1)) + max C 1 := by
+        have h1 : (1 : ℝ) ≤ max C 1 := le_max_right _ _
+        have hC' : C ≤ max C 1 := le_max_left _ _
+        nlinarith [hlog]
 
 open scoped Classical in
 /-- Column orthogonality of the characters of a finite commutative group valued in `ℂˣ`:
