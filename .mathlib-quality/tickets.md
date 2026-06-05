@@ -71,13 +71,18 @@ the chain is sorry-free *modulo L3*.
 
 ## The real remaining work (the 4 project sorries, 2026-06-05 after LF3+LF4)
 
-### [GA] normLeOne_frontier_lipschitz (Gap A) — Status: in_progress (2026-06-05, /beastmode)
-- File: ZetaProduct.lean:793 (sorry at 799) · Depends on: none · THE foundational deep gap.
-- Statement: `frontier (normAtAllPlaces '' fundamentalCone.normLeOne K)` is covered by finitely
-  many Lipschitz images of `[0,1]^{r-1}`, `r = #InfinitePlace K` — L1's `hlip` hypothesis shape.
-- Source: Gun–Ramaré–Sivaraman JNT 243 (2023) §3.3 (Lemmas 5–8), after Debaene; mathlib has only
-  the measure-zero form `volume_frontier_normLeOne`. Fresh mathlib-PR-scale development on
-  `mixedEmbedding`/`fundamentalCone`/`logMap`/`expMapBasis`.
+### [GA] normLeOne_frontier_lipschitz (Gap A) — Status: done (2026-06-06, /beastmode)
+- File: ZetaProduct.lean (discharged) ⟸ ForMathlib/NormLeOneLipschitz.lean (the development).
+- **Progress**:
+  - 2026-06-06: PROVED sorry-free + axiom-clean `[propext, Classical.choice, Quot.sound]`
+    (commits f4e305a + 414da77 + 5e3ad0a). Architecture: mathlib's
+    `normAtAllPlaces '' normLeOne = expMapBasis '' paramSet` (Roblot); frontier ⊆ image of box
+    boundary ∪ {0} (openness + injectivity + compactSet); each face cube-parametrized — the
+    `t = exp(x w₀)` substitution linearizes the unbounded `Iic 0` direction, `t` taking the cube
+    slot freed by pinning `x i = a`, `t = 0` absorbing `{0}`; C¹ face maps Lipschitz on the cube
+    (`LocallyLipschitzOn.exists_lipschitzOnWith_of_compact`) made global by the 1-Lipschitz
+    `clampUnit`; assembly over `Unit ⊕ Unit ⊕ ({w ≠ w₀} × Bool)` with the `equivFinRank`
+    relabeling isometry. Future-mathlib-PR material. /cleanup ran (body 79→7, helpers extracted).
 
 ### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: open
 - File: ZetaProduct.lean:831 (sorry at 842) · Depends on: GA + L1 (proven) · bad-prime split +
