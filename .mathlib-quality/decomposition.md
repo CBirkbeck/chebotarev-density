@@ -755,3 +755,65 @@ count via congruence cosets and running orthogonality over G. The only structura
 the cyclotomic-restatement cascade (~4 signatures) matching where the chain is used. Substantially
 smaller than building Cl_𝔮; reuses `cyclotomic_frobenius_acts_as_norm_power` (project) and
 `AddChar.expect_eq_zero_iff_ne_zero` (mathlib). No false leaves; reviewer-confirmed, GRS/Lang-sourced.
+# L1 sub-decomposition: the effective lattice count = Widmer's theorem (/develop --decompose, 2026-06-05)
+
+**Target:** `exists_card_inter_smul_lattice_sub_volume_mul_pow_le` (ForMathlib/LatticePointCount.lean):
+`|#(s ∩ n⁻¹•ℤ^ι) − vol(s)·nᵈ| ≤ C·nᵈ⁻¹`, `s` bounded measurable, `∂s` covered by finitely many
+Lipschitz images of `[0,1]ᵈ⁻¹`.
+
+## THE finding — L1 IS Widmer's theorem (GRS CITE it, do not prove it)
+GRS §2.4 + §3: their lattice-point count is **Theorem 3 (Widmer [12])**, cited verbatim (p.18):
+> "Theorem 3 (Widmer). Let Λ_n be a lattice in ℝ^n with successive minima δ_0,...,δ_n. Let S be a
+> bounded set in ℝ^n such that its boundary is of Lipschitz class L(n,M,L)... Then S is measurable and
+> |#(S∩Λ_n) − Vol(S)/Vol(Λ_n)| ≤ M·n^{3n²/2}·max_{0≤i<n} Lⁱ/(δ_0(Λ_n)···δ_i(Λ_n))."
+> "Definition 4. S ⊆ ℝ^n (n≥2) is of Lipschitz class L(n,M,L) if there are M maps φ₁,…,φ_M :
+> [0,1]^{n−1}→ℝ^n such that S ⊆ ⋃ images, and ‖φ_i(x̄)−φ_i(ȳ)‖ ≤ L‖x̄−ȳ‖."
+L1 = Widmer's Thm 3 with Λ=ℤ^ι (covol 1, successive minima 1; after the `n`-dilation the i=d−1 term
+dominates ⟹ `O(nᵈ⁻¹)`). My L1 hypothesis (frontier covered by finitely many Lipschitz `[0,1]ᵈ⁻¹`→ℝ^ι
+maps) IS GRS Definition 4. So **L1 has a precise, named, published source — Widmer [M. Widmer,
+"Counting primitive points of bounded height", Trans. AMS 362 (2010) 4793–4829]** — and GRS's §3 is
+"build the ideal fundamental domain `F`, prove ∂F is Lipschitz class (§3.3 Lemmas 5–8), apply Widmer".
+
+## Source for the PROOF (Widmer cited; the standard boundary-cell argument)
+GRS do not reproduce Widmer's proof. The argument (Lang GTM110 p.129; reviewer reply; Widmer): count
+points of `n⁻¹ℤ^d` in `s` = (cells inside `s`) ± (cells meeting `∂s`); interior cells ≈ `vol·nᵈ`;
+**boundary cells = O(nᵈ⁻¹)** because `∂s` is a finite union of Lipschitz images of `[0,1]ᵈ⁻¹`:
+partition `[0,1]ᵈ⁻¹` into `nᵈ⁻¹` cubes of side `1/n`, each maps (Lipschitz `L`) to diameter
+`≤ L√(d−1)/n`, hence after the `n`-dilation meets `O_L(1)` cells; total `nᵈ⁻¹·O(1)`.
+
+## Decomposition (boundary-cell route)
+- **L1b (count↔volume bridge):** `|#(s ∩ n⁻¹•ℤ^d) − vol(s)·nᵈ| ≤ #{cells of n⁻¹ℤ^d meeting ∂s}`. Each
+  lattice cell lies in `s`, outside `s`, or meets `∂s`; first two give `vol·nᵈ`, the discrepancy is the
+  boundary cells. mathlib's `tendsto_card_div_pow_atTop_volume` is the *limit* version via the same
+  BoxIntegral cell/prepartition machinery — reusable. Moderate.
+- **L1a (boundary-cell count, THE deep core):** `#{cells of n⁻¹ℤ^d meeting ∂s} ≤ C·nᵈ⁻¹` from the
+  Lipschitz cover. Decomposes:
+  - **L1a' (single-chart cell count):** for `φ : [0,1]ᵈ⁻¹→ℝ^d` Lipschitz-`L`, `#{n⁻¹ℤ^d-cells meeting
+    φ([0,1]ᵈ⁻¹)} ≤ (L√(d−1)+2)ᵈ·nᵈ⁻¹`. Cube subdivision + "bounded-diameter set meets O(1) cells".
+    The combinatorial-geometric heart. New.
+  - **finite-cover sum:** L1a = `Σ_{M charts}` L1a'. Trivial.
+
+## mathlib discharge
+- Widmer Thm 3 / L1: **ABSENT** (only the no-rate `tendsto_card_div_pow_atTop_volume`). Deep gap.
+- L1b: BoxIntegral `UnitPartition` cell/prepartition machinery (the limit proof's internals) — PARTIAL/reusable.
+- L1a': new (cube subdivision + bounded-diameter cell incidence; check `ZSpan`/`BoxIntegral`/`Metric` helpers).
+
+## Adversarial attacks
+- **Source-citation (Widmer):** GRS Theorem 3 quoted verbatim (p.18); it is Widmer Trans.AMS 362 (2010),
+  a real published lattice-point theorem. L1 = its Λ=ℤ^ι case; my hypothesis = GRS Definition 4. No drift.
+- **Exponent:** Widmer `Lⁱ/(δ_0···δ_i)`; Λ=ℤ^ι (δ=1), `n`-dilation ⟹ i=d−1 dominates ⟹ `O(nᵈ⁻¹)` ✓.
+  Reviewer's `t=X^{1/d}` downstream ⟹ `X^{1−1/d}` for the ideal count. Survives.
+- **d=1 edge:** GRS Def 4 + Widmer assume `n≥2`; `[0,1]ᵈ⁻¹=[0,1]⁰`=point at d=1 (K=ℚ, Dirichlet,
+  separate). FLAG: L1 currently has no `2 ≤ Fintype.card ι` precondition — at `d≤1` the statement is
+  trivial/vacuous; add `2 ≤ Fintype.card ι` or confirm the d≤1 case is harmless. First execution step.
+- **Prior-B2 (Step 4.6):** b2_log 2 entries; no name/shape match. Clean.
+
+## Feasibility verdict
+**L1 is a clean, named, published theorem — Widmer's lattice-point count (GRS Theorem 3) — that mathlib
+lacks.** Proving it = the standard boundary-cell argument: a combinatorial-geometric core (L1a',
+cube-subdivision + bounded-diameter cell incidence) + a count↔volume bridge (L1b, reusing mathlib's
+BoxIntegral cell machinery). A genuine but bounded geometry-of-numbers development — a self-contained,
+generally-useful **mathlib PR** strengthening `tendsto_card_div_pow_atTop_volume` to the effective
+Lipschitz-boundary form. THE one deep gap of the whole Chebotarev project; everything else is glue.
+First execution steps: add the `2 ≤ Fintype.card ι` precondition; state L1a/L1b/L1a' precisely; then
+prove L1a' (the heart) → L1a → L1b → L1.
