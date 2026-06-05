@@ -573,3 +573,22 @@ gaps reduce to {L3, the χ≠1 Dirichlet bound}. **S3 is independently mathlib-P
 mathlib's `tendsto_card_div_pow`) — recommended path: develop S3 as a standalone geometry-of-numbers
 contribution (route b, self-contained Murty norm-form), then S2/S4/S5/§3 + LF4 close quickly. No
 false leaves; the decomposition mirrors Murty–Van Order's actual proof.
+
+## Lean skeleton (written 2026-06-05, `lake build` green, axioms = standard + sorryAx)
+After re-reading Sharifi p.142 verbatim, the faithful Lean realisation is **two** leaves, not the
+S0–S5 spread (Sharifi himself states the geometry-of-numbers fact as ONE sentence, then derives the
+character bound by an elementary `Σζ=0` computation):
+- **Leaf G — `exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`** (ZetaProduct.lean ~512,
+  `sorry`): `∃ C C', ∀ ζ, ζ^(orderOf χ)=1 → ∀ N≥1, |#{𝔞≠⊥ : N𝔞≤N ∧ χ(𝔞)=ζ} − C·N| ≤ C'·N^{1−1/d}`.
+  `C` is bound BEFORE `∀ ζ` (encodes "C independent of ζ"). This is the single deep gap = the
+  effective-rate strengthening of mathlib's `tendsto_norm_le_and_mk_eq_div_atTop` (S3+S5 fused;
+  S0/S1/S2 already mathlib via `idealSetEquivNorm`/`fundamentalCone`/`isBounded_normLeOne`). The
+  generic lattice-count S3 is NOT yet stated standalone — its `O(t^{n−1})` boundary hypothesis is
+  from Lang VI/Sutherland L19, not in `docs/`, so stating it now would lean on memory (forbidden);
+  defer until that source is in hand.
+- **Assembly — `character_sum_geometry_of_numbers_bound`** (ZetaProduct.lean ~530): proof now
+  `obtain`s leaf G (real dependency edge) and records Sharifi's §3 computation
+  (`Σ_𝔞 χ(𝔞)=Σ_{ζ^n=1} ζ·#fibre_ζ`, leading term killed by `Σ_{ζ^n=1} ζ=0`, `n≥2`) as the
+  structural comment; the witness constant `(orderOf χ)·C'` is the real one. Remaining `sorry` =
+  the elementary fibre-regroup + roots-of-unity-sum (a tickettable step, not the deep gap).
+- **LF4 unchanged**: still collapses to `LSeriesSummable_of_sum_norm_bigO` once leaf G lands.

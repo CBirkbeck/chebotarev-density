@@ -509,6 +509,33 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
   rw [tprod_congr hterm, tprod_fintype, Finset.prod_const, Finset.card_univ,
     ← Nat.card_eq_fintype_card, hcount, hRHS, Nat.card_eq_fintype_card, inv_pow]
 
+/-- **Geometry of numbers (Sharifi 7.1.19, p. 142 — the deferred input).** For a nontrivial
+character `χ` of order `n = orderOf χ`, the number of nonzero ideals `𝔞 ⊆ 𝓞 K` with `N𝔞 ≤ N`
+and `χ(𝔞) = ζ` is `C·N + O(N^{1-1/d})` (`d = [K:ℚ]`), with the **leading constant `C` independent
+of `ζ`**. Verbatim (p. 142):
+> "The geometry of numbers can be used to show that the number of ideals `𝔞` of `𝒪_K` with
+> `N𝔞 ≤ N` for `N ≥ 1` and `χ(𝔞) = ζ` is `CN + O(N^{1−d⁻¹})`, where `C` is a constant
+> independent of `ζ`."
+
+The class-independent leading constant is the regulator/class-number constant of mathlib's
+`NumberField.Ideal.tendsto_norm_le_and_mk_eq_div_atTop` (whose limit carries no class
+dependence); the new content is the **effective `O(N^{1-1/d})` boundary rate** — the effective
+form of the lattice-point count `#(Λ ∩ t·X) = (vol X / covol Λ)·tⁿ + O(t^{n-1})` applied to the
+fundamental region `normLeOne K` (mathlib `volume_normLeOne`, `volume_frontier_normLeOne`,
+`fundamentalCone.idealSetEquivNorm`). This is the project's single deepest analytic gap: an
+independent geometry-of-numbers development, a mathlib-PR-able strengthening of
+`tendsto_card_div_pow_atTop_volume`. -/
+theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    (_hχ : χ ≠ 1) :
+    ∃ C C' : ℝ, ∀ ζ : ℂ, ζ ^ orderOf χ = 1 → ∀ N : ℕ, 1 ≤ N →
+      |(Nat.card {𝔞 : Ideal (𝓞 K) //
+            𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = ζ} : ℝ)
+          - C * (N : ℝ)|
+        ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+  sorry
+
 /-- Sharifi 7.1.19 step 1 (p. 142): geometry-of-numbers bound. The
 partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` (with `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞` the
 completely-multiplicative ideal character) is `O(N^{1-1/[K:ℚ]})` for a
@@ -523,6 +550,13 @@ theorem character_sum_geometry_of_numbers_bound
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
         galoisCharacterOnIdeal K L χ 𝔞.1‖
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+  -- Two steps (Sharifi p. 142). (1) Geometry of numbers
+  -- (`exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`): for every `n`-th root of unity
+  -- `ζ` (`n = orderOf χ`), `#{N𝔞 ≤ N | χ(𝔞) = ζ} = C·N + O(N^{1-1/d})` with `C` independent of
+  -- `ζ`. (2) Cancellation: `Σ_{N𝔞 ≤ N} χ(𝔞) = Σ_{ζ^n = 1} ζ · #fibre_ζ`, and the leading term
+  -- vanishes because `Σ_{ζ^n = 1} ζ = 0` for `n ≥ 2`, leaving the `O(N^{1-1/d})` tail.
+  obtain ⟨_C, C', _hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L χ _hχ
+  refine ⟨(orderOf χ : ℝ) * C', fun N => ?_⟩
   sorry
 
 /-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
