@@ -719,14 +719,14 @@ feed both to `artinLSeries_prime_sum_bounded_of_analytic_extension`. So this gap
 the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the bridge. -/
 private theorem artinLSeries_prime_sum_bounded_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (hχ : χ ≠ 1) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
-  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L χ hχ
+  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L m χ hχ
   exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
-    (artinLSeries_one_ne_zero K L χ hχ Lf hLf_an hLf_eq)
+    (artinLSeries_one_ne_zero K L m χ hχ Lf hLf_an hLf_eq)
 
 /-! ### Assembly helpers for `primeIdealZetaSum_frobeniusFibre_asymp`
 
@@ -965,7 +965,7 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
   -- each `‖(χσ)⁻¹ · twistedPrimeSum χ s‖ ≤ Cχ` (norm-1 coefficient × bounded Artin sum).
   have hterm : ∀ χ : galoisCharacter K L, χ ≠ 1 → ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ hχ => by
-    obtain ⟨C, hC⟩ := artinLSeries_prime_sum_bounded_of_ne_one K L χ hχ
+    obtain ⟨C, hC⟩ := artinLSeries_prime_sum_bounded_of_ne_one K L m χ hχ
     refine ⟨C, ?_⟩
     filter_upwards [hC] with s hs
     have hnorm1 : ‖((χ σ : ℂ))⁻¹‖ = 1 := by

@@ -1147,11 +1147,17 @@ Source quote (verbatim, p. 142):
 Mathlib analogue of Sharifi Lemma 7.1.5:
 `LSeries.summable_of_partial_sums_le_const_mul_rpow` (or the
 `LSeries.tendsto_neg_logDerivLSeries_eq_*` machinery in
-`Mathlib.NumberTheory.LSeries.*`). -/
+`Mathlib.NumberTheory.LSeries.*`).
+
+**Stated at cyclotomic generality** (`L = K(μ_m)`), like the geometry-of-numbers input it rests
+on (`character_sum_geometry_of_numbers_bound`, leaf G — see the restatement note there, expert
+review 2026-06-05): the general-abelian partial-sum bound needs class field theory, while for
+`L = K(μ_m)` it is CFT-free. Every consumer (the non-vanishing chain, the cyclotomic Chebotarev
+case) instantiates at a cyclotomic extension. -/
 theorem artinLSeries_analytic_extension
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (_hχ : χ ≠ 1) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ Lf : ℂ → ℂ,
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} ∧
       (∀ s : ℂ, 1 < s.re →
@@ -1770,10 +1776,10 @@ is bounded above on a right neighbourhood of `s = 1`. (Here `L_{χ'}(s) = artinD
 which agrees with the analytic extension on `Re s > 1`.) -/
 private theorem artinDirichletSeries_norm_le_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ' : galoisCharacter K L)
-    (hχ' : χ' ≠ 1) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ' : galoisCharacter K L) (hχ' : χ' ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤ C := by
-  obtain ⟨Lf', hLf'_an, hLf'_eq⟩ := artinLSeries_analytic_extension K L χ' hχ'
+  obtain ⟨Lf', hLf'_an, hLf'_eq⟩ := artinLSeries_analytic_extension K L m χ' hχ'
   -- `1` lies in the analyticity domain `{1 - d⁻¹ < re s}` (as `d ≥ 1`, `1 - d⁻¹ < 1`).
   have hdpos : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
     have : 0 < Module.finrank ℚ K := Module.finrank_pos
@@ -1882,11 +1888,17 @@ nontrivial `χ`. Source argument: if any `L(χ,1) = 0`, the
 strictly weaker than the simple pole `log ζ_L ~ log(1/(s-1))`, a
 contradiction. Uses `artinLSeries_analytic_extension` so that
 "`L(χ, 1)` is defined" makes sense — the extension brings `s = 1` into
-the analyticity domain. -/
+the analyticity domain.
+
+**Stated at cyclotomic generality** (`L = K(μ_m)`): the proof bounds every other nontrivial
+factor `L_{χ'}` near `s = 1` via its analytic extension
+(`artinDirichletSeries_norm_le_of_ne_one` ⟸ `artinLSeries_analytic_extension`), which — like
+the geometry-of-numbers leaf it rests on — is CFT-free only cyclotomically (see the restatement
+note on `exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`, expert review 2026-06-05). -/
 theorem artinLSeries_one_ne_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
-    (_hχ : χ ≠ 1) :
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∀ Lf : ℂ → ℂ,
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} →
       (∀ s : ℂ, 1 < s.re →
@@ -1953,7 +1965,7 @@ theorem artinLSeries_one_ne_zero
         -- `log‖L_χ(s)‖ = log‖Lf(s)‖ ≤ -log(1/(s-1)) + Cχ` (Ingredient C, since `Lf = L_χ`)
         rw [← hLf_eq' (s : ℂ) (by simpa using hs1)]
         exact hs
-      · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L χ' h1
+      · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L m χ' h1
         -- `log‖L_{χ'}(s)‖ ≤ log (max C 1) ≤ 0 + log (max C 1)`, using `max C 1 ≥ 1 > 0`.
         refine ⟨Real.log (max C 1), ?_⟩
         filter_upwards [hC] with s hs
