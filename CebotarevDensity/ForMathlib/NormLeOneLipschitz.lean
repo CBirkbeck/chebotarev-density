@@ -256,6 +256,102 @@ theorem image_boundary_subset_faces :
     refine Or.inr (Set.mem_iUnion.mpr ⟨i, Set.mem_iUnion₂.mpr ⟨y w, ?_, ⟨c, hcmem, hkey⟩⟩⟩)
     rcases ha with h | h <;> simp [h]
 
+/-! ### Cube relabelling and the covering family
+
+The frontier statement indexes its cube by `Fin (#InfinitePlace K - 1)`, while the face maps are
+indexed by the non-distinguished places `{w ≠ w₀}`. `cubeRelabel` transports the cube along
+`equivFinRank`; it is `1`-Lipschitz, maps the unit cube into itself, and is onto the unit cube. The
+covering family `frontierCoverFamily` collects the zero map, the `w₀`-face map, and the side-face
+maps, each clamped to the cube and relabelled. -/
+
+/-- Relabel cube coordinates `Fin (#InfinitePlace K - 1) → ℝ` by the non-distinguished places
+`{w ≠ w₀}` via `equivFinRank`. -/
+def cubeRelabel (c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) :
+    {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+  fun j => c (equivFinRank.symm j)
+
+open scoped Classical in
+theorem lipschitzWith_cubeRelabel : LipschitzWith 1 (cubeRelabel K) :=
+  LipschitzWith.of_edist_le fun c d => by
+    simp only [cubeRelabel, edist_pi_def]
+    exact Finset.sup_le fun j _ => edist_le_pi_edist c d (equivFinRank.symm j)
+
+theorem cubeRelabel_mem_Icc {c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ}
+    (hc : c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1) :
+    cubeRelabel K c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 :=
+  ⟨fun _ => hc.1 _, fun _ => hc.2 _⟩
+
+theorem exists_cubeRelabel_eq {c' : {w : InfinitePlace K // w ≠ w₀} → ℝ}
+    (hc' : c' ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1) :
+    ∃ c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1, cubeRelabel K c = c' :=
+  ⟨fun j => c' (equivFinRank j), ⟨fun j => hc'.1 _, fun j => hc'.2 _⟩,
+    funext fun j => by simp [cubeRelabel]⟩
+
+/-- The finite family covering the frontier: the zero map (index `inl ()`), the `w₀`-face map
+(`inr (inl ())`), and the side-face maps `faceMapSide i a` for `i ≠ w₀`, `a ∈ {0,1}`
+(`inr (inr (i, b))`, `a = if b then 1 else 0`), each post-clamped to the unit cube and relabelled
+through `cubeRelabel`. -/
+def frontierCoverFamily :
+    (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) →
+      (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K :=
+  Sum.elim (fun _ _ => 0)
+    (Sum.elim (fun _ => faceMapZero K ∘ clampUnit _ ∘ cubeRelabel K)
+      fun p => faceMapSide K p.1 (if p.2 then 1 else 0) ∘ clampUnit _ ∘ cubeRelabel K)
+
+/-- Every member of `frontierCoverFamily` is `M`-Lipschitz for a common constant `M`: each face
+map is `C¹` on the compact cube hence Lipschitz there (`exists_lipschitzWith_comp_clampUnit`), and
+pre-composing with the `1`-Lipschitz `cubeRelabel` preserves the constant; take `M` to be the
+supremum over the finitely many faces. -/
+theorem exists_lipschitzWith_frontierCoverFamily :
+    ∃ M : ℝ≥0, ∀ s, LipschitzWith M (frontierCoverFamily K s) := by
+  classical
+  obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_comp_clampUnit (contDiff_faceMapZero K)
+  choose Ms hMs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool =>
+    exists_lipschitzWith_comp_clampUnit (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0))
+  refine ⟨M₀ ⊔ Finset.univ.sup Ms, fun s => ?_⟩
+  rcases s with _ | _ | p
+  · exact (LipschitzWith.const _).weaken zero_le
+  · exact (hM₀.comp (lipschitzWith_cubeRelabel K)).weaken (by rw [mul_one]; exact le_sup_left)
+  · exact ((hMs p).comp (lipschitzWith_cubeRelabel K)).weaken
+      (by rw [mul_one]; exact le_sup_of_le_right (Finset.le_sup (Finset.mem_univ p)))
+
+/-- The frontier of `normAtAllPlaces '' normLeOne K` is covered by the cube images of
+`frontierCoverFamily`. The chain is: frontier → box-boundary image `∪ {0}`
+(`frontier_image_paramSet_subset`) → the face images (`image_boundary_subset_faces`), then each
+face image is the corresponding family member after undoing the relabelling
+(`exists_cubeRelabel_eq`) and the clamp (`clampUnit_eq_self`), with `{0}` the value of the zero
+map. -/
+theorem frontier_subset_frontierCoverFamily :
+    frontier (normAtAllPlaces '' normLeOne K) ⊆
+      ⋃ s, frontierCoverFamily K s '' Icc 0 1 := by
+  classical
+  rw [normAtAllPlaces_normLeOne_eq_image]
+  refine (frontier_image_paramSet_subset K).trans
+    (Set.union_subset ((image_boundary_subset_faces K).trans (Set.union_subset ?_ ?_)) ?_)
+  · rintro x ⟨c', hc', rfl⟩
+    obtain ⟨c, hc, rfl⟩ := exists_cubeRelabel_eq K hc'
+    refine Set.mem_iUnion.mpr ⟨Sum.inr (Sum.inl ()), c, hc, ?_⟩
+    change faceMapZero K (clampUnit _ (cubeRelabel K c)) = faceMapZero K (cubeRelabel K c)
+    rw [clampUnit_eq_self (cubeRelabel_mem_Icc K hc)]
+  · rintro x hx
+    rw [Set.mem_iUnion] at hx
+    obtain ⟨i, hx⟩ := hx
+    rw [Set.mem_iUnion₂] at hx
+    obtain ⟨a, ha, c', hc', rfl⟩ := hx
+    obtain ⟨c, hc, rfl⟩ := exists_cubeRelabel_eq K hc'
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at ha
+    obtain ⟨b, rfl⟩ : ∃ b : Bool, (if b then (1 : ℝ) else 0) = a := by
+      rcases ha with rfl | rfl
+      · exact ⟨false, rfl⟩
+      · exact ⟨true, rfl⟩
+    refine Set.mem_iUnion.mpr ⟨Sum.inr (Sum.inr (i, b)), c, hc, ?_⟩
+    change faceMapSide K i (if b then (1 : ℝ) else 0) (clampUnit _ (cubeRelabel K c)) = _
+    rw [clampUnit_eq_self (cubeRelabel_mem_Icc K hc)]
+  · rintro x hx
+    rw [Set.mem_singleton_iff] at hx
+    subst hx
+    exact Set.mem_iUnion.mpr ⟨Sum.inl (), 0, ⟨le_rfl, fun _ => zero_le_one⟩, rfl⟩
+
 /-! ### Assembly -/
 
 /-- **The Lipschitz cover of the frontier of `normAtAllPlaces '' (normLeOne K)`**
@@ -269,83 +365,11 @@ theorem normLeOne_frontier_lipschitz_cover :
       (∀ j, LipschitzWith M (φ j)) ∧
         frontier (normAtAllPlaces '' normLeOne K) ⊆ ⋃ j, φ j '' Icc 0 1 := by
   classical
-  -- Relabel the cube coordinates by the non-distinguished places (`rank K = r - 1`).
-  set e : Fin (Fintype.card (InfinitePlace K) - 1) ≃ {w : InfinitePlace K // w ≠ w₀} :=
-    equivFinRank with he
-  set ρ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) →
-      ({w : InfinitePlace K // w ≠ w₀} → ℝ) := fun c j => c (e.symm j) with hρ
-  have hρ_lip : LipschitzWith 1 ρ := LipschitzWith.of_edist_le fun c d => by
-    rw [hρ, edist_pi_def]
-    exact Finset.sup_le fun j _ => edist_le_pi_edist c d (e.symm j)
-  have hρ_mem : ∀ c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1,
-      ρ c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 :=
-    fun c hc => ⟨fun j => hc.1 _, fun j => hc.2 _⟩
-  have hρ_surj : ∀ c' ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1,
-      ∃ c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1, ρ c = c' := by
-    intro c' hc'
-    refine ⟨fun j => c' (e j), ⟨fun j => hc'.1 _, fun j => hc'.2 _⟩, ?_⟩
-    funext j
-    rw [hρ]
-    simp
-  -- The Lipschitz constants of the clamped face maps, and their common bound `M`.
-  obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_comp_clampUnit (contDiff_faceMapZero K)
-  choose Ms hMs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool =>
-    exists_lipschitzWith_comp_clampUnit (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0))
-  set M : ℝ≥0 := M₀ ⊔ Finset.univ.sup Ms with hM
-  -- The family: the zero map, the `w₀`-face map, and the side-face maps.
-  set fam : (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) →
-      (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K :=
-    Sum.elim (fun _ _ => 0)
-      (Sum.elim (fun _ => faceMapZero K ∘ clampUnit _ ∘ ρ)
-        (fun p => faceMapSide K p.1 (if p.2 then 1 else 0) ∘ clampUnit _ ∘ ρ)) with hfam
-  refine ⟨Fintype.card (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)), M,
-    fam ∘ (Fintype.equivFin _).symm, fun j => ?_, ?_⟩
-  · -- Every member of the family is `M`-Lipschitz.
-    change LipschitzWith M (fam ((Fintype.equivFin _).symm j))
-    generalize (Fintype.equivFin _).symm j = x
-    rcases x with _ | _ | p
-    · exact (LipschitzWith.const _).weaken zero_le
-    · exact (hM₀.comp hρ_lip).weaken (by rw [mul_one, hM]; exact le_sup_left)
-    · exact ((hMs p).comp hρ_lip).weaken
-        (by rw [mul_one, hM]; exact le_sup_of_le_right (Finset.le_sup (Finset.mem_univ p)))
-  · -- The coverage chain: frontier → box boundary image ∪ {0} → face images → the family.
-    rw [normAtAllPlaces_normLeOne_eq_image]
-    refine (frontier_image_paramSet_subset K).trans
-      (Set.union_subset ((image_boundary_subset_faces K).trans (Set.union_subset ?_ ?_)) ?_)
-    · -- the `w₀`-face piece, via the index `inr (inl ())`
-      rintro x ⟨c', hc', rfl⟩
-      obtain ⟨c, hc, rfl⟩ := hρ_surj c' hc'
-      refine Set.mem_iUnion.mpr ⟨Fintype.equivFin _ (Sum.inr (Sum.inl ())), c, hc, ?_⟩
-      change fam ((Fintype.equivFin _).symm (Fintype.equivFin _ _)) c = _
-      rw [Equiv.symm_apply_apply, hfam]
-      change faceMapZero K (clampUnit _ (ρ c)) = faceMapZero K (ρ c)
-      rw [clampUnit_eq_self (hρ_mem c hc)]
-    · -- the side-face pieces, via the indices `inr (inr (i, b))`
-      rintro x hx
-      rw [Set.mem_iUnion] at hx
-      obtain ⟨i, hx⟩ := hx
-      rw [Set.mem_iUnion₂] at hx
-      obtain ⟨a, ha, c', hc', rfl⟩ := hx
-      obtain ⟨c, hc, rfl⟩ := hρ_surj c' hc'
-      simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at ha
-      have hb : ∃ b : Bool, (if b then (1 : ℝ) else 0) = a := by
-        rcases ha with rfl | rfl
-        · exact ⟨false, rfl⟩
-        · exact ⟨true, rfl⟩
-      obtain ⟨b, rfl⟩ := hb
-      refine Set.mem_iUnion.mpr ⟨Fintype.equivFin _ (Sum.inr (Sum.inr (i, b))), c, hc, ?_⟩
-      change fam ((Fintype.equivFin _).symm (Fintype.equivFin _ _)) c = _
-      rw [Equiv.symm_apply_apply, hfam]
-      change faceMapSide K i (if b then (1 : ℝ) else 0) (clampUnit _ (ρ c)) = _
-      rw [clampUnit_eq_self (hρ_mem c hc)]
-    · -- the `{0}` piece, via the zero map at index `inl ()`
-      rintro x hx
-      rw [Set.mem_singleton_iff] at hx
-      subst hx
-      refine Set.mem_iUnion.mpr ⟨Fintype.equivFin _ (Sum.inl ()), 0, ⟨le_rfl, ?_⟩, ?_⟩
-      · exact fun _ => zero_le_one
-      · change fam ((Fintype.equivFin _).symm (Fintype.equivFin _ _)) 0 = 0
-        rw [Equiv.symm_apply_apply, hfam]
-        rfl
+  obtain ⟨M, hM⟩ := exists_lipschitzWith_frontierCoverFamily K
+  -- Reindex the sum-typed family by `Fin (card …)` to match the statement shape.
+  set e := Fintype.equivFin (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool))
+  refine ⟨_, M, fun j => frontierCoverFamily K (e.symm j), fun j => hM _, ?_⟩
+  rw [e.symm.surjective.iUnion_comp fun s => frontierCoverFamily K s '' Icc 0 1]
+  exact frontier_subset_frontierCoverFamily K
 
 end Chebotarev
