@@ -2,6 +2,7 @@ module
 
 public import CebotarevDensity.Frobenius
 public import CebotarevDensity.ForMathlib.LatticePointCount
+public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 public import Mathlib.NumberTheory.LSeries.DirichletContinuation
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
@@ -788,15 +789,18 @@ suffices for the rate-*free* limit `ZLattice.covolume.tendsto_card_le_div'` behi
 `O(N^{1−1/d})` error term. The Lipschitz-boundary regularity is Gun–Ramaré–Sivaraman, *Counting
 ideals in ray classes*, J. Number Theory 243 (2023) §3.3 (after Debaene): `∂(normLeOne K)` is a
 finite union of images of `[0,1]^{d-1}` under the Lipschitz parametrizations `expMapBasis`/`expMap`
-of the cone boundary. **Residual sorry — this is the project's single deepest analytic gap, a
-legitimate standalone future-mathlib PR.** -/
+of the cone boundary. **Proven** in `ForMathlib/NormLeOneLipschitz.lean`
+(`normLeOne_frontier_lipschitz_cover`, a standalone future-mathlib PR): the frontier of
+`expMapBasis '' paramSet K` lies in the image of the box boundary plus `{0}`, each box face is
+parametrized by the unit cube (the `t = exp (x w₀)` substitution linearizes the unbounded
+`w₀`-direction), and the `C¹` face maps are Lipschitz on the cube. -/
 theorem normLeOne_frontier_lipschitz (K : Type*) [Field K] [NumberField K] :
     ∃ (m : ℕ) (M : ℝ≥0)
       (φ : Fin m → (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → mixedEmbedding.realSpace K),
       (∀ j, LipschitzWith M (φ j)) ∧
         frontier (mixedEmbedding.normAtAllPlaces ''
-          mixedEmbedding.fundamentalCone.normLeOne K) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
-  sorry
+          mixedEmbedding.fundamentalCone.normLeOne K) ⊆ ⋃ j, φ j '' Set.Icc 0 1 :=
+  normLeOne_frontier_lipschitz_cover K
 
 /-- **L2 (Sub-gaps 2+3) — unramified-supported Frobenius-fibre equidistribution.** For
 `L = K(μ_m)` cyclotomic, the number of nonzero ideals `𝔞` with `N𝔞 ≤ N`, **every prime factor of
