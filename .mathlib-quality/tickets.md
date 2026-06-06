@@ -84,9 +84,25 @@ the chain is sorry-free *modulo L3*.
     `clampUnit`; assembly over `Unit ⊕ Unit ⊕ ({w ≠ w₀} × Bool)` with the `equivFinRank`
     relabeling isometry. Future-mathlib-PR material. /cleanup ran (body 79→7, helpers extracted).
 
-### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: open
-- File: ZetaProduct.lean:831 (sorry at 842) · Depends on: GA + L1 (proven) · bad-prime split +
-  congruence-coset lattice counting; see L2 docstring + HANDOVER §5.2 (U-predicate, import cycle §5.3).
+### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: in_progress
+- File: ZetaProduct.lean (sorry at ~846) · ALL INPUTS PROVEN as of 2026-06-06 except one:
+  - DONE sorry-free: coset workhorse; mixed-space GA-lift; index-transport; per-residue effective
+    ideal count `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` (axiom-clean!);
+    CyclotomicNormResidue.lean (norm-residue dictionary + Frobenii-generate).
+  - LAST ICC sorry: `cardNormLeResidue_density_eq_of_mem_subgroup` (the κ-transfer core).
+    **Route F (FINAL DESIGN, 2026-06-06):** restate with an S-character coset-translate decay
+    hypothesis `hF : ∀ χ : S →* ℂˣ, χ ≠ 1 → ∀ w, Tendsto (Σ_{s ∈ S} χ(s)·count_{w·s}(N)/N) → 0`;
+    prove by S-internal finite-abelian Fourier inversion (separating character + translation
+    trick, `Mathlib.GroupTheory.FiniteAbelian.Duality`); thread hF into `_uniform` (conclusion
+    unchanged). Consumer discharges hF via PROVEN LF3 + `autToPow_frobeniusClass_out`.
+    DISCARDED routes (lossy/walled — do not retry): ideal-multiplication limit transfer (N𝔟
+    factor); element-orbit permutation (S ⊄ unit-norm-residues from ideal realizers).
+    ⚠ 3 consecutive worker dispatches died to API-529 overload (0 work done each, tree clean
+    at e57e823) — retry the dispatch when capacity returns; the full worker brief is in the
+    session transcript and reconstructible from this note.
+  - THEN the assembly (ZetaProduct:846): bad-prime split (`frobeniusIdeal_mul`, finite
+    unramified-but-𝔭∣m set) + fibre = norm-residue class χ_cyc(g) + `_uniform` over the image
+    subgroup (realizers from `subgroup_eq_top_of_forall_frobenius_mem` products).
 
 ### [AB1] exists_cyclotomicCrossing_fibres — Status: open (⚠ statement review FIRST)
 - File: Abelian.lean:148 (sorry at 157) · Depends on: chebotarev_cyclotomic (proven mod gaps) ·
