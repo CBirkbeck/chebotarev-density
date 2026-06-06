@@ -967,6 +967,76 @@ private theorem card_good_fibre_eq_card_residue
     exact Units.ext (by rw [ZMod.coe_unitOfCoprime, I.2.2])
   exact ⟨h0, I.2.1, hcp, hfr⟩
 
+/-- The **bad part** of an ideal at level `m`: the product of its normalized prime factors
+whose norm is not coprime to `m`. For an unramified-supported ideal these are the finitely
+many factors lying over divisors of `m` that are unramified despite `𝔭 ∣ (m)`. -/
+private noncomputable def badPart (K : Type*) [Field K] [NumberField K] (m : ℕ)
+    (𝔞 : Ideal (𝓞 K)) : Ideal (𝓞 K) :=
+  ((UniqueFactorizationMonoid.normalizedFactors 𝔞).filter
+    fun 𝔭 => ¬(Ideal.absNorm 𝔭).Coprime m).prod
+
+/-- The **good part**: the product of the factors with norm coprime to `m`. -/
+private noncomputable def goodPart (K : Type*) [Field K] [NumberField K] (m : ℕ)
+    (𝔞 : Ideal (𝓞 K)) : Ideal (𝓞 K) :=
+  ((UniqueFactorizationMonoid.normalizedFactors 𝔞).filter
+    fun 𝔭 => (Ideal.absNorm 𝔭).Coprime m).prod
+
+section BadGoodSplit
+
+variable (K : Type*) [Field K] [NumberField K] (m : ℕ)
+
+private theorem goodPart_mul_badPart (𝔞 : Ideal (𝓞 K)) (h𝔞 : 𝔞 ≠ ⊥) :
+    goodPart K m 𝔞 * badPart K m 𝔞 = 𝔞 := by
+  classical
+  rw [goodPart, badPart, ← Multiset.prod_add, Multiset.filter_add_not]
+  exact Ideal.prod_normalizedFactors_eq_self h𝔞
+
+private theorem badPart_ne_bot (𝔞 : Ideal (𝓞 K)) : badPart K m 𝔞 ≠ ⊥ := by
+  classical
+  refine Multiset.prod_ne_zero fun h0 => ?_
+  exact (UniqueFactorizationMonoid.prime_of_normalized_factor _
+    (Multiset.mem_of_mem_filter h0)).ne_zero rfl
+
+private theorem goodPart_ne_bot (𝔞 : Ideal (𝓞 K)) : goodPart K m 𝔞 ≠ ⊥ := by
+  classical
+  refine Multiset.prod_ne_zero fun h0 => ?_
+  exact (UniqueFactorizationMonoid.prime_of_normalized_factor _
+    (Multiset.mem_of_mem_filter h0)).ne_zero rfl
+
+private theorem absNorm_goodPart_coprime (𝔞 : Ideal (𝓞 K)) :
+    (Ideal.absNorm (goodPart K m 𝔞)).Coprime m := by
+  classical
+  rw [goodPart, map_multiset_prod]
+  refine Multiset.prod_induction (fun n : ℕ => n.Coprime m) _
+    (fun a b ha hb => Nat.Coprime.mul_left ha hb) (Nat.coprime_one_left m) fun n hn => ?_
+  obtain ⟨𝔭, h𝔭, rfl⟩ := Multiset.mem_map.mp hn
+  exact (Multiset.mem_filter.mp h𝔭).2
+
+/-- A multiset of primes (of ideals, where `normalize` is the identity) recovers itself as
+the normalized factors of its product. -/
+private theorem normalizedFactors_multiset_prod' {s : Multiset (Ideal (𝓞 K))}
+    (hs : ∀ 𝔭 ∈ s, Prime 𝔭) :
+    UniqueFactorizationMonoid.normalizedFactors s.prod = s := by
+  classical
+  rw [UniqueFactorizationMonoid.normalizedFactors_multiset_prod s
+    fun h0 => (hs 0 h0).ne_zero rfl]
+  rw [show s.map UniqueFactorizationMonoid.normalizedFactors = s.map fun 𝔭 => {𝔭} from
+    Multiset.map_congr rfl fun 𝔭 h𝔭 => by
+      rw [UniqueFactorizationMonoid.normalizedFactors_irreducible (hs 𝔭 h𝔭).irreducible,
+        normalize_eq]]
+  exact Multiset.sum_map_singleton s
+
+private theorem mem_factors_badPart {𝔞 : Ideal (𝓞 K)} {𝔭 : Ideal (𝓞 K)}
+    (h𝔭 : 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors (badPart K m 𝔞)) :
+    𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞 ∧ ¬(Ideal.absNorm 𝔭).Coprime m := by
+  classical
+  rw [badPart, normalizedFactors_multiset_prod' K (fun 𝔮 h𝔮 =>
+    UniqueFactorizationMonoid.prime_of_normalized_factor _
+      (Multiset.mem_of_mem_filter h𝔮))] at h𝔭
+  exact ⟨Multiset.mem_of_mem_filter h𝔭, (Multiset.mem_filter.mp h𝔭).2⟩
+
+end BadGoodSplit
+
 end GapBAssembly
 
 /-- **L2 (Sub-gaps 2+3) — unramified-supported Frobenius-fibre equidistribution.** For
