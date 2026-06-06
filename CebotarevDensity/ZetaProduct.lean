@@ -9,6 +9,7 @@ public import Mathlib.NumberTheory.LSeries.DirichletContinuation
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.NumberTheory.Cyclotomic.Gal
+public import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
 public import Mathlib.Analysis.SpecialFunctions.Log.Summable
 
@@ -831,7 +832,66 @@ private theorem unramifiedIn_of_coprime_absNorm
     [IsGalois K L] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
     UnramifiedIn K L 𝔭 := by
-  sorry
+  classical
+  refine ⟨h𝔭, fun 𝔓 h𝔓max h𝔓lo => ?_⟩
+  haveI := h𝔓lo
+  haveI : 𝔓.IsPrime := h𝔓max.isPrime
+  rw [← not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
+  intro hdvd
+  obtain ⟨ζ, hζ⟩ := IsCyclotomicExtension.exists_isPrimitiveRoot K L
+    (Set.mem_singleton m) (NeZero.ne m)
+  set ζ𝓞 : 𝓞 L := hζ.toInteger with hζ𝓞
+  have hpow : ζ𝓞 ^ m = 1 := hζ.toInteger_isPrimitiveRoot.pow_eq_one
+  -- `minpoly 𝓞K ζ𝓞 ∣ X^m − 1`, say with cofactor `g`.
+  have hdvd_pol : minpoly (𝓞 K) ζ𝓞 ∣ Polynomial.X ^ m - 1 := by
+    refine minpoly.isIntegrallyClosed_dvd (Algebra.IsIntegral.isIntegral ζ𝓞) ?_
+    simp [sub_eq_zero, hpow]
+  obtain ⟨g, hg⟩ := hdvd_pol
+  -- Differentiate `X^m − 1 = f·g` and evaluate at `ζ𝓞`: `m·ζ𝓞^{m−1} = f'(ζ𝓞)·g(ζ𝓞)`.
+  have hkey : (m : 𝓞 L) * ζ𝓞 ^ (m - 1)
+      = Polynomial.aeval ζ𝓞 (Polynomial.derivative (minpoly (𝓞 K) ζ𝓞))
+        * Polynomial.aeval ζ𝓞 g := by
+    have hder := congrArg (Polynomial.aeval ζ𝓞 ∘ Polynomial.derivative) hg
+    simp only [Function.comp_apply, Polynomial.derivative_sub, Polynomial.derivative_one,
+      Polynomial.derivative_X_pow, Polynomial.derivative_mul, map_sub, map_mul, map_add,
+      Polynomial.aeval_natCast, map_pow, Polynomial.aeval_X, minpoly.aeval, zero_mul, add_zero,
+      sub_zero, map_zero, Polynomial.aeval_C] at hder
+    simpa using hder
+  -- The different divides `(f'(ζ𝓞))` (conductor formula), so `f'(ζ𝓞) ∈ 𝔓`.
+  have hadj : Algebra.adjoin K {algebraMap (𝓞 L) L ζ𝓞} = ⊤ := by
+    have : algebraMap (𝓞 L) L ζ𝓞 = ζ := hζ.coe_toInteger
+    rw [this]
+    exact IsCyclotomicExtension.adjoin_primitive_root_eq_top hζ
+  have hdiff_dvd : differentIdeal (𝓞 K) (𝓞 L)
+      ∣ Ideal.span {Polynomial.aeval ζ𝓞 (Polynomial.derivative (minpoly (𝓞 K) ζ𝓞))} :=
+    ⟨conductor (𝓞 K) ζ𝓞, by
+      rw [← conductor_mul_differentIdeal (𝓞 K) K L ζ𝓞 hadj]; ring⟩
+  have hmem : (m : 𝓞 L) * ζ𝓞 ^ (m - 1) ∈ 𝔓 := by
+    rw [hkey]
+    exact Ideal.mul_mem_right _ _
+      ((Ideal.dvd_iff_le.mp (dvd_trans hdvd hdiff_dvd)) (Ideal.mem_span_singleton_self _))
+  -- `ζ𝓞` is a unit, so `m ∈ 𝔓`, hence `m ∈ 𝔭`.
+  have hm𝔓 : ((m : ℕ) : 𝓞 L) ∈ 𝔓 := by
+    rcases ‹𝔓.IsPrime›.mem_or_mem hmem with h | h
+    · exact h
+    · exact absurd (Ideal.eq_top_of_isUnit_mem _ h
+        ((IsUnit.of_pow_eq_one hpow (NeZero.ne m)).pow _)) ‹𝔓.IsPrime›.ne_top
+  have hm𝔭 : ((m : ℕ) : 𝓞 K) ∈ 𝔭 := by
+    have hmap : algebraMap (𝓞 K) (𝓞 L) ((m : ℕ) : 𝓞 K) ∈ 𝔓 := by
+      rwa [map_natCast]
+    rw [h𝔓lo.over]
+    exact Ideal.mem_comap.mpr hmap
+  -- Norm divisibility: `N𝔭 ∣ m^d`, contradicting coprimality (`N𝔭 > 1` for a nonzero prime).
+  have hdvd_norm : Ideal.absNorm 𝔭 ∣ m ^ Module.finrank ℤ (𝓞 K) := by
+    have hle : Ideal.span {((m : ℕ) : 𝓞 K)} ≤ 𝔭 :=
+      (Ideal.span_singleton_le_iff_mem _).mpr hm𝔭
+    have hd := Ideal.absNorm_dvd_absNorm_of_le hle
+    rwa [Ideal.absNorm_span_singleton, show ((m : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (m : ℤ) by
+        push_cast; rfl,
+      Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
+  exact absurd (Ideal.absNorm_eq_one_iff.mp
+      (Nat.eq_one_of_dvd_coprimes (hcop.pow_right _) dvd_rfl hdvd_norm))
+    ‹𝔭.IsPrime›.ne_top
 
 /-- The cyclotomic character sends `frobeniusIdeal` of a coprime-norm ideal to its norm
 residue: multiplicative extension of the per-prime `autToPow_frobeniusClass_out` over the
