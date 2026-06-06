@@ -88,10 +88,24 @@ the chain is sorry-free *modulo L3*.
 - File: ZetaProduct.lean:831 (sorry at 842) · Depends on: GA + L1 (proven) · bad-prime split +
   congruence-coset lattice counting; see L2 docstring + HANDOVER §5.2 (U-predicate, import cycle §5.3).
 
-### [AB1] exists_cyclotomicCrossing_fibres — Status: open
+### [AB1] exists_cyclotomicCrossing_fibres — Status: open (⚠ statement review FIRST)
 - File: Abelian.lean:148 (sorry at 157) · Depends on: chebotarev_cyclotomic (proven mod gaps) ·
   compositum `Gal(L(μ_m)/K) ≅ G × H` (linear disjointness, m coprime to disc(L)) + fixed-field
   density transfer. Sharifi 7.2.2 Step 2 pp. 143–144.
+- **⚠ Adversarial statement analysis (2026-06-06, pre-attack):** the statement quantifies over ALL
+  `m ≥ 1` with NO disjointness hypothesis, but the intended proof needs `L ∩ K(μ_m) = K`
+  (`Gal(L(μ_m)/K) ≅ G × H` FAILS otherwise — e.g. `K(μ_m) ⊆ L`); for bad `m` the
+  exact-density-`1/(|G||H|)` fibres are not produced by the compositum route (whether the bare
+  existence survives via density interpolation is doubtful-to-formalize). Sharifi's proof CHOOSES
+  `m ≡ 1 mod n^k` PRIME (Dirichlet primes-in-AP — mathlib HAS it,
+  `Mathlib.NumberTheory.LSeries.PrimesInAP`), hence coprime to `disc L`. EXPECTED FIX before
+  proving: add a disjointness/coprimality hypothesis to AB1 (and thread through LF10
+  `liminf_density_S_sigma_ge_card_H_n_div_GH` + the `m`-chooser in `chebotarev_abelian`'s proof,
+  which must pick `m` prime large via Dirichlet-in-AP — check `H_n_over_H_tends_to_one`'s
+  compatibility with restricting to prime `m ≡ 1 mod n^k`). Do the restatement cascade FIRST,
+  then the compositum infrastructure (M = L(μ_m) as `IsCyclotomicExtension {m} L M` +
+  `Gal(M/K) ≃* G × H` via restriction-product, injectivity from disjointness, surjectivity by
+  order; per-(σ,τ) fixed field F + `chebotarev_cyclotomic` at M/F + `density_lift_through_fixedField`).
 
 ### [M1] chebotarev_density assembly — Status: open
 - File: Main.lean:~1370 (sorry at 1375) · Depends on: AB1 chain + fixed-field reduction (Main.lean
