@@ -717,6 +717,322 @@ private theorem map_span_int_linearEquiv {E F : Type*} [AddCommGroup E] [Module 
     rw [Submodule.map_coe]; rfl
   rw [himg, ← key]; rfl
 
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
+/-- **Homogeneity of the norm-bounded cone region.** For `t ≥ 1`, the slice of the fundamental
+cone of mixed norm `≤ t ^ d` (`d = [K:ℚ]`) is the real dilation `t • normLeOne K`: scaling by `t`
+preserves the cone (`smul_mem_iff_mem`) and multiplies the norm by `t ^ d`
+(`mixedEmbedding.norm_smul`, `|t| = t`). -/
+private theorem cone_normLe_eq_smul_normLeOne {K : Type*} [Field K] [NumberField K] {t : ℝ}
+    (ht : 1 ≤ t) :
+    {x : mixedSpace K | x ∈ fundamentalCone K ∧
+        mixedEmbedding.norm x ≤ t ^ (Module.finrank ℚ K)} = t • normLeOne K := by
+  have ht0 : (0 : ℝ) < t := lt_of_lt_of_le one_pos ht
+  have htne : t ≠ 0 := ht0.ne'
+  ext x
+  simp only [Set.mem_setOf_eq, Set.mem_smul_set, normLeOne, Set.mem_inter_iff, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨hcone, hnorm⟩
+    refine ⟨t⁻¹ • x, ⟨(smul_mem_iff_mem (inv_ne_zero htne)).mpr hcone, ?_⟩, ?_⟩
+    · rw [mixedEmbedding.norm_smul, abs_of_pos (inv_pos.mpr ht0), inv_pow,
+        inv_mul_le_one₀ (by positivity)]
+      exact hnorm
+    · rw [smul_smul, mul_inv_cancel₀ htne, one_smul]
+  · rintro ⟨y, ⟨hcone, hnorm⟩, rfl⟩
+    refine ⟨(smul_mem_iff_mem htne).mpr hcone, ?_⟩
+    rw [mixedEmbedding.norm_smul, abs_of_pos ht0]
+    calc t ^ (Module.finrank ℚ K) * mixedEmbedding.norm y
+        ≤ t ^ (Module.finrank ℚ K) * 1 :=
+          mul_le_mul_of_nonneg_left hnorm (by positivity)
+      _ = t ^ (Module.finrank ℚ K) := mul_one _
+
+open NumberField.mixedEmbedding in
+/-- **The ideal lattice is a full lattice in the standard chart.** Transporting
+`idealLattice K (mk0 K J)` along the chart `Φ = (stdBasis K).equivFunL : mixedSpace K ≃ index K → ℝ`
+turns it into `T '' ℤ^(index K)` for an explicit `ℝ`-linear automorphism `T`: take the basis `c`
+formed by `Φ` applied to the `ℝ`-basis `fractionalIdealLatticeBasis` (reindexed to `index K`, whose
+cardinality matches by `fractionalIdeal_rank`/`finrank`), and let `T` send the standard basis to
+`c` (`Basis.equiv`). Then `T '' ℤ^ι = span ℤ (range c) = Φ '' (span ℤ idealLatticeBasis)`
+(`map_span_int_linearEquiv`, `span_idealLatticeBasis`). -/
+private theorem exists_latticeEquiv_image_idealLattice {K : Type*} [Field K] [NumberField K]
+    (J : (Ideal (𝓞 K))⁰) :
+    ∃ T : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ),
+      T '' (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)) := by
+  classical
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
+  set I := FractionalIdeal.mk0 K J with hI
+  have e : Module.Free.ChooseBasisIndex ℤ I ≃ index K := by
+    apply Fintype.equivOfCardEq
+    rw [← Module.finrank_eq_card_chooseBasisIndex, NumberField.fractionalIdeal_rank,
+      RingOfIntegers.rank, ← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K),
+      mixedEmbedding.finrank]
+  set c : Module.Basis (index K) ℝ (index K → ℝ) :=
+    ((mixedEmbedding.fractionalIdealLatticeBasis K I).map Φ.toLinearEquiv).reindex e with hc
+  refine ⟨(Pi.basisFun ℝ (index K)).equiv c (Equiv.refl (index K)), ?_⟩
+  have hcrange : Set.range c
+      = Φ '' (Set.range (mixedEmbedding.fractionalIdealLatticeBasis K I)) := by
+    rw [hc, Module.Basis.range_reindex, ← Set.range_comp]; rfl
+  rw [map_span_int_linearEquiv]
+  have hrange : ((Pi.basisFun ℝ (index K)).equiv c (Equiv.refl (index K)))
+      '' (Set.range (Pi.basisFun ℝ (index K))) = Set.range c := by
+    rw [← Set.range_comp]
+    congr 1; ext i
+    simp only [Function.comp_apply, Module.Basis.equiv_apply, Equiv.refl_apply]
+  rw [hrange, hcrange, ← mixedEmbedding.span_idealLatticeBasis K I]
+  exact (map_span_int_linearEquiv Φ.toLinearEquiv _).symm
+
+/-- **Bounded coordinate-hyperplane pieces are Lipschitz cube-coverable.** For a coordinate `j` and
+radius `R ≥ 0`, the slab `{x : x j = 0, ∀ i, |x i| ≤ R}` of the hyperplane `{x j = 0}` in `ι → ℝ`
+is contained in a single Lipschitz image of the unit cube `[0,1]^(card ι - 1)` (constant `2R`):
+parametrise the `card ι - 1` free coordinates affinely by `c ↦ 2R·c - R` (a bijection
+`Fin (card ι - 1) ≃ {i // i ≠ j}` supplies the indices) and set coordinate `j` to `0`. This is the
+boundary contribution of an orthant cut, feeding the workhorse's frontier-cover hypothesis. -/
+private theorem exists_lipschitz_cube_cover_hyperplane_slab {ι : Type*} [Fintype ι]
+    (j : ι) {R : ℝ} (hR : 0 ≤ R) :
+    ∃ (M : ℝ≥0) (φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      LipschitzWith M φ ∧
+        {x : ι → ℝ | x j = 0 ∧ ∀ i, |x i| ≤ R} ⊆ φ '' Set.Icc 0 1 := by
+  classical
+  have hcard : Fintype.card {i : ι // i ≠ j} = Fintype.card ι - 1 := by
+    rw [Fintype.card_subtype_compl]; simp
+  set σ : Fin (Fintype.card ι - 1) ≃ {i : ι // i ≠ j} :=
+    (Fintype.equivFinOfCardEq hcard).symm with hσ
+  set φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) :=
+    fun c i => if h : i = j then 0 else (2 * R) * c (σ.symm ⟨i, h⟩) - R with hφ
+  refine ⟨(2 * R).toNNReal, φ, ?_, ?_⟩
+  · refine LipschitzWith.of_dist_le_mul fun c c' => ?_
+    rw [dist_pi_le_iff (by positivity)]
+    intro i
+    by_cases hij : i = j
+    · simp only [hφ, dif_pos hij, dist_self]; positivity
+    · simp only [hφ, dif_neg hij]
+      rw [Real.dist_eq, show (2 * R) * c (σ.symm ⟨i, hij⟩) - R - ((2 * R) * c' (σ.symm ⟨i, hij⟩) - R)
+            = (2 * R) * (c (σ.symm ⟨i, hij⟩) - c' (σ.symm ⟨i, hij⟩)) by ring,
+        abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 2 * R),
+        Real.coe_toNNReal _ (by positivity)]
+      gcongr
+      rw [← Real.dist_eq]
+      exact dist_le_pi_dist c c' (σ.symm ⟨i, hij⟩)
+  · rintro x ⟨hxj, hxbd⟩
+    rcases eq_or_lt_of_le hR with hR0 | hR0
+    · have hx0 : x = 0 := by
+        ext i; have := hxbd i; rw [← hR0] at this; exact abs_nonpos_iff.mp this
+      refine ⟨0, ⟨le_refl _, zero_le_one⟩, ?_⟩
+      ext i; simp only [hφ]
+      by_cases hij : i = j
+      · rw [dif_pos hij, hx0]; rfl
+      · rw [dif_neg hij, hx0]; simp [← hR0]
+    · refine ⟨fun k => (x (σ k) + R) / (2 * R), ⟨?_, ?_⟩, ?_⟩
+      · intro k; simp only [Pi.zero_apply]
+        rw [le_div_iff₀ (by positivity)]; have := (abs_le.mp (hxbd (σ k))).1; linarith
+      · intro k; simp only [Pi.one_apply]
+        rw [div_le_one (by positivity)]; have := (abs_le.mp (hxbd (σ k))).2; linarith
+      · ext i
+        by_cases hij : i = j
+        · rw [hφ]; simp only; rw [dif_pos hij, hij]; exact hxj.symm
+        · rw [hφ]; simp only [dif_neg hij, Equiv.apply_symm_apply]; field_simp; ring
+
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
+/-- **Coset translate of cone points translates the generator by `m · J`.** If two cone points
+`a₁, a₂ ∈ idealSet K J` differ by a vector of `m • (idealLattice K (mk0 K J))` (the `m`-sublattice),
+then their generators differ by `m · w` for some `w ∈ J`: a lattice vector is `mixedEmbedding K y`
+with `y ∈ J` (integral, as `mk0 K J = ↑J`), and `mixedEmbedding` is injective, so the integral
+preimages satisfy `gen₁ = gen₂ + m·w`. This is the `ℤ`-linearity that makes the norm residue
+coset-constant (via `natCast_algebraNorm_add_nsmul_mul`). -/
+private theorem exists_generator_diff_of_coset {K : Type*} [Field K] [NumberField K] (m : ℕ)
+    (J : (Ideal (𝓞 K))⁰) (a₁ a₂ : idealSet K J)
+    (hcoset : (a₁ : mixedSpace K) - (a₂ : mixedSpace K) ∈
+      (m : ℝ) • (mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J) : Set (mixedSpace K))) :
+    ∃ w : 𝓞 K, (w : 𝓞 K) ∈ (J : Set (𝓞 K)) ∧
+      (preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K) =
+        (preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) + (m : 𝓞 K) * w := by
+  obtain ⟨v, hv, hveq⟩ := hcoset
+  simp only at hveq
+  rw [SetLike.mem_coe, mem_idealLattice] at hv
+  obtain ⟨y, hy, hyeq⟩ := hv
+  simp only [FractionalIdeal.coe_mk0, FractionalIdeal.mem_coeIdeal] at hy
+  obtain ⟨w, hwJ, hweq⟩ := hy
+  rw [Algebra.linearMap_apply] at hweq
+  refine ⟨w, hwJ, ?_⟩
+  have hg1 : mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K) : K)
+      = (a₁ : mixedSpace K) := by rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
+  have hg2 : mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) : K)
+      = (a₂ : mixedSpace K) := by rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
+  have hkey : mixedEmbedding K (((preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K)
+      - (preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) : 𝓞 K) : K)
+      = mixedEmbedding K ((m : 𝓞 K) * w : 𝓞 K) := by
+    push_cast
+    rw [map_sub, hg1, hg2, ← hveq, ← hyeq, ← hweq, Nat.cast_smul_eq_nsmul, ← map_nsmul]
+    congr 1
+    rw [nsmul_eq_mul]
+  have heq := RingOfIntegers.coe_injective (K := K) ((mixedEmbedding_injective K) hkey)
+  linear_combination heq
+
+/-! ### Lipschitz-cover combinators and orthant boundary for the per-piece workhorse -/
+
+/-- **Union of two Lipschitz cube covers.** If `A` and `B` are each covered by finitely many
+`Lipschitz`-images of `[0,1]^(card ι - 1)`, so is `A ∪ B` (concatenate the families, take the max
+constant). -/
+private theorem exists_lipschitz_cover_union {ι : Type*} [Fintype ι] (A B : Set (ι → ℝ))
+    (h1 : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ A ⊆ ⋃ j, φ j '' Set.Icc 0 1)
+    (h2 : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ B ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
+    ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ (A ∪ B : Set (ι → ℝ)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
+  obtain ⟨m1, M1, φ1, hL1, hc1⟩ := h1
+  obtain ⟨m2, M2, φ2, hL2, hc2⟩ := h2
+  refine ⟨m1 + m2, max M1 M2, fun j => Sum.elim φ1 φ2 (finSumFinEquiv.symm j), ?_, ?_⟩
+  · intro j
+    simp only
+    rcases h : finSumFinEquiv.symm j with k | k
+    · rw [Sum.elim_inl]; exact (hL1 k).weaken (le_max_left _ _)
+    · rw [Sum.elim_inr]; exact (hL2 k).weaken (le_max_right _ _)
+  · refine Set.union_subset ?_ ?_
+    · refine hc1.trans (Set.iUnion_subset fun k => ?_)
+      refine Set.subset_iUnion_of_subset (finSumFinEquiv (Sum.inl k)) ?_
+      simp only [Equiv.symm_apply_apply, Sum.elim_inl, subset_refl]
+    · refine hc2.trans (Set.iUnion_subset fun k => ?_)
+      refine Set.subset_iUnion_of_subset (finSumFinEquiv (Sum.inr k)) ?_
+      simp only [Equiv.symm_apply_apply, Sum.elim_inr, subset_refl]
+
+/-- **Finite union of Lipschitz cube covers.** A `Fintype`-indexed union of sets, each Lipschitz
+cube-covered, is itself Lipschitz cube-covered (concatenate over `Σ g, Fin (mf g)`, take the
+`Finset.sup` of the constants). -/
+private theorem exists_lipschitz_cover_iUnion {ι : Type*} [Fintype ι] {γ : Type*} [Fintype γ]
+    (A : γ → Set (ι → ℝ))
+    (h : ∀ g, ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ A g ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
+    ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ (⋃ g, A g) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
+  classical
+  choose mf Mf φf hLf hcf using h
+  set e := Fintype.equivFin (Σ g, Fin (mf g)) with he
+  set Ψ : (Σ g, Fin (mf g)) → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) :=
+    fun p => φf p.1 p.2 with hΨ
+  refine ⟨Fintype.card (Σ g, Fin (mf g)), Finset.univ.sup Mf, fun j => Ψ (e.symm j), ?_, ?_⟩
+  · intro j
+    exact (hLf (e.symm j).1 (e.symm j).2).weaken (Finset.le_sup (Finset.mem_univ _))
+  · refine Set.iUnion_subset fun g => (hcf g).trans (Set.iUnion_subset fun k => ?_)
+    refine Set.subset_iUnion_of_subset (e ⟨g, k⟩) ?_
+    simp only [hΨ, Equiv.symm_apply_apply, subset_refl]
+
+/-- **Frontier of a closed sign-orthant cut.** The closed orthant in `ι → ℝ` cutting the coordinates
+`g k` (`k ∈ s` forces `≤ 0`, `k ∉ s` forces `≥ 0`) has frontier inside the union of the coordinate
+hyperplanes `{y (g k) = 0}`. Proof: the orthant is closed, its strict version is open and contained
+in it, so a boundary point lies in the orthant but not its interior, forcing some `y (g k) = 0`. -/
+private theorem frontier_signOrthant_subset {ι κ : Type*} [Fintype ι] [Fintype κ] (g : κ → ι)
+    (s : Finset κ) :
+    frontier ({y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))})
+      ⊆ ⋃ k : κ, {y : ι → ℝ | y (g k) = 0} := by
+  classical
+  set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hO
+  set Os : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) < 0) ∧ (∀ k ∉ s, 0 < y (g k))} with hOs
+  have hOclosed : IsClosed O := by
+    rw [hO, setOf_and]
+    refine IsClosed.inter ?_ ?_
+    · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) ≤ 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) ≤ 0} := by
+        ext y; simp
+      rw [h]
+      exact isClosed_biInter (fun k _ => isClosed_le (continuous_apply (g k)) continuous_const)
+    · have h : {y : ι → ℝ | ∀ k ∉ s, 0 ≤ y (g k)}
+          = ⋂ k ∈ (sᶜ : Finset κ), {y : ι → ℝ | 0 ≤ y (g k)} := by ext y; simp
+      rw [h]
+      exact isClosed_biInter (fun k _ => isClosed_le continuous_const (continuous_apply (g k)))
+  have hOsopen : IsOpen Os := by
+    rw [hOs, setOf_and]
+    refine IsOpen.inter ?_ ?_
+    · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) < 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) < 0} := by
+        ext y; simp
+      rw [h]
+      exact isOpen_biInter_finset (fun k _ => isOpen_lt (continuous_apply (g k)) continuous_const)
+    · have h : {y : ι → ℝ | ∀ k ∉ s, 0 < y (g k)}
+          = ⋂ k ∈ (sᶜ : Finset κ), {y : ι → ℝ | 0 < y (g k)} := by ext y; simp
+      rw [h]
+      exact isOpen_biInter_finset (fun k _ => isOpen_lt continuous_const (continuous_apply (g k)))
+  have hsub : Os ⊆ O := fun y hy => ⟨fun k hk => (hy.1 k hk).le, fun k hk => (hy.2 k hk).le⟩
+  intro y hy
+  have hyO : y ∈ O := hOclosed.closure_eq ▸ frontier_subset_closure hy
+  have hyni : y ∉ interior O := by
+    rw [frontier_eq_closure_inter_closure] at hy
+    rw [interior_eq_compl_closure_compl]; exact fun hh => hh hy.2
+  by_contra hcon
+  simp only [Set.mem_iUnion, Set.mem_setOf_eq, not_exists] at hcon
+  apply hyni
+  exact mem_interior.mpr ⟨Os, hsub, hOsopen,
+    ⟨fun k hk => lt_of_le_of_ne (hyO.1 k hk) (hcon k),
+     fun k hk => lt_of_le_of_ne (hyO.2 k hk) (Ne.symm (hcon k))⟩⟩
+
+/-- **Lipschitz frontier cover of an orthant-cut region.** If `D₀` is bounded with a Lipschitz cube
+cover of its frontier, then `D₀ ∩ orthant` (orthant cutting the coordinates `g k`) also has a
+Lipschitz cube-covered frontier: `frontier (D₀ ∩ O) ⊆ frontier D₀ ∪ (closure D₀ ∩ frontier O)`
+(`frontier_inter_subset`), the orthant boundary lands in finitely many coordinate hyperplanes
+(`frontier_signOrthant_subset`), and each bounded hyperplane slice is cube-covered
+(`exists_lipschitz_cube_cover_hyperplane_slab`); combine via the cover combinators. -/
+private theorem exists_frontier_cover_inter_orthant {ι : Type*} [Fintype ι] {κ : Type*} [Fintype κ]
+    (g : κ → ι) (s : Finset κ) (D₀ : Set (ι → ℝ)) (hbdd : Bornology.IsBounded D₀)
+    (hcov : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ frontier D₀ ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
+    ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧
+        frontier (D₀ ∩ {y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))})
+          ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
+  classical
+  obtain ⟨R, hR0, hRbd⟩ : ∃ R : ℝ, 0 ≤ R ∧ ∀ x ∈ closure D₀, ∀ i, |x i| ≤ R := by
+    obtain ⟨R, hR⟩ := isBounded_iff_forall_norm_le.mp hbdd.closure
+    refine ⟨max R 0, le_max_right _ _, fun x hx i => ?_⟩
+    calc |x i| = ‖x i‖ := (Real.norm_eq_abs _).symm
+      _ ≤ ‖x‖ := norm_le_pi_norm x i
+      _ ≤ max R 0 := le_max_of_le_left (hR x hx)
+  set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hO
+  have hsub : frontier (D₀ ∩ O)
+      ⊆ frontier D₀ ∪ ⋃ k : κ, {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R} := by
+    refine (frontier_inter_subset D₀ O).trans (Set.union_subset ?_ ?_)
+    · exact Set.inter_subset_left.trans Set.subset_union_left
+    · refine fun x hx => Or.inr ?_
+      obtain ⟨k, hxk⟩ := Set.mem_iUnion.mp (frontier_signOrthant_subset g s hx.2)
+      exact Set.mem_iUnion.mpr ⟨k, hxk, fun i => hRbd x hx.1 i⟩
+  obtain ⟨m, M, φ, hL, hc⟩ := exists_lipschitz_cover_union (frontier D₀)
+    (⋃ k : κ, {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R}) hcov
+    (exists_lipschitz_cover_iUnion (fun k => {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R})
+      (fun k => by
+        obtain ⟨M, φ, hL, hc⟩ := exists_lipschitz_cube_cover_hyperplane_slab (g k) hR0
+        exact ⟨1, M, fun _ => φ, fun _ => hL, hc.trans (Set.subset_iUnion_of_subset 0 subset_rfl)⟩))
+  exact ⟨m, M, φ, hL, hsub.trans hc⟩
+
+/-- **Membership in the standard integer lattice ⟺ integer coordinates.** A point of `ι → ℝ` lies in
+`span ℤ (range (Pi.basisFun ℝ ι))` iff every coordinate is an integer. -/
+private theorem mem_span_int_basisFun_iff {ι : Type*} [Fintype ι] (v : ι → ℝ) :
+    v ∈ span ℤ (Set.range (Pi.basisFun ℝ ι)) ↔ ∀ i, ∃ n : ℤ, v i = (n : ℝ) := by
+  classical
+  constructor
+  · intro hv i
+    induction hv using Submodule.span_induction with
+    | mem x hx =>
+      obtain ⟨j, rfl⟩ := hx
+      rw [Pi.basisFun_apply, Pi.single_apply]
+      by_cases hij : i = j
+      · exact ⟨1, by simp [hij]⟩
+      · exact ⟨0, by simp [hij]⟩
+    | zero => exact ⟨0, by simp⟩
+    | add x y _ _ ihx ihy =>
+      obtain ⟨a, ha⟩ := ihx; obtain ⟨b, hb⟩ := ihy
+      exact ⟨a + b, by rw [Pi.add_apply, ha, hb]; push_cast; ring⟩
+    | smul c x _ ih =>
+      obtain ⟨a, ha⟩ := ih
+      exact ⟨c * a, by rw [Pi.smul_apply, ha, zsmul_eq_mul]; push_cast; ring⟩
+  · intro h
+    choose n hn using h
+    have hv : v = ∑ i, (n i) • (Pi.basisFun ℝ ι i) := by
+      ext j
+      rw [Finset.sum_apply, hn j, Finset.sum_eq_single j]
+      · simp [Pi.basisFun_apply]
+      · intro b _ hbj; simp [Pi.basisFun_apply, Ne.symm hbj]
+      · intro hj; exact absurd (Finset.mem_univ j) hj
+    rw [hv]
+    exact sum_mem (fun i _ => zsmul_mem (subset_span (Set.mem_range_self i)) _)
+
 open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
 set_option backward.isDefEq.respectTransparency false in
 open Classical in
