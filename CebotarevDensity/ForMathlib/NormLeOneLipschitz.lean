@@ -718,4 +718,49 @@ theorem normLeOne_frontier_lipschitz_cover_mixedSpace :
   rw [e.symm.surjective.iUnion_comp fun p => Φ p '' Icc 0 1]
   exact hcover
 
+/-! ### Transporting the cover to the standard Euclidean coordinate space `index K → ℝ`
+
+The effective lattice-point workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le`
+operates on the standard coordinate space `ι → ℝ` (sup metric) with the standard lattice
+`ℤ^ι`. We carry the `mixedSpace K` cover over via the continuous linear equivalence
+`Φ = (stdBasis K).equivFunL : mixedSpace K ≃L[ℝ] (index K → ℝ)` (the `stdBasis`-coordinate
+chart). Lipschitz constants inflate by `‖Φ‖₊`; the cube domain is relabelled along
+`Fintype.card (index K) - 1 = finrank ℚ K - 1` (`Module.finrank_eq_card_basis`). -/
+
+open Classical in
+/-- **The Lipschitz frontier cover of `normLeOne K`, transported to `index K → ℝ`.** The frontier
+of the `stdBasis`-coordinate image `Φ '' normLeOne K` (with `Φ = (stdBasis K).equivFunL`) is
+covered by finitely many Lipschitz images of the unit cube `[0,1]^{#(index K) − 1}`. This is the
+exact `hlip` regularity hypothesis of `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` with
+`ι = index K`, obtained from `normLeOne_frontier_lipschitz_cover_mixedSpace` by post-composing the
+charts with the continuous-linear `Φ` (Lipschitz, frontier-preserving as a homeomorphism) and
+relabelling the cube dimension via `Fintype.card (index K) − 1 = finrank ℚ K − 1`. -/
+theorem normLeOne_frontier_lipschitz_cover_index :
+    ∃ (m : ℕ) (M : ℝ≥0)
+      (φ : Fin m → (Fin (Fintype.card (index K) - 1) → ℝ) → (index K → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧
+        frontier ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K)) ⊆
+          ⋃ j, φ j '' Icc 0 1 := by
+  obtain ⟨m, M, φ, hφ, hcov⟩ := normLeOne_frontier_lipschitz_cover_mixedSpace K
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
+  have hcard1 : Fintype.card (index K) - 1 = Module.finrank ℚ K - 1 := by
+    rw [show Fintype.card (index K) = Module.finrank ℚ K from by
+      rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]]
+  set g : Fin (Fintype.card (index K) - 1) ≃ Fin (Module.finrank ℚ K - 1) := finCongr hcard1 with hg
+  have hrelab : LipschitzWith 1
+      (fun c : Fin (Fintype.card (index K) - 1) → ℝ => (fun a => c (g.symm a))) :=
+    LipschitzWith.of_dist_le_mul fun c d => by
+      rw [NNReal.coe_one, one_mul]
+      exact (dist_pi_le_iff dist_nonneg).mpr fun a => dist_le_pi_dist c d (g.symm a)
+  refine ⟨m, ‖(Φ : mixedSpace K →L[ℝ] (index K → ℝ))‖₊ * (M * 1),
+    fun j => fun c => Φ (φ j (fun a => c (g.symm a))),
+    fun j => Φ.lipschitz.comp ((hφ j).comp hrelab), ?_⟩
+  rw [← Φ.coe_toHomeomorph, ← Φ.toHomeomorph.image_frontier]
+  refine (Set.image_mono hcov).trans ?_
+  rw [Set.image_iUnion]
+  refine Set.iUnion_subset fun j => ?_
+  rintro _ ⟨_, ⟨c, hc, rfl⟩, rfl⟩
+  exact Set.mem_iUnion.mpr ⟨j, ⟨fun a => c (g a), ⟨fun a => hc.1 _, fun a => hc.2 _⟩, by
+    simp only [Equiv.apply_symm_apply]⟩⟩
+
 end Chebotarev

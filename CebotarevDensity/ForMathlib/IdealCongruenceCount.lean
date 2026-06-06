@@ -696,25 +696,144 @@ private theorem card_principalize {K : Type*} [Field K] [NumberField K] (c : ℕ
     (((Equiv.dvd J).subtypeEquiv (fun I => principalize_iff c a N C J I hJ hNJ)).trans
       (Equiv.subtypeSubtypeEquivSubtypeInter (fun I : (Ideal (𝓞 K))⁰ ↦ J ∣ I) _))
 
+/-! ### Geometric infrastructure: linear-equiv transport and the residue-decorated torsion bridge
+
+The geometric core transports the cone-point count to the standard coordinate space `index K → ℝ`
+(the ambient of the workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le`) via the chart
+`Φ = (stdBasis K).equivFunL`. `map_span_int_linearEquiv` carries `ℤ`-spans through `Φ` (so the
+ideal lattice becomes `T '' ℤ^ι`); `card_isPrincipal_dvd_norm_le_residue` is mathlib's
+`card_isPrincipal_dvd_norm_le` refined by a norm-residue condition (carried along the per-norm
+fibre equivalence `idealSetEquivNorm`). -/
+
+/-- **`ℤ`-span transport along an `ℝ`-linear equivalence.** For an `ℝ`-linear equivalence `f` and a
+set `S`, the image of the `ℤ`-span of `S` is the `ℤ`-span of the image (as sets). -/
+private theorem map_span_int_linearEquiv {E F : Type*} [AddCommGroup E] [Module ℝ E]
+    [AddCommGroup F] [Module ℝ F] (f : E ≃ₗ[ℝ] F) (S : Set E) :
+    f '' (span ℤ S : Set E) = (span ℤ (f '' S) : Set F) := by
+  have key : (span ℤ ((f.restrictScalars ℤ) '' S) : Submodule ℤ F)
+      = (span ℤ S).map (f.restrictScalars ℤ).toLinearMap := (Submodule.map_span _ S).symm
+  have himg : (f '' (span ℤ S : Set E))
+      = ((span ℤ S).map (f.restrictScalars ℤ).toLinearMap : Set F) := by
+    rw [Submodule.map_coe]; rfl
+  rw [himg, ← key]; rfl
+
+open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
+set_option backward.isDefEq.respectTransparency false in
+open Classical in
+/-- **Residue-decorated torsion bridge.** Mathlib's `card_isPrincipal_dvd_norm_le` refined by a
+norm-residue condition: the number of `J`-divisible principal ideals of norm `≤ s` whose norm is
+`≡ b (mod m)`, times the torsion order, equals the number of cone points `a ∈ idealSet K J` of
+norm `≤ s` whose integer norm `intNorm (idealSetEquiv K J a)` is `≡ b (mod m)`. The residue is a
+function of the norm value, so it rides along the per-norm fibre equivalence `idealSetEquivNorm`
+(fibres where `(i : ZMod m) ≠ b` are empty on both sides). -/
+private theorem card_isPrincipal_dvd_norm_le_residue {K : Type*} [Field K] [NumberField K]
+    (J : (Ideal (𝓞 K))⁰) (m b : ℕ) (s : ℝ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+        (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} * torsionOrder K =
+        Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+          ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} := by
+  obtain hs | hs := le_or_gt 0 s
+  · rw [torsionOrder, ← Nat.card_eq_fintype_card, ← Nat.card_prod]
+    refine Nat.card_congr <| @Equiv.ofFiberEquiv _ (γ := Finset.Iic ⌊s⌋₊) _
+      (fun I ↦ ⟨Ideal.absNorm I.1.val.1, Finset.mem_Iic.mpr (Nat.le_floor I.1.prop.2.2.1)⟩)
+      (fun a ↦ ⟨intNorm (idealSetEquiv K J a.1).1, Finset.mem_Iic.mpr
+        (Nat.le_floor (by rw [intNorm_idealSetEquiv_apply]; exact a.prop.1))⟩) fun ⟨i, hi⟩ ↦ ?_
+    simp_rw [Subtype.mk.injEq]
+    have hile : (i : ℝ) ≤ s := (Nat.le_floor_iff hs).mp (Finset.mem_Iic.mp hi)
+    by_cases hib : (i : ZMod m) = (b : ZMod m)
+    · calc _ ≃ {I : {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+                (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+                ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} //
+                Ideal.absNorm I.1.1 = i} × torsion K := Equiv.prodSubtypeFstEquivSubtypeProd
+          _ ≃ {I : (Ideal (𝓞 K))⁰ // ((J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+                (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+                ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))) ∧
+                Ideal.absNorm I.1 = i} × torsion K :=
+              Equiv.prodCongrLeft fun _ ↦ Equiv.subtypeSubtypeEquivSubtypeInter
+                (p := fun I : (Ideal (𝓞 K))⁰ => (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+                  (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+                  ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))
+                (q := fun I => Ideal.absNorm (I : Ideal (𝓞 K)) = i)
+          _ ≃ {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+                (I : Ideal (𝓞 K)) ∧ Ideal.absNorm (I : Ideal (𝓞 K)) = i} × torsion K :=
+              Equiv.prodCongrLeft fun _ ↦ Equiv.subtypeEquivRight fun I ↦ by
+                constructor
+                · rintro ⟨⟨h1, h2, _, _⟩, h5⟩; exact ⟨h1, h2, h5⟩
+                · rintro ⟨h1, h2, h3⟩
+                  exact ⟨⟨h1, h2, by rw [h3]; exact hile, by rw [h3]; exact hib⟩, h3⟩
+          _ ≃ {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) = i} :=
+                (idealSetEquivNorm K J i).symm
+          _ ≃ {a : idealSet K J // intNorm (idealSetEquiv K J a).1 = i} := by
+                simp_rw [← intNorm_idealSetEquiv_apply, Nat.cast_inj]; rfl
+          _ ≃ _ := (Equiv.subtypeSubtypeEquivSubtype (p := fun a : idealSet K J =>
+                mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+                  ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
+                (q := fun a => intNorm (idealSetEquiv K J a).1 = i) fun {a} h ↦ by
+                rw [← intNorm_idealSetEquiv_apply, h]
+                exact ⟨by exact_mod_cast hile, by rw [h] at *; exact hib⟩).symm
+    · haveI : IsEmpty {a : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+          ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} //
+          intNorm (idealSetEquiv K J a.1).1 = i} := ⟨fun a ↦ hib (by rw [← a.2]; exact a.1.2.2)⟩
+      haveI : IsEmpty {a : ({I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+          (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} × torsion K) //
+          Ideal.absNorm a.1.1.1 = i} := ⟨fun a ↦ hib (by rw [← a.2]; exact a.1.1.2.2.2.2)⟩
+      exact Equiv.equivOfIsEmpty _ _
+  · haveI : IsEmpty {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+        (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} :=
+      ⟨fun I ↦ absurd I.2.2.2.1 (not_le.mpr (lt_of_lt_of_le hs (Nat.cast_nonneg _)))⟩
+    haveI : IsEmpty {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} :=
+      ⟨fun a ↦ absurd a.2.1 (not_le.mpr (lt_of_lt_of_le hs (mixedEmbedding.norm_nonneg _)))⟩
+    rw [Nat.card_of_isEmpty, Nat.card_of_isEmpty, zero_mul]
+
 /-! ### The per-residue effective ideal count -/
 
 open Ideal in
+open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
+/-- **Effective count of cone points of `idealSet K J` with a norm residue** (the Widmer / GRS
+geometric core). For a fixed nonzero ideal `J`, a modulus `m` and a residue `b`, the number of
+cone points `a ∈ idealSet K J` of `mixedEmbedding.norm ≤ N·N(J)` whose integer norm
+`intNorm (idealSetEquiv K J a)` is `≡ b (mod m)` is `κ·N + O(N^{1-1/d})`, `d = [K:ℚ]`.
+
+This is the substantive analytic input. Proof (Gun–Ramaré–Sivaraman, *Counting ideals in ray
+classes*, JNT 243 (2023), §3, after Widmer, Trans. AMS 362 (2010)): transport the count to the
+standard coordinate space `index K → ℝ` along the chart `Φ = (stdBasis K).equivFunL`
+(`map_span_int_linearEquiv` carries `idealLattice K J` to a full lattice `Λ_J = T '' ℤ^ι`); the
+norm-region `fundamentalCone ∩ {norm ≤ N·N(J)}` is the real dilation `t • normLeOne K` at
+`t = (N·N(J))^{1/d}` (norm-homogeneity `mixedEmbedding.norm_smul` + cone `smul`-stability
+`smul_mem_iff_mem`), so the count is the number of points of `Λ_J ∩ (t • Φ '' normLeOne K)`
+carrying the residue. Partition by the sign pattern `s` of the real coordinates (the orthant
+decomposition `plusPart`/`negAt`); on each orthant `natAbs_norm_eq_neg_one_pow_mul_norm` turns the
+absolute residue `|Norm| ≡ b` into the signed residue `Norm ≡ ±b`, which is constant on cosets of
+`m • Λ_J` (`natCast_algebraNorm_add_nsmul_mul`). Count each qualifying (orthant, coset) by the
+workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` (the frontier cover from
+`normLeOne_frontier_lipschitz_cover_index` together with the bounded coordinate-hyperplane pieces
+cut by the orthant), and sum the finitely many estimates: the leading terms give `κ·N` (with
+`t^d = N·N(J)`) and the error terms `O(t^{d-1}) = O((N·N(J))^{1-1/d}) = O(N^{1-1/d})`
+(`Real.rpow` algebra, `N(J) ≥ 1`). -/
+private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberField K]
+    (m : ℕ) [NeZero m] (b : ℕ) (J : (Ideal (𝓞 K))⁰) :
+    ∃ κ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
+      |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
+            ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
+          ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * N|
+        ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+  sorry
+
+open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
 /-- **Effective count of `J`-divisible principal ideals with a norm residue** (the geometric core
 of the per-class count). For a fixed nonzero ideal `J` and a residue `b (mod m)`, the number of
 `J`-divisible principal ideals of norm `≤ N·N(J)` with norm residue `b (mod m)` is
 `κ·N + O(N^{1-1/d})`.
 
-This is the post-principalization target: via `card_isPrincipal_dvd_norm_le` and the
-`idealSetEquivNorm` dictionary it equals `(1/torsionOrder K)` times the count of cone points of
-`idealLattice K J` of `mixedEmbedding.norm ≤ N·N(J)` carrying the residue
-`(absNorm (span x) : ZMod m) = b` (torsion-invariant). Sign-orthant decomposition
-(`plusPart`/`negAt`, `natAbs_norm_eq_neg_one_pow_mul_norm`) turns the absolute residue into the
-coset-constant signed residue (`natCast_algebraNorm_add_nsmul_mul`); transport to `ℤ^ι` in
-`euclidean K` (`ZLattice.volume_image_eq_volume_div_covolume'`) and count each `m·N(J)`-coset with
-the workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` at `t = (N·N(J))^{1/d}`,
-the frontier cover from `normLeOne_frontier_lipschitz_cover_mixedSpace` (through `toMixed`) plus
-hyperplane pieces. Summing finitely many estimates and dividing by `torsionOrder K` gives the
-bound. -/
+Reduction to the cone-point count `exists_card_idealSet_residue_le`: the residue-decorated torsion
+bridge `card_isPrincipal_dvd_norm_le_residue` (at `s = N·N(J)`) equates the ideal count times
+`torsionOrder K` with the cone-point count carrying the same residue; dividing the effective
+cone-point estimate by the (nonzero) torsion order gives the bound, with `κ` and `C'` scaled by
+`1/torsionOrder K`. -/
 private theorem exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
     {K : Type*} [Field K] [NumberField K] (m : ℕ) [NeZero m] (b : ℕ) (J : (Ideal (𝓞 K))⁰) :
     ∃ κ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
@@ -724,7 +843,49 @@ private theorem exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
             ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ)
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  sorry
+  obtain ⟨κ, C', hcore⟩ := exists_card_idealSet_residue_le m b J
+  have htors : (0 : ℝ) < torsionOrder K := by
+    exact_mod_cast (torsionOrder K).pos_of_ne_zero (torsionOrder_ne_zero K)
+  refine ⟨κ / torsionOrder K, C' / torsionOrder K, fun N hN => ?_⟩
+  have hcount : (Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+      (IsPrincipal (I : Ideal (𝓞 K)) ∧
+      Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) * torsionOrder K
+      = (Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
+          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
+        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) := by
+    rw [← Nat.cast_mul]; congr 1
+    rw [← card_isPrincipal_dvd_norm_le_residue J m b
+      ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ)]
+    congr 1
+    exact Nat.card_congr (Equiv.subtypeEquivRight fun I => by simp only [Nat.cast_le])
+  have he : |(Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+      (IsPrincipal (I : Ideal (𝓞 K)) ∧
+      Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) - κ / torsionOrder K * N|
+      = |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
+          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
+        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * N| /
+        torsionOrder K := by
+    rw [eq_div_iff htors.ne', ← hcount,
+      show ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+          (IsPrincipal (I : Ideal (𝓞 K)) ∧
+          Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) *
+            (torsionOrder K : ℝ) - κ * N)
+        = (torsionOrder K : ℝ) * ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣
+          (I : Ideal (𝓞 K)) ∧ (IsPrincipal (I : Ideal (𝓞 K)) ∧
+          Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) -
+            κ / torsionOrder K * N) by field_simp,
+      abs_mul, abs_of_pos htors, mul_comm]
+  rw [he, div_le_iff₀ htors]
+  calc |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
+          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
+        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * N|
+      ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := hcore N hN
+    _ = C' / torsionOrder K * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) * torsionOrder K := by
+        field_simp
 
 open Ideal in
 /-- **Per-class effective residue count.** For a fixed ideal class `C`, the number of nonzero
