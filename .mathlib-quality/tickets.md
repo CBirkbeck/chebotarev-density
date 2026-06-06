@@ -100,9 +100,31 @@ the chain is sorry-free *modulo L3*.
     ⚠ 3 consecutive worker dispatches died to API-529 overload (0 work done each, tree clean
     at e57e823) — retry the dispatch when capacity returns; the full worker brief is in the
     session transcript and reconstructible from this note.
-  - THEN the assembly (ZetaProduct:846): bad-prime split (`frobeniusIdeal_mul`, finite
-    unramified-but-𝔭∣m set) + fibre = norm-residue class χ_cyc(g) + `_uniform` over the image
-    subgroup (realizers from `subgroup_eq_top_of_forall_frobenius_mem` products).
+  - 2026-06-06 (late): **IdealCongruenceCount.lean fully sorry-free** — κ-uniformity proven via
+    Fourier inversion (Route F, in-session after 4 dispatch deaths to API overload); `_uniform`
+    takes the hF Fourier-decay hypothesis (consumer discharges via LF3 + autToPow). Axioms clean.
+  - ⚠ **B2 LOGGED (8d46789): the L2 statement (and leaf G, LF3) are FALSE at the degenerate
+    corner `K = ℚ (d=1), m ≡ 2 mod 4`** — infinite 2-power bad parts contribute Θ(log N) total
+    error vs the claimed O(N⁰); CRT-alignment counterexample in b2_log.jsonl. TRUE for d ≥ 2 and
+    for d=1 with m ≢ 2 mod 4 (bad set empty). **REPAIR (mechanical): thread `hm : m % 4 ≠ 2`
+    through L2 → leaf G → LF3 → LF4 → artinDirichletSeries_norm_le_of_ne_one → LF5 →
+    Cyclotomic consumers** (chebotarev_cyclotomic chain); the Abelian m-choosers pick
+    `m ≡ 1 mod lcm(4, n^k)` prime via Dirichlet-in-AP (mathlib PrimesInAP), so every use
+    survives; the corner is mathematically redundant (`ℚ(μ_m) = ℚ(μ_{m/2})`).
+  - THEN the assembly (ZetaProduct:846, with hm): (1) import ICC + CyclotomicNormResidue into
+    ZetaProduct; (2) bad-prime split: bad primes = {𝔭 unram, N𝔭 not coprime m} FINITE (divisors
+    of m); bad-supported parts 𝔟 = products of bad primes — the 𝔟-tail Σ N𝔟^{-(1-1/d)}
+    converges for d ≥ 2; for d = 1 with hm the bad set is EMPTY (K=ℚ: a p ∣ m unramified in
+    ℚ(μ_m) forces p = 2 ∧ 2∥m, excluded) — case split d=1/d≥2 or handle uniformly via the
+    convergent-tail argument with the d=1-empty observation; (3) per fixed 𝔟: good-part fibre =
+    norm-residue class via autToPow_frobeniusClass_out + frobeniusIdeal_mul (Frobenius shifts);
+    (4) per-residue counts from ICC `_uniform` with S := the image of the cyclotomic character
+    (range of autToPow ∘ Frob — equals the full character image by
+    subgroup_eq_top_of_forall_frobenius_mem), hF discharged via LF3
+    character_sum_geometry_of_numbers_bound pulled back along autToPow (the twisted coset sums
+    = galoisCharacterOnIdeal partial sums up to the FINITE bad-prime corrections — same split);
+    (5) κ independent of g since the residue-fibre is a single class χ_cyc(g) and `_uniform`
+    gives one κ across the image subgroup; sum the 𝔟-tail.
 
 ### [AB1] exists_cyclotomicCrossing_fibres — Status: open (⚠ statement review FIRST)
 - File: Abelian.lean:148 (sorry at 157) · Depends on: chebotarev_cyclotomic (proven mod gaps) ·
