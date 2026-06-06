@@ -11,6 +11,7 @@ public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.NumberTheory.Cyclotomic.Gal
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
+public import Mathlib.RingTheory.RootsOfUnity.CyclotomicUnits
 public import Mathlib.Analysis.SpecialFunctions.Log.Summable
 
 /-!
@@ -1906,22 +1907,179 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
   rw [hgoal]
   exact add_le_add hA hB
 
+/-! ### Sub-lemmas for `coprime_absNorm_of_unramified_of_finrank_eq_one` (the `d = 1` branch)
+
+The `d = 1` ramification fact is discharged **K-internally** (no `K ≃ ℚ` transport) via the
+different ideal: a rational prime `p ∣ m` (with `m % 4 ≠ 2`) extracted from a non-coprime norm
+gives a primitive `p^v`-th root `ζ'` in `𝓞 L`; the Eisenstein identity
+`(p) = (ζ' − 1)^{φ(p^v)}` (with `φ(p^v) ≥ 2`) forces `𝔓² ∣ (𝔭)·𝓞 L` for any `𝔓` over `𝔭`,
+hence `𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L)`
+(`pow_sub_one_dvd_differentIdeal`), contradicting unramifiedness. -/
+
+open Polynomial Finset in
+/-- **Cyclotomic Eisenstein identity (element level, base-free).** For a primitive `p^(k+1)`-th root
+of unity `ζ'` in a domain `A`, the prime `p` is associated to `(ζ' − 1)^{φ(p^{k+1})}` where
+`φ(p^{k+1}) = p^k (p − 1)`: evaluating `cyclotomic (p^(k+1)) = ∏_{μ primitive} (X − μ)` at `1` gives
+`p = ∏ (1 − μ)`, and each factor `1 − μ` is associated to `ζ' − 1`
+(`IsPrimitiveRoot.associated_sub_one_pow_sub_one_of_coprime`). -/
+private theorem associated_natCast_sub_one_pow {A : Type*} [CommRing A] [IsDomain A] {p k : ℕ}
+    [hp : Fact p.Prime] {ζ' : A} (hζ' : IsPrimitiveRoot ζ' (p ^ (k + 1))) :
+    Associated (p : A) ((ζ' - 1) ^ (p ^ k * (p - 1))) := by
+  have hcard : (primitiveRoots (p ^ (k + 1)) A).card = p ^ k * (p - 1) := by
+    rw [hζ'.card_primitiveRoots, Nat.totient_prime_pow_succ hp.out]
+  have heval : (p : A) = ∏ μ ∈ primitiveRoots (p ^ (k + 1)) A, (1 - μ) := by
+    have h1 := eval_one_cyclotomic_prime_pow (R := A) k (p := p)
+    rw [cyclotomic_eq_prod_X_sub_primitiveRoots hζ'] at h1
+    simp only [eval_prod, eval_sub, eval_X, eval_C] at h1
+    rw [← h1]
+  rw [heval]
+  have hpos : 0 < p ^ (k + 1) := pow_pos hp.out.pos _
+  have hassoc : ∀ μ ∈ primitiveRoots (p ^ (k + 1)) A, Associated (1 - μ) (ζ' - 1) := by
+    intro μ hμ
+    have hμp : IsPrimitiveRoot μ (p ^ (k + 1)) := isPrimitiveRoot_of_mem_primitiveRoots hμ
+    obtain ⟨j, _, rfl⟩ := hζ'.eq_pow_of_pow_eq_one hμp.pow_eq_one
+    have hjc : j.Coprime (p ^ (k + 1)) := (hζ'.pow_iff_coprime hpos j).mp hμp
+    have ha := hζ'.associated_sub_one_pow_sub_one_of_coprime hjc
+    rw [show (1 : A) - ζ' ^ j = -(ζ' ^ j - 1) by ring]
+    exact ha.neg_right.symm
+  calc Associated (∏ μ ∈ primitiveRoots (p ^ (k + 1)) A, (1 - μ))
+        (∏ _μ ∈ primitiveRoots (p ^ (k + 1)) A, (ζ' - 1)) := Associated.prod _ _ _ hassoc
+    _ = (ζ' - 1) ^ (p ^ k * (p - 1)) := by rw [Finset.prod_const, hcard]
+
+/-- **Totient lower bound** `2 ≤ p^k (p − 1)` away from the degenerate case `(p, k) = (2, 0)`. -/
+private theorem two_le_pow_mul_pred {p k : ℕ} (hp : p.Prime) (hbad : ¬ (p = 2 ∧ k = 0)) :
+    2 ≤ p ^ k * (p - 1) := by
+  rcases eq_or_ne p 2 with rfl | hp2
+  · have hk : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr (fun h => hbad ⟨rfl, h⟩)
+    calc 2 = 2 ^ 1 * (2 - 1) := by norm_num
+      _ ≤ 2 ^ k * (2 - 1) := Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) hk)
+  · have hp3 : 3 ≤ p := hp.two_le.lt_of_ne (Ne.symm hp2)
+    calc 2 ≤ 1 * (p - 1) := by omega
+      _ ≤ p ^ k * (p - 1) := Nat.mul_le_mul_right _ (Nat.one_le_pow _ _ hp.pos)
+
+/-- The degenerate cyclotomic case `2 ∥ m` (i.e. `m.factorization 2 = 1`) is exactly `m ≡ 2 mod 4`,
+ruled out by `hm`. -/
+private theorem factorization_two_ne_one_of_mod_four {m : ℕ} (hm0 : m ≠ 0) (hm : m % 4 ≠ 2) :
+    m.factorization 2 ≠ 1 := by
+  intro hf
+  apply hm
+  have h2dvd : 2 ∣ m := by
+    have h : (2 : ℕ) ^ 1 ∣ m :=
+      (Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mpr (by omega)
+    simpa using h
+  have h4ndvd : ¬ (4 ∣ m) := by
+    intro h4
+    rw [show (4 : ℕ) = 2 ^ 2 by norm_num] at h4
+    have := (Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mp h4
+    omega
+  omega
+
+/-- **At `[K : ℚ] = 1`, a rational prime in a prime `𝔭` spans `𝔭`.** Since `N((p)) = p^{[K:ℚ]} = p`
+and `𝔭 ∣ (p)` with `N𝔭 > 1`, the cofactor has norm `1`, so `(p) = 𝔭`. -/
+private theorem span_singleton_natCast_eq_of_finrank_eq_one
+    (hd1 : Module.finrank ℚ K = 1) (p : ℕ) (hp : p.Prime) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
+    (hmem : (p : 𝓞 K) ∈ 𝔭) : Ideal.span {(p : 𝓞 K)} = 𝔭 := by
+  have hrank : Module.finrank ℤ (𝓞 K) = 1 := by rw [NumberField.RingOfIntegers.rank, hd1]
+  have hNspan : Ideal.absNorm (Ideal.span {(p : 𝓞 K)}) = p := by
+    rw [Ideal.absNorm_span_singleton,
+      show ((p : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (p : ℤ) by push_cast; rfl,
+      Algebra.norm_algebraMap, hrank, Int.natAbs_pow, Int.natAbs_natCast, pow_one]
+  have hle : Ideal.span {(p : 𝓞 K)} ≤ 𝔭 := (Ideal.span_singleton_le_iff_mem _).mpr hmem
+  obtain ⟨C, hC⟩ := Ideal.dvd_iff_le.mpr hle
+  have hNmul : Ideal.absNorm 𝔭 * Ideal.absNorm C = p := by rw [← map_mul, ← hC, hNspan]
+  have hN𝔭1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => ‹𝔭.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  have hN𝔭eq : Ideal.absNorm 𝔭 = p :=
+    (Nat.Prime.eq_one_or_self_of_dvd hp _ ⟨_, hNmul.symm⟩).resolve_left hN𝔭1
+  have hNC1 : Ideal.absNorm C = 1 := by
+    rw [hN𝔭eq] at hNmul
+    exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [mul_one]; exact hNmul)
+  rw [hC, Ideal.absNorm_eq_one_iff.mp hNC1, Ideal.mul_top]
+
+omit [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] in
 /-- **Bad primes are empty when `[K : ℚ] = 1`** (i.e. `K = ℚ`, the `d = 1` case). If `K` has degree
 `1` over `ℚ`, then no nonzero prime `𝔭` of `𝓞 K` that is unramified in `L = K(μ_m)` can have norm
 sharing a factor with `m`: a prime `𝔭` with `¬(N𝔭).Coprime m` lies over a rational prime `p ∣ m`,
-and `p ∣ m` (with `m % 4 ≠ 2`) **ramifies** in the cyclotomic field `ℚ(μ_m) = L` (mathlib's
-`IsCyclotomicExtension.Rat.ramificationIdx_eq`, transported along the degree-`1` algebra equivalence
-`K ≃ₐ[ℚ] ℚ`), contradicting unramifiedness.
+and `p ∣ m` (with `m % 4 ≠ 2`) **ramifies** in the cyclotomic field `L = K(μ_m)`, contradicting
+unramifiedness.
 
-**SANCTIONED RESIDUAL `sorry` (the single permitted gap of the L2 assembly).** Per the orchestrator,
-the `d = 1` cyclotomic-ramification fact — the only piece resisting a short proof — may be left as
-one documented `true` sorried lemma; every other component of the L2 fibre bound is `sorry`-free.
-The statement is a standard ramification fact (`p ∣ m ⇒ p` ramifies in `ℚ(μ_m)`), available in
-mathlib over the `ℚ`-base and requiring only the (fiddly) finrank-`1` transport `K ≃ₐ ℚ`. -/
+The ramification is proved **K-internally** (no `K ≃ ℚ` transport): extract the rational prime
+`p ∣ m` with `(p : 𝓞 K) ∈ 𝔭` (`exists_primeFactor_natCast_mem_of_not_coprime`); set
+`v = m.factorization p = k + 1 ≥ 1`, with `(p, v) ≠ (2, 1)` from `hm`
+(`factorization_two_ne_one_of_mod_four`). A primitive `p^v`-th root `ζ'` lives in `𝓞 L`, and the
+element-level Eisenstein identity `(p) = (ζ' − 1)^{φ(p^v)}` (`associated_natCast_sub_one_pow`) with
+`φ(p^v) = p^k (p − 1) ≥ 2` (`two_le_pow_mul_pred`) gives `𝔓^{φ(p^v)} ∣ (𝔭)·𝓞 L`
+(using `(p) = 𝔭` at `d = 1`, `span_singleton_natCast_eq_of_finrank_eq_one`), so `𝔓² ∣ (𝔭)·𝓞 L` and
+`𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L)` (`pow_sub_one_dvd_differentIdeal`) — contradicting `UnramifiedIn`
+via `not_dvd_differentIdeal_iff`. -/
 private theorem coprime_absNorm_of_unramified_of_finrank_eq_one
     (hd1 : Module.finrank ℚ K = 1) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥)
     (hunr : UnramifiedIn K L 𝔭) (hm : m % 4 ≠ 2) : (Ideal.absNorm 𝔭).Coprime m := by
-  sorry
+  classical
+  by_contra hncop
+  -- extract the rational prime `p ∣ m` with `(p : 𝓞 K) ∈ 𝔭`.
+  obtain ⟨p, hpm, hpmem𝔭⟩ := exists_primeFactor_natCast_mem_of_not_coprime K m 𝔭 h𝔭 hncop
+  have hp : p.Prime := (Nat.mem_primeFactors.mp hpm).1
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hpdvd : p ∣ m := Nat.dvd_of_mem_primeFactors hpm
+  have hm0 : m ≠ 0 := (Nat.mem_primeFactors.mp hpm).2.2
+  -- `v = m.factorization p = k + 1 ≥ 1`, with `(p, k) ≠ (2, 0)`.
+  set v := m.factorization p with hv
+  have hv1 : 1 ≤ v := by rw [hv]; exact hp.factorization_pos_of_dvd hm0 hpdvd
+  obtain ⟨k, hk⟩ : ∃ k, v = k + 1 := ⟨v - 1, by omega⟩
+  have hbad : ¬ (p = 2 ∧ k = 0) := by
+    rintro ⟨rfl, rfl⟩
+    exact factorization_two_ne_one_of_mod_four hm0 hm (by rw [← hv, hk])
+  -- a primitive `p^(k+1)`-th root `ζ'` in `𝓞 L`.
+  have hpvdvd : p ^ v ∣ m := by rw [hv]; exact Nat.ordProj_dvd m p
+  obtain ⟨ζm, hζm⟩ :=
+    IsCyclotomicExtension.exists_isPrimitiveRoot K L (Set.mem_singleton m) (NeZero.ne m)
+  set q := m / p ^ v with hq
+  have hqdvd : q ∣ m := Nat.div_dvd_of_dvd hpvdvd
+  have hq0 : q ≠ 0 := Nat.div_ne_zero_iff.mpr
+    ⟨pow_ne_zero _ hp.ne_zero, Nat.le_of_dvd (Nat.pos_of_ne_zero hm0) hpvdvd⟩
+  set ζ' : 𝓞 L := hζm.toInteger ^ q with hζ'def
+  have hmq : m / q = p ^ (k + 1) := by rw [hq, Nat.div_div_self hpvdvd hm0, ← hk]
+  have hζ' : IsPrimitiveRoot ζ' (p ^ (k + 1)) := by
+    have h := hζm.toInteger_isPrimitiveRoot.pow_of_dvd hq0 hqdvd
+    rwa [hmq] at h
+  -- the Eisenstein identity and the totient bound.
+  have hassoc : Associated (p : 𝓞 L) ((ζ' - 1) ^ (p ^ k * (p - 1))) :=
+    associated_natCast_sub_one_pow hζ'
+  have hφ2 : 2 ≤ p ^ k * (p - 1) := two_le_pow_mul_pred hp hbad
+  -- `(p) = 𝔭` at `d = 1`.
+  have hspan𝔭 : Ideal.span {(p : 𝓞 K)} = 𝔭 :=
+    span_singleton_natCast_eq_of_finrank_eq_one K hd1 p hp 𝔭 hpmem𝔭
+  -- a maximal prime `𝔓` over `𝔭`, and `¬ 𝔓 ∣ differentIdeal` from `hunr`.
+  haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal h𝔭
+  obtain ⟨𝔓, h𝔓max, h𝔓lo⟩ :=
+    Ideal.exists_maximal_ideal_liesOver_of_isIntegral (R := 𝓞 K) (S := 𝓞 L) 𝔭
+  haveI : 𝔓.IsPrime := h𝔓max.isPrime
+  haveI := h𝔓lo
+  have hnotdvd : ¬ 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
+    rw [not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
+    exact hunr.2 𝔓 h𝔓max h𝔓lo
+  apply hnotdvd
+  -- `𝔓² ∣ (𝔭)·𝓞 L`, hence `𝔓 = 𝔓^{2-1} ∣ differentIdeal`.
+  have hdvd2 : 𝔓 ^ 2 ∣ 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) := by
+    have hmapeq : 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) = Ideal.span {(p : 𝓞 L)} := by
+      rw [← hspan𝔭, Ideal.map_span, Set.image_singleton, map_natCast]
+    have hspanL : Ideal.span {(p : 𝓞 L)} = (Ideal.span {ζ' - 1}) ^ (p ^ k * (p - 1)) := by
+      rw [Ideal.span_singleton_pow]
+      exact Ideal.span_singleton_eq_span_singleton.mpr hassoc
+    have hpmem𝔓 : (p : 𝓞 L) ∈ 𝔓 := by
+      have h1 : algebraMap (𝓞 K) (𝓞 L) (p : 𝓞 K) ∈ 𝔓 := by
+        rw [h𝔓lo.over] at hpmem𝔭; exact hpmem𝔭
+      rwa [map_natCast] at h1
+    have hsub𝔓 : ζ' - 1 ∈ 𝔓 := by
+      have hpow : (ζ' - 1) ^ (p ^ k * (p - 1)) ∈ 𝔓 := by
+        obtain ⟨u, hu⟩ := hassoc
+        rw [← hu]; exact Ideal.mul_mem_right _ _ hpmem𝔓
+      exact ‹𝔓.IsPrime›.mem_of_pow_mem _ hpow
+    have hdvd1 : 𝔓 ∣ Ideal.span {ζ' - 1} :=
+      Ideal.dvd_iff_le.mpr ((Ideal.span_singleton_le_iff_mem _).mpr hsub𝔓)
+    rw [hmapeq, hspanL]
+    exact dvd_trans (pow_dvd_pow 𝔓 hφ2) (pow_dvd_pow_of_dvd hdvd1 _)
+  simpa using pow_sub_one_dvd_differentIdeal (𝓞 K) 𝔓 2 h𝔭 hdvd2
 
 open UniqueFactorizationMonoid nonZeroDivisors in
 /-- **The L2 fibre bound, `d = 1` branch.** When `[K : ℚ] = 1` the bad-prime set is empty, so the
