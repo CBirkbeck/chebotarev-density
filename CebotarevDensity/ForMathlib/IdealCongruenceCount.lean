@@ -3,6 +3,9 @@ module
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import Mathlib.GroupTheory.FiniteAbelian.Duality
+public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
+public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 /-!
 # Effective counting of ideals by class and norm residue
@@ -1946,6 +1949,29 @@ private theorem exists_tendsto_cardNormLeResidue_div (K : Type*) [Field K] [Numb
   exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos
     (fun N hN => hκ N hN)⟩
 
+/-- **Character-column orthogonality** for a finite commutative group `G`: for `g ≠ 1`, the sum
+of `χ g` over all characters `χ : G →* ℂˣ` vanishes. A separating character `χ₀` with
+`χ₀ g ≠ 1` exists (`CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity`, with
+`HasEnoughRootsOfUnity ℂ` from algebraic closedness), and reindexing the sum by translation
+with `χ₀` scales it by `χ₀ g`, forcing it to vanish. -/
+private theorem sum_char_apply_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finite G]
+    [Fintype (G →* ℂˣ)] {g : G} (hg : g ≠ 1) : ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
+  classical
+  haveI : NeZero ((Monoid.exponent G : ℕ) : ℂ) := ⟨Nat.cast_ne_zero.mpr (NeZero.ne _)⟩
+  obtain ⟨χ₀, hχ₀⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
+  have hshift : ((χ₀ g : ℂˣ) : ℂ) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) =
+      ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) := by
+    rw [Finset.mul_sum]
+    refine Fintype.sum_bijective (χ₀ * ·) (Group.mulLeft_bijective χ₀)
+      (fun χ => ((χ₀ g : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun χ => ((χ g : ℂˣ) : ℂ)) fun χ => ?_
+    rw [MonoidHom.mul_apply, Units.val_mul]
+  have h0 : (((χ₀ g : ℂˣ) : ℂ) - 1) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
+    rw [sub_mul, one_mul, hshift, sub_self]
+  rcases mul_eq_zero.mp h0 with h | h
+  · exact absurd (Units.ext (by simpa using sub_eq_zero.mp h)) hχ₀
+  · exact h
+
+open scoped Classical in
 /-- **κ-uniformity over the realized-residue subgroup (the geometric core).** The Dirichlet
 density of ideals with a fixed norm residue is **constant on the subgroup `S` of realized
 residues**: if `a, a' ∈ S` and the counts `cardNormLeResidue K c a` and `cardNormLeResidue K c a'`
@@ -1978,38 +2004,115 @@ ideal classes. Two ingredients close it:
   signed-norm residue by `Norm y`, giving a bijection between the qualifying-cell sets for
   residues `a` and `a·(Norm y)`. The obstruction is that this needs **element** realizers `y`
   coprime to `c·N(J)`, whereas the available hypothesis `hS` supplies **ideal** realizers `𝔟`
-  with no control of coprimality to the (class-dependent) factor `N(J)`. Discharging this gap
-  cleanly likely requires strengthening `hS` to an element form (`∃ y, IsUnit (y : ZMod c) ∧
-  (Algebra.norm ℤ y : ZMod c) = a`) and threading the realizer through the per-class
-  principalization — left for a dedicated geometric development. -/
+  with no control of coprimality to the (class-dependent) factor `N(J)`.
+
+**The proof here is instead the Fourier route**: the hypothesis `hF` — for every nontrivial
+character `χ` of `S`, the `χ`-twisted count average `(∑_{s ∈ S} χ(s)·count_s(N))/N → 0` — says
+all nontrivial Fourier coefficients of the density function `s ↦ κ_s` on `S` vanish, so by
+finite-abelian Fourier inversion (`sum_char_apply_eq_zero_of_ne_one` orthogonality) that
+function is constant on `S`. `hF` is discharged by the Gap-B consumer (`ZetaProduct.lean`) via
+the proven LF3 character-sum bound `character_sum_geometry_of_numbers_bound` through
+`autToPow_frobeniusClass_out`: each character of the realized subgroup pulls back to a Galois
+character of `Gal(K(μ_m)/K)`, and the twisted counts are the `galoisCharacterOnIdeal` partial
+sums up to the bad-prime corrections. -/
 private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field K] [NumberField K]
     {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
-    (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
-      ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c))
+    (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
+      Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+          (cardNormLeResidue K c ((s : (ZMod c)ˣ) : ZMod c) N : ℂ)) / (N : ℂ))
+        Filter.atTop (nhds 0))
     {a a' : (ZMod c)ˣ} (ha : a ∈ S) (ha' : a' ∈ S) {κ κ' : ℝ}
     (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
     (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
-  sorry
+  haveI : NeZero ((Monoid.exponent S : ℕ) : ℂ) := ⟨Nat.cast_ne_zero.mpr (NeZero.ne _)⟩
+  haveI : Fintype (S →* ℂˣ) := Fintype.ofFinite _
+  choose κf hκf using fun s : S =>
+    exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
+  have hκa : κ = κf ⟨a, ha⟩ := tendsto_nhds_unique hκ (hκf ⟨a, ha⟩)
+  have hκa' : κ' = κf ⟨a', ha'⟩ := tendsto_nhds_unique hκ' (hκf ⟨a', ha'⟩)
+  -- All nontrivial `S`-Fourier coefficients of `s ↦ κf s` vanish.
+  have hhat : ∀ χ : S →* ℂˣ, χ ≠ 1 →
+      ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) = 0 := by
+    intro χ hχ
+    refine tendsto_nhds_unique ?_ (hF χ hχ)
+    have hsum := tendsto_finset_sum Finset.univ fun s (_ : s ∈ Finset.univ) =>
+      ((Complex.continuous_ofReal.tendsto (κf s)).comp (hκf s)).const_mul ((χ s : ℂˣ) : ℂ)
+    refine hsum.congr fun N => ?_
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun s _ => ?_
+    simp only [Function.comp_apply]
+    push_cast
+    ring
+  -- Fourier inversion: `card · κf u = ∑ κf` for every `u`, hence `κf` is constant.
+  have hinv : ∀ u : S, (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ) = ∑ s : S, (κf s : ℂ) := by
+    intro u
+    have horth : ∀ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ))
+        = if s = u then (Fintype.card (S →* ℂˣ) : ℂ) else 0 := by
+      intro s
+      by_cases hs : s = u
+      · subst hs
+        simp
+      · rw [if_neg hs]
+        exact sum_char_apply_eq_zero_of_ne_one fun h => hs (inv_mul_eq_one.mp h).symm
+    calc (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ)
+        = ∑ s : S, (if s = u then (Fintype.card (S →* ℂˣ) : ℂ) else 0) * (κf s : ℂ) := by
+          simp [ite_mul]
+      _ = ∑ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ)) * (κf s : ℂ) := by
+          refine Finset.sum_congr rfl fun s _ => ?_
+          rw [horth s]
+      _ = ∑ s : S, ∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := by
+          refine Finset.sum_congr rfl fun s _ => ?_
+          rw [Finset.sum_mul]
+      _ = ∑ χ : S →* ℂˣ, ∑ s : S, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := Finset.sum_comm
+      _ = ∑ χ : S →* ℂˣ, ((χ u⁻¹ : ℂˣ) : ℂ) * ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) := by
+          refine Finset.sum_congr rfl fun χ _ => ?_
+          rw [Finset.mul_sum]
+          refine Finset.sum_congr rfl fun s _ => ?_
+          rw [map_mul, Units.val_mul, mul_assoc]
+      _ = ∑ s : S, (κf s : ℂ) := by
+          rw [Finset.sum_eq_single (1 : S →* ℂˣ)]
+          · simp
+          · intro χ _ hχ
+            rw [hhat χ hχ, mul_zero]
+          · intro h
+            exact absurd (Finset.mem_univ _) h
+  have hcard0 : ((Fintype.card (S →* ℂˣ) : ℂ)) ≠ 0 := by
+    exact_mod_cast Fintype.card_ne_zero
+  have hfc : (κf ⟨a, ha⟩ : ℂ) = (κf ⟨a', ha'⟩ : ℂ) :=
+    mul_left_cancel₀ hcard0 ((hinv ⟨a, ha⟩).trans (hinv ⟨a', ha'⟩).symm)
+  rw [hκa, hκa']
+  exact_mod_cast hfc
 
-/-- **Norm-residue density transfer (κ-uniformity over realized residues).** If every residue
-in a subgroup `S ≤ (ℤ/c)ˣ` is realized as the norm residue of some nonzero ideal, then the
-leading densities of `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` can be taken
-**equal across `S`**: there is **one** pair `(κ, C')` for which the effective estimate
+open scoped Classical in
+/-- **Norm-residue density transfer (κ-uniformity over realized residues).** Under the
+Fourier-decay hypothesis `hF` — for every nontrivial character `χ` of `S ≤ (ℤ/c)ˣ`, the
+`χ`-twisted count average over `S` tends to `0` — the leading densities of
+`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` can be taken **equal across `S`**: there
+is **one** pair `(κ, C')` for which the effective estimate
 `|#{N(I) ≤ N, N(I) ≡ a} − κ·N| ≤ C'·N^{1-1/d}` holds for every `a ∈ S` simultaneously. This is
 the `g`-independence input of the Frobenius-fibre equidistribution (the `ℚ(i)`-trap avoidance:
 uniformity over the **image subgroup** of ideal norms, never over all of `(ℤ/c)ˣ`).
 
+`hF` is discharged by the consumer (Gap B in `ZetaProduct.lean`) via the proven
+`character_sum_geometry_of_numbers_bound` (LF3) through `autToPow_frobeniusClass_out`: each
+`S`-character pulls back to a Galois character, and the twisted counts are the
+`galoisCharacterOnIdeal` partial sums up to bad-prime corrections.
+
 Proof: the per-residue leading constants are the limits of `count / N`
-(`tendsto_div_atTop_of_sub_mul_rpow_le`), so they are constant on `S`
-(`cardNormLeResidue_density_eq_of_mem_subgroup`); take that common value as `κ` and the sum of the
-per-residue error constants over the finite `ZMod c` as `C'`. -/
+(`tendsto_div_atTop_of_sub_mul_rpow_le`), so they are constant on `S` by Fourier inversion
+(`cardNormLeResidue_density_eq_of_mem_subgroup`); take that common value as `κ` and the sum of
+the per-residue error constants over the finite `ZMod c` as `C'`. -/
 theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
     (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (S : Subgroup (ZMod c)ˣ)
-    (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
-      ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c)) :
+    (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
+      Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+          (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+            ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((s : (ZMod c)ˣ) : ZMod c)} : ℂ))
+          / (N : ℂ))
+        Filter.atTop (nhds 0)) :
     ∃ κ C' : ℝ, ∀ a ∈ S, ∀ N : ℕ, 1 ≤ N →
       |(Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
             ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c)} : ℝ)
@@ -2026,9 +2129,8 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
   refine ⟨κlim ((1 : (ZMod c)ˣ) : ZMod c), ∑ b : ZMod c, |C'f b|, fun a ha N hN => ?_⟩
   -- Constancy of the density over `S`: `κlim a = κlim 1`.
   have hconst : κlim ((a : (ZMod c)ˣ) : ZMod c) = κlim ((1 : (ZMod c)ˣ) : ZMod c) :=
-    cardNormLeResidue_density_eq_of_mem_subgroup hS ha (one_mem S)
-      (by simpa [cardNormLeResidue] using hκlim ((a : (ZMod c)ˣ) : ZMod c))
-      (by simpa [cardNormLeResidue] using hκlim ((1 : (ZMod c)ˣ) : ZMod c))
+    cardNormLeResidue_density_eq_of_mem_subgroup hF ha (one_mem S)
+      (hκlim ((a : (ZMod c)ˣ) : ZMod c)) (hκlim ((1 : (ZMod c)ˣ) : ZMod c))
   rw [← hconst, ← hκfeq ((a : (ZMod c)ˣ) : ZMod c)]
   -- Reduce to the per-residue effective bound and dominate the error constant.
   refine (hκf ((a : (ZMod c)ˣ) : ZMod c) N hN).trans
