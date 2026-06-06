@@ -2163,6 +2163,232 @@ private theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finit
   · exact absurd (Units.ext (sub_eq_zero.mp h)) hg₀
   · exact h
 
+/-! ### Per-class densities and the realizer transfer (Lang VI §3 Thm 3)
+
+The honest proof of κ-constancy over the realized subgroup `S` (Lang, *Algebraic Number Theory*
+GTM 110, Ch. VI §3, Thm 3) is *not* the lossy multiply-by-`𝔟`-and-sandwich argument (which only
+gives `κ_a ≤ N(𝔟)·κ_{a·t}`). It goes through the **per-class** densities. We isolate the single
+irreducible geometric fact — the per-class realizer transfer — and assemble the global statement
+around it cleanly:
+
+* `cardNormLeResidueClass` / `exists_tendsto_cardNormLeResidueClass_div` — the per-class count and
+  its density `κ_{C,y} = lim #{N(I) ≤ N, N(I) ≡ y, [I] = C}/N`.
+* `tendsto_cardNormLeResidue_div_eq_sum_class` — the density splits over the class group,
+  `κ_y = ∑_C κ_{C,y}` (from `card_norm_le_residue_eq_sum_class`).
+* `cardNormLeResidueClass_density_transfer` — **the geometric heart**: for a realizer `𝔟` of a
+  unit `u = N(𝔟) mod c`, the per-class density transfers as `κ_{C,x} = κ_{C·[𝔟], x·u}`. Proof:
+  the norm-multiplying bijection `I ↦ 𝔟·I` gives the exact identity
+  `#{[I]=C, N(I)≡x, N(I)≤M} = #{[J]=C·[𝔟], N(J)≡x·u, 𝔟∣J, N(J)≤M·N(𝔟)}` (Route A); the
+  `𝔟`-divisible class-`C·[𝔟]` density is `1/N(𝔟)` of the full class-`C·[𝔟]` density at the same
+  residue (Route B, the Lang covolume/CRT equidistribution `cardNormLeResidueClass_div_density`),
+  so the `N(𝔟)`-factors cancel.
+* `cardNormLeResidue_density_const_of_realized` — the global statement: sum the transfer over the
+  class group and reindex by `Equiv.mulRight [𝔟]`.
+-/
+
+open Ideal in
+/-- **Per-class norm-residue count.** The number of nonzero integral ideals of `𝓞 K` of norm `≤ N`,
+norm residue `y (mod c)`, and ideal class `C`. -/
+private def cardNormLeResidueClass {K : Type*} [Field K] [NumberField K] (c : ℕ) (y : ZMod c)
+    (C : ClassGroup (𝓞 K)) (N : ℕ) : ℕ :=
+  Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+    ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = y) ∧ ClassGroup.mk0 I = C}
+
+/-- The per-class density `κ_{C,y} = lim #{N(I) ≤ N, N(I) ≡ y, [I] = C}/N` exists, as the leading
+constant of the per-class effective estimate `exists_card_norm_le_residue_class_eq_sub_mul_rpow_le`
+(via `tendsto_div_atTop_of_sub_mul_rpow_le`). -/
+private theorem exists_tendsto_cardNormLeResidueClass_div {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (y : ZMod c) (C : ClassGroup (𝓞 K)) :
+    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ) := by
+  obtain ⟨κ, C', hκ⟩ := exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c y C
+  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hκ N hN)⟩
+
+open Ideal in
+/-- **The norm-residue density splits over the class group.** `κ_y = ∑_C κ_{C,y}`: the count
+`cardNormLeResidue` is the finite sum of the per-class counts (`card_norm_le_residue_eq_sum_class`),
+so its density (where it exists) is the sum of the per-class densities. -/
+private theorem tendsto_cardNormLeResidue_div_eq_sum_class {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (y : ZMod c) {κ : ℝ}
+    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c y N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ))
+    (κf : ClassGroup (𝓞 K) → ℝ)
+    (hκf : ∀ C, Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κf C))) :
+    κ = ∑ C : ClassGroup (𝓞 K), κf C := by
+  refine tendsto_nhds_unique hκ ?_
+  have hsum := tendsto_finsetSum Finset.univ fun C (_ : C ∈ Finset.univ) => hκf C
+  refine hsum.congr fun N => ?_
+  rw [cardNormLeResidue, card_norm_le_residue_eq_sum_class c y N, Nat.cast_sum, Finset.sum_div]
+  rfl
+
+open Ideal in
+/-- **`𝔟`-divisible per-class norm-residue count.** The number of nonzero integral ideals of
+`𝓞 K` divisible by `𝔟`, of norm `≤ N`, norm residue `y (mod c)`, and ideal class `D`. -/
+private def cardNormLeResidueClassDvd {K : Type*} [Field K] [NumberField K] (c : ℕ)
+    (𝔟 : (Ideal (𝓞 K))⁰) (y : ZMod c) (D : ClassGroup (𝓞 K)) (N : ℕ) : ℕ :=
+  Nat.card {J : (Ideal (𝓞 K))⁰ // (𝔟 : Ideal (𝓞 K)) ∣ (J : Ideal (𝓞 K)) ∧
+    ((Ideal.absNorm (J : Ideal (𝓞 K)) ≤ N ∧
+      ((Ideal.absNorm (J : Ideal (𝓞 K)) : ZMod c)) = y) ∧ ClassGroup.mk0 J = D)}
+
+open Ideal in
+/-- **Route A (the norm-multiplying bijection, exact).** Multiplication by `𝔟` is a bijection from
+class-`C` ideals of norm `≤ N` and residue `x` onto the `𝔟`-divisible class-`C·[𝔟]` ideals of norm
+`≤ N·N(𝔟)` and residue `x·N(𝔟)`. (`N(𝔟) (mod c)` is a unit so the residue condition transports both
+ways; the norm scales by `N(𝔟)`, the class by `[𝔟]`, and `𝔟 ∣ 𝔟·I` is automatic.) -/
+private theorem cardNormLeResidueClass_eq_dvd {K : Type*} [Field K] [NumberField K] (c : ℕ)
+    [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (x : ZMod c) (C : ClassGroup (𝓞 K)) (N : ℕ) :
+    cardNormLeResidueClass c x C N =
+      cardNormLeResidueClassDvd c 𝔟 (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c))
+        (C * ClassGroup.mk0 𝔟) (N * Ideal.absNorm (𝔟 : Ideal (𝓞 K))) := by
+  classical
+  have hNb : 0 < Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := absNorm_pos_of_nonZeroDivisors 𝔟
+  rw [cardNormLeResidueClass, cardNormLeResidueClassDvd]
+  simp_rw [← nonZeroDivisors_dvd_iff_dvd_coe]
+  refine Nat.card_congr
+    (((Equiv.dvd 𝔟).subtypeEquiv (fun I => ?_)).trans
+      (Equiv.subtypeSubtypeEquivSubtypeInter (fun J : (Ideal (𝓞 K))⁰ ↦ 𝔟 ∣ J) _))
+  -- predicate correspondence under `I ↦ 𝔟 · I`
+  have hnorm : absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
+      = absNorm (𝔟 : Ideal (𝓞 K)) * absNorm (I : Ideal (𝓞 K)) := by
+    simp_rw [Equiv.dvd_apply, Submonoid.coe_mul, _root_.map_mul]
+  have hcls : ClassGroup.mk0 ((Equiv.dvd 𝔟) I) = ClassGroup.mk0 I * ClassGroup.mk0 𝔟 := by
+    rw [Equiv.dvd_apply, map_mul, mul_comm]
+  -- norm `≤`
+  have hle : (absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ≤
+      N * absNorm (𝔟 : Ideal (𝓞 K))) ↔ (absNorm (I : Ideal (𝓞 K)) ≤ N) := by
+    rw [hnorm, mul_comm (absNorm (𝔟 : Ideal (𝓞 K))) (absNorm (I : Ideal (𝓞 K))),
+      Nat.mul_le_mul_right_iff hNb]
+  -- residue
+  have hres : (((absNorm (I : Ideal (𝓞 K)) : ZMod c)) = x) ↔
+      (((absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) : ZMod c)) =
+        x * (absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) := by
+    rw [hnorm, Nat.cast_mul, mul_comm ((absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c))
+      ((absNorm (I : Ideal (𝓞 K)) : ZMod c)), hu.mul_left_inj]
+  -- class
+  have hcl : (ClassGroup.mk0 I = C) ↔
+      (ClassGroup.mk0 ((Equiv.dvd 𝔟) I) = C * ClassGroup.mk0 𝔟) := by
+    rw [hcls, mul_left_inj]
+  rw [← hle, ← hres, ← hcl]
+
+open Ideal in
+/-- **Route B (the Lang covolume / CRT equidistribution).** For a realizer `𝔟` with `N(𝔟) (mod c)`
+a unit, the `𝔟`-divisible class-`D` norm-residue density is `1/N(𝔟)` of the full class-`D` density
+at the same residue: `κ^{÷𝔟}_{D,y}·N(𝔟) = κ_{D,y}`.
+
+Geometric content (the single irreducible fact of `IdealCongruenceCount`, Lang, *Algebraic Number
+Theory* GTM 110, Ch. VI §3, Thm 3; Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1). Principalize the
+class-`D` ideals at a representative `J` of `D⁻¹` **chosen coprime to `𝔟`** (every ideal class
+contains a representative coprime to a given ideal, by prime avoidance / CRT in the Dedekind domain
+`𝓞 K`). The full count becomes principal ideals `(g)` with `J ∣ (g)`, norm `≤ X·N(J)`, norm
+`≡ y·N(J) (mod c·N(J))`; the `𝔟`-divisible count adds `𝔟 ∣ (g)·J⁻¹ ⟺ g ∈ 𝔟J` (since `J` is
+coprime to `𝔟`), i.e. the generator lies in the index-`N(𝔟)` sublattice `𝔟J ⊆ J` of the ideal
+lattice. By `gcd(N(𝔟), c·N(J)) = 1` (`N(𝔟)` is a unit mod `c`, and `N(J)` coprime to `N(𝔟)` from
+the coprime rep), the norm-residue selector mod `c·N(J)` and the `𝔟J`-coset mod `N(𝔟)` are
+CRT-independent, so the selector is equidistributed across the `N(𝔟)` cosets of `𝔟J` in `J`. Hence
+the `𝔟`-divisible cone-point count is `1/N(𝔟)` of the full one (the per-`(orthant, coset)` cell
+densities of `exists_card_idealSet_residue_le` are translate-uniform — `vol(D₀ ∩ orthant)/|det T'|`,
+independent of the coset — so the equidistributed selector gives exactly the covolume ratio
+`covol(J)/covol(𝔟J) = 1/N(𝔟)`).
+
+This is the **one** fact the elementary κ-transfer cannot reach (there is no norm-preserving
+residue-shifting ideal map; multiplication by `𝔟` only gives the lossy `κ_a ≤ N(𝔟)·κ_{a·t}`). All
+of `IdealCongruenceCount`'s remaining structure — Route A (`cardNormLeResidueClass_eq_dvd`), the
+limit glue, the class-group reindexing — is proven around it. -/
+private theorem cardNormLeResidueClass_div_density {K : Type*} [Field K] [NumberField K] (c : ℕ)
+    [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (y : ZMod c) (D : ClassGroup (𝓞 K)) {κfull : ℝ}
+    (hκfull : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κfull)) :
+    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κfull / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) := by
+  sorry
+
+open Ideal in
+/-- **Per-class realizer transfer (the geometric heart, Lang VI §3 Thm 3).** For a fixed nonzero
+ideal `𝔟` whose norm residue `N(𝔟) (mod c)` is a unit, the per-class norm-residue density
+transfers along multiplication by `[𝔟]`:
+`κ_{C,x} = κ_{C·[𝔟], x·N(𝔟)}` (both densities limits of `count/N`).
+
+Proof (the two routes whose `N(𝔟)`-factors cancel). **Route A** (`cardNormLeResidueClass_eq_dvd`,
+the norm-multiplying bijection, exact): `I ↦ 𝔟·I` is a bijection
+`{[I]=C, N(I)≡x, N(I)≤M} ≃ {[J]=C·[𝔟], 𝔟∣J, N(J)≡x·N(𝔟), N(J)≤M·N(𝔟)}`, so
+`κ_{C,x} = N(𝔟)·κ^{÷𝔟}_{C·[𝔟], x·N(𝔟)}` where `κ^{÷𝔟}` is the `𝔟`-divisible density. **Route B**
+(`cardNormLeResidueClass_div_density`): `κ^{÷𝔟}_{C·[𝔟], y}·N(𝔟) = κ_{C·[𝔟], y}`. Cancel `N(𝔟)`. -/
+private theorem cardNormLeResidueClass_density_transfer {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (x : ZMod c) (C : ClassGroup (𝓞 K)) {κ κ' : ℝ}
+    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c x C N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ))
+    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c
+        (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) (C * ClassGroup.mk0 𝔟) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ')) :
+    κ = κ' := by
+  classical
+  set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
+  have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
+  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
+  set y : ZMod c := x * (NB : ZMod c) with hy
+  set D : ClassGroup (𝓞 K) := C * ClassGroup.mk0 𝔟 with hD
+  -- Route B: the `𝔟`-divisible density is `κ'/NB`.
+  have hκd : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κ' / (NB : ℝ))) := cardNormLeResidueClass_div_density c 𝔟 hu y D hκ'
+  -- Route A as a limit: `cardNormLeResidueClass x C M / M = NB · (Dvd (M·NB) / (M·NB))`.
+  have hAlim : Filter.Tendsto
+      (fun M : ℕ => (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
+      Filter.atTop (nhds ((NB : ℝ) * (κ' / (NB : ℝ)))) := by
+    have hcomp : Filter.Tendsto (fun M : ℕ => M * NB) Filter.atTop Filter.atTop :=
+      Filter.tendsto_atTop_mono (fun M => Nat.le_mul_of_pos_right M hNB) Filter.tendsto_id
+    have hd2 : Filter.Tendsto
+        (fun M : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D (M * NB) : ℝ) / ((M * NB : ℕ) : ℝ))
+        Filter.atTop (nhds (κ' / (NB : ℝ))) := hκd.comp hcomp
+    refine (hd2.const_mul (NB : ℝ)).congr fun M => ?_
+    rw [cardNormLeResidueClass_eq_dvd c 𝔟 hu x C M, ← hy, ← hD]
+    rcases Nat.eq_zero_or_pos M with hM0 | hMpos
+    · simp [hM0]
+    · have hMne : (M : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hMpos.ne'
+      rw [Nat.cast_mul]
+      field_simp
+      ring
+  rw [tendsto_nhds_unique hκ hAlim, mul_div_cancel₀ _ hNB0]
+
+open Ideal in
+/-- **Global realizer transfer.** Summing the per-class transfer over the class group (reindexing
+by `Equiv.mulRight [𝔟]`): for a realizer `𝔟` with `N(𝔟) (mod c)` a unit, `κ_x = κ_{x·N(𝔟)}`, the
+densities of `cardNormLeResidue` at residues `x` and `x·N(𝔟)`. -/
+private theorem cardNormLeResidue_density_transfer {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (x : ZMod c) {κ κ' : ℝ}
+    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c x N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ))
+    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+        (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ')) :
+    κ = κ' := by
+  classical
+  -- Per-class densities for both residues.
+  choose κf hκf using fun C => exists_tendsto_cardNormLeResidueClass_div (K := K) c x C
+  choose κf' hκf' using fun C =>
+    exists_tendsto_cardNormLeResidueClass_div (K := K) c
+      (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) C
+  -- `κ = ∑_C κf C`, `κ' = ∑_C κf' C`.
+  have hsplit : κ = ∑ C : ClassGroup (𝓞 K), κf C :=
+    tendsto_cardNormLeResidue_div_eq_sum_class c x hκ κf hκf
+  have hsplit' : κ' = ∑ C : ClassGroup (𝓞 K), κf' C :=
+    tendsto_cardNormLeResidue_div_eq_sum_class c
+      (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) hκ' κf' hκf'
+  -- Per-class transfer: `κf C = κf' (C·[𝔟])`.
+  have htrans : ∀ C : ClassGroup (𝓞 K), κf C = κf' (C * ClassGroup.mk0 𝔟) := fun C =>
+    cardNormLeResidueClass_density_transfer c 𝔟 hu x C (hκf C) (hκf' (C * ClassGroup.mk0 𝔟))
+  rw [hsplit, hsplit']
+  rw [Finset.sum_congr rfl fun C _ => htrans C]
+  exact Equiv.sum_comp (Equiv.mulRight (ClassGroup.mk0 𝔟)) κf'
+
 open scoped Classical in
 /-- **κ-constancy over the realized-residue subgroup (Lang VI §3 Thm 3).** If `a, a'` lie in a
 subgroup `S ≤ (ℤ/c)ˣ` *all of whose elements are realized as ideal-norm residues* (`hS`), then the
@@ -2199,7 +2425,28 @@ private theorem cardNormLeResidue_density_const_of_realized
     (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
-  sorry
+  classical
+  -- Realizers of `a` and `a'` (their norm residues are the units `↑a`, `↑a'`).
+  obtain ⟨𝔟, h𝔟⟩ := hS a ha
+  obtain ⟨𝔟', h𝔟'⟩ := hS a' ha'
+  have hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) := h𝔟 ▸ a.isUnit
+  have hu' : IsUnit ((Ideal.absNorm (𝔟' : Ideal (𝓞 K)) : ZMod c)) := h𝔟' ▸ a'.isUnit
+  -- The density at residue `1`.
+  obtain ⟨κ₁, hκ₁⟩ := exists_tendsto_cardNormLeResidue_div K c (1 : ZMod c)
+  -- Transfer `1 → 1·N(𝔟) = ↑a` gives `κ₁ = κ`; similarly `κ₁ = κ'`.
+  have hone_eq : (1 : ZMod c) * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c) = (a : ZMod c) := by
+    rw [one_mul, h𝔟]
+  have hone_eq' : (1 : ZMod c) * (Ideal.absNorm (𝔟' : Ideal (𝓞 K)) : ZMod c) = (a' : ZMod c) := by
+    rw [one_mul, h𝔟']
+  have hκ_a : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+      ((1 : ZMod c) * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ) := by rw [hone_eq]; exact hκ
+  have hκ_a' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+      ((1 : ZMod c) * (Ideal.absNorm (𝔟' : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ') := by rw [hone_eq']; exact hκ'
+  have h1 : κ₁ = κ := cardNormLeResidue_density_transfer c 𝔟 hu (1 : ZMod c) hκ₁ hκ_a
+  have h2 : κ₁ = κ' := cardNormLeResidue_density_transfer c 𝔟' hu' (1 : ZMod c) hκ₁ hκ_a'
+  rw [← h1, h2]
 
 open scoped Classical in
 /-- **Fourier decay from realized residues (the `hF` producer).** Let `S ≤ (ℤ/c)ˣ` be a subgroup
