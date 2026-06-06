@@ -2138,4 +2138,129 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
   exact (le_abs_self _).trans (Finset.single_le_sum
     (f := fun b => |C'f b|) (fun b _ => abs_nonneg _) (Finset.mem_univ _))
 
+/-! ### Realizer-driven Fourier decay (the `hF` producer) -/
+
+/-- **Row orthogonality** for a finite commutative group `G`: for a nontrivial character
+`χ : G →* ℂˣ`, the sum of `χ g` over all `g : G` vanishes. A separating element `g₀` with
+`χ g₀ ≠ 1` exists (else `χ = 1`); reindexing the sum by left translation with `g₀` scales it by
+`χ g₀`, forcing it to vanish. This is the companion of the column orthogonality
+`sum_char_apply_eq_zero_of_ne_one`. -/
+private theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finite G] [Fintype G]
+    {χ : G →* ℂˣ} (hχ : χ ≠ 1) : ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
+  classical
+  obtain ⟨g₀, hg₀⟩ : ∃ g₀ : G, χ g₀ ≠ 1 := by
+    by_contra h
+    push Not at h
+    exact hχ (MonoidHom.ext fun g => by simpa using h g)
+  have hshift : ((χ g₀ : ℂˣ) : ℂ) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = ∑ g : G, ((χ g : ℂˣ) : ℂ) := by
+    rw [Finset.mul_sum]
+    refine Fintype.sum_bijective (g₀ * ·) (Group.mulLeft_bijective g₀)
+      (fun g => ((χ g₀ : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun g => ((χ g : ℂˣ) : ℂ)) fun g => ?_
+    rw [map_mul, Units.val_mul]
+  have h0 : (((χ g₀ : ℂˣ) : ℂ) - 1) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
+    rw [sub_mul, one_mul, hshift, sub_self]
+  rcases mul_eq_zero.mp h0 with h | h
+  · exact absurd (Units.ext (sub_eq_zero.mp h)) hg₀
+  · exact h
+
+open scoped Classical in
+/-- **κ-constancy over the realized-residue subgroup (Lang VI §3 Thm 3).** If `a, a'` lie in a
+subgroup `S ≤ (ℤ/c)ˣ` *all of whose elements are realized as ideal-norm residues* (`hS`), then the
+per-residue ideal densities of `a` and `a'` coincide: `κ = κ'`.
+
+This is the geometry-of-numbers heart of the abelian Chebotarev step, the per-ray-class ideal
+count with class-independent leading constant (Lang, *Algebraic Number Theory* GTM 110, Ch. VI §3,
+Thm 3; equivalently Gun–Ramaré–Sivaraman, *Counting ideals in ray classes*, JNT 243 (2023), Thm 1).
+
+The statement is **true** and is the converse direction of the in-file Fourier dictionary
+`cardNormLeResidue_density_eq_of_mem_subgroup` (which derives κ-constancy *from* the Fourier-decay
+hypothesis `hF`). It is what `tendsto_sum_char_mul_cardNormLeResidue_div_of_realized` consumes to
+*produce* `hF`. The proof exposes the leading constants of the opaque-`κ` cell estimates built
+above (`exists_card_idealSet_residue_le`): writing
+`κ_a = ∑_C (N(J_C)·vol(D₀ ∩ orthant_s)/|det T_{m_C}|)·#{qualifying cells for a}`, two facts close
+it. (i) *Orthant volume symmetry*: `vol(D₀ ∩ orthant_s)` is independent of the sign pattern `s`,
+because
+`negAt s` (mathlib `volume_preserving_negAt`, `norm_negAt`) is a volume- and norm-preserving
+involution carrying orthant `∅` to orthant `s` inside `normLeOne K`; combined with the Lang
+covolume cancellation `|det T_{m_C}| = m_C^d · N(J_C) · 2^{-r₂}√|discr|`
+(`NumberField.mixedEmbedding.covolume_idealLattice`) each cell contributes the same universal
+`κ₀ = vol(D₀)/(2^{r₁} c^d 2^{-r₂}√|discr|)`. (ii) *Equinumerosity of qualifying cells across `S`*:
+multiplication by an element of `(𝓞/m_C)ˣ` of signed norm-residue `t = a'·a⁻¹` permutes the cells
+and shifts the residue selector by `t` (the in-file `natCast_algebraNorm_add_nsmul_mul` /
+`norm_zmod_eq_of_emb_sub_mem` congruence), so the qualifying-cell counts for `a` and `a'` agree once
+`t ∈ S` is realized — which `hS` supplies. -/
+private theorem cardNormLeResidue_density_const_of_realized
+    {K : Type*} [Field K] [NumberField K] {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
+    (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
+      ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c))
+    {a a' : (ZMod c)ˣ} (ha : a ∈ S) (ha' : a' ∈ S) {κ κ' : ℝ}
+    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ))
+    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ')) :
+    κ = κ' := by
+  sorry
+
+open scoped Classical in
+/-- **Fourier decay from realized residues (the `hF` producer).** Let `S ≤ (ℤ/c)ˣ` be a subgroup
+all of whose elements are realized as ideal-norm residues (`hS`). Then for every **nontrivial**
+character `χ` of `S`, the `χ`-twisted norm-residue count average over `S` tends to `0`:
+
+`(∑_{s ∈ S} χ(s)·#{N(I) ≤ N, N(I) ≡ s}) / N → 0`.
+
+This is exactly the Fourier-decay hypothesis `hF` consumed by
+`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform` (and by
+`cardNormLeResidue_density_eq_of_mem_subgroup`): when the consumer's `S` is the full image
+subgroup of ideal-norm residues, `hS` holds tautologically, so this theorem discharges its `hF`
+and hands back the `κ`-uniform effective ideal count. (The avoidance of the `ℚ(i)`-trap is built
+in: realization, hence decay, is asserted only over the **image subgroup** `S`, never over all of
+`(ℤ/c)ˣ`.)
+
+Proof: each per-residue count has a density `κ_s = lim #{N(I) ≤ N, N(I) ≡ s}/N`
+(`exists_tendsto_cardNormLeResidue_div`), and the realizer hypothesis makes these densities
+constant on `S` (`cardNormLeResidue_density_const_of_realized`, Lang VI §3 Thm 3). Hence the
+twisted average tends to `(∑_{s ∈ S} χ(s))·κ`, which vanishes by row orthogonality
+`sum_char_self_eq_zero_of_ne_one` for the nontrivial `χ`. -/
+theorem tendsto_sum_char_mul_cardNormLeResidue_div_of_realized
+    (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (S : Subgroup (ZMod c)ˣ)
+    (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
+      ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c))
+    (χ : S →* ℂˣ) (hχ : χ ≠ 1) :
+    Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+        (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((s : (ZMod c)ˣ) : ZMod c)} : ℂ))
+        / (N : ℂ))
+      Filter.atTop (nhds 0) := by
+  classical
+  -- Per-residue densities `κf s = lim count_s / N`.
+  choose κf hκf using fun s : S =>
+    exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
+  -- All densities over `S` are equal (Lang VI §3 Thm 3 via the realizer hypothesis).
+  have hconst : ∀ s : S, κf s = κf 1 := fun s =>
+    cardNormLeResidue_density_const_of_realized hS s.2 (one_mem S) (hκf s) (hκf 1)
+  -- The twisted average tends to `(∑_{s} χ s)·κf 1`.
+  have hlim : Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+        (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((s : (ZMod c)ˣ) : ZMod c)} : ℂ))
+        / (N : ℂ))
+      Filter.atTop (nhds (∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ))) := by
+    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) =>
+      ((Complex.continuous_ofReal.tendsto (κf s)).comp (hκf s)).const_mul ((χ s : ℂˣ) : ℂ)
+    refine hsum.congr fun N => ?_
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun s _ => ?_
+    simp only [Function.comp_apply, cardNormLeResidue]
+    push_cast
+    ring
+  -- The limiting value vanishes: factor out the common density, use row orthogonality.
+  have hval : (∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ)) = 0 := by
+    have hrw : (∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ))
+        = (∑ s : S, ((χ s : ℂˣ) : ℂ)) * (κf 1 : ℂ) := by
+      rw [Finset.sum_mul]
+      refine Finset.sum_congr rfl fun s _ => ?_
+      rw [hconst s]
+    rw [hrw, sum_char_self_eq_zero_of_ne_one hχ, zero_mul]
+  rw [hval] at hlim
+  exact hlim
+
 end Chebotarev

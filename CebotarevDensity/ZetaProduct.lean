@@ -1,11 +1,14 @@
 module
 
 public import CebotarevDensity.Frobenius
+public import CebotarevDensity.CyclotomicNormResidue
+public import CebotarevDensity.ForMathlib.IdealCongruenceCount
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 public import Mathlib.NumberTheory.LSeries.DirichletContinuation
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
+public import Mathlib.NumberTheory.Cyclotomic.Gal
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
 public import Mathlib.Analysis.SpecialFunctions.Log.Summable
 
@@ -801,6 +804,110 @@ theorem normLeOne_frontier_lipschitz (K : Type*) [Field K] [NumberField K] :
         frontier (mixedEmbedding.normAtAllPlaces ''
           mixedEmbedding.fundamentalCone.normLeOne K) ⊆ ⋃ j, φ j '' Set.Icc 0 1 :=
   normLeOne_frontier_lipschitz_cover K
+
+/-! ### Sub-lemmas for `exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le` (the Gap-B assembly)
+
+The assembly route: (1) a prime with norm coprime to `m` is unramified in `L = K(μ_m)`
+(different-ideal criterion + `minpoly ∣ X^m − 1`); (2) on coprime-norm ideals the cyclotomic
+character sends `frobeniusIdeal` to the norm residue (multiplicative extension of
+`autToPow_frobeniusClass_out`), and `autToPow` is injective, so the Frobenius fibre IS a
+norm-residue class; (3) the per-residue count with one constant across the realized subgroup
+is `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform`; (4) an unramified-supported
+ideal splits uniquely as (bad part)·(good part), where the bad primes — unramified but with
+norm sharing a factor with `m` — divide `(m)` and are finitely many; the count regroups as a
+sum over bad parts of shifted good counts; (5) with `hm : m % 4 ≠ 2`, either `d ≥ 2` (the
+bad-part Euler tail converges) or the bad set is empty (`d = 1`), so the per-bad-part errors
+sum to `O(N^{1−1/d})`. -/
+
+section GapBAssembly
+
+/-- A nonzero prime of `𝓞 K` whose norm is coprime to `m` is unramified in `L = K(μ_m)`:
+a ramified prime would divide the different ideal, which divides
+`(aeval ζ (minpoly 𝓞K ζ).derivative)` by the conductor formula; since `minpoly ∣ X^m − 1`,
+that derivative value divides `m·ζ^{m−1}`, so `m ∈ 𝔓`, hence `(m) ≤ 𝔭` and
+`N𝔭 ∣ N((m)) = m^d`, contradicting coprimality. -/
+private theorem unramifiedIn_of_coprime_absNorm
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+    [IsGalois K L] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
+    UnramifiedIn K L 𝔭 := by
+  sorry
+
+/-- The cyclotomic character sends `frobeniusIdeal` of a coprime-norm ideal to its norm
+residue: multiplicative extension of the per-prime `autToPow_frobeniusClass_out` over the
+normalized factors. -/
+private theorem autToPow_frobeniusIdeal
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+    [IsGalois K L] [FiniteDimensional K L] [IsMulCommutative Gal(L/K)]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
+    {ζ : L} (hζ : IsPrimitiveRoot ζ m) (𝔠 : Ideal (𝓞 K)) (h𝔠 : 𝔠 ≠ ⊥)
+    (hcop : (Ideal.absNorm 𝔠).Coprime m) :
+    hζ.autToPow K (frobeniusIdeal K L 𝔠) = ZMod.unitOfCoprime (Ideal.absNorm 𝔠) hcop := by
+  classical
+  revert h𝔠 hcop
+  induction 𝔠 using UniqueFactorizationMonoid.induction_on_prime with
+  | h₁ => exact fun h𝔠 _ => absurd rfl h𝔠
+  | h₂ u hu =>
+      intro _ hcop
+      obtain rfl : u = ⊤ := Ideal.isUnit_iff.mp hu
+      rw [frobeniusIdeal_one, map_one]
+      exact Units.ext (by simp [ZMod.coe_unitOfCoprime])
+  | h₃ a p ha hp ih =>
+      intro hpa hcop
+      have hp' : p ≠ ⊥ := hp.ne_zero
+      have ha' : a ≠ ⊥ := ha
+      haveI : p.IsPrime := Ideal.isPrime_of_prime hp
+      have hsplit : Ideal.absNorm (p * a) = Ideal.absNorm p * Ideal.absNorm a :=
+        map_mul Ideal.absNorm p a
+      have hcp : (Ideal.absNorm p).Coprime m :=
+        Nat.Coprime.coprime_dvd_left (Dvd.intro _ rfl) (hsplit ▸ hcop)
+      have hca : (Ideal.absNorm a).Coprime m :=
+        Nat.Coprime.coprime_dvd_left (Dvd.intro_left _ rfl) (hsplit ▸ hcop)
+      rw [frobeniusIdeal_mul K L hp' ha', map_mul,
+        frobeniusIdeal_apply_prime K L p hp',
+        autToPow_frobeniusClass_out K L m hζ p
+          (unramifiedIn_of_coprime_absNorm K L m p hp' hcp) hcp,
+        ih ha' hca]
+      exact Units.ext (by push_cast [ZMod.coe_unitOfCoprime, hsplit]; ring)
+
+open nonZeroDivisors in
+/-- The good-fibre count is a norm-residue count: for `h : Gal(L/K)`, the ideals with norm
+`≤ X`, norm coprime to `m`, and `frobeniusIdeal = h` are exactly the ideals with norm `≤ X`
+and norm residue `(hζ.autToPow K h : ZMod m)` — coprimality and the unramified support come
+for free from the residue being a unit, and the Frobenius condition is the residue condition
+by injectivity of the cyclotomic character. -/
+private theorem card_good_fibre_eq_card_residue
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+    [IsGalois K L] [FiniteDimensional K L] [IsMulCommutative Gal(L/K)]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
+    {ζ : L} (hζ : IsPrimitiveRoot ζ m) (h : Gal(L/K)) (X : ℕ) :
+    Nat.card {𝔠 : Ideal (𝓞 K) // 𝔠 ≠ ⊥ ∧ Ideal.absNorm 𝔠 ≤ X ∧
+        (Ideal.absNorm 𝔠).Coprime m ∧ frobeniusIdeal K L 𝔠 = h}
+      = Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ X ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m))
+          = ((hζ.autToPow K h : (ZMod m)ˣ) : ZMod m)} := by
+  classical
+  refine Nat.card_congr
+    { toFun := fun 𝔠 => ⟨⟨𝔠.1, mem_nonZeroDivisors_of_ne_zero 𝔠.2.1⟩, 𝔠.2.2.1, by
+        obtain ⟨𝔠, h0, hX, hcp, hfr⟩ := 𝔠
+        subst hfr
+        rw [autToPow_frobeniusIdeal K L m hζ 𝔠 h0 hcp, ZMod.coe_unitOfCoprime]⟩
+      invFun := fun I => ⟨(I.1 : Ideal (𝓞 K)), ?_⟩
+      left_inv := fun 𝔠 => Subtype.ext rfl
+      right_inv := fun I => Subtype.ext (Subtype.ext rfl) }
+  have h0 : (I.1 : Ideal (𝓞 K)) ≠ ⊥ := by
+    simpa using nonZeroDivisors.coe_ne_zero I.1
+  have hcp : (Ideal.absNorm (I.1 : Ideal (𝓞 K))).Coprime m := by
+    refine (ZMod.isUnit_iff_coprime _ m).mp ?_
+    rw [I.2.2]
+    exact (hζ.autToPow K h).isUnit
+  have hfr : frobeniusIdeal K L (I.1 : Ideal (𝓞 K)) = h := by
+    refine hζ.autToPow_injective (K := K) ?_
+    rw [autToPow_frobeniusIdeal K L m hζ _ h0 hcp]
+    exact Units.ext (by rw [ZMod.coe_unitOfCoprime, I.2.2])
+  exact ⟨h0, I.2.1, hcp, hfr⟩
+
+end GapBAssembly
 
 /-- **L2 (Sub-gaps 2+3) — unramified-supported Frobenius-fibre equidistribution.** For
 `L = K(μ_m)` cyclotomic, the number of nonzero ideals `𝔞` with `N𝔞 ≤ N`, **every prime factor of
