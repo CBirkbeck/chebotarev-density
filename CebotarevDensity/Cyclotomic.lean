@@ -663,13 +663,13 @@ the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the br
 private theorem artinLSeries_prime_sum_bounded_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
-    [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (hχ : χ ≠ 1) :
+    [hAb : IsMulCommutative Gal(L/K)] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
-  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L m χ hχ
+  obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L m hm χ hχ
   exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
-    (artinLSeries_one_ne_zero K L m χ hχ Lf hLf_an hLf_eq)
+    (artinLSeries_one_ne_zero K L m hm χ hχ Lf hLf_an hLf_eq)
 
 /-! ### Assembly helpers for `primeIdealZetaSum_frobeniusFibre_asymp`
 
@@ -889,7 +889,8 @@ the log-asymptotic of the Artin L-functions
 `~ log ζ_K(s) ~ log(1/(s-1))` on the other. -/
 theorem primeIdealZetaSum_frobeniusFibre_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum
@@ -908,7 +909,7 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
   -- each `‖(χσ)⁻¹ · twistedPrimeSum χ s‖ ≤ Cχ` (norm-1 coefficient × bounded Artin sum).
   have hterm : ∀ χ : galoisCharacter K L, χ ≠ 1 → ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ hχ => by
-    obtain ⟨C, hC⟩ := artinLSeries_prime_sum_bounded_of_ne_one K L m χ hχ
+    obtain ⟨C, hC⟩ := artinLSeries_prime_sum_bounded_of_ne_one K L m hm χ hχ
     refine ⟨C, ?_⟩
     filter_upwards [hC] with s hs
     have hnorm1 : ‖((χ σ : ℂ))⁻¹‖ = 1 := by
@@ -990,7 +991,8 @@ Source: "on the one hand we have Σ_χ χ(σ)^{-1} log L(χ,s) ~ |G|
 ~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`. -/
 theorem cyclotomic_density_from_two_sided_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum
@@ -999,7 +1001,7 @@ theorem cyclotomic_density_from_two_sided_asymp
           / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) :=
   tendsto_ratio_of_log_asymp_numerator _ _ _
-    (primeIdealZetaSum_frobeniusFibre_asymp K L m σ)
+    (primeIdealZetaSum_frobeniusFibre_asymp K L m hm σ)
     (primeIdealZetaSum_univ_tendsto_log K)
 
 /-- **Chebotarev's theorem, cyclotomic case** (Sharifi §7.2.1).
@@ -1008,22 +1010,24 @@ For `K` a number field, `m ≥ 1`, and `L = K(μ_m)` the `m`-th cyclotomic
 extension of `K`, every `σ ∈ Gal(L/K)` is the Frobenius of a set of primes
 of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
 theorem chebotarev_cyclotomic
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (σ : Gal(L/K)) :
     HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
-  cyclotomic_density_from_two_sided_asymp K L m σ
+  cyclotomic_density_from_two_sided_asymp K L m hm σ
 
 /-- A variant of the cyclotomic-case theorem stated as a lower-density
 inequality. Used in the abelian case to feed into the
 `HasLowerDirichletDensity.mono` chain. -/
 theorem chebotarev_cyclotomic_lowerDensity_ge
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (σ : Gal(L/K)) :
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (σ : Gal(L/K)) :
     HasLowerDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}
       ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
-  (chebotarev_cyclotomic K L m σ).hasLower
+  (chebotarev_cyclotomic K L m hm σ).hasLower
 
 end Chebotarev

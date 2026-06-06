@@ -835,7 +835,7 @@ feeding the per-good-part L1 application — the residual deep input is
 theorem exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) :
     ∃ κ C' : ℝ, ∀ g : Gal(L/K), ∀ N : ℕ, 1 ≤ N →
       |(Nat.card {𝔞 : Ideal (𝓞 K) //
             𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
@@ -873,7 +873,7 @@ mathlib-PR) fed by the Lipschitz-frontier input `normLeOne_frontier_lipschitz`. 
 theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ C C' : ℝ, ∀ ζ : ℂ, ζ ^ orderOf χ = 1 → ∀ N : ℕ, 1 ≤ N →
       |(Nat.card {𝔞 : Ideal (𝓞 K) //
             𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = ζ} : ℝ)
@@ -882,7 +882,7 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
   classical
   -- The unramified-supported Frobenius-fibre equidistribution (L2): `κ` is the common leading
   -- density.
-  obtain ⟨κ, C₂, hL2⟩ := exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le K L m
+  obtain ⟨κ, C₂, hL2⟩ := exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le K L m hm
   -- The constant fibre cardinality `κ₀ = |ker χ|`.
   set κ₀ : ℕ := Nat.card (MonoidHom.ker χ) with hκ₀
   -- Leading constant `C = κ₀·κ`; error constant `C' = κ₀·C₂` (no bridge term: `A = B` exactly).
@@ -1088,14 +1088,14 @@ nontrivial character `χ`. This is the convergence input that extends
 theorem character_sum_geometry_of_numbers_bound
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ N : ℕ,
       ‖∑' 𝔞 : {𝔞 : Ideal (𝓞 K) //
                 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
         galoisCharacterOnIdeal K L χ 𝔞.1‖
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  obtain ⟨C₀, C', hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m χ _hχ
+  obtain ⟨C₀, C', hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m hm χ _hχ
   refine ⟨(orderOf χ : ℝ) * C', fun N => ?_⟩
   have hC' : 0 ≤ C' := (abs_nonneg _).trans (by simpa using hcount 1 (one_pow _) 1 le_rfl)
   rcases Nat.eq_zero_or_pos N with rfl | hN1
@@ -1222,10 +1222,10 @@ private theorem sum_galoisCharacterCoeff_eq_tsum_absNorm_le
 private theorem sum_galoisCharacterCoeff_isBigO
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)
       =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) := by
-  obtain ⟨C, hC⟩ := character_sum_geometry_of_numbers_bound K L m χ _hχ
+  obtain ⟨C, hC⟩ := character_sum_geometry_of_numbers_bound K L m hm χ _hχ
   refine Asymptotics.isBigO_iff.mpr ⟨C, Filter.Eventually.of_forall fun n => ?_⟩
   rw [sum_galoisCharacterCoeff_eq_tsum_absNorm_le K L χ n,
     Real.norm_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n) _)]
@@ -1351,7 +1351,7 @@ case) instantiates at a cyclotomic extension. -/
 theorem artinLSeries_analytic_extension
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∃ Lf : ℂ → ℂ,
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} ∧
       (∀ s : ℂ, 1 < s.re →
@@ -1371,7 +1371,7 @@ theorem artinLSeries_analytic_extension
     change ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k = 0
     rw [Nat.floor_eq_zero.mpr ht, Finset.Icc_eq_empty (by norm_num), Finset.sum_empty]
   have hS_bigO : S =O[Filter.atTop] (fun t : ℝ => t ^ r) :=
-    (((sum_galoisCharacterCoeff_isBigO K L m χ _hχ).comp_tendsto tendsto_nat_floor_atTop).trans <|
+    (((sum_galoisCharacterCoeff_isBigO K L m hm χ _hχ).comp_tendsto tendsto_nat_floor_atTop).trans <|
       isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0))
   refine ⟨fun s => s * mellin S (-s), ?_, fun s hs => ?_⟩
   · refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
@@ -1395,7 +1395,7 @@ theorem artinLSeries_analytic_extension
     rw [← lseries_galoisCharacterCoeff_eq_tsum K L χ s hs,
       LSeries_eq_mul_integral (galoisCharacterCoeff K L χ) hr0
         (lt_of_lt_of_le hr1 (by exact_mod_cast hs.le)) hssum
-        (sum_galoisCharacterCoeff_isBigO K L m χ _hχ),
+        (sum_galoisCharacterCoeff_isBigO K L m hm χ _hχ),
       setIntegral_Ioi_one_mul_cpow_eq_mellin S hS_zero s]
 
 /-! ### Sub-lemmas for `artinLSeries_one_ne_zero` (Sharifi 7.1.19 step 2, p. 142)
@@ -2008,9 +2008,9 @@ which agrees with the analytic extension on `Re s > 1`.) -/
 private theorem artinDirichletSeries_norm_le_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ' : galoisCharacter K L) (hχ' : χ' ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ' : galoisCharacter K L) (hχ' : χ' ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤ C := by
-  obtain ⟨Lf', hLf'_an, hLf'_eq⟩ := artinLSeries_analytic_extension K L m χ' hχ'
+  obtain ⟨Lf', hLf'_an, hLf'_eq⟩ := artinLSeries_analytic_extension K L m hm χ' hχ'
   -- `1` lies in the analyticity domain `{1 - d⁻¹ < re s}` (as `d ≥ 1`, `1 - d⁻¹ < 1`).
   have hdpos : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
     have : 0 < Module.finrank ℚ K := Module.finrank_pos
@@ -2129,7 +2129,7 @@ note on `exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow`, expert review
 theorem artinLSeries_one_ne_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
-    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
     ∀ Lf : ℂ → ℂ,
       AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} →
       (∀ s : ℂ, 1 < s.re →
@@ -2196,7 +2196,7 @@ theorem artinLSeries_one_ne_zero
         -- `log‖L_χ(s)‖ = log‖Lf(s)‖ ≤ -log(1/(s-1)) + Cχ` (Ingredient C, since `Lf = L_χ`)
         rw [← hLf_eq' (s : ℂ) (by simpa using hs1)]
         exact hs
-      · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L m χ' h1
+      · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L m hm χ' h1
         -- `log‖L_{χ'}(s)‖ ≤ log (max C 1) ≤ 0 + log (max C 1)`, using `max C 1 ≥ 1 > 0`.
         refine ⟨Real.log (max C 1), ?_⟩
         filter_upwards [hC] with s hs
