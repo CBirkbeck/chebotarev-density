@@ -40,39 +40,41 @@ Main.lean:1375         M1   = chebotarev_density (top-level assembly)
 Everything else — the full L-function chain, leaf G, LF1–LF12, L1 (Widmer), Gap A — is proven.
 Gap B is the only remaining *analytic* mathematics; AB1/M1 are algebraic infrastructure + glue.
 
-## 3. Gap B: skeleton in place, fills in flight
+## 3. Gap B: the arithmetic engine is DONE; assembly remains
 
 The Gap-B decomposition is pinned as compiling sorried statements (commit `137adc8`):
 
-- **`ForMathlib/IdealCongruenceCount.lean`** —
-  1. `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` (the workhorse: coset of a full
-     lattice `T '' ℤ^ι`, real dilation `t • D`, error uniform in the translate; closure of L1
-     under linear transport + translation + floor sandwich; note **L1's constant depends only
-     on the cover data (m, M)** — the key to translate-uniformity);
-  2. `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` (effective ideal count by norm
-     residue mod c: class-group split → mathlib principalization dictionary
-     (`tendsto_norm_le_and_mk_eq_div_atTop`'s private auxes, re-derive) → **sign-orthant**
-     refinement (algebraic Norm has constant sign per orthant, so `|Norm| ≡ b` becomes a union
-     of cosets of `(c·N J) • Λ_J` per orthant; orthant cuts keep Lipschitz frontiers) → the
-     workhorse per coset at `t = (N·N J)^{1/d}`);
-  3. `..._uniform` (κ-uniformity across a subgroup of **realized** norm residues — the
-     ℚ(i)-trap avoidance; proof is a *limit-level* transfer via `I ↦ I·𝔟`, no rate needed).
-- **`CyclotomicNormResidue.lean`** (below ZetaProduct, resolving HANDOVER-old §5.3's import
-  cycle) —
-  4. `autToPow_frobeniusClass_out` (cyclotomic Frobenius = norm residue under
-     `IsPrimitiveRoot.autToPow`; needs `cyclotomic_frobenius_acts_as_norm_power` RELOCATED
-     here from Cyclotomic.lean);
-  5. `subgroup_eq_top_of_forall_frobenius_mem` (Frobenii generate; CFT-free via the
-     fixed-field + everywhere-split zeta-asymptotics argument, reusing
-     `primeIdealZetaSum_univ_tendsto_log`). **CAUTION:** the originally-frozen statement is
-     not CFT-free-provable for non-abelian G with `.out`-only membership (double-coset
-     analysis); the fill is **authorized to add `[IsMulCommutative Gal(L/K)]`** — all
-     consumers are cyclotomic.
+The per-residue effective ideal count — Gap B's engine — is **fully proven and axiom-clean**
+(2026-06-06, commits f8aebdd…d34f766): `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le`
+has axioms exactly `[propext, Classical.choice, Quot.sound]`. The chain: the ξ-uniform coset
+workhorse (real dilations, L1-transport) → the mixed-space lift of Gap A's cover (phase tori)
+→ the index-coordinate transport → principalization with the residue threaded (novel: the
+`leftMulMatrix`/`RingHom.map_det` norm-congruence on cosets; the signed product formula over
+embedding pairs; the natAbs↔signed conversion on sign-orthants) → the cone-point count by
+(sign-orthant × m-coset) partition feeding the workhorse. Also proven sorry-free
+(CyclotomicNormResidue.lean): `cyclotomic_frobenius_acts_as_norm_power` (relocated, breaking
+the import cycle), `autToPow_frobeniusClass_out` (Frobenius = norm residue under the
+cyclotomic character), and `subgroup_eq_top_of_forall_frobenius_mem` (Frobenii generate;
+abelian hypothesis added — the non-abelian out-only form is not CFT-free provable; proof via
+a fresh downward Frobenius-restriction lemma + the fibred zeta comparison).
 
-**Final assembly of Gap B in ZetaProduct.lean** (not yet written): bad-prime multiplicative
-split (`𝔞 = 𝔟·𝔞'` with 𝔟 supported on the finite unramified-but-`𝔭∣m` set, per-𝔟 Frobenius
-shift via `frobeniusIdeal_mul`), then per `g`: fibre = norm-residue class `χ_cyc(g)` (items
-4+1–3), κ-uniform over `g` via item 5 feeding item 3's hypothesis.
+**In flight / remaining for Gap B:**
+1. `..._uniform` (IdealCongruenceCount.lean, last sorry): κ-uniformity across realized
+   residues. ⚠ The naive ideal-multiplication limit transfer is LOSSY (an `N𝔟` factor); the
+   sound route (worked out 2026-06-06, in the dispatched worker's brief): per-cell leading
+   terms are (orthant, coset)-independent — `vol(D_s)` is equal across orthants by the
+   sign-symmetry of `normLeOne` (mathlib `volume_negAt_plusPart`-adjacent) — so
+   `κ_b = #(qualifying cells for b) · κ_cell`, and multiplication by an ELEMENT `y` invertible
+   mod the modulus permutes `J/(cNJ)J` shifting the norm residue by `Norm y`, giving
+   equinumerosity of qualifying-cell sets. The hypothesis may need strengthening from
+   ideal-realizers to element-realizers (authorized; the Gap-B consumer adapts — element
+   realizers come from the Frobenius/cyclotomic side).
+2. **The Gap B assembly** (ZetaProduct.lean:846, `exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le`):
+   bad-prime multiplicative split (`𝔞 = 𝔟·𝔞'`, 𝔟 over the finite unramified-but-`𝔭∣m` set,
+   Frobenius shifts via `frobeniusIdeal_mul`) + per `g` the fibre is the norm-residue class
+   `χ_cyc(g)` (`autToPow_frobeniusClass_out` + leaf-G's `U`-support machinery) + the uniform
+   count over the image subgroup (`subgroup_eq_top_of_forall_frobenius_mem` realizes every
+   residue in the image as a product of prime norms, feeding the `hS` hypothesis).
 
 ## 4. AB1 and M1 (not started)
 
