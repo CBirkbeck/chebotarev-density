@@ -3,6 +3,7 @@ module
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import Mathlib.RingTheory.DedekindDomain.Factorization
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
 public import Mathlib.Analysis.Complex.Polynomial.Basic
@@ -2455,6 +2456,243 @@ private theorem cardNormLeResidueClassDvd_floor_collapse {K : Type*} [Field K]
     exact ⟨hb, ⟨(Nat.le_iff_le_mul_div_of_dvd hNB hNdvd N).mpr hle, hres⟩, hcls⟩
 
 open Ideal in
+/-- **Ideal-coprimality to `(n)` implies norm-coprimality to `n`.** If an integral ideal `J` is
+coprime (as ideals) to `span {(n : 𝓞 K)}`, then `gcd(N(J), n) = 1`: any prime `p ∣ gcd(N(J), n)`
+has, by `exists_isMaximal_dvd_of_dvd_absNorm'`, a maximal divisor `P ∣ J` lying over `(p)`; then
+`(n : 𝓞 K) ∈ P` (as `p ∣ n`), so `J ⊔ span{n} ≤ P ≠ ⊤`, contradicting coprimality. -/
+private theorem absNorm_coprime_of_isCoprime_span {K : Type*} [Field K] [NumberField K]
+    (J : (Ideal (𝓞 K))⁰) (n : ℕ)
+    (hcop : IsCoprime (J : Ideal (𝓞 K)) (Ideal.span {(n : 𝓞 K)})) :
+    (Ideal.absNorm (J : Ideal (𝓞 K))).Coprime n := by
+  by_contra hnc
+  obtain ⟨p, hp, hpJ, hpn⟩ := Nat.Prime.not_coprime_iff_dvd.mp hnc
+  obtain ⟨P, hPmax, hPunder, hPdvd⟩ :=
+    Ideal.exists_isMaximal_dvd_of_dvd_absNorm' hp (J : Ideal (𝓞 K)) hpJ
+  -- `J ≤ P` and `span{n} ≤ P`, so `J ⊔ span{n} ≤ P ≠ ⊤`.
+  have hJP : (J : Ideal (𝓞 K)) ≤ P := Ideal.le_of_dvd hPdvd
+  have hpP : (p : 𝓞 K) ∈ P := by
+    have hpZ : (p : ℤ) ∈ Ideal.under ℤ P := by
+      rw [hPunder]; exact Ideal.mem_span_singleton_self _
+    rw [Ideal.under, Ideal.mem_comap] at hpZ
+    simpa using hpZ
+  have hnP : (n : 𝓞 K) ∈ P := by
+    obtain ⟨k, hk⟩ := hpn
+    rw [hk]
+    push_cast
+    exact Ideal.mul_mem_right _ _ hpP
+  have hspanP : Ideal.span {(n : 𝓞 K)} ≤ P := by
+    rw [Ideal.span_le, Set.singleton_subset_iff]; exact hnP
+  have hsupP : (J : Ideal (𝓞 K)) ⊔ Ideal.span {(n : 𝓞 K)} ≤ P := sup_le hJP hspanP
+  rw [Ideal.isCoprime_iff_sup_eq] at hcop
+  rw [hcop, top_le_iff] at hsupP
+  exact hPmax.ne_top hsupP
+
+open Ideal in
+/-- **(L1) Coprime class representative.** Every ideal class `D` has an integral representative `J`
+whose absolute norm is coprime to a prescribed positive integer `n`. (Standard avoidance: from any
+representative `J₀` of `D`, multiply by a principal ideal supported away from the prime factors of
+`n·N(J₀)` to clear the common factors; the class is unchanged and the resulting norm is coprime to
+`n`.) This is the representative used to align the two cone-point lattices in the covolume / CRT
+density transfer so that `gcd(N(𝔟), c·N(J)) = 1`. -/
+private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField K]
+    (D : ClassGroup (𝓞 K)) (n : ℕ) (hn : 0 < n) :
+    ∃ J : (Ideal (𝓞 K))⁰, ClassGroup.mk0 J = D ∧
+      (Ideal.absNorm (J : Ideal (𝓞 K))).Coprime n := by
+  classical
+  -- Trivial case `n = 1`: any representative works (`Coprime _ 1`).
+  rcases eq_or_ne n 1 with rfl | hn1
+  · obtain ⟨J, hJ⟩ := ClassGroup.mk0_surjective D
+    exact ⟨J, hJ, Nat.coprime_one_right _⟩
+  -- Main case `n ≥ 2`. Pick `J₀` a representative of `D⁻¹`.
+  have hn2 : 2 ≤ n := by omega
+  obtain ⟨J₀, hJ₀⟩ := ClassGroup.mk0_surjective D⁻¹
+  have hJ₀ne : (J₀ : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero J₀
+  set 𝔫 : Ideal (𝓞 K) := Ideal.span {(n : 𝓞 K)} with h𝔫
+  have hnZ : (n : 𝓞 K) ≠ 0 := by
+    simpa using (Nat.cast_ne_zero (R := 𝓞 K)).mpr hn.ne'
+  have h𝔫ne : 𝔫 ≠ ⊥ := by
+    rw [h𝔫, Ne, Ideal.span_singleton_eq_bot]; exact hnZ
+  -- `𝔫 ≠ ⊤`: `absNorm 𝔫 = n^d ≥ 2^1 > 1`, while `absNorm ⊤ = 1`.
+  have h𝔫top : 𝔫 ≠ ⊤ := by
+    intro htop
+    have hN : Ideal.absNorm 𝔫 = n ^ Module.finrank ℤ (𝓞 K) := by
+      rw [h𝔫]; exact Ideal.absNorm_span_natCast n
+    rw [htop, Ideal.absNorm_top] at hN
+    have hd : 0 < Module.finrank ℤ (𝓞 K) := Module.finrank_pos
+    have : 2 ≤ n ^ Module.finrank ℤ (𝓞 K) :=
+      le_trans hn2 (Nat.le_self_pow hd.ne' n)
+    omega
+  -- `IsDedekindDomain.exists_sup_span_eq` on `𝔫·J₀ ≤ J₀`: get `a` with `𝔫·J₀ ⊔ span{a} = J₀`.
+  have hle : 𝔫 * (J₀ : Ideal (𝓞 K)) ≤ (J₀ : Ideal (𝓞 K)) := Ideal.mul_le_left
+  have hIne : 𝔫 * (J₀ : Ideal (𝓞 K)) ≠ 0 := by
+    rw [Ne, mul_eq_zero, not_or]; exact ⟨h𝔫ne, hJ₀ne⟩
+  obtain ⟨a, ha⟩ := IsDedekindDomain.exists_sup_span_eq hle hIne
+  -- `a ≠ 0`: else `𝔫·J₀ = J₀`, cancel to `𝔫 = ⊤`, contradicting `h𝔫top`.
+  have hane : a ≠ 0 := by
+    intro hbot
+    rw [hbot, Ideal.span_singleton_zero, sup_bot_eq] at ha
+    apply h𝔫top
+    have : (J₀ : Ideal (𝓞 K)) * 𝔫 = (J₀ : Ideal (𝓞 K)) * ⊤ := by
+      rw [Ideal.mul_top, mul_comm]; exact ha
+    exact mul_left_cancel₀ hJ₀ne this
+  -- `span{a} ≤ J₀`, so `J₀ ∣ span{a}`; write `span{a} = J₀·J₁`.
+  have haJ₀ : Ideal.span {a} ≤ (J₀ : Ideal (𝓞 K)) := le_sup_right.trans (le_of_eq ha)
+  obtain ⟨J₁, hJ₁⟩ : (J₀ : Ideal (𝓞 K)) ∣ Ideal.span {a} := Ideal.dvd_iff_le.mpr haJ₀
+  have hJ₁ne : J₁ ≠ ⊥ := by
+    intro hbot
+    rw [hbot, Ideal.mul_bot, Ideal.span_singleton_eq_bot] at hJ₁
+    exact hane hJ₁
+  -- `𝔫 ⊔ J₁ = ⊤` (coprime): cancel `J₀` from `J₀·(𝔫 ⊔ J₁) = J₀`.
+  have hcop : 𝔫 ⊔ J₁ = ⊤ := by
+    have hkey : (J₀ : Ideal (𝓞 K)) * (𝔫 ⊔ J₁) = (J₀ : Ideal (𝓞 K)) * ⊤ := by
+      calc (J₀ : Ideal (𝓞 K)) * (𝔫 ⊔ J₁)
+          = (J₀ : Ideal (𝓞 K)) * 𝔫 ⊔ (J₀ : Ideal (𝓞 K)) * J₁ := Ideal.mul_sup _ _ _
+        _ = 𝔫 * (J₀ : Ideal (𝓞 K)) ⊔ Ideal.span {a} := by rw [mul_comm (J₀ : Ideal (𝓞 K)) 𝔫, hJ₁]
+        _ = (J₀ : Ideal (𝓞 K)) := ha
+        _ = (J₀ : Ideal (𝓞 K)) * ⊤ := (Ideal.mul_top _).symm
+    exact mul_left_cancel₀ hJ₀ne hkey
+  have hJ₁mem : J₁ ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hJ₁ne
+  have hsaZ : Ideal.span {a} ≠ 0 := by
+    rw [Submodule.zero_eq_bot, Ne, Ideal.span_singleton_eq_bot]; exact hane
+  set J₁' : (Ideal (𝓞 K))⁰ := ⟨J₁, hJ₁mem⟩ with hJ₁'
+  refine ⟨J₁', ?_, ?_⟩
+  · -- `[J₁] = [J₀]⁻¹ = D`: `span{a} = J₀·J₁` is principal, so `[J₀]·[J₁] = 1`.
+    have hsa_mem : Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hsaZ
+    have hprinc : ClassGroup.mk0 (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = 1 :=
+      (ClassGroup.mk0_eq_one_iff hsa_mem).mpr ⟨a, rfl⟩
+    have hfact : (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = J₀ * J₁' := by
+      apply Subtype.ext; simp only [Submonoid.coe_mul, hJ₁', hJ₁]
+    rw [hfact, map_mul, hJ₀] at hprinc
+    have hinv := mul_eq_one_iff_eq_inv.mp hprinc
+    rw [← inv_inv (ClassGroup.mk0 J₁'), ← hinv, inv_inv]
+  · -- Norm-coprimality from `IsCoprime J₁ 𝔫`.
+    have hcopI : IsCoprime (J₁ : Ideal (𝓞 K)) 𝔫 := by
+      rw [Ideal.isCoprime_iff_sup_eq, sup_comm]; exact hcop
+    exact absNorm_coprime_of_isCoprime_span J₁' n (by
+      simpa only [hJ₁'] using hcopI)
+
+open Ideal in
+/-- **(L2) The dvd-density is the full density divided by `N(𝔟)` (Lang VI §3 Thm 3; GRS Thm 1).**
+For a realizer `𝔟` with `N(𝔟) (mod c)` a unit, the `𝔟`-divisible class-`D` norm-residue count has
+density `κfull/N(𝔟)`, where `κfull` is the full class-`D` residue-`y` density.
+
+**This is the single remaining irreducible geometry-of-numbers gap of the file** — the project's
+deepest leaf. Everything else around the per-class realizer transfer is now proven (Route A `L3 =
+cardNormLeResidueClassDvd_div_density_routeA`, the coprime representative `L1 =
+exists_mk0_eq_absNorm_coprime`, the assembly `tendsto_cardNormLeResidueClass_div_transfer`, and the
+limit/sum/reindex glue). It is genuinely *not* reachable from Route A: that bijection only relates
+the dvd-density to `κ_{D·[𝔟]⁻¹, y·u⁻¹}/N(𝔟)`, and combined with this fact it yields exactly the
+transfer `κ_{D,y} = κ_{D·[𝔟]⁻¹, y·u⁻¹}` — so L2 is equivalent to the geometric transfer itself, not
+a reduction of it.
+
+**Proof program (covolume / CRT equidistribution).** Choose (via `exists_mk0_eq_absNorm_coprime`) a
+representative `J` of `D⁻¹` with `N(J)` coprime to `N(𝔟)·c`. Principalize *both* counts as in
+`card_principalize`/`exists_card_norm_le_residue_class_eq_sub_mul_rpow_le`:
+* `κfull` is the leading constant of the cone-point count of `idealSet K J` (the `J`-lattice
+  `Λ_J = mixedEmbedding.idealLattice K (mk0 K J)`), namely
+  `κfull = (∑_{cells qualifying for residue} vol(D₀ ∩ orthant)) / ((c·N(J))^d · covol(Λ_J) · w)`,
+  `w = torsionOrder K`, via `exists_card_dvd_principal_residue_real_le (c·N(J)) (y.val·N(J)) J`.
+* the `𝔟`-divisible count, after the same principalization, is the cone-point count of the
+  *sublattice* `Λ_{𝔟J} ⊆ Λ_J`, which is index `N(𝔟)` (`covol(Λ_{𝔟J}) = N(𝔟)·covol(Λ_J)`, from
+  `NumberField.mixedEmbedding.covolume_idealLattice` since `absNorm(𝔟J) = N(𝔟)·N(J)`), with the
+  *same* qualifying-cell volumes; `gcd(N(𝔟), c·N(J)) = 1` makes the norm-residue selector
+  equidistribute across the `N(𝔟)` cosets of `Λ_{𝔟J}` in `Λ_J`, so the qualifying-cell count is
+  unchanged and the leading constant is `κfull/N(𝔟)` (the covolume grows by `N(𝔟)`).
+Then `tendsto_div_atTop_of_sub_mul_rpow_le` upgrades the effective estimate to the limit. The two
+ingredients (`covolume_idealLattice` scaling; CRT cell equidistribution) are pure
+geometry-of-numbers and require no analytic input beyond the already-formalised workhorse
+`exists_card_coset_inter_smul_sub_volume_mul_rpow_le`. -/
+private theorem cardNormLeResidueClassDvd_div_density {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (y : ZMod c) (D : ClassGroup (𝓞 K)) {κfull : ℝ}
+    (hκfull : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κfull)) :
+    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κfull / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) :=
+  sorry
+
+open Ideal in
+/-- **(L3) Route A as a density (elementary, exact).** The `𝔟`-divisible class-`D` residue-`y` count
+has density `κ_{CC,xC}/N(𝔟)`, where `CC = D·[𝔟]⁻¹`, `xC = y·u⁻¹` (`u = N(𝔟) mod c` the unit), and
+`κ_{CC,xC}` is the full class-`CC` residue-`xC` density. This is the norm-multiplying bijection
+`cardNormLeResidueClass_eq_dvd` together with the floor collapse
+`cardNormLeResidueClassDvd_floor_collapse`: `#{𝔟∣J, [J]=D, N(J)≤N, N(J)≡y}`
+` = #{[I]=CC, N(I)≤⌊N/N(𝔟)⌋, N(I)≡xC}`, whose density (the limit of `count(⌊N/N(𝔟)⌋)/N`) is
+`κ_{CC,xC}/N(𝔟)`. No geometry. -/
+private theorem cardNormLeResidueClassDvd_div_density_routeA {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (y : ZMod c) (D : ClassGroup (𝓞 K)) {κCC : ℝ}
+    (hκCC : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c
+        (y * (↑hu.unit⁻¹ : ZMod c)) (D * (ClassGroup.mk0 𝔟)⁻¹) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κCC)) :
+    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κCC / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) := by
+  classical
+  set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
+  have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
+  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
+  set u : (ZMod c)ˣ := hu.unit with hudef
+  have hu_spec : (↑u : ZMod c) = (NB : ZMod c) := hu.unit_spec
+  set xC : ZMod c := y * (↑u⁻¹ : ZMod c) with hxC
+  set CC : ClassGroup (𝓞 K) := D * (ClassGroup.mk0 𝔟)⁻¹ with hCC
+  have hxmul : xC * (NB : ZMod c) = y := by
+    rw [hxC, ← hu_spec, mul_assoc, ← Units.val_mul, inv_mul_cancel, Units.val_one, mul_one]
+  have hCmul : CC * ClassGroup.mk0 𝔟 = D := by rw [hCC, inv_mul_cancel_right]
+  -- Route A count identity: the `𝔟`-divisible count at `N` is the `(CC, xC)` count at `⌊N/N(𝔟)⌋`.
+  have hcount : ∀ N : ℕ, cardNormLeResidueClassDvd c 𝔟 y D N
+      = cardNormLeResidueClass c xC CC (N / NB) := by
+    intro N
+    rw [cardNormLeResidueClassDvd_floor_collapse c 𝔟 y D N,
+      cardNormLeResidueClass_eq_dvd c 𝔟 hu xC CC (N / NB), ← hNBdef, hxmul, hCmul, mul_comm NB]
+  -- The shifted count divided by `N` tends to `κCC/N(𝔟)`: split off the floor.
+  refine (Filter.Tendsto.congr (fun N => by rw [hcount N]) ?_)
+  -- `count(⌊N/NB⌋)/N = (count(⌊N/NB⌋)/⌊N/NB⌋) · (⌊N/NB⌋/N)`, factors → `κCC · (1/NB)`.
+  -- The inner sequence `⌊N/NB⌋ → ∞`.
+  have hgN : Filter.Tendsto (fun N : ℕ => (N / NB : ℕ)) Filter.atTop Filter.atTop :=
+    Nat.tendsto_div_const_atTop hNB.ne'
+  -- The ratio `⌊N/NB⌋/N → 1/NB`, via `⌊N/NB⌋ = (N - N%NB)/NB`.
+  have hratio : Filter.Tendsto (fun N : ℕ => ((N / NB : ℕ) : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (1 / (NB : ℝ))) := by
+    have hsub : Filter.Tendsto (fun N : ℕ => ((N % NB : ℕ) : ℝ) / (N : ℝ))
+        Filter.atTop (nhds 0) := by
+      refine squeeze_zero' (Filter.Eventually.of_forall fun N => by positivity)
+        (Filter.Eventually.of_forall fun N => ?_)
+        (tendsto_const_div_atTop_nhds_zero_nat (NB : ℝ))
+      rcases Nat.eq_zero_or_pos N with hN0 | hNpos
+      · simp [hN0]
+      · have hNposR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hNpos
+        rw [div_le_div_iff_of_pos_right hNposR]
+        exact_mod_cast (Nat.mod_lt N hNB).le
+    -- `(N/NB)/N = (1 - (N%NB)/N)/NB`.
+    have hkey : ∀ N : ℕ, 1 ≤ N → ((N / NB : ℕ) : ℝ) / (N : ℝ)
+        = (1 - ((N % NB : ℕ) : ℝ) / (N : ℝ)) / (NB : ℝ) := by
+      intro N hN
+      have hNposR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+      have hdm : ((N / NB : ℕ) : ℝ) * (NB : ℝ) + ((N % NB : ℕ) : ℝ) = (N : ℝ) := by
+        exact_mod_cast Nat.div_add_mod' N NB
+      field_simp
+      nlinarith [hdm]
+    have hlim : Filter.Tendsto (fun N : ℕ => (1 - ((N % NB : ℕ) : ℝ) / (N : ℝ)) / (NB : ℝ))
+        Filter.atTop (nhds ((1 - 0) / (NB : ℝ))) := by
+      exact ((tendsto_const_nhds.sub hsub).div_const (NB : ℝ))
+    refine (hlim.congr' ?_).mono_right (by rw [sub_zero])
+    filter_upwards [Filter.eventually_ge_atTop 1] with N hN using (hkey N hN).symm
+  -- Compose: `count(⌊N/NB⌋)/(⌊N/NB⌋) → κCC`, times the ratio.
+  have hcomp : Filter.Tendsto
+      (fun N : ℕ => (cardNormLeResidueClass c xC CC (N / NB) : ℝ) / ((N / NB : ℕ) : ℝ))
+      Filter.atTop (nhds κCC) := hκCC.comp hgN
+  have hprod := hcomp.mul hratio
+  rw [show κCC * (1 / (NB : ℝ)) = κCC / (NB : ℝ) by ring] at hprod
+  refine hprod.congr' ?_
+  filter_upwards [Filter.eventually_ge_atTop (NB + 1)] with N hN
+  have hgpos : 0 < N / NB := Nat.div_pos (le_trans (by omega) hN) hNB
+  have hgR : ((N / NB : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hgpos.ne'
+  have hNR : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+
+open Ideal in
 /-- **The single irreducible geometry-of-numbers fact of `IdealCongruenceCount` (Lang, *Algebraic
 Number Theory* GTM 110, Ch. VI §3, Thm 3; Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1).** The
 per-class norm-residue *density* is invariant under multiplying the class by `[𝔟]` and the residue
@@ -2486,7 +2724,34 @@ private theorem tendsto_cardNormLeResidueClass_div_transfer {K : Type*} [Field K
     Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c
         (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) (C * ClassGroup.mk0 𝔟) M : ℝ) / (M : ℝ))
       Filter.atTop (nhds κ) := by
-  sorry
+  classical
+  set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
+  have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
+  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
+  set y : ZMod c := x * (NB : ZMod c) with hy
+  set D : ClassGroup (𝓞 K) := C * ClassGroup.mk0 𝔟 with hD
+  -- The RHS density exists; call it `κ'`. It suffices to prove `κ' = κ`.
+  obtain ⟨κ', hκ'⟩ := exists_tendsto_cardNormLeResidueClass_div (K := K) c y D
+  suffices heq : κ' = κ by rwa [heq] at hκ'
+  -- The unit `u = N(𝔟) (mod c)`; back-shifted residue `xC = y·u⁻¹`, class `CC = D·[𝔟]⁻¹`.
+  set u : (ZMod c)ˣ := hu.unit with hudef
+  have hu_spec : (↑u : ZMod c) = (NB : ZMod c) := hu.unit_spec
+  -- The back-shifted data collapses to the LHS: `xC = x`, `CC = C`.
+  have hxC : y * (↑u⁻¹ : ZMod c) = x := by
+    rw [hy, ← hu_spec, mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one, mul_one]
+  have hCC : D * (ClassGroup.mk0 𝔟)⁻¹ = C := by rw [hD, mul_inv_cancel_right]
+  -- L2: the `𝔟`-divisible density at `(y, D)` is `κ'/N(𝔟)` (full density `κ'`).
+  have hL2 : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κ' / (NB : ℝ))) :=
+    cardNormLeResidueClassDvd_div_density c 𝔟 hu y D hκ'
+  -- L3: the same `𝔟`-divisible density equals `κ/N(𝔟)` via Route A (`CC = C`, `xC = x`).
+  have hL3 : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds (κ / (NB : ℝ))) := by
+    refine cardNormLeResidueClassDvd_div_density_routeA c 𝔟 hu y D (κCC := κ) ?_
+    rw [hxC, hCC]; exact hκ
+  -- Uniqueness of the limit pins `κ'/N(𝔟) = κ/N(𝔟)`, hence `κ' = κ`.
+  have hdiv : κ' / (NB : ℝ) = κ / (NB : ℝ) := tendsto_nhds_unique hL2 hL3
+  exact (div_left_inj' hNB0).mp hdiv
 
 open Ideal in
 /-- **The single irreducible geometric kernel of `IdealCongruenceCount` (Lang, *Algebraic Number
