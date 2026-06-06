@@ -412,20 +412,355 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
   rw [hcount, ← hvolD']
   exact abs_cardR_translate_sub_volume_le hD'bdd hD'meas hφ'lip hcov' (T.symm ξ) ht
 
+/-! ### Arithmetic input: the integer norm is constant modulo `M` on cosets of `M · 𝓞_K` -/
+
+/-- **Norm is coset-constant modulo `M`.** For `x y : 𝓞 K` and `M : ℕ`, the algebraic norm
+satisfies `Algebra.norm ℤ (x + M·y) ≡ Algebra.norm ℤ x (mod M)`. Proof: the norm is the
+determinant of the left-multiplication matrix in a fixed `ℤ`-basis; reducing the matrix entries
+mod `M` kills the `M·(leftMulMatrix y)` summand (the determinant commutes with the reduction ring
+hom), so the two determinants agree in `ZMod M`. -/
+private theorem natCast_algebraNorm_add_nsmul_mul {K : Type*} [Field K] [NumberField K]
+    (M : ℕ) (x y : 𝓞 K) :
+    ((Algebra.norm ℤ (x + (M : 𝓞 K) * y) : ℤ) : ZMod M) = ((Algebra.norm ℤ x : ℤ) : ZMod M) := by
+  classical
+  let b := Module.Free.chooseBasis ℤ (𝓞 K)
+  have hN : ∀ z : 𝓞 K, (Algebra.norm ℤ z : ℤ) = (Algebra.leftMulMatrix b z).det :=
+    fun z ↦ Algebra.norm_eq_matrix_det b z
+  rw [hN, hN]
+  rw [show ((Algebra.leftMulMatrix b (x + (M : 𝓞 K) * y)).det : ZMod M) =
+      (((Int.castRingHom (ZMod M)).mapMatrix
+        (Algebra.leftMulMatrix b (x + (M : 𝓞 K) * y))).det) by rw [← RingHom.map_det]; rfl]
+  rw [show ((Algebra.leftMulMatrix b x).det : ZMod M) =
+      (((Int.castRingHom (ZMod M)).mapMatrix (Algebra.leftMulMatrix b x)).det) by
+        rw [← RingHom.map_det]; rfl]
+  congr 1
+  have hMy : (M : 𝓞 K) * y = M • y := by rw [nsmul_eq_mul]
+  rw [hMy, map_add, map_nsmul]
+  ext i j
+  simp only [Matrix.add_apply, RingHom.mapMatrix_apply, Matrix.map_apply, Matrix.smul_apply,
+    eq_intCast, Int.cast_add]
+  rw [show (((M • (Algebra.leftMulMatrix b) y i j) : ℤ) : ZMod M) = 0 by
+    rw [nsmul_eq_mul, Int.cast_mul, Int.cast_natCast, ZMod.natCast_self, zero_mul]]
+  rw [add_zero]
+
+/-! ### Sign of the algebraic norm via the real embeddings -/
+
+open Classical NumberField.InfinitePlace in
+/-- **Signed product formula for the rational norm.** For `y : K`,
+`Algebra.norm ℚ y = (∏_{w real} σ_w y) · (∏_{w complex} ‖σ_w y‖²)`, where `σ_w` is the embedding
+attached to the place `w` (real-valued for a real place). The complex factor is nonnegative, so
+the **sign** of the norm is the product of the signs of the real embeddings — the input to the
+sign-orthant decomposition. Proof: group `Algebra.norm_eq_prod_embeddings` over the fibres of
+`InfinitePlace.mk`; a real place contributes its single real embedding, a complex place its
+conjugate pair `σ · conj σ = ‖σ‖²`. -/
+private theorem norm_eq_prod_real_emb_mul_prod_complex {K : Type*} [Field K] [NumberField K]
+    (y : K) :
+    ((Algebra.norm ℚ y : ℝ)) =
+      (∏ w : {w : InfinitePlace K // IsReal w}, embedding_of_isReal w.2 y) *
+        (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) y‖ ^ 2) := by
+  classical
+  have hcc : ((Algebra.norm ℚ y : ℝ) : ℂ) =
+      ((∏ w : {w : InfinitePlace K // IsReal w}, embedding_of_isReal w.2 y : ℝ) : ℂ) *
+        ((∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) y‖ ^ 2 : ℝ) : ℂ) := by
+    have hperplace : ∀ w : InfinitePlace K,
+        ∏ ψ ∈ Finset.univ.filter (fun ψ : K →+* ℂ => mk ψ = w), ψ y =
+          if hw : IsReal w then ((embedding_of_isReal hw y : ℝ) : ℂ)
+          else (‖(embedding w) y‖ ^ 2 : ℝ) := by
+      intro w
+      have hfilter : Finset.univ.filter (fun ψ : K →+* ℂ => mk ψ = w)
+          = {embedding w, ComplexEmbedding.conjugate (embedding w)} := by
+        ext ψ
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert,
+          Finset.mem_singleton]
+        conv_lhs => rw [← mk_embedding w, mk_eq_iff, ComplexEmbedding.conjugate,
+          star_involutive.eq_iff]
+      rw [hfilter]
+      by_cases hw : IsReal w
+      · rw [dif_pos hw, ComplexEmbedding.isReal_iff.mp (isReal_iff.mp hw),
+          Finset.insert_eq_self.mpr (Finset.mem_singleton_self _), Finset.prod_singleton,
+          embedding_of_isReal_apply hw]
+      · rw [dif_neg hw, Finset.prod_pair]
+        · rw [ComplexEmbedding.conjugate_coe_eq, Complex.mul_conj]
+          norm_cast
+          rw [Complex.normSq_eq_norm_sq]
+        · rw [Ne, eq_comm, ← ComplexEmbedding.isReal_iff, ← isReal_iff]; exact hw
+    have hemb : (algebraMap ℚ ℂ) (Algebra.norm ℚ y) = ∏ ψ : K →+* ℂ, ψ y := by
+      rw [Algebra.norm_eq_prod_embeddings ℚ ℂ y]
+      exact (Fintype.prod_equiv RingHom.equivRatAlgHom (fun ψ : K →+* ℂ => ψ y)
+        (fun σ : K →ₐ[ℚ] ℂ => σ y) (fun ψ => by simp [RingHom.equivRatAlgHom_apply])).symm
+    rw [show ((Algebra.norm ℚ y : ℝ) : ℂ) = (algebraMap ℚ ℂ) (Algebra.norm ℚ y) by
+        rw [eq_ratCast (algebraMap ℚ ℂ), Complex.ofReal_ratCast], hemb,
+      ← Finset.prod_fiberwise (g := fun ψ : K →+* ℂ => mk ψ) (f := fun ψ => ψ y) Finset.univ]
+    simp_rw [hperplace]
+    rw [prod_eq_prod_mul_prod]
+    congr 1
+    · rw [Finset.prod_congr rfl (fun w _ => by rw [dif_pos w.2]), Complex.ofReal_prod]
+    · rw [Finset.prod_congr rfl (fun w _ => by rw [dif_neg (not_isReal_iff_isComplex.mpr w.2)]),
+        Complex.ofReal_prod]
+  exact_mod_cast hcc
+
+/-- **Sign of a product of reals from a sign pattern.** If `f w < 0` exactly for `w ∈ s` and
+`f w > 0` otherwise, then `∏ w, f w = (-1)^{#s} · ∏ w, |f w|`. -/
+private theorem prod_eq_neg_one_pow_card_mul_prod_abs {ι : Type*} [Fintype ι] (s : Finset ι)
+    (f : ι → ℝ) (hpos : ∀ w ∉ s, 0 < f w) (hneg : ∀ w ∈ s, f w < 0) :
+    (∏ w, f w) = (-1) ^ (s.card) * (∏ w, |f w|) := by
+  classical
+  rw [← Finset.prod_mul_prod_compl s (fun w => |f w|),
+    show ((-1 : ℝ)) ^ s.card = ∏ w ∈ s, (-1 : ℝ) by rw [Finset.prod_const],
+    ← Finset.prod_mul_prod_compl s f, ← mul_assoc, ← Finset.prod_mul_distrib]
+  congr 1
+  · exact Finset.prod_congr rfl (fun w hw => by rw [neg_one_mul, abs_of_neg (hneg w hw), neg_neg])
+  · exact Finset.prod_congr rfl (fun w hw => (abs_of_pos (hpos w (Finset.mem_compl.mp hw))).symm)
+
+open Classical NumberField.InfinitePlace NumberField.mixedEmbedding in
+/-- **Sign of the integer norm on a sign-orthant.** If the real coordinates of
+`mixedEmbedding K y` are negative exactly on `s` (and positive off `s`), then
+`(Algebra.norm ℤ y).natAbs = (-1)^{#s} · Algebra.norm ℤ y` in `ℤ`. This makes the *absolute*
+norm residue equal to a coset-constant (signed) residue on each orthant. -/
+private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [NumberField K]
+    (y : 𝓞 K) (s : Finset {w : InfinitePlace K // IsReal w})
+    (hneg : ∀ w ∈ s, (mixedEmbedding K (y : K)).1 w < 0)
+    (hpos : ∀ w ∉ s, 0 < (mixedEmbedding K (y : K)).1 w) :
+    ((Algebra.norm ℤ y).natAbs : ℤ) = (-1) ^ (s.card) * (Algebra.norm ℤ y : ℤ) := by
+  classical
+  have hcoe : ((Algebra.norm ℤ y : ℤ) : ℝ) = Algebra.norm ℚ (y : K) := by
+    rw [← Algebra.coe_norm_int]; push_cast; ring
+  have hcpx : 0 ≤
+      (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) (y : K)‖ ^ 2) :=
+    Finset.prod_nonneg (fun w _ => sq_nonneg _)
+  -- The sign hypotheses, phrased on the real embeddings (which equal the mixed coordinates).
+  have hmix : ∀ w : {w : InfinitePlace K // IsReal w},
+      embedding_of_isReal w.2 (y : K) = (mixedEmbedding K (y : K)).1 w := fun w => by
+    rw [mixedEmbedding_apply_isReal]
+  have hneg' : ∀ w ∈ s, embedding_of_isReal w.2 (y : K) < 0 := fun w hw => by
+    rw [hmix]; exact hneg w hw
+  have hpos' : ∀ w ∉ s, 0 < embedding_of_isReal w.2 (y : K) := fun w hw => by
+    rw [hmix]; exact hpos w hw
+  have hsign := prod_eq_neg_one_pow_card_mul_prod_abs s
+    (fun w : {w : InfinitePlace K // IsReal w} => embedding_of_isReal w.2 (y : K)) hpos' hneg'
+  have hnf := norm_eq_prod_real_emb_mul_prod_complex (K := K) (y : K)
+  -- `|↑norm| = (∏|real emb|)·(∏complex)`, since the complex factor is nonnegative.
+  have habs : |((Algebra.norm ℚ (y : K) : ℝ))|
+      = (∏ w : {w : InfinitePlace K // IsReal w}, |embedding_of_isReal w.2 (y : K)|) *
+        (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) (y : K)‖ ^ 2) := by
+    rw [hnf, abs_mul, abs_of_nonneg hcpx, Finset.abs_prod]
+  -- Real-number identity: `(↑norm : ℝ) = (-1)^#s · |↑norm|`.
+  have hkeyR : ((Algebra.norm ℚ (y : K) : ℝ))
+      = (-1) ^ (s.card) * |((Algebra.norm ℚ (y : K) : ℝ))| := by
+    rw [habs]
+    conv_lhs => rw [hnf, hsign]
+    ring
+  -- Transfer to `ℤ` via the cast: `norm = (-1)^#s · natAbs`.
+  have hZ' : (Algebra.norm ℤ y : ℤ) = (-1) ^ (s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) := by
+    have hZ : ((Algebra.norm ℤ y : ℤ) : ℝ)
+        = ((-1) ^ (s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) : ℤ) := by
+      push_cast
+      rw [hcoe]
+      exact hkeyR
+    exact_mod_cast hZ
+  -- Invert using `((-1)^#s)² = 1`.
+  have hsq : ((-1 : ℤ)) ^ s.card * (-1) ^ s.card = 1 := by
+    rw [← pow_add, ← two_mul, pow_mul]; simp
+  calc ((Algebra.norm ℤ y).natAbs : ℤ)
+      = 1 * ((Algebra.norm ℤ y).natAbs : ℤ) := (one_mul _).symm
+    _ = ((-1) ^ s.card * (-1) ^ s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) := by rw [hsq]
+    _ = (-1) ^ s.card * ((-1) ^ s.card * ((Algebra.norm ℤ y).natAbs : ℤ)) := by ring
+    _ = (-1) ^ s.card * (Algebra.norm ℤ y : ℤ) := by rw [← hZ']
+
+/-! ### Splitting the count by ideal class -/
+
+open Ideal in
+/-- **Class split of the residue count.** The number of nonzero integral ideals of norm `≤ N`
+with norm residue `a (mod c)` is the sum over the (finite) class group of the per-class counts.
+The class group is a `Fintype`; finiteness of each fibre follows from
+`Ideal.finite_setOf_absNorm_le₀`. -/
+private theorem card_norm_le_residue_eq_sum_class {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (a : ZMod c) (N : ℕ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a}
+    = ∑ C : ClassGroup (𝓞 K),
+        Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} := by
+  classical
+  have hbase : Finite {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N} :=
+    Ideal.finite_setOf_absNorm_le₀ N
+  have hfin : Finite {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} :=
+    Finite.of_injective (fun I => (⟨I.1, I.2.1⟩ :
+      {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N}))
+      (fun x y h => Subtype.ext (by simpa using h))
+  have hfinC : ∀ C : ClassGroup (𝓞 K), Finite {I : (Ideal (𝓞 K))⁰ //
+      (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} := fun C =>
+    Finite.of_injective (fun I => (⟨I.1, I.2.1.1⟩ :
+      {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N}))
+      (fun x y h => Subtype.ext (by simpa using h))
+  have hF : Fintype {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} := Fintype.ofFinite _
+  have hFC : ∀ C, Fintype {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} :=
+    fun C => Fintype.ofFinite _
+  rw [Nat.card_eq_fintype_card,
+    Finset.sum_congr rfl (fun C _ => Nat.card_eq_fintype_card (α := {I : (Ideal (𝓞 K))⁰ //
+      (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C})),
+    ← Fintype.card_sigma]
+  refine Fintype.card_congr ((Equiv.sigmaFiberEquiv (fun I :
+    {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} => ClassGroup.mk0 I.1)).symm.trans ?_)
+  refine Equiv.sigmaCongrRight (fun C => ?_)
+  exact {
+    toFun := fun I => ⟨I.1.1, I.1.2, I.2⟩
+    invFun := fun I => ⟨⟨I.1, I.2.1⟩, I.2.2⟩
+    left_inv := fun _ => rfl
+    right_inv := fun _ => rfl }
+
+/-! ### Principalization: reducing a class to `J`-divisible principal ideals -/
+
+/-- **Modular cancellation.** `m ≡ a (mod c)` iff `m·NJ ≡ a·NJ (mod c·NJ)` (for `NJ > 0`).
+This transports the norm residue through the principalization map `I ↦ J · I`, under which the
+norm is multiplied by `N(J)`. -/
+private theorem natCast_eq_iff_mul_natCast_eq (cc NJ m a : ℕ) (hNJ : 0 < NJ) :
+    ((m : ZMod cc) = (a : ZMod cc)) ↔
+      (((m * NJ : ℕ) : ZMod (cc * NJ)) = ((a * NJ : ℕ) : ZMod (cc * NJ))) := by
+  rw [ZMod.natCast_eq_natCast_iff, ZMod.natCast_eq_natCast_iff, Nat.ModEq, Nat.ModEq,
+    Nat.mul_mod_mul_right, Nat.mul_mod_mul_right]
+  exact ⟨fun h => by rw [h], fun h => Nat.eq_of_mul_eq_mul_right hNJ h⟩
+
+open Ideal Submodule in
+/-- **Principalization correspondence (per ideal).** Under `I ↦ J · I` (`Equiv.dvd J`, with
+`ClassGroup.mk0 J = C⁻¹`), the predicate "`I` has norm `≤ N`, residue `a (mod c)`, and class `C`"
+corresponds to "`J · I` is principal, has norm `≤ N·N(J)`, and residue `a·N(J) (mod c·N(J))`":
+`mk0 I = C ↔ IsPrincipal (J·I)` (since `mk0 (J·I) = C⁻¹·mk0 I`), the norm scales by `N(J)`, and
+the residue transports by `natCast_eq_iff_mul_natCast_eq`. -/
+private theorem principalize_iff {K : Type*} [Field K] [NumberField K] (c : ℕ) [NeZero c]
+    (a : ZMod c) (N : ℕ) (C : ClassGroup (𝓞 K)) (J I : (Ideal (𝓞 K))⁰)
+    (hJ : ClassGroup.mk0 J = C⁻¹) (hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K))) :
+    ((Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C) ↔
+      (IsPrincipal (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ∧
+        Ideal.absNorm (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ≤
+          N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+        ((Ideal.absNorm (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) :
+            ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K)))) =
+          ((a.val * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) :
+            ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K)))))) := by
+  classical
+  have hnorm : absNorm (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
+      = absNorm (I : Ideal (𝓞 K)) * absNorm (J : Ideal (𝓞 K)) := by
+    simp_rw [Equiv.dvd_apply, Submonoid.coe_mul, _root_.map_mul]; ring
+  have hprin : IsPrincipal (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ↔
+      ClassGroup.mk0 I = C := by
+    have hmem : (((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ∈ (Ideal (𝓞 K))⁰ :=
+      SetLike.coe_mem _
+    rw [← ClassGroup.mk0_eq_one_iff hmem]
+    have hmk : ClassGroup.mk0 (⟨(((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)), hmem⟩ :
+        (Ideal (𝓞 K))⁰) = ClassGroup.mk0 ((Equiv.dvd J) I : (Ideal (𝓞 K))⁰) := by congr 1
+    rw [hmk, Equiv.dvd_apply, map_mul, hJ, inv_mul_eq_one, eq_comm]
+  rw [hprin, hnorm]
+  have hres : (((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ↔
+      (((Ideal.absNorm (I : Ideal (𝓞 K)) * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) :
+          ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K)))) =
+        ((a.val * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) :
+          ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K))))) := by
+    rw [show ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a ↔
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((a.val : ℕ) : ZMod c) by
+      rw [ZMod.natCast_val, ZMod.cast_id]]
+    exact natCast_eq_iff_mul_natCast_eq c (absNorm (J : Ideal (𝓞 K)))
+      (absNorm (I : Ideal (𝓞 K))) a.val hNJ
+  have hnle : (absNorm (I : Ideal (𝓞 K)) * absNorm (J : Ideal (𝓞 K)) ≤
+      N * absNorm (J : Ideal (𝓞 K))) ↔ (absNorm (I : Ideal (𝓞 K)) ≤ N) :=
+    Nat.mul_le_mul_right_iff hNJ
+  rw [hnle, ← hres]
+  tauto
+
+open Ideal Submodule in
+/-- **Principalization (`Nat.card` level).** With `ClassGroup.mk0 J = C⁻¹`, the count of class-`C`
+ideals of norm `≤ N` and residue `a (mod c)` equals the count of `J`-divisible principal ideals
+of norm `≤ N·N(J)` and residue `a·N(J) (mod c·N(J))`. The bijection is `I ↦ J · I`
+(`Equiv.dvd J`); the predicate correspondence is `principalize_iff`. -/
+private theorem card_principalize {K : Type*} [Field K] [NumberField K] (c : ℕ) [NeZero c]
+    (a : ZMod c) (N : ℕ) (C : ClassGroup (𝓞 K)) (J : (Ideal (𝓞 K))⁰)
+    (hJ : ClassGroup.mk0 J = C⁻¹) (hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K))) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C}
+    = Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+        (IsPrincipal (I : Ideal (𝓞 K)) ∧
+        Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K)))) =
+          ((a.val * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) :
+            ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K))))))} := by
+  classical
+  simp_rw [← nonZeroDivisors_dvd_iff_dvd_coe]
+  exact Nat.card_congr
+    (((Equiv.dvd J).subtypeEquiv (fun I => principalize_iff c a N C J I hJ hNJ)).trans
+      (Equiv.subtypeSubtypeEquivSubtypeInter (fun I : (Ideal (𝓞 K))⁰ ↦ J ∣ I) _))
+
 /-! ### The per-residue effective ideal count -/
+
+open Ideal in
+/-- **Effective count of `J`-divisible principal ideals with a norm residue** (the geometric core
+of the per-class count). For a fixed nonzero ideal `J` and a residue `b (mod m)`, the number of
+`J`-divisible principal ideals of norm `≤ N·N(J)` with norm residue `b (mod m)` is
+`κ·N + O(N^{1-1/d})`.
+
+This is the post-principalization target: via `card_isPrincipal_dvd_norm_le` and the
+`idealSetEquivNorm` dictionary it equals `(1/torsionOrder K)` times the count of cone points of
+`idealLattice K J` of `mixedEmbedding.norm ≤ N·N(J)` carrying the residue
+`(absNorm (span x) : ZMod m) = b` (torsion-invariant). Sign-orthant decomposition
+(`plusPart`/`negAt`, `natAbs_norm_eq_neg_one_pow_mul_norm`) turns the absolute residue into the
+coset-constant signed residue (`natCast_algebraNorm_add_nsmul_mul`); transport to `ℤ^ι` in
+`euclidean K` (`ZLattice.volume_image_eq_volume_div_covolume'`) and count each `m·N(J)`-coset with
+the workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` at `t = (N·N(J))^{1/d}`,
+the frontier cover from `normLeOne_frontier_lipschitz_cover_mixedSpace` (through `toMixed`) plus
+hyperplane pieces. Summing finitely many estimates and dividing by `torsionOrder K` gives the
+bound. -/
+private theorem exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
+    {K : Type*} [Field K] [NumberField K] (m : ℕ) [NeZero m] (b : ℕ) (J : (Ideal (𝓞 K))⁰) :
+    ∃ κ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
+      |(Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+            (IsPrincipal (I : Ideal (𝓞 K)) ∧
+            Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+            ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ)
+          - κ * N|
+        ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+  sorry
+
+open Ideal in
+/-- **Per-class effective residue count.** For a fixed ideal class `C`, the number of nonzero
+integral ideals of norm `≤ N`, norm residue `a (mod c)`, **and class `C`** equals
+`κ_C · N + O(N^{1-1/d})`. Summed over the finite class group by
+`card_norm_le_residue_eq_sum_class`, this is the full effective count
+`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le`. Proof: principalize to `J`-divisible
+principal ideals (`card_principalize`, with `ClassGroup.mk0 J = C⁻¹`), then invoke the geometric
+core `exists_card_dvd_principal_residue_eq_sub_mul_rpow_le` at modulus `c·N(J)` and residue
+`a·N(J)`. -/
+private theorem exists_card_norm_le_residue_class_eq_sub_mul_rpow_le
+    {K : Type*} [Field K] [NumberField K] (c : ℕ) [NeZero c] (a : ZMod c) (C : ClassGroup (𝓞 K)) :
+    ∃ κ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
+      |(Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+            ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} : ℝ)
+          - κ * N|
+        ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
+  classical
+  -- Pick a representative `J` of `C⁻¹`.
+  obtain ⟨J, hJ⟩ := ClassGroup.mk0_surjective C⁻¹
+  have hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K)) := absNorm_pos_of_nonZeroDivisors J
+  -- The residue on the principalized side is modulo `c·N(J)` at value `a.val·N(J)`.
+  haveI : NeZero (c * Ideal.absNorm (J : Ideal (𝓞 K))) :=
+    ⟨Nat.mul_ne_zero (NeZero.ne c) hNJ.ne'⟩
+  obtain ⟨κ, C', hκ⟩ := exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
+    (c * Ideal.absNorm (J : Ideal (𝓞 K))) (a.val * Ideal.absNorm (J : Ideal (𝓞 K))) J
+  refine ⟨κ, C', fun N hN => ?_⟩
+  rw [card_principalize c a N C J hJ hNJ]
+  exact hκ N hN
 
 /-- **Effective ideal count by norm residue.** For a number field `K` and a modulus `c`, the
 number of nonzero integral ideals of norm `≤ N` with norm residue `a (mod c)` is
-`κ_a · N + O(N^{1-1/d})`, `d = [K:ℚ]`. Proof plan: split by ideal class (finitely many); per
-class, mathlib's principalization dictionary (`tendsto_norm_le_and_mk_eq_div_atTop`'s aux
-equivalences) trades ideals of class `C`, norm `≤ N` for cone points of the ideal lattice
-`Λ_J` of a representative `J` with `mixedEmbedding.norm ≤ N·N(J)`, up to the torsion order;
-the norm-residue condition becomes, per sign-orthant of the real coordinates, a union of
-cosets of `(c·N(J)) • Λ_J` (the algebraic norm is constant mod `c·N(J)` on such cosets and
-has constant sign per orthant); each orthant-cut region has Lipschitz-covered frontier
-(Gap A's `normLeOne_frontier_lipschitz_cover` plus bounded hyperplane pieces), so the
-workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` counts each coset with the
-uniform `O(t^{d-1})` error at `t = (N·N(J))^{1/d}`. -/
+`κ_a · N + O(N^{1-1/d})`, `d = [K:ℚ]`. Proof: split by ideal class (finitely many)
+(`card_norm_le_residue_eq_sum_class`); sum the per-class effective counts
+(`exists_card_norm_le_residue_class_eq_sub_mul_rpow_le`) and bound the total error by the
+triangle inequality over the (finite) class group. -/
 theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le
     (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (a : ZMod c) :
     ∃ κ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
@@ -433,7 +768,27 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le
             ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} : ℝ)
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  sorry
+  classical
+  -- Per-class constants.
+  choose κf C'f hκf using fun C : ClassGroup (𝓞 K) =>
+    exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c a C
+  refine ⟨∑ C : ClassGroup (𝓞 K), κf C, ∑ C : ClassGroup (𝓞 K), |C'f C|, fun N hN => ?_⟩
+  -- Split the count and the leading term over the class group.
+  rw [card_norm_le_residue_eq_sum_class c a N]
+  rw [show ((∑ C : ClassGroup (𝓞 K),
+        Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} : ℕ) : ℝ)
+      = ∑ C : ClassGroup (𝓞 K),
+        (Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} : ℝ) by
+    push_cast; rfl]
+  rw [Finset.sum_mul, ← Finset.sum_sub_distrib]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  rw [Finset.sum_mul]
+  refine Finset.sum_le_sum (fun C _ => ?_)
+  refine (hκf C N hN).trans ?_
+  gcongr
+  exact le_abs_self _
 
 /-- **Norm-residue density transfer (κ-uniformity over realized residues).** If every residue
 in a subgroup `S ≤ (ℤ/c)ˣ` is realized as the norm residue of some nonzero ideal, then the
