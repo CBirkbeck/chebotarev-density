@@ -1857,6 +1857,41 @@ private theorem exists_card_norm_le_residue_class_eq_sub_mul_rpow_le
   rw [card_principalize c a N C J hJ hNJ]
   exact hκ N hN
 
+/-- **The leading constant is the limit of `count / N`.** An effective estimate
+`|f N - κ·N| ≤ C'·N^{1-1/d}` (with `d ≥ 1`) pins `κ` as the limit of `f N / N`: the relative
+error is `|f N / N - κ| ≤ |C'|·N^{-1/d} → 0`. In particular two leading constants for the same
+counting function `f` must coincide (`Filter.Tendsto.unique`). This makes the per-residue
+density of `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` a well-defined invariant of the
+residue, independent of the `∃`-witness. -/
+private theorem tendsto_div_atTop_of_sub_mul_rpow_le {f : ℕ → ℝ} {κ C' : ℝ} {d : ℕ}
+    (hd : 0 < d) (hbound : ∀ N : ℕ, 1 ≤ N → |f N - κ * N| ≤ C' * (N : ℝ) ^ (1 - (d : ℝ)⁻¹)) :
+    Filter.Tendsto (fun N : ℕ => f N / (N : ℝ)) Filter.atTop (nhds κ) := by
+  have hdne : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hd.ne'
+  have hdpos : (0 : ℝ) < (d : ℝ)⁻¹ := by positivity
+  -- The dominating sequence `|C'| · N^{-1/d}` tends to `0`.
+  have hzero : Filter.Tendsto (fun N : ℕ => |C'| * (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+      by
+    have h1 : Filter.Tendsto (fun x : ℝ => x ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+      tendsto_rpow_neg_atTop hdpos
+    have h2 : Filter.Tendsto (fun N : ℕ => (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+      h1.comp tendsto_natCast_atTop_atTop
+    simpa using h2.const_mul |C'|
+  -- Squeeze `‖f N / N - κ‖ = |f N / N - κ|` between `0` and the dominating sequence.
+  rw [tendsto_iff_norm_sub_tendsto_zero]
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N => norm_nonneg _) ?_ hzero
+  filter_upwards [Filter.eventually_ge_atTop 1] with N hN
+  have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one hN
+  have hNne : (N : ℝ) ≠ 0 := hNpos.ne'
+  rw [Real.norm_eq_abs, div_sub' hNne, abs_div, abs_of_pos hNpos, div_le_iff₀ hNpos,
+    mul_comm (N : ℝ) κ]
+  refine (hbound N hN).trans ?_
+  -- `C' · N^{1-1/d} ≤ |C'| · N^{-1/d} · N`, using `N^{1-1/d} = N^{-1/d} · N`.
+  have hsplit : (N : ℝ) ^ (1 - (d : ℝ)⁻¹) = (N : ℝ) ^ (-(d : ℝ)⁻¹) * (N : ℝ) := by
+    rw [show (1 : ℝ) - (d : ℝ)⁻¹ = -(d : ℝ)⁻¹ + 1 by ring, Real.rpow_add hNpos, Real.rpow_one]
+  rw [hsplit, ← mul_assoc]
+  gcongr
+  exact le_abs_self C'
+
 /-- **Effective ideal count by norm residue.** For a number field `K` and a modulus `c`, the
 number of nonzero integral ideals of norm `≤ N` with norm residue `a (mod c)` is
 `κ_a · N + O(N^{1-1/d})`, `d = [K:ℚ]`. Proof: split by ideal class (finitely many)
@@ -1892,17 +1927,85 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le
   gcongr
   exact le_abs_self _
 
+/-- **Norm-residue count, abbreviation.** `cardNormLeResidue K c a N` is the number of nonzero
+integral ideals of `𝓞 K` of norm `≤ N` whose norm is `≡ a (mod c)`. The leading constant of its
+effective estimate (`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le`) is, by
+`tendsto_div_atTop_of_sub_mul_rpow_le`, the limit of `cardNormLeResidue K c a N / N`. -/
+private def cardNormLeResidue (K : Type*) [Field K] [NumberField K] (c : ℕ) (a : ZMod c)
+    (N : ℕ) : ℕ :=
+  Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
+    ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a}
+
+/-- The density `lim cardNormLeResidue K c a N / N` exists and equals the leading constant of
+`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le`. -/
+private theorem exists_tendsto_cardNormLeResidue_div (K : Type*) [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (a : ZMod c) :
+    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c a N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ) := by
+  obtain ⟨κ, C', hκ⟩ := exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le K c a
+  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos
+    (fun N hN => hκ N hN)⟩
+
+/-- **κ-uniformity over the realized-residue subgroup (the geometric core).** The Dirichlet
+density of ideals with a fixed norm residue is **constant on the subgroup `S` of realized
+residues**: if `a, a' ∈ S` and the counts `cardNormLeResidue K c a` and `cardNormLeResidue K c a'`
+have densities `κ` and `κ'` (limits of `count / N`), then `κ = κ'`.
+
+This is the analytic heart of the Chebotarev abelian step (the `g`-independence of the
+Frobenius-fibre density over the image subgroup of ideal norms — the `ℚ(i)`-trap avoidance:
+uniformity over the **image subgroup**, never over all of `(ℤ/c)ˣ`).
+
+### Status: the single remaining gap of `IdealCongruenceCount`.
+
+The classical statement (Lang, *Algebraic Number Theory* GTM 110, Ch. VI §3 Thm 3;
+Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1) is **true**, but the elementary `κ`-transfer
+sketched in earlier drafts (multiply by a realizing ideal `𝔟`, sandwich) does **not** close:
+multiplication by `𝔟` scales the norm by `N𝔟 ≥ 1`, so it only yields the lossy
+`κ_a ≤ N𝔟 · κ_{a·t}` (and, with the inverse, `1 ≤ N𝔟 · N𝔟'`), never the needed equality —
+there is no norm-preserving ideal map shifting the residue. The genuine proof is geometric and
+goes through the per-`(orthant, coset)` cell structure already built in this file
+(`exists_card_idealSet_residue_le`): the per-residue density is
+`κ_a = N(J)·∑_{cells (s,k)} ⟦residue holds on cell⟧ · vol(D₀ ∩ orthant s)/|det T'|`, summed over
+ideal classes. Two ingredients close it:
+
+* **Orthant volume symmetry.** `vol(D₀ ∩ orthant s)` is independent of the sign pattern `s`,
+  since `D₀ = Φ '' normLeOne K` is sign-symmetric (mathlib's `volume_negAt_plusPart` /
+  `volume_eq_two_pow_mul_volume_plusPart`, transported through the chart `Φ`). Hence each cell
+  contributes the same `κ₀ = vol(D₀)/(2^{r₁}·|det T'|)` and `κ_a = κ₀·N(J)·#{qualifying cells}`.
+
+* **Equinumerosity of qualifying cells across `S`.** Multiplication by an element `y ∈ 𝓞 K`
+  invertible mod the per-class modulus `c·N(J)` permutes the cells `(s,k)` and shifts the
+  signed-norm residue by `Norm y`, giving a bijection between the qualifying-cell sets for
+  residues `a` and `a·(Norm y)`. The obstruction is that this needs **element** realizers `y`
+  coprime to `c·N(J)`, whereas the available hypothesis `hS` supplies **ideal** realizers `𝔟`
+  with no control of coprimality to the (class-dependent) factor `N(J)`. Discharging this gap
+  cleanly likely requires strengthening `hS` to an element form (`∃ y, IsUnit (y : ZMod c) ∧
+  (Algebra.norm ℤ y : ZMod c) = a`) and threading the realizer through the per-class
+  principalization — left for a dedicated geometric development. -/
+private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field K] [NumberField K]
+    {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
+    (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
+      ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c))
+    {a a' : (ZMod c)ˣ} (ha : a ∈ S) (ha' : a' ∈ S) {κ κ' : ℝ}
+    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ))
+    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
+      Filter.atTop (nhds κ')) :
+    κ = κ' := by
+  sorry
+
 /-- **Norm-residue density transfer (κ-uniformity over realized residues).** If every residue
 in a subgroup `S ≤ (ℤ/c)ˣ` is realized as the norm residue of some nonzero ideal, then the
 leading densities of `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` can be taken
-**equal across `S`**: multiplication by a fixed ideal `𝔟` with `(N𝔟 : ZMod c) = t` injects
-`{N(I) ≤ N, N(I) ≡ a}` into `{N(I) ≤ N·N𝔟, N(I) ≡ a·t}` with complement of relative density
-`0`, so the leading constants — which are pinned as the limits of `count/N` by the effective
-bounds — satisfy `κ_a ≤ N𝔟 · κ_{a·t}` and (using the inverse residue, `S` a group)
-conversely; a short sandwich gives `κ_a = κ_{a·t}` for all `t` realized, hence constancy on
-`S`-cosets, in particular on `S`. This is the `g`-independence input of the Frobenius-fibre
-equidistribution (the `ℚ(i)`-trap avoidance: uniformity over the **image subgroup** of ideal
-norms, never over all of `(ℤ/c)ˣ`). -/
+**equal across `S`**: there is **one** pair `(κ, C')` for which the effective estimate
+`|#{N(I) ≤ N, N(I) ≡ a} − κ·N| ≤ C'·N^{1-1/d}` holds for every `a ∈ S` simultaneously. This is
+the `g`-independence input of the Frobenius-fibre equidistribution (the `ℚ(i)`-trap avoidance:
+uniformity over the **image subgroup** of ideal norms, never over all of `(ℤ/c)ˣ`).
+
+Proof: the per-residue leading constants are the limits of `count / N`
+(`tendsto_div_atTop_of_sub_mul_rpow_le`), so they are constant on `S`
+(`cardNormLeResidue_density_eq_of_mem_subgroup`); take that common value as `κ` and the sum of the
+per-residue error constants over the finite `ZMod c` as `C'`. -/
 theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
     (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (S : Subgroup (ZMod c)ˣ)
     (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
@@ -1912,6 +2015,25 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
             ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c)} : ℝ)
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  sorry
+  classical
+  -- Per-residue effective constants and the per-residue density (limit of `count / N`).
+  choose κf C'f hκf using exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le K c
+  choose κlim hκlim using exists_tendsto_cardNormLeResidue_div K c
+  -- The leading constant for residue `a` is its density.
+  have hκfeq : ∀ a : ZMod c, κf a = κlim a := fun a =>
+    tendsto_nhds_unique
+      (tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hκf a N hN)) (hκlim a)
+  refine ⟨κlim ((1 : (ZMod c)ˣ) : ZMod c), ∑ b : ZMod c, |C'f b|, fun a ha N hN => ?_⟩
+  -- Constancy of the density over `S`: `κlim a = κlim 1`.
+  have hconst : κlim ((a : (ZMod c)ˣ) : ZMod c) = κlim ((1 : (ZMod c)ˣ) : ZMod c) :=
+    cardNormLeResidue_density_eq_of_mem_subgroup hS ha (one_mem S)
+      (by simpa [cardNormLeResidue] using hκlim ((a : (ZMod c)ˣ) : ZMod c))
+      (by simpa [cardNormLeResidue] using hκlim ((1 : (ZMod c)ˣ) : ZMod c))
+  rw [← hconst, ← hκfeq ((a : (ZMod c)ˣ) : ZMod c)]
+  -- Reduce to the per-residue effective bound and dominate the error constant.
+  refine (hκf ((a : (ZMod c)ˣ) : ZMod c) N hN).trans
+    (mul_le_mul_of_nonneg_right ?_ (Real.rpow_nonneg (Nat.cast_nonneg N) _))
+  exact (le_abs_self _).trans (Finset.single_le_sum
+    (f := fun b => |C'f b|) (fun b _ => abs_nonneg _) (Finset.mem_univ _))
 
 end Chebotarev
