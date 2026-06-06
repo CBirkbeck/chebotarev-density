@@ -1035,9 +1035,314 @@ private theorem mem_factors_badPart {𝔞 : Ideal (𝓞 K)} {𝔭 : Ideal (𝓞 
       (Multiset.mem_of_mem_filter h𝔮))] at h𝔭
   exact ⟨Multiset.mem_of_mem_filter h𝔭, (Multiset.mem_filter.mp h𝔭).2⟩
 
+/-- Every prime factor of a coprime-norm ideal has coprime norm (a factor's norm divides the
+ideal's norm). -/
+private theorem coprime_absNorm_of_mem_factors_of_coprime {𝔠 : Ideal (𝓞 K)}
+    (hcop : (Ideal.absNorm 𝔠).Coprime m) {𝔮 : Ideal (𝓞 K)}
+    (h𝔮 : 𝔮 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔠) :
+    (Ideal.absNorm 𝔮).Coprime m :=
+  Nat.Coprime.coprime_dvd_left
+    (Ideal.absNorm_dvd_absNorm_of_le
+      (Ideal.le_of_dvd (UniqueFactorizationMonoid.dvd_of_mem_normalizedFactors h𝔮))) hcop
+
+/-- **Good part of a coprime·bad product.** If every factor of `𝔠` has coprime norm and every
+factor of `𝔟` does not, then the good part of `𝔠 * 𝔟` is `𝔠` (the coprime side of the
+factor-filter split). -/
+private theorem goodPart_mul_eq {𝔠 𝔟 : Ideal (𝓞 K)} (h𝔠 : 𝔠 ≠ ⊥) (h𝔟 : 𝔟 ≠ ⊥)
+    (hc : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔠, (Ideal.absNorm 𝔭).Coprime m)
+    (hb : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔟, ¬(Ideal.absNorm 𝔭).Coprime m) :
+    goodPart K m (𝔠 * 𝔟) = 𝔠 := by
+  classical
+  rw [goodPart, UniqueFactorizationMonoid.normalizedFactors_mul h𝔠 h𝔟, Multiset.filter_add,
+    Multiset.filter_eq_self.mpr hc, Multiset.filter_eq_nil.mpr hb, add_zero]
+  exact Ideal.prod_normalizedFactors_eq_self h𝔠
+
+/-- **Bad part of a coprime·bad product.** Symmetrically, the bad part of `𝔠 * 𝔟` is `𝔟`. -/
+private theorem badPart_mul_eq {𝔠 𝔟 : Ideal (𝓞 K)} (h𝔠 : 𝔠 ≠ ⊥) (h𝔟 : 𝔟 ≠ ⊥)
+    (hc : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔠, (Ideal.absNorm 𝔭).Coprime m)
+    (hb : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔟, ¬(Ideal.absNorm 𝔭).Coprime m) :
+    badPart K m (𝔠 * 𝔟) = 𝔟 := by
+  classical
+  rw [badPart, UniqueFactorizationMonoid.normalizedFactors_mul h𝔠 h𝔟, Multiset.filter_add,
+    Multiset.filter_eq_nil.mpr (fun 𝔭 h𝔭 => not_not.mpr (hc 𝔭 h𝔭)),
+    Multiset.filter_eq_self.mpr hb, zero_add]
+  exact Ideal.prod_normalizedFactors_eq_self h𝔟
+
 end BadGoodSplit
 
+/-! ### Finiteness of the bad-prime set
+
+The "bad" primes are the nonzero primes `𝔭` whose norm is *not* coprime to `m`. Each such `𝔭`
+contains the integer cast `(p : 𝓞 K)` of some prime factor `p ∣ m` (the rational prime below
+`𝔭`), so the bad-prime set is covered by the finitely many prime divisors of the ideals
+`(p)`, `p ∈ m.primeFactors` — a finite set. -/
+
+section BadPrimesFinite
+
+variable (K : Type*) [Field K] [NumberField K] (m : ℕ)
+
+omit [NumberField K] in
+/-- If the integer cast `(n : 𝓞 K)` lies in a prime ideal `𝔭` and `1 < n`, then some rational
+prime factor `r ∣ n` already casts into `𝔭`. (Strong induction on `n`: factor `n = r·k`; the
+prime `𝔭` swallows `r` or `k`, and `k < n` recurses.) -/
+private theorem exists_prime_dvd_natCast_mem
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (n : ℕ) (hn1 : 1 < n) (hmem : (n : 𝓞 K) ∈ 𝔭) :
+    ∃ r : ℕ, r.Prime ∧ r ∣ n ∧ (r : 𝓞 K) ∈ 𝔭 := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    obtain ⟨r, hr, k, rfl⟩ := Nat.exists_prime_and_dvd (by omega : n ≠ 1)
+    have hkpos : 0 < k := by
+      rcases Nat.eq_zero_or_pos k with h | h
+      · rw [h, Nat.mul_zero] at hn1; omega
+      · exact h
+    have hcast : ((r * k : ℕ) : 𝓞 K) = (r : 𝓞 K) * (k : 𝓞 K) := by push_cast; ring
+    rw [hcast] at hmem
+    rcases ‹𝔭.IsPrime›.mem_or_mem hmem with hrm | hkm
+    · exact ⟨r, hr, ⟨k, rfl⟩, hrm⟩
+    · by_cases hk1 : k = 1
+      · subst hk1; simp only [Nat.cast_one] at hkm
+        exact absurd (Ideal.eq_top_of_isUnit_mem _ hkm isUnit_one) ‹𝔭.IsPrime›.ne_top
+      · have hklt : k < r * k := by
+          have h2 : 2 ≤ r := hr.two_le
+          calc k = 1 * k := (one_mul k).symm
+            _ < r * k := (Nat.mul_lt_mul_right hkpos).2 (by omega)
+        obtain ⟨s, hs, hsdvd, hsm⟩ := ih k hklt (by omega) hkm
+        exact ⟨s, hs, hsdvd.trans ⟨r, by ring⟩, hsm⟩
+
+/-- A nonzero prime with norm not coprime to `m` contains `(p : 𝓞 K)` for some `p ∈ m.primeFactors`:
+the norm `N𝔭` is a power of a single rational prime `r` (since `r ∈ 𝔭 ⇒ N𝔭 ∣ r^d`), and the prime
+`p ∣ gcd(N𝔭, m)` must equal `r`, hence `p ∣ m` and `(p : 𝓞 K) = (r : 𝓞 K) ∈ 𝔭`. -/
+private theorem exists_primeFactor_natCast_mem_of_not_coprime
+    [NeZero m] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥)
+    (hncop : ¬ (Ideal.absNorm 𝔭).Coprime m) :
+    ∃ p ∈ m.primeFactors, (p : 𝓞 K) ∈ 𝔭 := by
+  have hN0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => h𝔭 (Ideal.absNorm_eq_zero_iff.mp h)
+  have hN1' : Ideal.absNorm 𝔭 ≠ 1 := fun h => ‹𝔭.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  obtain ⟨r, hr, hrdvd, hrm⟩ :=
+    exists_prime_dvd_natCast_mem K 𝔭 _ (by omega) (Ideal.absNorm_mem 𝔭)
+  have hNdvd : Ideal.absNorm 𝔭 ∣ r ^ Module.finrank ℤ (𝓞 K) := by
+    have hd := Ideal.absNorm_dvd_absNorm_of_le ((Ideal.span_singleton_le_iff_mem _).mpr hrm)
+    rwa [Ideal.absNorm_span_singleton, show ((r : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (r : ℤ) by
+        push_cast; rfl, Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
+  obtain ⟨p, hp, hpdvd⟩ :=
+    Nat.exists_prime_and_dvd (show Nat.gcd (Ideal.absNorm 𝔭) m ≠ 1 from hncop)
+  have hpr : p ∣ r ^ Module.finrank ℤ (𝓞 K) := (hpdvd.trans (Nat.gcd_dvd_left _ _)).trans hNdvd
+  have hpeqr : p = r := (Nat.prime_dvd_prime_iff_eq hp hr).mp (hp.dvd_of_dvd_pow hpr)
+  exact ⟨p, Nat.mem_primeFactors.mpr ⟨hp, hpdvd.trans (Nat.gcd_dvd_right _ _), NeZero.ne m⟩,
+    hpeqr ▸ hrm⟩
+
+/-- The nonzero primes containing a fixed nonzero integer cast `(p : 𝓞 K)` form a finite set
+(they are the prime divisors of `(p)`, and a nonzero ideal has finitely many prime divisors). -/
+private theorem finite_primes_natCast_mem (p : ℕ) (hp : p ≠ 0) :
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ (p : 𝓞 K) ∈ 𝔭}.Finite := by
+  classical
+  have hspan : (Ideal.span {(p : 𝓞 K)}) ≠ 0 := by
+    simp only [Ne, Ideal.zero_eq_bot, Ideal.span_singleton_eq_bot]
+    exact_mod_cast hp
+  have hfin := Ideal.finite_factors (R := 𝓞 K) hspan
+  apply Set.Finite.ofFinset (hfin.toFinset.image fun v => v.asIdeal)
+  intro 𝔭
+  simp only [Set.Finite.mem_toFinset, Finset.mem_image, Set.mem_setOf_eq]
+  constructor
+  · rintro ⟨v, hv, rfl⟩
+    exact ⟨v.isPrime, v.ne_bot, (Ideal.dvd_iff_le.mp hv) (Ideal.mem_span_singleton_self _)⟩
+  · rintro ⟨hprime, hne, hmem⟩
+    exact ⟨⟨𝔭, hprime, hne⟩, Ideal.dvd_iff_le.mpr ((Ideal.span_singleton_le_iff_mem _).mpr hmem),
+      rfl⟩
+
+/-- **The bad-prime set is finite.** The nonzero primes whose norm is not coprime to `m` are
+covered by the finitely many primes containing `(p : 𝓞 K)` for `p ∈ m.primeFactors`. -/
+private theorem finite_badPrimes [NeZero m] :
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (Ideal.absNorm 𝔭).Coprime m}.Finite := by
+  classical
+  refine Set.Finite.subset
+    (Set.Finite.biUnion (s := (↑m.primeFactors : Set ℕ)) (Set.toFinite _) fun p _ =>
+      finite_primes_natCast_mem K p ?_) ?_
+  · exact Nat.pos_of_mem_primeFactors (by assumption) |>.ne'
+  · rintro 𝔭 ⟨hprime, hne, hncop⟩
+    haveI := hprime
+    obtain ⟨p, hp, hpmem⟩ := exists_primeFactor_natCast_mem_of_not_coprime K m 𝔭 hne hncop
+    exact Set.mem_biUnion hp ⟨hprime, hne, hpmem⟩
+
+end BadPrimesFinite
+
 end GapBAssembly
+
+section FibrePartition
+
+open UniqueFactorizationMonoid in
+/-- **Per-bad-part fibre bijection (Sharifi 7.2.2 geometry-of-numbers step C).** Fix a nonzero,
+"bad-supported" ideal `𝔟` (every factor unramified with norm *not* coprime to `m`) and a target
+Frobenius `g`. The unramified-supported ideals `𝔞` of norm `≤ N` with `Frob 𝔞 = g` whose bad part
+is exactly `𝔟` are in bijection with the *coprime-norm* ideals `𝔠` of norm `≤ ⌊N / N𝔟⌋` with
+`Frob 𝔠 = g · (Frob 𝔟)⁻¹`, via `𝔞 ↦ goodPart 𝔞` (inverse `𝔠 ↦ 𝔠 * 𝔟`). The norm bound transfers
+through `N(goodPart 𝔞) · N𝔟 = N𝔞` (`Nat.le_div_iff_mul_le`), the Frobenius condition through
+multiplicativity and group cancellation, and the bad/good split through `goodPart_mul_eq` /
+`badPart_mul_eq`. -/
+private theorem card_fibre_eq_card_good_fibre
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (g : Gal(L/K)) (N : ℕ) {𝔟 : Ideal (𝓞 K)} (h𝔟 : 𝔟 ≠ ⊥)
+    (hbU : ∀ 𝔭 ∈ normalizedFactors 𝔟, UnramifiedIn K L 𝔭)
+    (hbn : ∀ 𝔭 ∈ normalizedFactors 𝔟, ¬(Ideal.absNorm 𝔭).Coprime m) :
+    Nat.card {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+          (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+            frobeniusIdeal K L 𝔞 = g ∧ badPart K m 𝔞 = 𝔟}
+        = Nat.card {𝔠 : Ideal (𝓞 K) // 𝔠 ≠ ⊥ ∧ Ideal.absNorm 𝔠 ≤ N / Ideal.absNorm 𝔟 ∧
+            (Ideal.absNorm 𝔠).Coprime m ∧ frobeniusIdeal K L 𝔠 = g * (frobeniusIdeal K L 𝔟)⁻¹} := by
+  classical
+  have hNb : 0 < Ideal.absNorm 𝔟 :=
+    Nat.pos_of_ne_zero fun h => h𝔟 (Ideal.absNorm_eq_zero_iff.mp h)
+  refine Nat.card_congr
+    { toFun := fun 𝔞 => ⟨goodPart K m 𝔞.1, goodPart_ne_bot K m 𝔞.1, ?_, ?_, ?_⟩
+      invFun := fun 𝔠 => ⟨𝔠.1 * 𝔟, ?_, ?_, ?_, ?_, ?_⟩
+      left_inv := ?_
+      right_inv := ?_ }
+  · -- N(goodPart 𝔞) ≤ N / N𝔟
+    obtain ⟨𝔞, h0, hN, _, _, hbad⟩ := 𝔞
+    have hgood : goodPart K m 𝔞 * 𝔟 = 𝔞 := by
+      rw [← hbad]; exact goodPart_mul_badPart K m 𝔞 h0
+    refine (Nat.le_div_iff_mul_le hNb).mpr ?_
+    rw [← map_mul Ideal.absNorm, hgood]
+    exact hN
+  · -- (N(goodPart 𝔞)).Coprime m
+    exact absNorm_goodPart_coprime K m 𝔞.1
+  · -- Frob(goodPart 𝔞) = g · (Frob 𝔟)⁻¹
+    obtain ⟨𝔞, h0, _, _, hfr, hbad⟩ := 𝔞
+    have hgood : goodPart K m 𝔞 * 𝔟 = 𝔞 := by
+      rw [← hbad]; exact goodPart_mul_badPart K m 𝔞 h0
+    have hmul : frobeniusIdeal K L (goodPart K m 𝔞) * frobeniusIdeal K L 𝔟 = g := by
+      rw [← frobeniusIdeal_mul K L (goodPart_ne_bot K m 𝔞) h𝔟, hgood, hfr]
+    exact eq_mul_inv_of_mul_eq hmul
+  · -- 𝔠 * 𝔟 ≠ ⊥
+    exact mul_ne_zero 𝔠.2.1 h𝔟
+  · -- N(𝔠 * 𝔟) ≤ N
+    obtain ⟨𝔠, h0, hN, _, _⟩ := 𝔠
+    rw [map_mul Ideal.absNorm]
+    exact (Nat.le_div_iff_mul_le hNb).mp hN
+  · -- every factor of 𝔠 * 𝔟 is unramified
+    obtain ⟨𝔠, h0, _, hcop, _⟩ := 𝔠
+    intro 𝔭 h𝔭
+    rw [normalizedFactors_mul h0 h𝔟, Multiset.mem_add] at h𝔭
+    rcases h𝔭 with h𝔭 | h𝔭
+    · haveI : 𝔭.IsPrime := Ideal.isPrime_of_prime (prime_of_normalized_factor _ h𝔭)
+      exact unramifiedIn_of_coprime_absNorm K L m 𝔭
+        (prime_of_normalized_factor _ h𝔭).ne_zero
+        (coprime_absNorm_of_mem_factors_of_coprime K m hcop h𝔭)
+    · exact hbU 𝔭 h𝔭
+  · -- Frob(𝔠 * 𝔟) = g
+    obtain ⟨𝔠, h0, _, _, hfr⟩ := 𝔠
+    rw [frobeniusIdeal_mul K L h0 h𝔟, hfr, inv_mul_cancel_right]
+  · -- badPart(𝔠 * 𝔟) = 𝔟
+    obtain ⟨𝔠, h0, _, hcop, _⟩ := 𝔠
+    exact badPart_mul_eq K m h0 h𝔟
+      (fun 𝔭 h𝔭 => coprime_absNorm_of_mem_factors_of_coprime K m hcop h𝔭) hbn
+  · -- left_inv: goodPart 𝔞 * 𝔟 = 𝔞
+    rintro ⟨𝔞, h0, _, _, _, hbad⟩
+    apply Subtype.ext
+    simp only
+    rw [← hbad, goodPart_mul_badPart K m 𝔞 h0]
+  · -- right_inv: goodPart (𝔠 * 𝔟) = 𝔠
+    rintro ⟨𝔠, h0, _, hcop, _⟩
+    apply Subtype.ext
+    simp only
+    exact goodPart_mul_eq K m h0 h𝔟
+      (fun 𝔭 h𝔭 => coprime_absNorm_of_mem_factors_of_coprime K m hcop h𝔭) hbn
+
+variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
+  [IsGalois K L] [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+  [IsCyclotomicExtension {m} K L]
+
+open UniqueFactorizationMonoid in
+/-- The "bad-supported" ideals of norm `≤ N`: nonzero, with every prime factor unramified in `L`
+and of norm not coprime to `m`. -/
+private def IsBadPart (N : ℕ) (𝔟 : Ideal (𝓞 K)) : Prop :=
+  𝔟 ≠ ⊥ ∧ (∀ 𝔭 ∈ normalizedFactors 𝔟, UnramifiedIn K L 𝔭 ∧ ¬(Ideal.absNorm 𝔭).Coprime m) ∧
+    Ideal.absNorm 𝔟 ≤ N
+
+omit [NumberField L] [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] [NeZero m]
+  [IsCyclotomicExtension {m} K L] in
+/-- The bad-supported ideals of norm `≤ N` form a finite set: they are a subset of the (finitely
+many) ideals of norm `≤ N`. -/
+private theorem finite_isBadPart (N : ℕ) : {𝔟 : Ideal (𝓞 K) | IsBadPart K L m N 𝔟}.Finite :=
+  (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).subset fun _ h𝔟 => h𝔟.2.2
+
+open UniqueFactorizationMonoid in
+/-- The L2 fibre subtype at `g` is finite (subset of all ideals of norm `≤ N`). -/
+private instance finite_L2 (g : Gal(L/K)) (N : ℕ) :
+    Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+      (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧ frobeniusIdeal K L 𝔞 = g} := by
+  haveI : Finite {I : Ideal (𝓞 K) // Ideal.absNorm I ≤ N} :=
+    (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
+  exact Finite.of_injective (β := {I : Ideal (𝓞 K) // Ideal.absNorm I ≤ N})
+    (fun 𝔞 => ⟨𝔞.1, 𝔞.2.2.1⟩)
+    (fun _ _ hab => Subtype.ext (by simpa using hab))
+
+omit [FiniteDimensional K L] [NeZero m] [IsCyclotomicExtension {m} K L] in
+open UniqueFactorizationMonoid in
+/-- **The partition (Sharifi 7.2.2 step B).** The L2 fibre count at `g` is the sum over the finite
+bad-part set of the per-bad-part fibre counts. The fibration is `𝔞 ↦ badPart 𝔞`
+(`Equiv.sigmaFiberEquiv` + `Nat.card_sigma`); membership `badPart 𝔞 ∈ B_N` uses
+`badPart_ne_bot`/`mem_factors_badPart` and `N(badPart) ∣ N𝔞`. -/
+private theorem card_L2_eq_sum_fibres (g : Gal(L/K)) (N : ℕ) :
+    Nat.card {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+          (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧ frobeniusIdeal K L 𝔞 = g}
+        = ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
+          Nat.card {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+            (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+              frobeniusIdeal K L 𝔞 = g ∧ badPart K m 𝔞 = 𝔟} := by
+  classical
+  -- The bad-part map lands in the bad-finset.
+  set L2 := {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+    (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧ frobeniusIdeal K L 𝔞 = g} with hL2
+  have hbadmem : ∀ 𝔞 : L2, IsBadPart K L m N (badPart K m 𝔞.1) := by
+    rintro ⟨𝔞, h0, hN, hU, _⟩
+    refine ⟨badPart_ne_bot K m 𝔞, fun 𝔭 h𝔭 => ?_, ?_⟩
+    · exact ⟨hU 𝔭 (mem_factors_badPart K m h𝔭).1, (mem_factors_badPart K m h𝔭).2⟩
+    · have hdvd : badPart K m 𝔞 ∣ 𝔞 := by
+        rw [badPart]
+        conv_rhs => rw [← Ideal.prod_normalizedFactors_eq_self h0]
+        exact Multiset.prod_dvd_prod_of_le (Multiset.filter_le _ _)
+      exact le_trans (Nat.le_of_dvd (Nat.pos_of_ne_zero
+        (fun h => h0 (Ideal.absNorm_eq_zero_iff.mp h)))
+        (Ideal.absNorm_dvd_absNorm_of_le (Ideal.le_of_dvd hdvd))) hN
+  set F : L2 → (finite_isBadPart K L m N).toFinset :=
+    fun 𝔞 => ⟨badPart K m 𝔞.1, by rw [Set.Finite.mem_toFinset]; exact hbadmem 𝔞⟩ with hF
+  rw [Nat.card_congr (Equiv.sigmaFiberEquiv F).symm, Nat.card_sigma,
+    ← Finset.sum_coe_sort (finite_isBadPart K L m N).toFinset]
+  refine Finset.sum_congr rfl fun 𝔟 _ => ?_
+  -- identify the sigma fiber with the flat per-bad-part subtype
+  refine Nat.card_congr
+    { toFun := fun x => ⟨x.1.1, x.1.2.1, x.1.2.2.1, x.1.2.2.2.1, x.1.2.2.2.2,
+        Subtype.ext_iff.mp x.2⟩
+      invFun := fun y => ⟨⟨y.1, y.2.1, y.2.2.1, y.2.2.2.1, y.2.2.2.2.1⟩,
+        Subtype.ext y.2.2.2.2.2⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
+
+open UniqueFactorizationMonoid nonZeroDivisors in
+/-- **The L2 count as a sum of norm-residue counts.** Chaining the partition
+(`card_L2_eq_sum_fibres`), the per-bad-part bijection (`card_fibre_eq_card_good_fibre`), and the
+good-fibre↔residue dictionary (`card_good_fibre_eq_card_residue`): the L2 fibre count at `g` is the
+sum over the finite bad-part set of the norm-residue counts of modulus `m` at residue
+`autToPow (g · Frob(𝔟)⁻¹)`, each up to norm `⌊N / N𝔟⌋`. -/
+private theorem card_L2_eq_sum_residue {ζ : L} (hζ : IsPrimitiveRoot ζ m) (g : Gal(L/K)) (N : ℕ) :
+    Nat.card {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+          (∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧ frobeniusIdeal K L 𝔞 = g}
+        = ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
+          Nat.card {I : (Ideal (𝓞 K))⁰ //
+            Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N / Ideal.absNorm 𝔟 ∧
+              ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m))
+                = ((hζ.autToPow K (g * (frobeniusIdeal K L 𝔟)⁻¹) : (ZMod m)ˣ) : ZMod m)} := by
+  rw [card_L2_eq_sum_fibres K L m g N]
+  refine Finset.sum_congr rfl fun 𝔟 h𝔟 => ?_
+  rw [Set.Finite.mem_toFinset] at h𝔟
+  obtain ⟨h0, hbfac, _⟩ := h𝔟
+  rw [card_fibre_eq_card_good_fibre K L m g N h0 (fun 𝔭 h => (hbfac 𝔭 h).1)
+      (fun 𝔭 h => (hbfac 𝔭 h).2),
+    card_good_fibre_eq_card_residue K L m hζ (g * (frobeniusIdeal K L 𝔟)⁻¹) (N / Ideal.absNorm 𝔟)]
+
+end FibrePartition
 
 /-- **L2 (Sub-gaps 2+3) — unramified-supported Frobenius-fibre equidistribution.** For
 `L = K(μ_m)` cyclotomic, the number of nonzero ideals `𝔞` with `N𝔞 ≤ N`, **every prime factor of
