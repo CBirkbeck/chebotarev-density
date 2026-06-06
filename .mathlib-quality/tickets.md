@@ -98,13 +98,29 @@ the chain is sorry-free *modulo L3*.
     DISCARDED routes (lossy/walled — do not retry): ideal-multiplication limit transfer (N𝔟
     factor); element-orbit permutation (S ⊄ unit-norm-residues from ideal realizers).
     ⚠ CIRCULARITY (2026-06-06, caught pre-assembly): hF CANNOT be discharged via LF3 — LF3
-    is proven FROM leaf G FROM L2 (the statement being assembled). The non-circular source is
-    Lang VI §3 Thm 3 (per-ray-class counts; covolume cancellation covol(Λ_J) = N(J)·covol₀
-    makes the per-cell constant class-independent; fibres of the ray-class→residue group hom
-    are equinumerous). Bridge worker dispatched: `hS ⟹ hF` in ICC (pure geometry of numbers
-    + finite group theory; two candidate routes — per-class κ-refinement, or the direct
-    unit-orbit twisted-cell-sum argument; ℚ(i)/c=5 sanity passes via local norm surjectivity
-    on split primes).
+    is proven FROM leaf G FROM L2. Non-circular source: Lang VI §3 (geometry only).
+  - 2026-06-06 (later): bridge worker landed `tendsto_sum_char_mul_cardNormLeResidue_div_of_realized`
+    (hS ⟹ hF) sorry-free MODULO one isolated core `cardNormLeResidue_density_const_of_realized`
+    (κ-constancy over realized S). **THE CELL-LEVEL TRANSFER DESIGN THAT CLOSES IT (orchestrator,
+    2026-06-06)**: per class C with rep J and realizer 𝔟 of t (N𝔟 coprime c AUTOMATIC — its
+    residue is a unit): (1) the window bijection 𝔄 ↦ 𝔄𝔟 gives A_{C,x}(N) = A^{÷𝔟}_{C[𝔟],xt}(N·N𝔟)
+    EXACTLY; (2) choosing the C[𝔟]-rep J' coprime to the primes over N𝔟 (rep-choice lemma, CRT)
+    makes 𝔟J' + cNJ'·J' = J', so the finer-coset map (𝔟J')/(cNJ')(𝔟J') → J'/(cNJ')J' is
+    BIJECTIVE and the 𝔟-divisible count is a (𝔟J')-divisor instance of the SAME geometric core
+    with covol(𝔟J'-lattice) = N𝔟·covol(J'-lattice) ⟹ κ^{÷𝔟} = κ_full/N𝔟 EXACTLY (needs the
+    explicit-κ cell-formula refinement R1a of the cone-point count + mathlib
+    volume_fundamentalDomain_fractionalIdealLatticeBasis); (3) compose: κ_{C,x} = κ_{C[𝔟],xt};
+    (4) reindex the class group (·[𝔟]) and sum: κ_x = κ_{xt}; (5) closure-induction over S.
+    Worker a8a5264 dispatched with the full design.
+  - The L2 ASSEMBLY (ZetaProduct): dictionary layer PROVEN (unramifiedIn_of_coprime_absNorm via
+    the different ideal + conductor_mul_differentIdeal; autToPow_frobeniusIdeal; the good-fibre =
+    residue-count Equiv; badPart/goodPart split with 6 proven helpers). Worker adf8e2ee dispatched
+    on the remainder: σ-partition over bad parts, per-fibre Equiv, the coprime-restricted
+    Frobenii-generation variant (bad-prime Frobenii are NOT norm-residues — μ_m doesn't inject
+    mod 𝔓 when p ∣ m — so generation must be re-proven from coprime primes only, density
+    argument unaffected by finitely many exclusions), Euler-tail bounds (iSup-based, no tsum;
+    Finset.prod_sum expansion + geometric ≤ (1−x)⁻¹), d=1 ⟹ badPrimes = ∅ under hm (the one
+    sanctioned fallback sorry if ℚ-cyclotomic ramification inputs resist).
     ⚠ 3 consecutive worker dispatches died to API-529 overload (0 work done each, tree clean
     at e57e823) — retry the dispatch when capacity returns; the full worker brief is in the
     session transcript and reconstructible from this note.
