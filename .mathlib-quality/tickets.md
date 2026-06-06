@@ -97,6 +97,14 @@ the chain is sorry-free *modulo L3*.
     unchanged). Consumer discharges hF via PROVEN LF3 + `autToPow_frobeniusClass_out`.
     DISCARDED routes (lossy/walled — do not retry): ideal-multiplication limit transfer (N𝔟
     factor); element-orbit permutation (S ⊄ unit-norm-residues from ideal realizers).
+    ⚠ CIRCULARITY (2026-06-06, caught pre-assembly): hF CANNOT be discharged via LF3 — LF3
+    is proven FROM leaf G FROM L2 (the statement being assembled). The non-circular source is
+    Lang VI §3 Thm 3 (per-ray-class counts; covolume cancellation covol(Λ_J) = N(J)·covol₀
+    makes the per-cell constant class-independent; fibres of the ray-class→residue group hom
+    are equinumerous). Bridge worker dispatched: `hS ⟹ hF` in ICC (pure geometry of numbers
+    + finite group theory; two candidate routes — per-class κ-refinement, or the direct
+    unit-orbit twisted-cell-sum argument; ℚ(i)/c=5 sanity passes via local norm surjectivity
+    on split primes).
     ⚠ 3 consecutive worker dispatches died to API-529 overload (0 work done each, tree clean
     at e57e823) — retry the dispatch when capacity returns; the full worker brief is in the
     session transcript and reconstructible from this note.
