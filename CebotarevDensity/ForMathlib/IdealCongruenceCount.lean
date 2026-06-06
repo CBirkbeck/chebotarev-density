@@ -2420,6 +2420,74 @@ private theorem exists_card_dvd_principal_residue_real_le {K : Type*} [Field K] 
     _ = C₀ / torsionOrder K * s ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) * torsionOrder K := by
         field_simp
 
+/-- **Multiples below a bound collapse to the floor.** For `0 < m` and `m ∣ a`, the bound `a ≤ N`
+is equivalent to `a ≤ m·⌊N/m⌋` (the largest multiple of `m` not exceeding `N`). -/
+private theorem Nat.le_iff_le_mul_div_of_dvd {a m : ℕ} (hm : 0 < m) (hd : m ∣ a) (N : ℕ) :
+    a ≤ N ↔ a ≤ m * (N / m) := by
+  obtain ⟨k, rfl⟩ := hd
+  refine ⟨fun h => ?_, fun h => le_trans h (Nat.mul_div_le N m)⟩
+  exact Nat.mul_le_mul_left m ((Nat.le_div_iff_mul_le hm).mpr (by rwa [mul_comm] at h))
+
+open Ideal in
+/-- **Norm-window collapse for `𝔟`-divisible counts.** Every `𝔟`-divisible ideal has norm a
+multiple of `N(𝔟)`, so the bound `N(J') ≤ N` is the same as `N(J') ≤ N(𝔟)·⌊N/N(𝔟)⌋`. Hence
+the `𝔟`-divisible class-`D` residue count at bound `N` agrees with the one at the largest
+multiple of `N(𝔟)` below `N`. -/
+private theorem cardNormLeResidueClassDvd_floor_collapse {K : Type*} [Field K]
+    [NumberField K] (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰) (y : ZMod c)
+    (D : ClassGroup (𝓞 K)) (N : ℕ) :
+    cardNormLeResidueClassDvd c 𝔟 y D N
+      = cardNormLeResidueClassDvd c 𝔟 y D
+          (Ideal.absNorm (𝔟 : Ideal (𝓞 K))
+            * (N / Ideal.absNorm (𝔟 : Ideal (𝓞 K)))) := by
+  classical
+  set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
+  have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
+  rw [cardNormLeResidueClassDvd, cardNormLeResidueClassDvd]
+  refine Nat.card_congr (Equiv.subtypeEquivRight fun J => ?_)
+  -- the only difference between the two predicates is the norm bound
+  constructor
+  · rintro ⟨hb, ⟨hle, hres⟩, hcls⟩
+    have hNdvd : NB ∣ Ideal.absNorm (J : Ideal (𝓞 K)) := map_dvd Ideal.absNorm hb
+    exact ⟨hb, ⟨(Nat.le_iff_le_mul_div_of_dvd hNB hNdvd N).mp hle, hres⟩, hcls⟩
+  · rintro ⟨hb, ⟨hle, hres⟩, hcls⟩
+    have hNdvd : NB ∣ Ideal.absNorm (J : Ideal (𝓞 K)) := map_dvd Ideal.absNorm hb
+    exact ⟨hb, ⟨(Nat.le_iff_le_mul_div_of_dvd hNB hNdvd N).mpr hle, hres⟩, hcls⟩
+
+open Ideal in
+/-- **The single irreducible geometry-of-numbers fact of `IdealCongruenceCount` (Lang, *Algebraic
+Number Theory* GTM 110, Ch. VI §3, Thm 3; Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1).** The
+per-class norm-residue *density* is invariant under multiplying the class by `[𝔟]` and the residue
+by `N(𝔟)` (for `N(𝔟)` a unit mod `c`):
+`lim #{[I]=C, N(I)≤M, N(I)≡x}/M = lim #{[I]=C·[𝔟], N(I)≤M, N(I)≡x·N(𝔟)}/M`.
+
+Equivalently, the cone-point leading constants
+`κ_J := (exists_card_idealSet_residue_real_le (c·N(J)) (x·N(J)) J).choose` of the two
+principalizations (at a common representative `J` of `C⁻¹` and at `𝔟J`) satisfy
+`κ_{𝔟J}·N(𝔟) = κ_J`. This is the covolume / CRT equidistribution content: `Λ_{𝔟J} ⊆ Λ_J` is an
+index-`N(𝔟)` sublattice (`covol(Λ_{𝔟J}) = N(𝔟)·covol(Λ_J)`,
+`NumberField.mixedEmbedding.covolume_idealLattice`), and `gcd(N(𝔟), c·N(J)) = 1` makes the
+norm-residue selector equidistribute across the `N(𝔟)` cosets of `Λ_{𝔟J}` in `Λ_J`, so each
+qualifying `(orthant, coset)` cell of the workhorse contributes `1/N(𝔟)` of its `J`-mass to the
+`𝔟J`-count. There is no norm-preserving residue-shifting ideal map, so the elementary
+multiply-by-`𝔟` bijection (`cardNormLeResidueClass_eq_dvd`, Route A) cannot reach this; it is the
+single geometric input around which the rest of `IdealCongruenceCount` is assembled.
+
+**Status: the irreducible geometric fact, not yet formalised.** It is stated here as a
+density-transfer so the effective rate `O(N^{1-1/d})` is supplied by the already-proven
+`exists_card_norm_le_residue_class_eq_sub_mul_rpow_le` and only the *leading constant* needs this
+input. -/
+private theorem tendsto_cardNormLeResidueClass_div_transfer {K : Type*} [Field K] [NumberField K]
+    (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
+    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    (x : ZMod c) (C : ClassGroup (𝓞 K)) {κ : ℝ}
+    (hκ : Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
+      Filter.atTop (nhds κ)) :
+    Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c
+        (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) (C * ClassGroup.mk0 𝔟) M : ℝ) / (M : ℝ))
+      Filter.atTop (nhds κ) := by
+  sorry
+
 open Ideal in
 /-- **The single irreducible geometric kernel of `IdealCongruenceCount` (Lang, *Algebraic Number
 Theory* GTM 110, Ch. VI §3, Thm 3; Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1).** For a realizer
@@ -2429,22 +2497,19 @@ density (the hypothesis `hκfull`):
 `|#{𝔟 ∣ J, [J]=D, N(J) ≤ N, N(J) ≡ y (mod c)} − (κ_{D,y}/N(𝔟))·N| ≤ C·N^{1−1/d}`.
 
 This is the geometry-of-numbers content the elementary κ-transfer cannot reach (there is no
-norm-preserving residue-shifting ideal map). **Proof (not yet formalised — the irreducible
-geometric fact):** principalise both counts at a representative `J` of `D⁻¹` chosen coprime to `𝔟`
-with `gcd(N(J), N(𝔟)) = 1` (every ideal class contains a representative coprime to a fixed ideal,
-by prime avoidance / CRT in the Dedekind domain `𝓞 K`). The full count becomes the `J`-divisible
-principal residue count, the `𝔟`-divisible count the `𝔟J`-divisible principal residue count (since
-`𝔟 ∣ J·I ⟺ 𝔟J ∣ J·I` when `gcd(𝔟, J) = 1`), both at bound `N·N(J)`, modulus `c·N(J)`, residue
-`y·N(J)`. By `exists_card_dvd_principal_residue_real_le` (the decoupled-bound estimate, proved
-above) both have effective densities `κ_J·N(J)` and `κ_{𝔟J}·N(J)`, where `κ_J, κ_{𝔟J}` are the
-cone-point leading constants `(exists_card_idealSet_residue_real_le (c·N(J)) (y·N(J)) ·).choose`
-at `J` and `𝔟J`. The covolume relation `covol(Λ_{𝔟J}) = N(𝔟)·covol(Λ_J)`
-(`volume_fundamentalDomain_fractionalIdealLatticeBasis`) together with the CRT equidistribution of
-the residue selector over the `N(𝔟)` cosets of the index-`N(𝔟)` sublattice `Λ_{𝔟J} ⊆ Λ_J` (which
-holds because `gcd(N(𝔟), c·N(J)) = 1` makes `Λ_{𝔟J}` surject onto `(Λ_J/(c·N(J))Λ_J)`, so
-`κ_{𝔟J}·N(𝔟) = κ_J`) gives `κ_{𝔟J}·N(J)·N(𝔟) = κ_J·N(J) = κ_{D,y}` (the last equality from
-`hκfull` by `tendsto_nhds_unique`). Hence the `𝔟`-divisible density is `κ_{D,y}/N(𝔟)`, with the
-inherited `O(N^{1−1/d})` error. -/
+norm-preserving residue-shifting ideal map). **Proof (the geometric input is isolated in
+`tendsto_cardNormLeResidueClass_div_transfer`; everything else here is elementary):** write
+`u = N(𝔟) (mod c)` (a unit), `xC = y·u⁻¹`, `CC = D·[𝔟]⁻¹`. The norm-multiplying bijection
+`cardNormLeResidueClass_eq_dvd` (Route A) and the window collapse
+`cardNormLeResidueClassDvd_floor_collapse` (every `𝔟`-divisible norm is a multiple of `N(𝔟)`)
+give the exact count identity
+`#{𝔟 ∣ J, [J]=D, N(J) ≤ N, N(J) ≡ y} = #{[I]=CC, N(I) ≤ ⌊N/N(𝔟)⌋, N(I) ≡ xC}`. The right side has
+the *effective* estimate `κ_CC·⌊N/N(𝔟)⌋ + O(N^{1−1/d})` from the already-proven per-class count
+`exists_card_norm_le_residue_class_eq_sub_mul_rpow_le`; the geometric density transfer
+`tendsto_cardNormLeResidueClass_div_transfer` (the irreducible covolume / CRT equidistribution
+fact — `density(CC, xC) = density(CC·[𝔟], xC·N(𝔟)) = density(D, y) = κ_{D,y}` by `hκfull` and
+`tendsto_nhds_unique`) pins `κ_CC = κ_{D,y}`. Finally `κ_{D,y}·⌊N/N(𝔟)⌋ = (κ_{D,y}/N(𝔟))·N` up to
+`|κ_{D,y}|·{N/N(𝔟)} = O(1) = O(N^{1−1/d})`, giving the stated bound with `C' = |C₀| + |κ_{D,y}|`. -/
 private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] [NumberField K]
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
@@ -2455,7 +2520,103 @@ private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] 
       |(cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) -
           (κfull / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ)) * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  sorry
+  classical
+  set d := Module.finrank ℚ K with hd
+  have hdpos : 0 < d := Module.finrank_pos
+  set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
+  have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
+  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
+  -- The unit `u = N(𝔟) (mod c)`; the "back-shifted" residue is `xC = y·u⁻¹`.
+  set u : (ZMod c)ˣ := hu.unit with hudef
+  have hu_spec : (↑u : ZMod c) = (NB : ZMod c) := hu.unit_spec
+  set xC : ZMod c := y * (↑u⁻¹ : ZMod c) with hxC
+  set CC : ClassGroup (𝓞 K) := D * (ClassGroup.mk0 𝔟)⁻¹ with hCC
+  -- The residue/class identities for the Route-A bijection.
+  have hxmul : xC * (NB : ZMod c) = y := by
+    rw [hxC, ← hu_spec, mul_assoc, ← Units.val_mul, inv_mul_cancel, Units.val_one, mul_one]
+  have hCmul : CC * ClassGroup.mk0 𝔟 = D := by
+    rw [hCC, inv_mul_cancel_right]
+  -- The full class-`CC` residue-`xC` effective count (already proven).
+  obtain ⟨κC, C₀, hbound⟩ :=
+    exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c xC CC
+  -- The leading constant `κC` is the density of the `(CC, xC)` count.
+  have hκC : Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c xC CC M : ℝ) / (M : ℝ))
+      Filter.atTop (nhds κC) :=
+    tendsto_div_atTop_of_sub_mul_rpow_le (C' := C₀) (d := d) hdpos
+      (fun N hN => by simpa only [cardNormLeResidueClass] using hbound N hN)
+  -- Transfer pins `κC = κfull`: the density of `(CC·[𝔟], xC·N(𝔟)) = (D, y)` equals `κC`.
+  have hκCfull : κC = κfull := by
+    refine tendsto_nhds_unique ?_ hκfull
+    have := tendsto_cardNormLeResidueClass_div_transfer c 𝔟 hu xC CC hκC
+    rw [hxmul, hCmul] at this
+    exact this
+  -- Count identity: the `𝔟`-divisible count at `N` is the `(CC, xC)` count at `N / N(𝔟)`.
+  have hcount : ∀ N : ℕ, cardNormLeResidueClassDvd c 𝔟 y D N
+      = cardNormLeResidueClass c xC CC (N / NB) := by
+    intro N
+    rw [cardNormLeResidueClassDvd_floor_collapse c 𝔟 y D N,
+      cardNormLeResidueClass_eq_dvd c 𝔟 hu xC CC (N / NB), ← hNBdef, hxmul, hCmul, mul_comm NB]
+  -- Assemble the effective bound from the `(CC, xC)` estimate plus the floor error.
+  subst hκCfull
+  refine ⟨|C₀| + |κC|, fun N hN => ?_⟩
+  have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hexp : (0 : ℝ) ≤ 1 - (d : ℝ)⁻¹ := by
+    have : (d : ℝ)⁻¹ ≤ 1 := by
+      rw [inv_le_one₀ (by exact_mod_cast hdpos)]; exact_mod_cast hdpos
+    linarith
+  have hN1exp : (1 : ℝ) ≤ (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := Real.one_le_rpow hNR hexp
+  -- Decompose: dvd-count `- (κC/NB)·N = (count_CC(M) - κC·M) + (κC·M - (κC/NB)·N)`.
+  rw [hcount N]
+  set M : ℕ := N / NB with hMdef
+  have hsplit : (cardNormLeResidueClass c xC CC M : ℝ) - κC / (NB : ℝ) * N
+      = ((cardNormLeResidueClass c xC CC M : ℝ) - κC * M)
+          + (κC * M - κC / (NB : ℝ) * N) := by
+    ring
+  rw [hsplit]
+  refine (abs_add_le _ _).trans ?_
+  rw [add_mul]
+  gcongr ?_ + ?_
+  · -- the main estimate, with the `M = 0` edge case
+    rcases Nat.eq_zero_or_pos M with hM0 | hMpos
+    · have : cardNormLeResidueClass c xC CC M = 0 := by
+        rw [hM0, cardNormLeResidueClass, Nat.card_eq_zero]
+        left
+        refine ⟨fun ⟨I, hI, _⟩ => ?_⟩
+        have hI0 : Ideal.absNorm (I : Ideal (𝓞 K)) = 0 := Nat.le_zero.mp hI.1
+        rw [absNorm_eq_zero_iff] at hI0
+        exact nonZeroDivisors.coe_ne_zero I hI0
+      rw [this, hM0]
+      simp only [Nat.cast_zero, mul_zero, sub_zero, abs_zero]
+      positivity
+    · have hMR : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hMpos
+      calc |(cardNormLeResidueClass c xC CC M : ℝ) - κC * M|
+          ≤ C₀ * (M : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
+            simpa only [cardNormLeResidueClass, hd] using hbound M hMpos
+        _ ≤ |C₀| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
+            refine mul_le_mul (le_abs_self _) ?_ (by positivity) (abs_nonneg _)
+            refine Real.rpow_le_rpow (by positivity) ?_ hexp
+            exact_mod_cast Nat.div_le_self N NB
+  · -- the floor error `|κC·M - (κC/NB)·N| ≤ |κC|·N^{1-1/d}`
+    have hMle : (M : ℝ) ≤ (N : ℝ) / (NB : ℝ) := by
+      rw [le_div_iff₀ (by positivity)]
+      exact_mod_cast Nat.div_mul_le_self N NB
+    have hMlt : (N : ℝ) / (NB : ℝ) - (M : ℝ) < 1 := by
+      have hlt : N < (M + 1) * NB := by
+        have hmod : N = NB * M + N % NB := by rw [hMdef]; exact (Nat.div_add_mod N NB).symm
+        have hlt' : N % NB < NB := Nat.mod_lt N hNB
+        nlinarith [hmod, hlt']
+      have hltR : (N : ℝ) < ((M : ℝ) + 1) * NB := by exact_mod_cast hlt
+      rw [sub_lt_iff_lt_add, div_lt_iff₀ (by positivity)]
+      nlinarith [hltR]
+    have hnn : (0 : ℝ) ≤ (N : ℝ) / NB - M := by linarith
+    have heq : |κC * (M : ℝ) - κC / (NB : ℝ) * N| = |κC| * ((N : ℝ) / NB - M) := by
+      rw [show κC * (M : ℝ) - κC / (NB : ℝ) * N = -(κC * ((N : ℝ) / NB - M)) by
+        field_simp; ring, abs_neg, abs_mul, abs_of_nonneg hnn]
+    rw [heq]
+    calc |κC| * ((N : ℝ) / NB - M) ≤ |κC| * 1 :=
+          mul_le_mul_of_nonneg_left (by linarith) (abs_nonneg _)
+      _ ≤ |κC| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) :=
+          mul_le_mul_of_nonneg_left hN1exp (abs_nonneg _)
 
 open Ideal in
 /-- **Route B (the Lang covolume / CRT equidistribution).** For a realizer `𝔟` with `N(𝔟) (mod c)`
