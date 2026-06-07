@@ -42,6 +42,21 @@ right neighbourhood of $`s=1`.
 
 :::
 
+:::proof "prime-zeta-higher-tail-bounded"
+
+Summing the geometric series $`\sum_{k\ge 2} N\fp^{-ks}` over $`k`
+gives the per-prime term $`N\fp^{-2s}/(1-N\fp^{-s})`, so the tail of the
+log-Euler-product is dominated termwise by $`\sum_\fp
+N\fp^{-2s}/(1-N\fp^{-s})`. For $`s>1` (indeed already for
+$`\re(s)>1/2`) each prime has $`N\fp\ge 2`, whence $`N\fp^{-s}\le 1/2`,
+so $`(1-N\fp^{-s})^{-1}\le 2` and the term is bounded above by
+$`2\,N\fp^{-2}`. The majorant $`\sum_\fp 2\,N\fp^{-2}` is a convergent
+series independent of $`s` — it is dominated by $`\zeta_K(2)` — so the
+constant $`C = 2\sum_\fp N\fp^{-2}` bounds the tail uniformly on a right
+neighbourhood of $`1`.
+
+:::
+
 :::theorem "logzeta-eq-primesum-bounded" (lean := "Chebotarev.logDedekindZeta_sub_primeIdealZetaSum_bounded")
 
 Euler-product-log identity:

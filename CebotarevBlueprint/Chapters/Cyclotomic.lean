@@ -66,6 +66,23 @@ $$`
 {uses "frobenius-class"}[]
 :::
 
+:::proof "character-orthogonality-eq"
+
+Since $`G` is abelian, each character is multiplicative and
+$`\chi(\sigma)\chi(\Frob_\fp)^{-1} = \chi(\sigma\Frob_\fp^{-1})`, so the
+sum is $`\sum_{\chi\in\widehat G}\chi(g)` with $`g = \sigma\Frob_\fp^{-1}`.
+The hypothesis $`\sigma_\fp = [\sigma]` means $`\Frob_\fp` is conjugate
+to $`\sigma`, hence (in the abelian group) equal to $`\sigma`, so
+$`g = 1` and every summand is $`\chi(1) = 1`; the sum is $`\abs{\widehat
+G} = \abs{G}`. The supporting orthogonality fact — $`\sum_\chi \chi(g)`
+equals $`\abs{G}` if $`g = 1` and $`0` otherwise — is the standard
+finite-abelian relation: for $`g\ne 1` pick a separating character
+$`\chi_0` with $`\chi_0(g)\ne 1`; reindexing the sum by the translation
+$`\chi\mapsto\chi_0\chi` multiplies it by $`\chi_0(g)`, forcing it to
+vanish.
+
+:::
+
 :::lemma_ "character-orthogonality-ne" (lean := "Chebotarev.character_orthogonality_cyclotomic_ne")
 
 Let $`L = K(\zeta_m)`, $`\sigma \in G`, and $`\fp` a nonzero prime of
@@ -175,4 +192,34 @@ $$`
 {uses "dirichlet-density"}[]
 {uses "frobenius-class"}[]
 {uses "cyclotomic-density-two-sided"}[]
+:::
+
+:::proof "chebotarev-cyclotomic"
+
+Fix $`\sigma\in G`. By character orthogonality over
+$`\widehat G = \widehat{\Gal{K(\zeta_m)/K}}`
+({bpref "character-orthogonality-eq"}[] in the matching case,
+{bpref "character-orthogonality-ne"}[] otherwise), the indicator of the
+condition $`\sigma_\fp = \sigma` is the character average
+$`\frac{1}{\abs{G}}\sum_{\chi}\chi(\sigma)\chi(\Frob_\fp)^{-1}`. Summing
+against $`N\fp^{-s}` turns the Frobenius-fibre prime sum into
+$$`
+  \sum_{\sigma_\fp = \sigma} N\fp^{-s}
+  \;=\; \frac{1}{\abs{G}}\sum_{\chi\in\widehat G}\chi(\sigma)^{-1}
+        \sum_\fp \chi(\Frob_\fp)\,N\fp^{-s},
+`
+and each inner sum is, up to a bounded error, $`\log L(\chi, s)`
+{uses "artin-euler-product-abelian"}[]. For $`\chi\ne\mathbf{1}` the
+$`L`-function extends analytically across $`s=1`
+({bpref "artin-analytic-extension"}[]) and is non-vanishing there
+({bpref "artin-one-ne-zero"}[]){uses "artin-one-ne-zero"}[], so
+$`\log L(\chi, s)` stays bounded as $`s\downarrow 1`; only the trivial
+character $`\chi=\mathbf{1}`, whose $`L`-function is $`\zeta_K`, carries
+the pole $`\log L(\mathbf{1}, s)\sim\log\frac{1}{s-1}`. Hence the fibre
+sum is asymptotic to $`\frac{1}{\abs{G}}\log\frac{1}{s-1}`
+({bpref "primesum-fibre-asymp"}[]). Dividing by the universal sum
+$`\sum_\fp N\fp^{-s}\sim\log\frac{1}{s-1}` ({bpref "prime-ideal-sum-log"}[])
+gives the Dirichlet density $`1/\abs{G}`
+({bpref "cyclotomic-density-two-sided"}[]).
+
 :::

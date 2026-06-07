@@ -6,6 +6,7 @@ import VersoBlueprint.Commands.Summary
 import CebotarevBlueprint.Chapters.Density
 import CebotarevBlueprint.Chapters.Frobenius
 import CebotarevBlueprint.Chapters.ZetaProduct
+import CebotarevBlueprint.Chapters.Engine
 import CebotarevBlueprint.Chapters.Cyclotomic
 import CebotarevBlueprint.Chapters.Abelian
 import CebotarevBlueprint.Chapters.Main
@@ -24,6 +25,15 @@ theorem** in conjugacy-class form. For a finite Galois extension $`L/K` of numbe
 fields with Galois group $`G=\Gal{L/K}` and a conjugacy class $`C\subseteq G`, the
 Dirichlet density of the set of primes $`\fp` of $`\OK` whose Frobenius conjugacy
 class is $`C` equals $`\abs{C}/\abs{G}`.
+
+**The formalisation is complete.** Every declaration is fully proved — zero
+`sorry`s anywhere in the project — and the four headline theorems
+(`chebotarev_density`, `chebotarev_cyclotomic`, `chebotarev_abelian`,
+`density_split_completely`) rest on exactly the three standard Lean/Mathlib
+axioms `propext`, `Classical.choice`, and `Quot.sound`, with no project-specific
+axioms. This has been certified by `leanprover/comparator` (statement-identity
+against the intended statements, axiom-budget audit, and kernel replay of every
+proof term).
 
 The proof follows the modern exposition of Stevenhagen–Lenstra (*Chebotarëv and his
 density theorem*, Appendix) and Sharifi (*Algebraic Number Theory*, §7.2). Both
@@ -63,6 +73,7 @@ Stevenhagen–Lenstra:
 {include 0 CebotarevBlueprint.Chapters.Density}
 {include 0 CebotarevBlueprint.Chapters.Frobenius}
 {include 0 CebotarevBlueprint.Chapters.ZetaProduct}
+{include 0 CebotarevBlueprint.Chapters.Engine}
 {include 0 CebotarevBlueprint.Chapters.Cyclotomic}
 {include 0 CebotarevBlueprint.Chapters.Abelian}
 {include 0 CebotarevBlueprint.Chapters.Main}

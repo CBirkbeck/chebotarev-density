@@ -76,15 +76,28 @@ $$`
   \;\le\; C \cdot N^{1 - 1/[K:\Q]} \qquad\text{for all }N\ge 1.
 `
 
+{uses "ideal-count-uniform"}[]
+{uses "fourier-decay-realized"}[]
+{uses "autopow-frobenius-residue"}[]
 :::
 
 :::proof "character-sum-geom-numbers"
 
 Geometry-of-numbers count of ideals in a norm-bounded region
-(Sharifi 7.1.19, p.~142, step~1). Per-residue-class count
-$`C N + O(N^{1-1/[K:\Q]})`; summing over $`\chi(\mathfrak{a}) = \zeta`
-for $`\zeta` a root of unity, the $`C N` contributions cancel by
-$`\sum_\zeta \zeta = 0`.
+(Sharifi 7.1.19, p.~142, step~1). The character value
+$`\chi(\mathfrak a)` depends only on the Frobenius
+$`\sigma_{\mathfrak a}`, which the cyclotomic dictionary
+{bpref "autopow-frobenius-residue"}[] identifies with the norm residue
+$`\Norm{\mathfrak a}\bmod m`; so $`\sum_{\Norm{\mathfrak a}\le
+N}\chi(\mathfrak a)` is a $`\chi`-weighted sum of the per-norm-residue
+ideal counts. The effective count
+{bpref "ideal-count-uniform"}[], made uniform over the realized
+residue subgroup by the Fourier-decay input
+{bpref "fourier-decay-realized"}[], gives each residue class the count
+$`\kappa N + O(N^{1-1/[K:\Q]})` with a common leading constant
+$`\kappa`. Summing over $`\chi(\mathfrak a) = \zeta` for $`\zeta` a root
+of unity, the equal $`\kappa N` main terms cancel by $`\sum_\zeta\zeta =
+0`, leaving only the $`O(N^{1-1/[K:\Q]})` errors.
 
 :::
 

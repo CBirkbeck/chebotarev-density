@@ -77,6 +77,7 @@ $$`
 
 {uses "chebotarev-abelian"}[]
 {uses "density-lift-fixedfield"}[]
+{uses "density-lift-fixed-field"}[]
 :::
 
 :::proof "chebotarev-density"

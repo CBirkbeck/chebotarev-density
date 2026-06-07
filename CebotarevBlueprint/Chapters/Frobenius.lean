@@ -101,6 +101,26 @@ Frobenius elements above $`\fp` are all conjugate.)
 {uses "frobenius-at"}[]
 :::
 
+:::proof "exists-frobenius-class"
+
+The Galois group $`G` acts transitively on the primes $`\fP` of
+$`\Ocirc_L` above $`\fp`, so any two such primes are related by some
+$`\sigma\in G`: $`\fP' = \sigma(\fP)`. Conjugation transports the
+Frobenius: if $`\Frob_\fP` is a Frobenius at $`\fP` (an element of
+$`D_\fP` {uses "decomposition-group"}[] acting as $`x\mapsto x^{N\fp}`
+on the residue field), then $`\sigma\,\Frob_\fP\,\sigma^{-1}` is a
+Frobenius at $`\sigma(\fP)`, since it lies in
+$`D_{\sigma(\fP)} = \sigma D_\fP\sigma^{-1}` and induces the same
+$`N\fp`-power map on $`\Ocirc_L/\sigma(\fP)`. Because $`\fp` is
+unramified, the inertia at each $`\fP` is trivial, so the Frobenius
+$`\Frob_\fP` {uses "frobenius-at"}[] is the *unique* element of $`D_\fP`
+with this residue action; hence the Frobenius elements above $`\fp` form
+a single $`G`-conjugacy class. Taking $`C = [\Frob_{\fP_0}]` for any
+fixed $`\fP_0\mid\fp` gives the required class, independent of the
+choice of $`\fP_0`.
+
+:::
+
 :::lemma_ "frobenius-class-eq-mk" (lean := "Chebotarev.frobeniusClass_eq_mk_of_isArithFrobAt")
 
 For a nonzero prime $`\fp` of $`\OK` unramified in $`L`, and any prime
