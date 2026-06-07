@@ -6,6 +6,8 @@ project:
   name: "chebotarev-density"
   authors:
     - "Chris Birkbeck"
+    - "Riccardo Brasca"
+    - "Xavier Roblot"
   license: "Apache-2.0"
 
 # sources - what was formalized. List of papers/textbooks/blueprints.
