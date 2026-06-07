@@ -1,8 +1,12 @@
 module
 
 public import CebotarevDensity.Density
+public import CebotarevDensity.CyclotomicNormResidue
+public import CebotarevDensity.ForMathlib.IdealCongruenceCount
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.LogOneDivSubOne
+public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
+public import CebotarevDensity.FixedFieldDensity
 public import CebotarevDensity.Frobenius
 public import CebotarevDensity.ZetaProduct
 public import CebotarevDensity.Cyclotomic

@@ -1,6 +1,7 @@
 module
 
 public import CebotarevDensity.Cyclotomic
+public import CebotarevDensity.FixedFieldDensity
 public import Mathlib.NumberTheory.ArithmeticFunction.Carmichael
 public import Mathlib.NumberTheory.LSeries.PrimesInAP
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Ideal
@@ -195,12 +196,11 @@ stated against the compositum `M = L(μ_m)` (carrier `CyclotomicField m L` with 
   `Abelian` because `Main` imports `Abelian`).
 * `density_lift_through_fixedField_repl` (C5) — the Step-1 cyclic density transfer through
   `F/K`, applied to `M/F` (so `chebotarev_cyclotomic` at `M/F` and `(σ,τ)`, density
-  `1/|Gal(M/F)|` of primes of `F`, lifts to density `1/(|G|·|H|)` of primes of `K`). This is
-  a verbatim replica of `Main.density_lift_through_fixedField` (stated for top field `M`):
-  `Main` is below `Abelian` in the import DAG, so the lemma cannot be imported; the
-  orchestrator should reconcile (move the shared statement to a common ancestor, or have
-  `Main` re-export). `hm4` threads into the `chebotarev_cyclotomic` application; `hcop`
-  threads into C1/C2a. -/
+  `1/|Gal(M/F)|` of primes of `F`, lifts to density `1/(|G|·|H|)` of primes of `K`). The
+  shared lemma `density_lift_through_fixedField` (with its Step-1 dependency block) now lives in
+  `CebotarevDensity.FixedFieldDensity`, a common ancestor of both `Abelian` and `Main`, so C5 is
+  a one-line application at `L ↦ M`. `hm4` threads into the `chebotarev_cyclotomic` application;
+  `hcop` threads into C1/C2a. -/
 
 /-- Generic disjointness from a global tag: if every member of `S i` carries the same tag
 `f i` under a single function `t`, and `f` is injective, the family `S` is pairwise disjoint.
@@ -213,35 +213,6 @@ private theorem pairwiseDisjoint_of_tag {α ι κ : Type*} (t : α → κ) (f : 
   simp only [Function.onFun, Set.disjoint_left]
   intro a hi hj
   exact hij (hf ((htag i a hi).symm.trans (htag j a hj)))
-
-/-- **Cyclotomic-crossing tagged master leaf** (Sharifi 7.2.2 Step 2, p. 144). For admissible
-`m` (`hm4 : m % 4 ≠ 2`, `hcop : (disc L).natAbs.Coprime m`) and `σ ∈ G = Gal(L/K)`, there is a
-single global tag `t : Ideal (𝓞 K) → (ℤ/mℤ)ˣ` — the `H`-component of the prime's
-`Gal(M/K) = G × H`-Frobenius, `M = L(μ_m)` — and a family of prime sets `S_{σ,τ}` indexed by
-`τ ∈ H_n = {τ : |G| ∣ ord τ}` such that:
-* each `S_{σ,τ}` lies in the `σ`-Frobenius fibre of `K` (`frobeniusClass_proj`, C4);
-* every prime of `S_{σ,τ}` has tag exactly `τ` (its `M`-Frobenius `H`-component);
-* each `S_{σ,τ}` has Dirichlet density `1/(|G|·|H|)` (`chebotarev_cyclotomic` at `M/F` with
-  `F = M^⟨(σ,τ)⟩`, C3, lifted through `F/K` by `density_lift_through_fixedField_repl`, C5).
-
-The global tag makes the distinct-`τ` fibres disjoint (`pairwiseDisjoint_of_tag`), which is the
-only extra fact `exists_cyclotomicCrossing_fibres` needs on top of this leaf.
-
-This packages the compositum infrastructure (`gal_compositum_prod_iso` (C1),
-`cyclotomicField_finrank_eq` (C2a)) and the per-`τ` density chain (C3/C4/C5); see the
-decomposition note above. `hm4`/`hcop` are threaded verbatim into those leaves. -/
-private theorem exists_crossing_family_tagged
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
-    (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
-    ∃ (t : Ideal (𝓞 K) → (ZMod m)ˣ)
-      (S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K))),
-      (∀ τ, S τ ⊆ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
-          frobeniusClass K L 𝔭 = ConjClasses.mk σ}) ∧
-      (∀ τ, ∀ 𝔭 ∈ S τ, t 𝔭 = (τ : (ZMod m)ˣ)) ∧
-      (∀ τ, HasDirichletDensity (S τ)
-          ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
-  sorry
 
 /-! #### Infrastructure leaves for `exists_crossing_family_tagged` (C1–C5)
 
@@ -359,20 +330,107 @@ private theorem cyclotomicField_finrank_eq
     rfl
   rw [hrelabel, hfr, hfinK₁]
 
+/-- **Joint-restriction bijectivity** — the analytic heart of C1, exposed with the explicit
+primitive root `ζ` so that callers (C1 and the master leaf) can read off the two components.
+The map `Φ = (restrictNormalHom L).prod (autToPow K hζ) : Gal(M/K) →* Gal(L/K) × (ℤ/mℤ)ˣ` is
+bijective: injective because an automorphism trivial on `L` and fixing `ζ` is trivial on
+`M = L(ζ)`; surjective by the degree count `[M:K] = [L:K]·φ(m) = [L:K]·[M:L]`
+(`cyclotomicField_finrank_eq` at base `L`, hence `hcop`). -/
+private theorem compositum_charProd_bijective
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
+    (hcop : ((NumberField.discr L).natAbs).Coprime m) (ζ : M) (hζ : IsPrimitiveRoot ζ m) :
+    Function.Bijective ((AlgEquiv.restrictNormalHom L).prod (hζ.autToPow K)) := by
+  haveI : FiniteDimensional K M := inferInstance
+  haveI : IsGalois L M := IsGalois.tower_top_of_isGalois K L M
+  set χK : Gal(M/K) →* (ZMod m)ˣ := hζ.autToPow K with hχK
+  set Φ : Gal(M/K) →* Gal(L/K) × (ZMod m)ˣ :=
+    (AlgEquiv.restrictNormalHom L).prod χK with hΦ
+  -- `[M:L] = φ(m)` (C2a at base `L`), hence the cardinality count.
+  have hML : Module.finrank L M = m.totient := cyclotomicField_finrank_eq L M m hcop
+  have hcardMK : Nat.card Gal(M/K) = Nat.card Gal(L/K) * Nat.card (ZMod m)ˣ := by
+    rw [IsGalois.card_aut_eq_finrank K M, IsGalois.card_aut_eq_finrank K L,
+      ← Module.finrank_mul_finrank K L M, hML, Nat.card_eq_fintype_card (α := (ZMod m)ˣ),
+      ZMod.card_units_eq_totient]
+  -- `Φ` is injective: an automorphism trivial on `L` and fixing `ζ` is trivial on `M = L(ζ)`.
+  have hΦinj : Function.Injective Φ := by
+    rw [injective_iff_map_eq_one]
+    intro σ hσ
+    rw [hΦ, MonoidHom.prod_apply, Prod.mk_eq_one] at hσ
+    obtain ⟨hσL, hσζ⟩ := hσ
+    -- `σ` fixes `ζ` (its cyclotomic-character value is `1`).
+    have hζfix : σ ζ = ζ := by
+      have hspec := hζ.autToPow_spec K σ
+      rw [hχK] at hσζ
+      rw [hσζ] at hspec
+      rw [← hspec, Units.val_one]
+      rcases eq_or_lt_of_le (NeZero.one_le (n := m)) with h1 | h1
+      · have hm1 : m = 1 := h1.symm
+        subst hm1
+        have : ζ = 1 := by simpa using hζ.pow_eq_one
+        simp [this]
+      · rw [ZMod.val_one_eq_one_mod, Nat.mod_eq_of_lt (by omega), pow_one]
+    -- `σ` fixes `L` pointwise (its `L`-restriction is trivial).
+    have hLfix : ∀ x : L, σ (algebraMap L M x) = algebraMap L M x := by
+      intro x
+      have hcomm := σ.restrictNormal_commutes L x
+      have hrn : σ.restrictNormal L = (1 : Gal(L/K)) := hσL
+      rw [hrn] at hcomm
+      simpa using hcomm.symm
+    -- `M = adjoin L {ζ}`, so `σ = 1`.
+    have htop : Algebra.adjoin L {ζ} = (⊤ : Subalgebra L M) :=
+      IsCyclotomicExtension.adjoin_primitive_root_eq_top hζ
+    apply AlgEquiv.ext
+    intro x
+    have hx : x ∈ Algebra.adjoin L {ζ} := htop ▸ Algebra.mem_top
+    refine Algebra.adjoin_induction (hx := hx) ?_ ?_ ?_ ?_
+    · intro y hy; rw [Set.mem_singleton_iff] at hy; subst hy; rw [hζfix]; rfl
+    · intro r; exact hLfix r
+    · intro a b _ _ ha hb; rw [map_add, ha, hb]; rfl
+    · intro a b _ _ ha hb; rw [map_mul, ha, hb]; rfl
+  exact (Nat.bijective_iff_injective_and_card _).mpr ⟨hΦinj, by rw [hcardMK, Nat.card_prod]⟩
+
+/-- **The cyclotomic character `autToPow L : Gal(M/L) → (ℤ/mℤ)ˣ` is a bijection.** Faithful
+(`autToPow_injective`) and surjective by `|Gal(M/L)| = [M:L] = φ(m) = |(ℤ/mℤ)ˣ|`
+(`cyclotomicField_finrank_eq` at base `L`). This is the `H ≅ (ℤ/mℤ)ˣ` half of C1's `G × H`
+splitting; the master leaf uses its inverse to turn an admissible residue `τ` into the
+`Gal(M/L)`-component of the compositum Frobenius. -/
+private theorem autToPow_L_bijective
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
+    (hcop : ((NumberField.discr L).natAbs).Coprime m) (ζ : M) (hζ : IsPrimitiveRoot ζ m) :
+    Function.Bijective (hζ.autToPow L) := by
+  haveI : FiniteDimensional K M := inferInstance
+  haveI : IsGalois L M := IsGalois.tower_top_of_isGalois K L M
+  have hML : Module.finrank L M = m.totient := cyclotomicField_finrank_eq L M m hcop
+  have hcardML : Nat.card Gal(M/L) = Nat.card (ZMod m)ˣ := by
+    rw [IsGalois.card_aut_eq_finrank L M, hML, Nat.card_eq_fintype_card,
+      ZMod.card_units_eq_totient]
+  exact (Nat.bijective_iff_injective_and_card _).mpr ⟨hζ.autToPow_injective L, hcardML⟩
+
 /-- **C1 — the `G × H` splitting of the compositum** (Sharifi p. 144):
 `Gal(M/K) ≅ G × Gal(M/L)`
 with `G = Gal(L/K)`, where `M = L(μ_m)`. The isomorphism is the restriction-pair
 `α ↦ (α.restrictScalars K on L, α on M/L)`; it is injective because `L` and `K(μ_m)` are
 linearly disjoint over `K` and surjective by the degree count
 `[M:K] = [L:K]·φ(m) = [L:K]·[M:L]` (which uses `cyclotomicField_finrank_eq`, hence `hcop`).
-Here `Gal(M/L) ≅ H = (ℤ/mℤ)ˣ` via the mod-`m` cyclotomic character. -/
+Here `Gal(M/L) ≅ H = (ℤ/mℤ)ˣ` via the mod-`m` cyclotomic character. The underlying bijective
+joint map is `compositum_charProd_bijective`; the `(ℤ/mℤ)ˣ → Gal(M/L)` half is
+`autToPow_L_bijective`. -/
 private theorem gal_compositum_prod_iso
     (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
     [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
     (_hcop : ((NumberField.discr L).natAbs).Coprime m) :
-    Nonempty (Gal(M/K) ≃* (Gal(L/K) × Gal(M/L))) :=
-  sorry
+    Nonempty (Gal(M/K) ≃* (Gal(L/K) × Gal(M/L))) := by
+  obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
+    IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
+  set e2 : Gal(M/L) ≃* (ZMod m)ˣ :=
+    MulEquiv.ofBijective (hζ.autToPow L) (autToPow_L_bijective K L M m _hcop ζ hζ) with he2
+  exact ⟨(MulEquiv.ofBijective _ (compositum_charProd_bijective K L M m _hcop ζ hζ)).trans
+    ((MulEquiv.refl Gal(L/K)).prodCongr e2.symm)⟩
 
 /-- **C3 — the compositum is cyclotomic over the `(σ,τ)`-fixed field** (Sharifi p. 144):
 "… `L(μ_m)` is given by adjoining `μ_m` to `F = K(μ_m)^⟨(σ,τ)⟩`", i.e. `M = F(μ_m)`.
@@ -551,38 +609,21 @@ private theorem frobeniusClass_proj
     rw [hLjunk, hσ1]
 
 /-- **C5 — density transfer through a fixed field** (Sharifi 7.2.2 Step 2 ⇒ Step 1 reuse,
-p. 143–144). A verbatim replica of `Main.density_lift_through_fixedField`, restated with the
-top field `M` (the compositum), so that the crossing can be assembled inside `Abelian`:
-`Main` is *below* `Abelian` in the import DAG (`Main` imports `Abelian`), so the original
-cannot be imported here. Given `σM ∈ Gal(M/K)`, the fixed field `E = M^⟨σM⟩`, a lift `σE`
-`σM` to `Gal(M/E)`, and the cyclic-case density `1/|Gal(M/E)|` of the `σE`-Frobenius fibre of
-`E`, the transfer yields density `|C|/|Gal(M/K)|` of the `σM`-Frobenius fibre of `K`. In the
-crossing, `σM = (σ,τ)`, `E = F`, and `chebotarev_cyclotomic` (at the cyclotomic `M/F`, valid by
-`hm4`) supplies the `_hab` input; the resulting density is `1/(|G|·|H|)`.
-**Orchestrator note (enriched 2026-06-07).** This duplicates the *proven*
-`Main.density_lift_through_fixedField` (Main.lean ~1152), available only by `L ↦ M` renaming.
-A naive in-file replica is NOT a "small port": the proof transitively pulls in the ENTIRE
-Step-1 reduction of `Main.lean` — ~18 declarations, ~1050 lines — none of which is importable
-(`Main` imports `Abelian`):
-  * public-form (already `(K L)`-explicit, copy verbatim with `L ↦ M`):
-    `frobeniusFibre_card_eq_of_isConj`, `card_primesAbove_eq_card_carrier_mul_frobeniusFibre`,
-    `count_frobenius_eq_sigma_mul_card_carrier`, `count_primes_above_with_frobenius_eq_sigma`,
-    `arithFrobAt_restrictScalars_eq`;
-  * private (suffix `_repl`): `univ_ratio_E_K_tendsto_one`,
-    `stabilizer_intermediate_eq_top_of_frobenius`, `inertiaDeg_under_E_eq_one_of_frobenius`,
-    `eq_of_liesOver_under_E_of_frobenius`, `arithFrobAt_E_eq_of_isArithFrobAt`,
-    `card_fibre_E_eq_card_fibre_L`, `frobeniusClass_under_eq_of_mem_fibre`,
-    `primeIdealZetaSum_fibre_eq_smul`, `tsum_comp_le_card_fibre_mul`,
-    `primeIdealZetaSum_degTwo_le`, `ramifiedBelow_finite`,
-    `primeIdealZetaSum_T2_div_univ_tendsto_zero`, and the lemma itself.
-**Key structural finding:** that entire chain is *Abelian-independent* — `Main`'s only use of
-`Abelian` is `chebotarev_abelian` (Main.lean:1289, inside `chebotarev_density`, AFTER all the
-Step-1 helpers). So the CLEAN orchestrator fix (requires editing `Main`, which this agent does
-NOT own) is to MOVE `density_lift_through_fixedField` + its Step-1 dependency block to a module
-strictly below `Abelian` (a new `CebotarevDensity/FixedFieldTransfer.lean` imported by both, or
-relocate into `Frobenius`), then DELETE this replica and have the master leaf call the shared
-lemma. Left `sorry` here rather than duplicate ~1050 verified lines unverifiably (the project
-`lake build` was concurrently broken in `ForMathlib/IdealCongruenceCount.lean`). -/
+p. 143–144). The Step-1 cyclic density transfer, restated with the top field `M` (the
+compositum), so that the crossing can be assembled inside `Abelian`. Given `σM ∈ Gal(M/K)`, the
+fixed field `E = M^⟨σM⟩`, a lift `σE` of `σM` to `Gal(M/E)`, and the cyclic-case density
+`1/|Gal(M/E)|` of the `σE`-Frobenius fibre of `E`, the transfer yields density `|C|/|Gal(M/K)|`
+of the `σM`-Frobenius fibre of `K`. In the crossing, `σM = (σ,τ)`, `E = F`, and
+`chebotarev_cyclotomic` (at the cyclotomic `M/F`, valid by `hm4`) supplies the `_hab` input; the
+resulting density is `1/(|G|·|H|)`.
+
+**Resolution (relocation, 2026-06-07).** The proven Step-1 reduction
+`density_lift_through_fixedField` and its ~18-declaration dependency block were *moved* out of
+`Main.lean` into the new module `CebotarevDensity.FixedFieldDensity`, which sits strictly below
+both `Main` (which re-imports it) and `Abelian` (the block is `chebotarev_abelian`-independent —
+`Main`'s only use of `Abelian` is `chebotarev_abelian`, inside `chebotarev_density`, after all
+the Step-1 helpers; so the block carries no `Abelian` dependency and no import cycle is created).
+This leaf is now a one-line application of the shared lemma at `L ↦ M`, no longer a replica. -/
 private theorem density_lift_through_fixedField_repl
     (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M] [IsGalois K M]
     [FiniteDimensional K M] (σM : Gal(M/K)) (E : IntermediateField K M) (σE : Gal(M/E))
@@ -596,7 +637,261 @@ private theorem density_lift_through_fixedField_repl
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
         frobeniusClass K M 𝔭 = ConjClasses.mk σM}
       ((Nat.card (ConjClasses.mk σM).carrier : ℝ) / Nat.card Gal(M/K)) :=
-  sorry
+  density_lift_through_fixedField σM E σE _hσE _hEfix _hab
+
+/-- **The compositum `M = L(μ_m)` is Galois over the base `K`.** For an abelian (indeed any)
+Galois extension `L/K` of number fields and the `{m}`-cyclotomic extension `M/L`, the tower
+`M/K` is Galois: it is separable (number-field base, characteristic zero) and normal because
+`M = A ⊔ B` is the compositum of the (normal) image `A` of `L` and the (normal, cyclotomic)
+subfield `B = K(μ_m) = adjoin K {ζ}` — both normal over `K`, so their join is normal
+(`normal_sup`). Supplies the `[IsGalois K M]` binder demanded by C1/C3/C4/C5 at the carrier
+`M = CyclotomicField m L`. -/
+private theorem isGalois_compositum_base
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    (m : ℕ) [NeZero m] (M : Type*) [Field M] [NumberField M] [Algebra K M] [Algebra L M]
+    [IsScalarTower K L M] [IsCyclotomicExtension {m} L M] : IsGalois K M := by
+  obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
+    IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
+  haveI : FiniteDimensional K M := inferInstance
+  haveI hsep : Algebra.IsSeparable K M := inferInstance
+  set A : IntermediateField K M := (IsScalarTower.toAlgHom K L M).fieldRange with hA
+  set B : IntermediateField K M := IntermediateField.adjoin K {ζ} with hB
+  haveI hAnormal : Normal K A :=
+    Normal.of_algEquiv (AlgEquiv.ofInjectiveField (IsScalarTower.toAlgHom K L M))
+  haveI hBcyc : IsCyclotomicExtension {m} K B :=
+    hζ.intermediateField_adjoin_isCyclotomicExtension (K := K)
+  haveI hBgal : IsGalois K B := IsCyclotomicExtension.isGalois (S := {m}) (K := K) (L := B)
+  haveI hBnormal : Normal K B := hBgal.to_normal
+  have hsup : A ⊔ B = ⊤ := by
+    have hζalg : IsAlgebraic K ζ := Algebra.IsAlgebraic.isAlgebraic ζ
+    have hsubalg : (IsScalarTower.toAlgHom K L M).range ⊔ Algebra.adjoin K {ζ}
+        = (⊤ : Subalgebra K M) := by
+      have htop : (Algebra.adjoin L {ζ} : Subalgebra L M) = ⊤ :=
+        IsCyclotomicExtension.adjoin_primitive_root_eq_top (n := m) hζ
+      rw [← Algebra.Subalgebra.restrictScalars_adjoin (R := K) (S := L) (s := {ζ}), htop,
+        Subalgebra.restrictScalars_top]
+    apply IntermediateField.toSubalgebra_injective
+    rw [hA, hB, IntermediateField.sup_toSubalgebra_of_isAlgebraic_left,
+      IntermediateField.adjoin_simple_toSubalgebra_of_isAlgebraic hζalg,
+      AlgHom.fieldRange_toSubalgebra, IntermediateField.top_toSubalgebra]
+    exact hsubalg
+  haveI hnormal : Normal K M := by
+    have h := IntermediateField.normal_sup K M A B
+    rw [hsup] at h
+    exact Normal.of_algEquiv (IntermediateField.topEquiv (F := K) (E := M))
+  exact IsGalois.mk
+
+/-- **A homomorphism into a commutative group is conjugacy-invariant.** If `IsConj a b` then
+`χ a = χ b` for `χ : G →* A` with `A` commutative (`χ` kills the conjugating factor). Used to
+read the tag `χK (Frob).out` off any conjugate representative of the `M`-Frobenius class. -/
+private theorem map_eq_of_isConj_comm {G A : Type*} [Group G] [CommGroup A] (χ : G →* A)
+    {a b : G} (h : IsConj a b) : χ a = χ b := by
+  obtain ⟨u, hu⟩ := h
+  have h1 : (u : G) * a = b * ↑u := hu
+  have hb : b = (u : G) * a * (↑u)⁻¹ := by rw [eq_mul_inv_iff_mul_eq]; exact h1.symm
+  rw [hb, map_mul, map_mul, map_inv, mul_comm (χ (u : G)), mul_assoc, mul_inv_cancel, mul_one]
+
+/-- **Unramifiedness descends to an intermediate field.** If a prime `𝔭` of `K` is unramified
+in the top field `M` of a tower `K ⊆ L ⊆ M`, it is unramified in `L`: for a maximal prime `𝔮`
+of `𝓞 L` over `𝔭`, pick a prime `𝔓` of `𝓞 M` over `𝔮`; then `e(𝔓/𝔭) = 1` (from the `M`-side
+hypothesis) factors as `e(𝔮/𝔭)·e(𝔓/𝔮)` (`Ideal.ramificationIdx_algebra_tower`), forcing
+`e(𝔮/𝔭) = 1`. Supplies C4's `_hunrL : UnramifiedIn K L 𝔭` input from `UnramifiedIn K M 𝔭`. -/
+private theorem unramifiedIn_tower_descend
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M] [IsGalois K L] [IsGalois K M]
+    (𝔭 : Ideal (𝓞 K)) (hunr : UnramifiedIn K M 𝔭) : UnramifiedIn K L 𝔭 := by
+  haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
+  refine ⟨hunr.1, fun 𝔮 h𝔮max h𝔮lo => ?_⟩
+  haveI := h𝔮max; haveI := h𝔮lo
+  haveI h𝔮p : 𝔮.IsPrime := h𝔮max.isPrime
+  have h𝔮bot : 𝔮 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔮
+  obtain ⟨𝔓, _, h𝔓p, h𝔓comap⟩ :=
+    Ideal.exists_ideal_over_prime_of_isIntegral (S := 𝓞 M) 𝔮 ⊥ (by simp)
+  haveI := h𝔓p
+  haveI h𝔓lo𝔮 : 𝔓.LiesOver 𝔮 := ⟨h𝔓comap.symm⟩
+  have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔮bot 𝔓
+  haveI h𝔓max : 𝔓.IsMaximal := h𝔓p.isMaximal h𝔓bot
+  have h𝔮under : Ideal.under (𝓞 L) 𝔓 = 𝔮 := h𝔓lo𝔮.over.symm
+  have h𝔭under : Ideal.under (𝓞 K) 𝔮 = 𝔭 := h𝔮lo.over.symm
+  haveI h𝔓lo𝔭 : 𝔓.LiesOver 𝔭 := ⟨by rw [← h𝔭under, ← h𝔮under, Ideal.under_under]⟩
+  have hunderP : Ideal.under (𝓞 K) 𝔓 = 𝔭 := h𝔓lo𝔭.over.symm
+  have hP1 : (Ideal.under (𝓞 K) 𝔓).ramificationIdx 𝔓 = 1 :=
+    (Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := 𝓞 K) (S := 𝓞 M) h𝔓bot).mp
+      (hunr.2 𝔓 h𝔓max h𝔓lo𝔭)
+  rw [hunderP] at hP1
+  have htower := Ideal.ramificationIdx_algebra_tower (R := 𝓞 K) (S := 𝓞 L) (T := 𝓞 M)
+    (p := 𝔭) (P := 𝔮) (Q := 𝔓) (Ideal.map_ne_bot_of_ne_bot h𝔮bot)
+    (Ideal.map_ne_bot_of_ne_bot hunr.1) (by rw [Ideal.map_le_iff_le_comap, h𝔓comap])
+  rw [hP1] at htower
+  have he𝔮 : 𝔭.ramificationIdx 𝔮 = 1 := Nat.eq_one_of_mul_eq_one_right htower.symm
+  rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := 𝓞 K) (S := 𝓞 L) h𝔮bot, h𝔭under]
+  exact he𝔮
+
+/-- **An automorphism fixing a primitive root has trivial cyclotomic character.** If
+`g : Gal(M/K)` fixes a primitive `m`-th root `ζ`, then `autToPow K hζ g = 1` (the character
+records the power `g(ζ) = ζ^c`, here `c = 1`). No cyclotomic-over-`K` hypothesis is needed —
+only `ζ`'s primitivity. Used in the master leaf to identify `K(μ_m).fixingSubgroup` with the
+kernel of the cyclotomic character (the `G × {1}` factor of C1's splitting). -/
+private theorem autToPow_eq_one_of_fixes
+    (K M : Type*) [Field K] [Field M] [Algebra K M] (m : ℕ) [NeZero m]
+    (ζ : M) (hζ : IsPrimitiveRoot ζ m) (g : Gal(M/K)) (hg : g ζ = ζ) :
+    hζ.autToPow K g = 1 := by
+  have hspec := hζ.autToPow_spec K g
+  rw [hg] at hspec
+  set u : (ZMod m)ˣ := hζ.autToPow K g with hu
+  have hmod : (u : ZMod m).val ≡ 1 [MOD m] := by
+    have hisu : IsUnit ζ := hζ.isUnit (NeZero.ne m)
+    lift ζ to Mˣ using hisu with z hz
+    have hzp : IsPrimitiveRoot z m := by rwa [IsPrimitiveRoot.coe_units_iff] at hζ
+    have hord : orderOf z = m := (IsPrimitiveRoot.eq_orderOf hzp).symm
+    have h' : z ^ (u : ZMod m).val = z ^ (1 : ℕ) := by
+      apply Units.ext; push_cast; rw [pow_one]; exact hspec
+    rwa [pow_eq_pow_iff_modEq, hord] at h'
+  have hu1 : (u : ZMod m) = 1 := by
+    have hcast : ((u : ZMod m).val : ZMod m) = (1 : ZMod m) := by
+      rw [← Nat.cast_one]; exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
+    rwa [ZMod.natCast_val, ZMod.cast_id] at hcast
+  exact Units.ext hu1
+
+/-- **Cyclotomic-crossing tagged master leaf** (Sharifi 7.2.2 Step 2, p. 144). For admissible
+`m` (`hm4 : m % 4 ≠ 2`, `hcop : (disc L).natAbs.Coprime m`) and `σ ∈ G = Gal(L/K)`, there is a
+single global tag `t : Ideal (𝓞 K) → (ℤ/mℤ)ˣ` — the `H`-component of the prime's
+`Gal(M/K) = G × H`-Frobenius, `M = L(μ_m)` — and a family of prime sets `S_{σ,τ}` indexed by
+`τ ∈ H_n = {τ : |G| ∣ ord τ}` such that:
+* each `S_{σ,τ}` lies in the `σ`-Frobenius fibre of `K` (`frobeniusClass_proj`, C4);
+* every prime of `S_{σ,τ}` has tag exactly `τ` (its `M`-Frobenius `H`-component);
+* each `S_{σ,τ}` has Dirichlet density `1/(|G|·|H|)` (`chebotarev_cyclotomic` at `M/F` with
+  `F = M^⟨(σ,τ)⟩`, C3, lifted through `F/K` by `density_lift_through_fixedField_repl`, C5).
+
+The global tag makes the distinct-`τ` fibres disjoint (`pairwiseDisjoint_of_tag`), which is the
+only extra fact `exists_cyclotomicCrossing_fibres` needs on top of this leaf.
+
+This packages the compositum infrastructure (`gal_compositum_prod_iso` (C1),
+`cyclotomicField_finrank_eq` (C2a)) and the per-`τ` density chain (C3/C4/C5); see the
+decomposition note above. `hm4`/`hcop` are threaded verbatim into those leaves. -/
+private theorem exists_crossing_family_tagged
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
+    (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
+    ∃ (t : Ideal (𝓞 K) → (ZMod m)ˣ)
+      (S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K))),
+      (∀ τ, S τ ⊆ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
+          frobeniusClass K L 𝔭 = ConjClasses.mk σ}) ∧
+      (∀ τ, ∀ 𝔭 ∈ S τ, t 𝔭 = (τ : (ZMod m)ˣ)) ∧
+      (∀ τ, HasDirichletDensity (S τ)
+          ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
+  classical
+  haveI : NeZero m := ⟨by omega⟩
+  -- The compositum carrier `M = L(μ_m)`, Galois over `K` (and over `L`).
+  let M := CyclotomicField m L
+  haveI : IsGalois K M := isGalois_compositum_base K L m M
+  haveI : IsGalois L M := IsGalois.tower_top_of_isGalois K L M
+  haveI : FiniteDimensional K M := inferInstance
+  -- A primitive `m`-th root `ζ ∈ M` and the cyclotomic characters over `K` and over `L`.
+  obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
+    IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
+  set χK : Gal(M/K) →* (ZMod m)ˣ := hζ.autToPow K with hχK
+  -- `Φ = (restrictNormalHom L, χK)` is bijective (C1's core); `e2 = autToPow L` is bijective.
+  have hΦbij : Function.Bijective ((AlgEquiv.restrictNormalHom L).prod χK) :=
+    compositum_charProd_bijective K L M m hcop ζ hζ
+  set equivΦ : Gal(M/K) ≃* Gal(L/K) × (ZMod m)ˣ :=
+    MulEquiv.ofBijective _ hΦbij with hequivΦ
+  set e2 : Gal(M/L) ≃* (ZMod m)ˣ :=
+    MulEquiv.ofBijective (hζ.autToPow L) (autToPow_L_bijective K L M m hcop ζ hζ) with he2
+  -- `Gal(M/K)` is abelian (it is `Gal(L/K) × Gal(M/L)`, both factors commutative).
+  haveI : IsMulCommutative Gal(M/L) :=
+    .of_comm fun a b => e2.injective (by rw [map_mul, map_mul]; exact mul_comm (e2 a) (e2 b))
+  haveI hGcomm : ∀ x y : Gal(L/K), x * y = y * x := fun x y => mul_comm' x y
+  haveI : IsMulCommutative Gal(M/K) :=
+    .of_comm fun a b => equivΦ.injective (by
+      rw [map_mul, map_mul, Prod.mul_def, Prod.mul_def, hGcomm, mul_comm
+        ((equivΦ a).2) ((equivΦ b).2)])
+  -- The compositum Frobenius element `σM τ := Φ⁻¹(σ, τ)`: restricts to `σ` over `L`,
+  -- and has cyclotomic character `τ`. Both components are read off `Φ (σM τ) = (σ, τ)`.
+  set σM : (ZMod m)ˣ → Gal(M/K) := fun τ => equivΦ.symm (σ, τ) with hσM
+  have hσMpair : ∀ τ, (AlgEquiv.restrictNormalHom L (σM τ), χK (σM τ)) = (σ, τ) := by
+    intro τ
+    have h : equivΦ (σM τ) = (σ, τ) := equivΦ.apply_symm_apply (σ, τ)
+    exact h
+  have hσMrestr : ∀ τ, AlgEquiv.restrictNormalHom L (σM τ) = σ :=
+    fun τ => congrArg Prod.fst (hσMpair τ)
+  have hσMchar : ∀ τ, χK (σM τ) = τ :=
+    fun τ => congrArg Prod.snd (hσMpair τ)
+  -- The global tag: the cyclotomic character of the (any representative of the) `M`-Frobenius.
+  refine ⟨fun 𝔭 => χK (frobeniusClass K M 𝔭).out,
+    fun τ => {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+      frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)}, ?_, ?_, ?_⟩
+  · -- (subset of `σ`-Frobenius fibre) via `frobeniusClass_proj` (C4).
+    rintro τ 𝔭 ⟨hp, hunrM, hfr⟩
+    have hunrL : UnramifiedIn K L 𝔭 := unramifiedIn_tower_descend K L M 𝔭 hunrM
+    exact ⟨hp, hunrL,
+      frobeniusClass_proj K L M σ (σM τ) (hσMrestr τ) 𝔭 hunrM hunrL hfr⟩
+  · -- (tag constant `= τ`): conjugacy-invariance of `χK` plus `χK (σM τ) = τ`.
+    rintro τ 𝔭 ⟨-, -, hfr⟩
+    -- The representative `(mk (σM τ)).out` is conjugate to `σM τ`; `χK` is conjugacy-invariant.
+    have hconj : IsConj (frobeniusClass K M 𝔭).out (σM (τ : (ZMod m)ˣ)) := by
+      rw [hfr]
+      exact ConjClasses.mk_eq_mk_iff_isConj.mp (Quotient.out_eq _)
+    change χK (frobeniusClass K M 𝔭).out = (τ : (ZMod m)ˣ)
+    rw [map_eq_of_isConj_comm χK hconj, hσMchar]
+  · -- (density `(|G|·|H|)⁻¹`): C3 gate + `chebotarev_cyclotomic` at `M/F`, lifted by C5.
+    rintro ⟨τ, hτ⟩
+    -- The C3 gate: `⟨σM τ⟩ ⊓ K(μ_m).fixingSubgroup = ⊥`, from `|G| ∣ ord τ`.
+    have hgate : Subgroup.zpowers (σM τ) ⊓
+        (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥ := by
+      rw [eq_bot_iff]
+      rintro g hg
+      rw [Subgroup.mem_inf] at hg
+      obtain ⟨⟨k, hk⟩, hgfix⟩ := hg
+      simp only at hk
+      -- `g` fixes `ζ` (it fixes the whole cyclotomic subfield).
+      have hζmem : ζ ∈ IntermediateField.adjoin K {b : M | b ^ m = 1} :=
+        IntermediateField.subset_adjoin K _ hζ.pow_eq_one
+      have hgζ : g ζ = ζ :=
+        (IntermediateField.mem_fixingSubgroup_iff _ g).mp hgfix ζ hζmem
+      -- hence `χK g = 1`.
+      have hχg : χK g = 1 := autToPow_eq_one_of_fixes K M m ζ hζ g hgζ
+      -- `g = (σM τ)^k`, so `χK g = τ^k = 1`, forcing `ord τ ∣ k`, hence `|G| ∣ k`.
+      have hχgτ : τ ^ k = 1 := by rw [← hσMchar τ, ← map_zpow, hk]; exact hχg
+      have hGk : (Nat.card Gal(L/K) : ℤ) ∣ k :=
+        dvd_trans (Int.natCast_dvd_natCast.mpr hτ) (orderOf_dvd_iff_zpow_eq_one.mpr hχgτ)
+      -- `restrictNormalHom L g = σ^k = 1` (since `ord σ ∣ |G| ∣ k`).
+      have hσk : σ ^ k = 1 :=
+        orderOf_dvd_iff_zpow_eq_one.mp
+          (dvd_trans (Int.natCast_dvd_natCast.mpr (orderOf_dvd_natCard σ)) hGk)
+      have hrestrg : AlgEquiv.restrictNormalHom L g = 1 := by
+        rw [← hk, map_zpow, hσMrestr, hσk]
+      -- `Φ g = (1, 1) = Φ 1`, and `Φ` is injective.
+      rw [Subgroup.mem_bot]
+      apply hΦbij.injective
+      rw [MonoidHom.prod_apply, MonoidHom.prod_apply, hrestrg, hχg, map_one, map_one]
+    -- The fixed field `F = M^⟨σM τ⟩`; `M/F` is `{m}`-cyclotomic (C3 with the gate).
+    set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers (σM τ)) with hF
+    haveI : IsScalarTower K ↥F M := F.isScalarTower_mid'
+    haveI hcycFM : IsCyclotomicExtension {m} ↥F M :=
+      compositum_isCyclotomic_over_fixedField K L M m (σM τ) hgate
+    -- The generator `σE ∈ Gal(M/F)` restricting to `σM τ` over `K`.
+    set e := IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers (σM τ)) with he
+    set σE : Gal(M/↥F) := e ⟨σM τ, Subgroup.mem_zpowers (σM τ)⟩ with hσE
+    -- Cyclotomic case for `M/F`: density `(card Gal(M/F))⁻¹` of the `σE`-Frobenius fibre of `F`.
+    have hcyc := chebotarev_cyclotomic (K := ↥F) (L := M) m hm4 σE
+    -- Lift through `F/K` (C5): density `(card carrier)/(card Gal(M/K))` of the `σM τ`-fibre of `K`.
+    have hlift := density_lift_through_fixedField_repl K M (σM τ) F σE
+      (by ext x; rfl) rfl hcyc
+    -- Arithmetic: the carrier is a singleton (`Gal(M/K)` abelian) and `card Gal(M/K) = |G|·|H|`.
+    have hcarrier : Nat.card (ConjClasses.mk (σM τ)).carrier = 1 := by
+      letI : CommMonoid Gal(M/K) := IsMulCommutative.instCommMonoid
+      have hcar : (ConjClasses.mk (σM τ)).carrier = {σM τ} := by
+        ext a
+        rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj,
+          isConj_iff_eq, Set.mem_singleton_iff]
+      rw [hcar, Nat.card_coe_set_eq, Set.ncard_singleton]
+    have hcardMK : Nat.card Gal(M/K) = Nat.card Gal(L/K) * Nat.card (ZMod m)ˣ := by
+      rw [IsGalois.card_aut_eq_finrank K M, IsGalois.card_aut_eq_finrank K L,
+        ← Module.finrank_mul_finrank K L M, cyclotomicField_finrank_eq L M m hcop,
+        Nat.card_eq_fintype_card (α := (ZMod m)ˣ), ZMod.card_units_eq_totient]
+    rw [hcarrier, hcardMK] at hlift
+    simpa using hlift
 
 private theorem exists_cyclotomicCrossing_fibres
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
