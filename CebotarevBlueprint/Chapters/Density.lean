@@ -119,7 +119,7 @@ transposed.
 
 :::
 
-:::theorem "tendsto-ratio-one-of-log-pm-bounded" (lean := "Chebotarev.tendsto_ratio_one_of_log_pm_bounded")
+:::theorem "tendsto-ratio-one-of-log-pm-bounded" (lean := "tendsto_ratio_one_of_log_pm_bounded")
 
 Let $`f : (1,\infty) \to \R`. If $`f` is sandwiched as
 $`\log\bigl(1/(s-1)\bigr) - C \le f(s) \le \log\bigl(1/(s-1)\bigr) + C'`
