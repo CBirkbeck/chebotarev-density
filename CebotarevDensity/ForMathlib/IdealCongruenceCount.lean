@@ -482,13 +482,14 @@ private theorem norm_eq_prod_real_emb_mul_prod_complex {K : Type*} [Field K] [Nu
 
 /-- **Sign of a product of reals from a sign pattern.** If `f w < 0` exactly for `w ∈ s` and
 `f w > 0` otherwise, then `∏ w, f w = (-1)^{#s} · ∏ w, |f w|`. -/
-private theorem prod_eq_neg_one_pow_card_mul_prod_abs {ι : Type*} [Fintype ι] (s : Finset ι)
-    (f : ι → ℝ) (hpos : ∀ w ∉ s, 0 < f w) (hneg : ∀ w ∈ s, f w < 0) :
+private theorem prod_eq_neg_one_pow_card_mul_prod_abs {ι : Type*} [Fintype ι]
+    {R : Type*} [CommRing R] [LinearOrder R] [IsStrictOrderedRing R] (s : Finset ι)
+    (f : ι → R) (hpos : ∀ w ∉ s, 0 < f w) (hneg : ∀ w ∈ s, f w < 0) :
     (∏ w, f w) = (-1) ^ (s.card) * (∏ w, |f w|) := by
   classical
-  rw [← Finset.prod_mul_prod_compl s (fun w => |f w|),
-    show ((-1 : ℝ)) ^ s.card = ∏ w ∈ s, (-1 : ℝ) by rw [Finset.prod_const],
-    ← Finset.prod_mul_prod_compl s f, ← mul_assoc, ← Finset.prod_mul_distrib]
+  rw [← Finset.prod_mul_prod_compl s f, ← Finset.prod_mul_prod_compl s (fun w => |f w|),
+    show ((-1 : R)) ^ s.card = ∏ w ∈ s, (-1 : R) by rw [Finset.prod_const],
+    ← mul_assoc, ← Finset.prod_mul_distrib]
   congr 1
   · exact Finset.prod_congr rfl (fun w hw => by rw [neg_one_mul, abs_of_neg (hneg w hw), neg_neg])
   · exact Finset.prod_congr rfl (fun w hw => (abs_of_pos (hpos w (Finset.mem_compl.mp hw))).symm)
@@ -2147,7 +2148,7 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
 `χ g₀ ≠ 1` exists (else `χ = 1`); reindexing the sum by left translation with `g₀` scales it by
 `χ g₀`, forcing it to vanish. This is the companion of the column orthogonality
 `sum_char_apply_eq_zero_of_ne_one`. -/
-private theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finite G] [Fintype G]
+private theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Fintype G]
     {χ : G →* ℂˣ} (hχ : χ ≠ 1) : ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
   classical
   obtain ⟨g₀, hg₀⟩ : ∃ g₀ : G, χ g₀ ≠ 1 := by

@@ -152,7 +152,7 @@ contradicting $`\log\zeta_L(s) \sim \log(s-1)^{-1}`.
 
 :::
 
-:::theorem "dedekind-zeta-factorisation"
+:::theorem "dedekind-zeta-factorisation" (lean := "Chebotarev.dedekindZeta_eq_prod_artinDirichletSeries")
 
 Let $`L/K` be a finite abelian Galois extension of number fields.
 There is a family of functions
