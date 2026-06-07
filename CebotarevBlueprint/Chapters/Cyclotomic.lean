@@ -1,0 +1,177 @@
+import Verso
+import VersoManual
+import VersoBlueprint
+
+open Verso.Genre
+open Verso.Genre.Manual
+open Informal
+
+#doc (Manual) "Chebotarev: cyclotomic case" =>
+
+tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+
+For a cyclotomic extension $`L = K(\zeta_m)`, Chebotarev's theorem
+reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
+(pp.~142--143).
+
+:::lemma "cyclotomic-frobenius-norm-power" (lean := "Chebotarev.cyclotomic_frobenius_acts_as_norm_power")
+
+Let $`L = K(\zeta_m)`, $`\fp` a nonzero prime of $`\OK` unramified in
+$`L`, and $`\fP` a prime of $`\Ocirc_L` above $`\fp`. Then for every
+primitive $`m`-th root of unity $`\zeta \in L`,
+$$`
+  \Frob_\fP(\zeta) \;=\; \zeta^{N\fp}.
+`
+
+{uses "frobenius-at"}[]
+:::
+
+:::proof "cyclotomic-frobenius-norm-power"
+
+By the defining property of $`\Frob_\fP` (acts as $`N\fp`-power on
+$`\Ocirc_L/\fP`) combined with the fact that $`\zeta_m` lifts
+isomorphically from the residue field for $`\fp\nmid m`.
+:::
+
+:::lemma "log-artin-asymp-character-sum" (lean := "Chebotarev.log_artinLSeries_asymp_character_sum")
+
+For every character $`\chi` of $`G`, the partial sum
+$`\sum_\fp \chi(\Frob_\fp) N\fp^{-s}` over $`\fp` unramified in $`L` is
+bounded by $`C\log(1/(s-1)) + C` for some constant $`C`, in a right
+neighbourhood of $`s = 1`.
+
+{uses "dedekind-zeta-factorisation"}[]
+{uses "frobenius-class"}[]
+:::
+
+:::proof "log-artin-asymp-character-sum"
+
+Expand $`\log L(\chi, s)` via the Euler product
+{bpref "artin-euler-product-abelian"}[]; the higher-power tail is
+bounded analogously to {bpref "prime-zeta-higher-tail-bounded"}[].
+:::
+
+:::lemma "character-orthogonality-eq" (lean := "Chebotarev.character_orthogonality_cyclotomic_eq")
+
+Let $`L = K(\zeta_m)`, $`\sigma \in G`, and $`\fp` a nonzero prime of
+$`\OK` unramified in $`L` with $`\sigma_\fp` the conjugacy class of
+$`\sigma`. Then
+$$`
+  \sum_{\chi\in\widehat G} \chi(\sigma)\chi(\Frob_\fp)^{-1}
+  \;=\; \abs{G}.
+`
+
+{uses "galois-character"}[]
+{uses "frobenius-class"}[]
+:::
+
+:::lemma "character-orthogonality-ne" (lean := "Chebotarev.character_orthogonality_cyclotomic_ne")
+
+Let $`L = K(\zeta_m)`, $`\sigma \in G`, and $`\fp` a nonzero prime of
+$`\OK` unramified in $`L` whose Frobenius class is not the conjugacy
+class of $`\sigma`. Then
+$$`
+  \sum_{\chi\in\widehat G} \chi(\sigma)\chi(\Frob_\fp)^{-1} \;=\; 0.
+`
+
+{uses "galois-character"}[]
+{uses "frobenius-class"}[]
+:::
+
+:::proof "character-orthogonality-ne"
+
+Standard finite-group character orthogonality for the dual of $`G`
+(Sharifi 7.2.1 step at p.~142). Under the isomorphism
+$`G\cong(\Z/m\Z)^\times` from {bpref "cyclotomic-frobenius-norm-power"}[],
+$`\chi(\Frob_\fp)` depends only on $`N\fp\bmod m`, and the sum reduces to
+the orthogonality relation on the cyclic group $`(\Z/m\Z)^\times`.
+:::
+
+:::lemma "primesum-fibre-asymp" (lean := "Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp")
+
+Let $`L = K(\zeta_m)` and $`\sigma \in G`. The Frobenius-fibre prime sum
+is asymptotic to $`(1/\abs{G})\log(1/(s-1))`:
+$$`
+  \lim_{s\downarrow 1}
+  \frac{\sum_{\fp:\,\sigma_\fp = \sigma} N\fp^{-s}}{\log(1/(s-1))}
+  \;=\; \frac{1}{\abs{G}}.
+`
+
+{uses "log-artin-asymp-character-sum"}[]
+{uses "character-orthogonality-eq"}[]
+{uses "character-orthogonality-ne"}[]
+{uses "artin-one-ne-zero"}[]
+:::
+
+:::proof "primesum-fibre-asymp"
+
+Multiply $`\log L(\chi, s)` by $`\chi(\sigma)^{-1}` and sum over $`\chi`:
+the orthogonality relations
+({bpref "character-orthogonality-eq"}[], {bpref "character-orthogonality-ne"}[])
+pick out the primes with Frobenius $`\sigma`, giving
+$`\sum_\chi \chi(\sigma)^{-1}\log L(\chi, s) \sim
+\abs{G}\sum_{\sigma_\fp=\sigma} N\fp^{-s}`; on the other hand it
+$`\sim \log\zeta_K(s) \sim \log(1/(s-1))` (only $`\chi=1` contributes a
+pole, by {bpref "artin-one-ne-zero"}[]). Divide.
+
+{uses "character-orthogonality-eq"}[]
+{uses "character-orthogonality-ne"}[]
+{uses "artin-one-ne-zero"}[]
+:::
+
+:::lemma "ratio-glue-numerator" (lean := "Chebotarev.tendsto_ratio_of_log_asymp_numerator")
+
+If $`\mathrm{num}(s)/\log(1/(s-1)) \to c` and
+$`\mathrm{den}(s)/\log(1/(s-1)) \to 1` as $`s\downarrow 1`, then
+$`\mathrm{num}(s)/\mathrm{den}(s) \to c`.
+:::
+
+:::proof "ratio-glue-numerator"
+
+Write $`\mathrm{num}/\mathrm{den} = (\mathrm{num}/L)/(\mathrm{den}/L)`
+with $`L = \log(1/(s-1))`, which is positive (hence nonzero) for
+$`s\in(1,2)` since $`1/(s-1) > 1`; apply the quotient rule for limits
+and cancel $`L`.
+:::
+
+:::lemma "cyclotomic-density-two-sided" (lean := "Chebotarev.cyclotomic_density_from_two_sided_asymp")
+
+Let $`L = K(\zeta_m)` and $`\sigma \in G`. Then
+$$`
+  \lim_{s\downarrow 1}
+  \frac{\sum_{\fp:\,\sigma_\fp = \sigma} N\fp^{-s}}
+       {\sum_\fp N\fp^{-s}}
+  \;=\; \frac{1}{\abs{G}}.
+`
+
+{uses "primesum-fibre-asymp"}[]
+{uses "prime-ideal-sum-log"}[]
+{uses "ratio-glue-numerator"}[]
+:::
+
+:::proof "cyclotomic-density-two-sided"
+
+The numerator asymptotic {bpref "primesum-fibre-asymp"}[]
+($`\mathrm{num}\sim(1/\abs{G})\log(1/(s-1))`) and the denominator
+asymptotic {bpref "prime-ideal-sum-log"}[]
+($`\mathrm{den}\sim\log(1/(s-1))`) feed the ratio glue
+{bpref "ratio-glue-numerator"}[].
+
+{uses "primesum-fibre-asymp"}[]
+{uses "prime-ideal-sum-log"}[]
+{uses "ratio-glue-numerator"}[]
+:::
+
+:::theorem "chebotarev-cyclotomic" (lean := "Chebotarev.chebotarev_cyclotomic")
+
+For $`K` a number field, $`m\ge 1`, $`L=K(\zeta_m)`, and every
+$`\sigma \in G = \Gal{L/K}`,
+$$`
+  \delta\bigl(\setof{\fp\subset\OK}{\sigma_\fp = \sigma}\bigr)
+  \;=\; \frac{1}{\abs{G}}.
+`
+
+{uses "dirichlet-density"}[]
+{uses "frobenius-class"}[]
+{uses "cyclotomic-density-two-sided"}[]
+:::
