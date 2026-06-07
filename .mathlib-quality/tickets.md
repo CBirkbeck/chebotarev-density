@@ -206,6 +206,12 @@ the chain is sorry-free *modulo L3*.
   long-line/unused-variable warnings (a few pre-existing), naming-gate renames on
   worker-generated helper names, and structure-gate decomposition flags on the larger
   assembly proofs.
+- **Orchestrator ruling (2026-06-07, binding for all CL1 workers)**: in-file
+  `/-! ### Sub-lemmas for … -/` blocks and verbatim Sharifi/Stevenhagen–Lenstra
+  citation blocks are CLAUDE.md-sanctioned ("Source quotes are binding"; the
+  Sub-lemmas convention is documented there) and OVERRIDE the generic
+  no-subsection-dividers style rule — keep them. Strippable: pure proof-strategy
+  narration inside such a block, if separable from the citations.
 - Depends on: nothing (main line done).
 
 ### [BP1] blueprint sync — Status: **done** (superseded by the verso migration, 2026-06-07)
