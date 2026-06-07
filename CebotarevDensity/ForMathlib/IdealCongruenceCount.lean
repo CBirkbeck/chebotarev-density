@@ -2183,8 +2183,8 @@ around it cleanly:
   the norm-multiplying bijection `I ↦ 𝔟·I` gives the exact identity
   `#{[I]=C, N(I)≡x, N(I)≤M} = #{[J]=C·[𝔟], N(J)≡x·u, 𝔟∣J, N(J)≤M·N(𝔟)}` (Route A); the
   `𝔟`-divisible class-`C·[𝔟]` density is `1/N(𝔟)` of the full class-`C·[𝔟]` density at the same
-  residue (Route B, the Lang covolume/CRT equidistribution `cardNormLeResidueClass_div_density`),
-  so the `N(𝔟)`-factors cancel.
+  residue (Route B, the limit form of the effective kernel
+  `cardNormLeResidueClassDvd_sub_mul_rpow_le`), so the `N(𝔟)`-factors cancel.
 * `cardNormLeResidue_density_const_of_realized` — the global statement: sum the transfer over the
   class group and reindex by `Equiv.mulRight [𝔟]`.
 -/
@@ -3487,30 +3487,13 @@ private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] 
           mul_le_mul_of_nonneg_left hN1exp (abs_nonneg _)
 
 open Ideal in
-/-- **The dvd-density is the full density divided by `N(𝔟)`, limit form (Lang VI §3 Thm 3; GRS Thm
-1).** For a realizer `𝔟` with `N(𝔟) (mod c)` a unit, the `𝔟`-divisible class-`D` norm-residue
-density is `1/N(𝔟)` of the full class-`D` density `κfull` at the same residue. The limit form of the
-effective kernel `cardNormLeResidueClassDvd_sub_mul_rpow_le`, via
-`tendsto_div_atTop_of_sub_mul_rpow_le`. -/
-private theorem cardNormLeResidueClass_div_density {K : Type*} [Field K] [NumberField K] (c : ℕ)
-    [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
-    (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
-    (y : ZMod c) (D : ClassGroup (𝓞 K)) {κfull : ℝ}
-    (hκfull : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
-      Filter.atTop (nhds κfull)) :
-    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
-      Filter.atTop (nhds (κfull / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) :=
-  (cardNormLeResidueClassDvd_sub_mul_rpow_le c 𝔟 hu y D hκfull).elim fun _ hC' =>
-    tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hC' N hN)
-
-open Ideal in
 /-- **Per-class realizer transfer (the geometric heart, Lang VI §3 Thm 3).** For a fixed nonzero
 ideal `𝔟` whose norm residue `N(𝔟) (mod c)` is a unit, the per-class norm-residue density
 transfers along multiplication by `[𝔟]`:
 `κ_{C,x} = κ_{C·[𝔟], x·N(𝔟)}` (both densities limits of `count/N`).
  Combine the norm-multiplying
-bijection `cardNormLeResidueClass_eq_dvd` (Route A) with `cardNormLeResidueClass_div_density`
-(Route B); the `N(𝔟)` factors cancel. -/
+bijection `cardNormLeResidueClass_eq_dvd` (Route A) with the limit form of the effective kernel
+`cardNormLeResidueClassDvd_sub_mul_rpow_le` (Route B); the `N(𝔟)` factors cancel. -/
 private theorem cardNormLeResidueClass_density_transfer {K : Type*} [Field K] [NumberField K]
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
@@ -3528,7 +3511,9 @@ private theorem cardNormLeResidueClass_density_transfer {K : Type*} [Field K] [N
   set y : ZMod c := x * (NB : ZMod c) with hy
   set D : ClassGroup (𝓞 K) := C * ClassGroup.mk0 𝔟 with hD
   have hκd : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
-      Filter.atTop (nhds (κ' / (NB : ℝ))) := cardNormLeResidueClass_div_density c 𝔟 hu y D hκ'
+      Filter.atTop (nhds (κ' / (NB : ℝ))) :=
+    (cardNormLeResidueClassDvd_sub_mul_rpow_le c 𝔟 hu y D hκ').elim fun _ hC' =>
+      tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hC' N hN)
   have hAlim : Filter.Tendsto
       (fun M : ℕ => (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
       Filter.atTop (nhds ((NB : ℝ) * (κ' / (NB : ℝ)))) := by
