@@ -184,7 +184,10 @@ stated against the compositum `M = L(μ_m)` (carrier `CyclotomicField m L` with 
 * `compositum_isCyclotomic_over_fixedField` (C3) — for any `g ∈ Gal(M/K)` the fixed field
   `F = M^⟨g⟩` has `M/F` cyclotomic; applied at `g = (σ,τ)`, where the trivial meet
   `⟨(σ,τ)⟩ ∩ (G × {1}) = 1` (`cyclic_subgroup_meets_G_times_one_trivially`, needs
-  `|G| ∣ ord τ`) gives `M = F(μ_m)`.
+  `|G| ∣ ord τ`) gives `M = F(μ_m)`. **Gate-fix (2026-06-07):** the Lean encoding of
+  `G × {1} = Gal(M/K(μ_m))` is `(IntermediateField.adjoin K {b | b^m=1}).fixingSubgroup`, NOT
+  `ker(restrictNormalHom L)` (which is `{1} × H = Gal(M/L)`); see the C3 docstring for the
+  necessity/sufficiency argument. The master leaf must supply the corrected gate.
 * `frobeniusClass_proj` (C4) — a prime with `Gal(M/K)`-Frobenius `(σ,τ)` has
   `Gal(L/K)`-Frobenius the projection `σ` (restriction-compatibility of `frobeniusClass`,
   the `M/L/K`-tower analogue of `Main.arithFrobAt_restrictScalars_eq`; replicated in
@@ -280,23 +283,122 @@ private theorem gal_compositum_prod_iso
 
 /-- **C3 — the compositum is cyclotomic over the `(σ,τ)`-fixed field** (Sharifi p. 144):
 "… `L(μ_m)` is given by adjoining `μ_m` to `F = K(μ_m)^⟨(σ,τ)⟩`", i.e. `M = F(μ_m)`.
-Stated for `g ∈ Gal(M/K)` whose cyclic span meets `Gal(M/L)` trivially and `F = M^⟨g⟩`:
-then `M/F` is the `m`-th cyclotomic extension. The kernel of `restrictNormalHom L` *is* the
-`{1} × H = Gal(M/L)` copy inside `Gal(M/K) = G × H`, so the meet hypothesis
-`⟨g⟩ ⊓ ker(restrictNormalHom L) = ⊥` is exactly Sharifi's `⟨(σ,τ)⟩ ∩ (G × {1}) = 1`
-(`cyclic_subgroup_meets_G_times_one_trivially`, supplied by the master leaf at `g = (σ,τ)`
-from `|G| ∣ ord τ`); it forces `F ∩ L = K` and hence `M = F(μ_m)`. **Adversarial note:** the
-meet hypothesis is essential — for general `g` (e.g. `g ∈ Gal(M/L)`) the conclusion is false;
+Stated for `g ∈ Gal(M/K)` and `F = M^⟨g⟩`: then `M/F` is the `m`-th cyclotomic extension.
+
+**Gate correction (statement-fix, 2026-06-07).** The decomposition originally gated this leaf
+by `⟨g⟩ ⊓ ker(restrictNormalHom L) = ⊥`. That is FALSE-as-stated: `ker(restrictNormalHom L)`
+is `Gal(M/L) = {1} × H` (the `L`-fixers), whereas Sharifi's `⟨(σ,τ)⟩ ∩ (G × {1}) = 1` is about
+`G × {1} = Gal(M/K(μ_m))`, the `μ_m`-fixers. Concretely with `g = (σ,τ)`: the *stated* meet
+`⟨g⟩ ⊓ ({1}×H)` is trivial iff `ord τ ∣ ord σ`, which `|G| ∣ ord τ` does NOT give; the
+*correct* meet `⟨g⟩ ⊓ (G×{1})` is trivial iff `ord σ ∣ ord τ`, which `ord σ ∣ |G| ∣ ord τ`
+DOES give (matching `cyclic_subgroup_meets_G_times_one_trivially`). Moreover `M = F(μ_m)`
+needs exactly `⟨g⟩ ⊓ Gal(M/K(μ_m)) = ⊥` (it is necessary and sufficient: `M = F ⊔ K(μ_m)`
+⟺ `fixingSubgroup(F ⊔ K(μ_m)) = ⊥` ⟺ `⟨g⟩ ⊓ K(μ_m).fixingSubgroup = ⊥`). The hypothesis is
+therefore corrected to `⟨g⟩ ⊓ (adjoin K μ_m).fixingSubgroup = ⊥`, where
+`adjoin K {b | b^m = 1} = K(μ_m)` is the cyclotomic subfield (its fixing subgroup is
+`Gal(M/K(μ_m)) = G × {1}`). The master-leaf assembly (`exists_crossing_family_tagged`) must
+supply this corrected gate at `g = (σ,τ)`: from `|G| ∣ ord τ` via
+`cyclic_subgroup_meets_G_times_one_trivially` transported across the `Gal(M/K) ≅ G × H`
+splitting (C1) so that `G × {1}` is identified with `(adjoin K μ_m).fixingSubgroup`.
+
+Proof: a primitive root `ζ ∈ M` exists (from `[IsCyclotomicExtension {m} L M]`);
+`adjoin K {ζ} = adjoin K {b | b^m=1} = K(μ_m)`; the corrected meet gives `F ⊔ K(μ_m) = ⊤`
+(`fixingSubgroup_sup` + `fixingSubgroup_fixedField` + the Galois correspondence
+`fixedField_fixingSubgroup`); hence `adjoin F {ζ} = ⊤` over `F` (`restrictScalars_adjoin_eq_sup`),
+and `adjoin F {ζ}` is `{m}`-cyclotomic over `F`
+(`IsPrimitiveRoot.intermediateField_adjoin_isCyclotomicExtension`), transported to `M` along
+`adjoin F {ζ} = ⊤ ≃ₐ M` (`IsCyclotomicExtension.equiv`, `IntermediateField.topEquiv`).
 `[IsCyclotomicExtension {m} L M]` guarantees `μ_m ⊆ M` so the adjunction makes sense. -/
 private theorem compositum_isCyclotomic_over_fixedField
     (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
     [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
     (g : Gal(M/K))
-    (_hmeet : Subgroup.zpowers g ⊓ (AlgEquiv.restrictNormalHom (F := K) (K₁ := M) L).ker = ⊥) :
+    (_hmeet : Subgroup.zpowers g ⊓
+      (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥) :
     letI := (IntermediateField.fixedField (Subgroup.zpowers g)).isScalarTower_mid'
-    IsCyclotomicExtension {m} ↥(IntermediateField.fixedField (Subgroup.zpowers g)) M :=
-  sorry
+    IsCyclotomicExtension {m} ↥(IntermediateField.fixedField (Subgroup.zpowers g)) M := by
+  set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers g) with hF
+  set Kμ : IntermediateField K M := IntermediateField.adjoin K {b : M | b ^ m = 1} with hKμ
+  -- a primitive `m`-th root `ζ ∈ M` (from the `L`-cyclotomic structure on `M`).
+  obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
+    IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
+  -- `adjoin K {ζ} = Kμ` (the roots of unity are exactly the powers of `ζ`).
+  have hadjζ : IntermediateField.adjoin K {ζ} = Kμ := by
+    apply le_antisymm
+    · apply IntermediateField.adjoin_le_iff.mpr
+      intro x hx
+      rw [Set.mem_singleton_iff] at hx; subst hx
+      exact IntermediateField.subset_adjoin K _ hζ.pow_eq_one
+    · apply IntermediateField.adjoin_le_iff.mpr
+      intro x hx
+      obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one (Set.mem_setOf_eq ▸ hx)
+      exact pow_mem (IntermediateField.subset_adjoin K _ (Set.mem_singleton ζ)) i
+  -- `F ⊔ Kμ = ⊤` via the Galois correspondence and the (corrected) meet hypothesis.
+  have hsup : (F ⊔ Kμ).fixingSubgroup = ⊥ := by
+    rw [IntermediateField.fixingSubgroup_sup, IntermediateField.fixingSubgroup_fixedField, _hmeet]
+  have htop : F ⊔ Kμ = ⊤ := by
+    have := congrArg IntermediateField.fixedField hsup
+    rwa [IsGalois.fixedField_fixingSubgroup, IntermediateField.fixedField_bot] at this
+  -- transport to `adjoin F {ζ} = ⊤` (over `F`), via `restrictScalars`.
+  have htopF : IntermediateField.adjoin (↥F) {ζ} = ⊤ := by
+    apply IntermediateField.restrictScalars_injective K
+    rw [IntermediateField.restrictScalars_adjoin_eq_sup, hadjζ, htop]
+    rfl
+  -- `adjoin F {ζ}` is `{m}`-cyclotomic over `F`; transport along `adjoin F {ζ} = ⊤ ≅ M`.
+  haveI : Algebra.IsIntegral ↥F M := Algebra.IsIntegral.of_finite ↥F M
+  haveI hcyc : IsCyclotomicExtension {m} ↥F (IntermediateField.adjoin (↥F) {ζ}) :=
+    IsPrimitiveRoot.intermediateField_adjoin_isCyclotomicExtension (K := ↥F) hζ
+  rw [htopF] at hcyc
+  exact IsCyclotomicExtension.equiv (S := {m}) (A := ↥F) (f := IntermediateField.topEquiv)
+
+/-- **Action intertwining for the downward normal restriction** (replica of
+`CyclotomicNormResidue.smul_algebraMap_eq`, adapted to the abstract tower `K ⊆ L ⊆ M` with
+`M` on top). The embedding `𝓞 L → 𝓞 M` intertwines the action of `σ : Gal(M/K)` with that of
+its normal restriction `σ ↾ L : Gal(L/K)`:
+`σ • algebraMap (𝓞 L) (𝓞 M) y = algebraMap (𝓞 L) (𝓞 M) (σ↾L • y)`. The CNR original is
+`private`, hence unreachable here; replicated `_repl`. -/
+private theorem smul_algebraMap_eq_repl
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (σ : Gal(M/K)) (y : 𝓞 L) :
+    σ • (algebraMap (𝓞 L) (𝓞 M) y) = algebraMap (𝓞 L) (𝓞 M) ((σ.restrictNormal L) • y) := by
+  haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
+  have hbridgeM : ∀ (g : M ≃ₐ[K] M) (x : 𝓞 M), ((g • x : 𝓞 M) : M) = g • (x : M) := fun g x =>
+    by simpa [Algebra.smul_def] using
+      (smul_distrib_smul (G := M ≃ₐ[K] M) (R := 𝓞 M) (S := M) g x 1).symm
+  have hbridgeL : ∀ (g : L ≃ₐ[K] L) (z : 𝓞 L), ((g • z : 𝓞 L) : L) = g • ((z : L)) := fun g z =>
+    by simpa [Algebra.smul_def] using
+      (smul_distrib_smul (G := L ≃ₐ[K] L) (R := 𝓞 L) (S := L) g z 1).symm
+  have hcoe : ∀ z : 𝓞 L, ((algebraMap (𝓞 L) (𝓞 M) z : 𝓞 M) : M) = algebraMap L M (z : L) :=
+    fun z => by
+      rw [show ((algebraMap (𝓞 L) (𝓞 M) z : 𝓞 M) : M)
+            = algebraMap (𝓞 M) M (algebraMap (𝓞 L) (𝓞 M) z) from rfl,
+        ← IsScalarTower.algebraMap_apply (𝓞 L) (𝓞 M) M,
+        show ((z : L)) = algebraMap (𝓞 L) L z from rfl,
+        ← IsScalarTower.algebraMap_apply (𝓞 L) L M]
+  rw [RingOfIntegers.ext_iff]
+  rw [hbridgeM, hcoe y, hcoe ((σ.restrictNormal L) • y), hbridgeL, AlgEquiv.smul_def,
+    AlgEquiv.smul_def, AlgEquiv.restrictNormal_commutes]
+
+/-- **Downward Frobenius restriction** (replica of
+`CyclotomicNormResidue.isArithFrobAt_restrictNormal`
+for the tower `K ⊆ L ⊆ M`). If `σ : Gal(M/K)` is an arithmetic Frobenius at a prime `𝔓` of `𝓞 M`,
+its normal restriction `σ ↾ L` is an arithmetic Frobenius at `𝔮 = 𝔓 ∩ 𝓞 L`. The defining
+congruence descends along `𝓞 L → 𝓞 M` via `smul_algebraMap_eq_repl` and `Ideal.under_under`. -/
+private theorem isArithFrobAt_restrictNormal_repl
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (σ : Gal(M/K)) (𝔓 : Ideal (𝓞 M))
+    (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) :
+    IsArithFrobAt (𝓞 K) (σ.restrictNormal L) (𝔓.under (𝓞 L)) := by
+  haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
+  have hunder : (𝔓.under (𝓞 L)).under (𝓞 K) = 𝔓.under (𝓞 K) := Ideal.under_under 𝔓
+  intro y
+  rw [hunder, Ideal.under, Ideal.mem_comap, map_sub, map_pow]
+  rw [show (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) (σ.restrictNormal L)) y
+        = (σ.restrictNormal L) • y from rfl, ← smul_algebraMap_eq_repl K L M σ y]
+  exact hσ (algebraMap (𝓞 L) (𝓞 M) y)
 
 /-- **C4 — Frobenius projects along the compositum tower** `M/L/K`. A prime `𝔭` of `K`
 unramified in `M` (hence in `L`) whose `Gal(M/K)`-Frobenius class is `(σ,τ)` — i.e. equal to
@@ -304,7 +406,11 @@ unramified in `M` (hence in `L`) whose `Gal(M/K)`-Frobenius class is `(σ,τ)` �
 This is the restriction-compatibility of `frobeniusClass` along `K ⊆ L ⊆ M`, the tower
 analogue of `Main.arithFrobAt_restrictScalars_eq` (replicated in `Abelian` because `Main`
 imports `Abelian`). It is what makes each crossing fibre `S_{σ,τ}` land inside the
-`σ`-Frobenius fibre `S_σ`. -/
+`σ`-Frobenius fibre `S_σ`. Proof: pick `𝔓 ∣ 𝔭` in `𝓞 M`, set `σM = arithFrobAt 𝔓`; then
+`IsConj σM τM` (both represent `frobeniusClass K M 𝔭`); `σM ↾ L` is an `L`-Frobenius at
+`𝔓 ∩ 𝓞 L` (`isArithFrobAt_restrictNormal_repl`), so `frobeniusClass K L 𝔭 = mk (σM ↾ L)`; and
+conjugacy descends through the hom `restrictNormalHom L` (`MonoidHom.map_isConj`), with
+`restrictNormalHom L τM = σ`. -/
 private theorem frobeniusClass_proj
     (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
@@ -312,8 +418,44 @@ private theorem frobeniusClass_proj
     (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
     (𝔭 : Ideal (𝓞 K)) (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
     (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
-    frobeniusClass K L 𝔭 = ConjClasses.mk σ :=
-  sorry
+    frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
+  by_cases hp : 𝔭.IsPrime
+  · haveI := hp
+    obtain ⟨𝔓, h𝔓p, h𝔓lo, -⟩ := exists_prime_liesOver K M 𝔭 (UnramifiedIn.ne_bot K M _hunrM)
+    haveI := h𝔓p
+    haveI := h𝔓lo
+    haveI : Finite (𝓞 M ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
+      (ne_bot_of_ramificationIdx_eq_one K M (UnramifiedIn.ramificationIdx_eq_one K M _hunrM 𝔓 h𝔓lo))
+    set σM : Gal(M/K) := arithFrobAt (𝓞 K) Gal(M/K) 𝔓 with hσM
+    have hMfrobσM : IsArithFrobAt (𝓞 K) σM 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 K) Gal(M/K) 𝔓
+    have hMclass : frobeniusClass K M 𝔭 = ConjClasses.mk σM :=
+      frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM σM 𝔓 hMfrobσM h𝔓lo
+    have hconjM : IsConj σM τM :=
+      ConjClasses.mk_eq_mk_iff_isConj.mp (hMclass.symm.trans _hfr)
+    have hLfrob : IsArithFrobAt (𝓞 K) (σM.restrictNormal L) (𝔓.under (𝓞 L)) :=
+      isArithFrobAt_restrictNormal_repl K L M σM 𝔓 hMfrobσM
+    haveI : (𝔓.under (𝓞 L)).IsPrime := Ideal.IsPrime.under (𝓞 L) 𝔓
+    haveI : (𝔓.under (𝓞 L)).LiesOver 𝔭 :=
+      ⟨(Ideal.under_under 𝔓).trans h𝔓lo.over.symm |>.symm⟩
+    have hLclass : frobeniusClass K L 𝔭 = ConjClasses.mk (σM.restrictNormal L) :=
+      frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 _hunrL (σM.restrictNormal L) (𝔓.under (𝓞 L))
+        hLfrob inferInstance
+    rw [hLclass]
+    have hconjL : IsConj (AlgEquiv.restrictNormalHom L σM) (AlgEquiv.restrictNormalHom L τM) :=
+      MonoidHom.map_isConj _ hconjM
+    rw [_hτM] at hconjL
+    have hrn : σM.restrictNormal L = AlgEquiv.restrictNormalHom L σM := rfl
+    rw [hrn]
+    exact ConjClasses.mk_eq_mk_iff_isConj.mpr hconjL
+  · have hMjunk : frobeniusClass K M 𝔭 = ConjClasses.mk 1 := by
+      rw [frobeniusClass, dif_neg (fun h => hp h.1)]
+    have hLjunk : frobeniusClass K L 𝔭 = ConjClasses.mk 1 := by
+      rw [frobeniusClass, dif_neg (fun h => hp h.1)]
+    have hconj : IsConj (1 : Gal(M/K)) τM :=
+      ConjClasses.mk_eq_mk_iff_isConj.mp (hMjunk.symm.trans _hfr)
+    have hτM1 : τM = 1 := isConj_one_right.mp hconj
+    have hσ1 : σ = 1 := by rw [← _hτM, hτM1, map_one]
+    rw [hLjunk, hσ1]
 
 /-- **C5 — density transfer through a fixed field** (Sharifi 7.2.2 Step 2 ⇒ Step 1 reuse,
 p. 143–144). A verbatim replica of `Main.density_lift_through_fixedField`, restated with the
@@ -324,8 +466,30 @@ cannot be imported here. Given `σM ∈ Gal(M/K)`, the fixed field `E = M^⟨σM
 `E`, the transfer yields density `|C|/|Gal(M/K)|` of the `σM`-Frobenius fibre of `K`. In the
 crossing, `σM = (σ,τ)`, `E = F`, and `chebotarev_cyclotomic` (at the cyclotomic `M/F`, valid by
 `hm4`) supplies the `_hab` input; the resulting density is `1/(|G|·|H|)`.
-**Orchestrator note:** this duplicates `Main.density_lift_through_fixedField`; reconcile by
-moving the shared statement to a common ancestor module (or having `Main` re-export it). -/
+**Orchestrator note (enriched 2026-06-07).** This duplicates the *proven*
+`Main.density_lift_through_fixedField` (Main.lean ~1152), available only by `L ↦ M` renaming.
+A naive in-file replica is NOT a "small port": the proof transitively pulls in the ENTIRE
+Step-1 reduction of `Main.lean` — ~18 declarations, ~1050 lines — none of which is importable
+(`Main` imports `Abelian`):
+  * public-form (already `(K L)`-explicit, copy verbatim with `L ↦ M`):
+    `frobeniusFibre_card_eq_of_isConj`, `card_primesAbove_eq_card_carrier_mul_frobeniusFibre`,
+    `count_frobenius_eq_sigma_mul_card_carrier`, `count_primes_above_with_frobenius_eq_sigma`,
+    `arithFrobAt_restrictScalars_eq`;
+  * private (suffix `_repl`): `univ_ratio_E_K_tendsto_one`,
+    `stabilizer_intermediate_eq_top_of_frobenius`, `inertiaDeg_under_E_eq_one_of_frobenius`,
+    `eq_of_liesOver_under_E_of_frobenius`, `arithFrobAt_E_eq_of_isArithFrobAt`,
+    `card_fibre_E_eq_card_fibre_L`, `frobeniusClass_under_eq_of_mem_fibre`,
+    `primeIdealZetaSum_fibre_eq_smul`, `tsum_comp_le_card_fibre_mul`,
+    `primeIdealZetaSum_degTwo_le`, `ramifiedBelow_finite`,
+    `primeIdealZetaSum_T2_div_univ_tendsto_zero`, and the lemma itself.
+**Key structural finding:** that entire chain is *Abelian-independent* — `Main`'s only use of
+`Abelian` is `chebotarev_abelian` (Main.lean:1289, inside `chebotarev_density`, AFTER all the
+Step-1 helpers). So the CLEAN orchestrator fix (requires editing `Main`, which this agent does
+NOT own) is to MOVE `density_lift_through_fixedField` + its Step-1 dependency block to a module
+strictly below `Abelian` (a new `CebotarevDensity/FixedFieldTransfer.lean` imported by both, or
+relocate into `Frobenius`), then DELETE this replica and have the master leaf call the shared
+lemma. Left `sorry` here rather than duplicate ~1050 verified lines unverifiably (the project
+`lake build` was concurrently broken in `ForMathlib/IdealCongruenceCount.lean`). -/
 private theorem density_lift_through_fixedField_repl
     (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M] [IsGalois K M]
     [FiniteDimensional K M] (σM : Gal(M/K)) (E : IntermediateField K M) (σE : Gal(M/E))
