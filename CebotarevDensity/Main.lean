@@ -86,10 +86,10 @@ theorem chebotarev_density
     (e ⟨σ, Subgroup.mem_zpowers σ⟩) rfl rfl
     (chebotarev_abelian _ L (e ⟨σ, Subgroup.mem_zpowers σ⟩))
 
-/-- In a commutative finite group every conjugacy class is a singleton,
+/-- In a commutative finite monoid every conjugacy class is a singleton,
 so `|C| = 1`. -/
 theorem ConjClasses_carrier_card_eq_one_of_comm
-    {G : Type*} [Group G] [IsMulCommutative G] [Finite G] (g : G) :
+    {G : Type*} [Monoid G] [IsMulCommutative G] [Finite G] (g : G) :
     Nat.card (ConjClasses.mk g).carrier = 1 := by
   letI : CommMonoid G := IsMulCommutative.instCommMonoid
   have h : (ConjClasses.mk g).carrier = {g} := by
@@ -115,9 +115,9 @@ theorem infinite_of_hasDirichletDensity_pos
     S.Infinite :=
   fun hfin ↦ hδ.ne' (tendsto_nhds_unique h (hasDirichletDensity_of_finite K hfin))
 
-/-- The carrier of a conjugacy class in a finite group has positive cardinality. -/
+/-- The carrier of a conjugacy class in a finite monoid has positive cardinality. -/
 theorem ConjClasses_carrier_card_pos
-    {G : Type*} [Group G] [Finite G] (C : ConjClasses G) :
+    {G : Type*} [Monoid G] [Finite G] (C : ConjClasses G) :
     0 < Nat.card C.carrier := by
   obtain ⟨a, rfl⟩ := ConjClasses.mk_surjective C
   have : Nonempty (ConjClasses.mk a).carrier := ⟨⟨a, ConjClasses.mem_carrier_mk⟩⟩
@@ -135,9 +135,9 @@ theorem infinite_setOf_frobenius_class
   · exact_mod_cast ConjClasses_carrier_card_pos C
   · exact_mod_cast Nat.card_pos (α := Gal(L/K))
 
-/-- The identity conjugacy class in a finite group has carrier of cardinality `1`. -/
+/-- The identity conjugacy class in a finite monoid has carrier of cardinality `1`. -/
 theorem ConjClasses_mk_one_carrier_card_eq_one
-    (G : Type*) [Group G] [Finite G] :
+    (G : Type*) [Monoid G] [Finite G] :
     Nat.card (ConjClasses.mk (1 : G)).carrier = 1 := by
   have h : (ConjClasses.mk (1 : G)).carrier = {1} := by
     simp [Set.ext_iff, ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj]
