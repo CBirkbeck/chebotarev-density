@@ -85,23 +85,29 @@ open scoped NNReal
 
 /-- The coordinatewise retraction of `ι → ℝ` onto the unit cube `Set.Icc 0 1`, given by
 `Set.projIcc` in each coordinate. -/
-def clampUnit (ι : Type*) (c : ι → ℝ) : ι → ℝ := fun i => (Set.projIcc 0 1 zero_le_one (c i) : ℝ)
+def clampUnit (ι : Type*) (c : ι → ℝ) : ι → ℝ := fun i ↦ (Set.projIcc 0 1 zero_le_one (c i) : ℝ)
 
 theorem clampUnit_mem_Icc (ι : Type*) (c : ι → ℝ) : clampUnit ι c ∈ Icc (0 : ι → ℝ) 1 :=
-  ⟨fun i => (Set.projIcc 0 1 zero_le_one (c i)).2.1,
-    fun i => (Set.projIcc 0 1 zero_le_one (c i)).2.2⟩
+  ⟨fun i ↦ (Set.projIcc 0 1 zero_le_one (c i)).2.1,
+    fun i ↦ (Set.projIcc 0 1 zero_le_one (c i)).2.2⟩
 
 theorem clampUnit_eq_self {ι : Type*} {c : ι → ℝ} (hc : c ∈ Icc (0 : ι → ℝ) 1) :
     clampUnit ι c = c :=
-  funext fun i => congrArg _ (Set.projIcc_of_mem _ ⟨hc.1 i, hc.2 i⟩)
+  funext fun i ↦ congrArg _ (Set.projIcc_of_mem _ ⟨hc.1 i, hc.2 i⟩)
 
-theorem lipschitzWith_clampUnit (ι : Type*) [Fintype ι] : LipschitzWith 1 (clampUnit ι) := by
-  refine LipschitzWith.of_dist_le_mul fun c d => ?_
-  rw [NNReal.coe_one, one_mul]
-  refine (dist_pi_le_iff dist_nonneg).mpr fun i => le_trans ?_ (dist_le_pi_dist c d i)
-  have h := (LipschitzWith.projIcc (a := (0 : ℝ)) (b := 1) zero_le_one).dist_le_mul (c i) (d i)
-  rw [NNReal.coe_one, one_mul] at h
-  exact (Subtype.dist_eq _ _).symm.trans_le h
+/-- A map into a finite pi type is `1`-Lipschitz once each output coordinate's `edist` is
+bounded by the input `edist`. The pi-codomain companion of `LipschitzWith.eval`. -/
+private theorem lipschitzWith_one_of_edist_apply_le {α κ : Type*} {β : κ → Type*}
+    [PseudoEMetricSpace α] [∀ j, PseudoEMetricSpace (β j)] [Fintype κ] {F : α → ∀ j, β j}
+    (h : ∀ c d j, edist (F c j) (F d j) ≤ edist c d) : LipschitzWith 1 F :=
+  LipschitzWith.of_edist_le fun c d ↦ by
+    rw [edist_pi_def]
+    exact Finset.sup_le fun j _ ↦ h c d j
+
+theorem lipschitzWith_clampUnit (ι : Type*) [Fintype ι] : LipschitzWith 1 (clampUnit ι) :=
+  lipschitzWith_one_of_edist_apply_le fun c d i ↦ (Subtype.edist_eq _ _).symm.trans_le <|
+    (((LipschitzWith.projIcc zero_le_one).edist_le_mul (c i) (d i)).trans_eq
+      (one_mul _)).trans (edist_le_pi_edist c d i)
 
 /-- A globally `C¹` map into `κ → ℝ`, pre-composed with the cube clamp, is globally Lipschitz;
 its image of the unit cube is unchanged. The Lipschitz constant comes from compactness of the
@@ -111,32 +117,25 @@ theorem exists_lipschitzWith_comp_clampUnit {ι κ : Type*} [Fintype ι] [Fintyp
     ∃ M : ℝ≥0, LipschitzWith M (f ∘ clampUnit ι) := by
   have hl := hf.locallyLipschitz.locallyLipschitzOn (s := Icc (0 : ι → ℝ) 1)
   obtain ⟨M, hM⟩ := hl.exists_lipschitzOnWith_of_compact isCompact_Icc
-  refine ⟨M, fun c d => ?_⟩
-  calc edist (f (clampUnit ι c)) (f (clampUnit ι d))
-      ≤ M * edist (clampUnit ι c) (clampUnit ι d) :=
-        hM (clampUnit_mem_Icc ι c) (clampUnit_mem_Icc ι d)
-    _ ≤ M * (1 * edist c d) := by gcongr; exact lipschitzWith_clampUnit ι c d
-    _ = M * edist c d := by rw [one_mul]
+  refine ⟨M, fun c d ↦ (hM (clampUnit_mem_Icc ι c) (clampUnit_mem_Icc ι d)).trans ?_⟩
+  gcongr
+  simpa using (lipschitzWith_clampUnit ι).edist_le_mul c d
 
 variable (K : Type*) [Field K] [NumberField K]
 
 theorem contDiff_expMapBasis : ContDiff ℝ 1 (⇑(expMapBasis (K := K))) := by
   classical
-  have h : ⇑(expMapBasis (K := K)) = fun x : realSpace K =>
-      Real.exp (x w₀) • fun w : InfinitePlace K =>
-        ∏ i : {w // w ≠ w₀}, w (fundSystem K (equivFinRank.symm i)) ^ x i :=
-    funext fun x => expMapBasis_apply' x
-  rw [h]
-  refine (Real.contDiff_exp.comp (contDiff_apply ℝ _ w₀)).smul
-    (contDiff_pi.mpr fun w => contDiff_prod fun i _ => ?_)
-  exact (contDiff_const (c := w (fundSystem K (equivFinRank.symm i)))).rpow
-    (contDiff_apply ℝ ℝ (i : InfinitePlace K)) fun x => (InfinitePlace.pos_iff.mpr (by simp)).ne'
+  rw [show ⇑(expMapBasis (K := K)) = fun x : realSpace K ↦
+      Real.exp (x w₀) • fun w : InfinitePlace K ↦
+        ∏ i : {w // w ≠ w₀}, w (fundSystem K (equivFinRank.symm i)) ^ x i from
+    funext expMapBasis_apply']
+  fun_prop (disch := exact fun x ↦ (InfinitePlace.pos_iff.mpr (by simp)).ne')
 
 open scoped Classical in
 /-- Parametrization of the `expMapBasis`-image of the `w₀`-face `{x | x w₀ = 0}` of
 `paramSet K`: plug `0` in the `w₀`-slot and the cube coordinates in the remaining slots. -/
 def faceMapZero (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : realSpace K :=
-  expMapBasis fun w => if hw : w = w₀ then 0 else c ⟨w, hw⟩
+  expMapBasis fun w ↦ if hw : w = w₀ then 0 else c ⟨w, hw⟩
 
 open scoped Classical in
 /-- Parametrization of the `expMapBasis`-image of a side face `{x | x i = a}` (`i ≠ w₀`,
@@ -146,31 +145,26 @@ substitution `t = exp (x w₀) ∈ (0,1]` (`expMapBasis_apply''`) turns it into 
 `faceMapSide i a c = (c i) • expMapBasis (x [w₀ => 0, i => a, w => c w])`. -/
 def faceMapSide (i : {w : InfinitePlace K // w ≠ w₀}) (a : ℝ)
     (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : realSpace K :=
-  c i • expMapBasis fun w => if hw : w = w₀ then 0 else if (⟨w, hw⟩ : {w // w ≠ w₀}) = i then a
+  c i • expMapBasis fun w ↦ if hw : w = w₀ then 0 else if (⟨w, hw⟩ : {w // w ≠ w₀}) = i then a
     else c ⟨w, hw⟩
 
 open scoped Classical in
 theorem contDiff_faceMapZero : ContDiff ℝ 1 (faceMapZero K) := by
-  refine (contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w => ?_)
+  refine (contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w ↦ ?_)
   by_cases hw : w = w₀
-  · simp only [dif_pos hw]
-    exact contDiff_const
-  · simp only [dif_neg hw]
-    exact contDiff_apply ℝ ℝ _
+  · simpa only [dif_pos hw] using contDiff_const
+  · simpa only [dif_neg hw] using contDiff_apply ℝ ℝ _
 
 open scoped Classical in
 theorem contDiff_faceMapSide (i : {w : InfinitePlace K // w ≠ w₀}) (a : ℝ) :
     ContDiff ℝ 1 (faceMapSide K i a) := by
-  refine (contDiff_apply ℝ ℝ i).smul ((contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w => ?_))
+  refine (contDiff_apply ℝ ℝ i).smul ((contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w ↦ ?_))
   by_cases hw : w = w₀
-  · simp only [dif_pos hw]
-    exact contDiff_const
+  · simpa only [dif_pos hw] using contDiff_const
   · simp only [dif_neg hw]
     by_cases hi : (⟨w, hw⟩ : {w // w ≠ w₀}) = i
-    · simp only [if_pos hi]
-      exact contDiff_const
-    · simp only [if_neg hi]
-      exact contDiff_apply ℝ ℝ _
+    · simpa only [if_pos hi] using contDiff_const
+    · simpa only [if_neg hi] using contDiff_apply ℝ ℝ _
 
 /-- **Topological reduction.** Since `expMapBasis` is open and injective with source `univ`,
 the frontier of `expMapBasis '' paramSet K` is contained in the image of the box boundary
@@ -183,10 +177,9 @@ theorem frontier_image_paramSet_subset :
   have hcl : closure (expMapBasis '' paramSet K) ⊆ compactSet K :=
     (isCompact_compactSet K).isClosed.closure_subset_iff.mpr
       ((Set.image_mono subset_closure).trans (expMapBasis_closure_subset_compactSet K))
-  have hopen : IsOpen (expMapBasis '' interior (paramSet K)) :=
-    expMapBasis.isOpen_image_of_subset_source isOpen_interior (by simp [expMapBasis_source])
   have hint : expMapBasis '' interior (paramSet K) ⊆ interior (expMapBasis '' paramSet K) :=
-    hopen.subset_interior_iff.mpr (Set.image_mono interior_subset)
+    (expMapBasis.isOpen_image_of_subset_source isOpen_interior
+      (by simp [expMapBasis_source])).subset_interior_iff.mpr (Set.image_mono interior_subset)
   refine (Set.diff_subset_diff hcl hint).trans ?_
   rw [compactSet_eq_union, Set.union_diff_distrib,
     ← Set.image_diff (injective_expMapBasis K)]
@@ -201,30 +194,25 @@ private theorem expMapBasis_mem_iUnion_faceMapSide
         faceMapSide K i a '' Icc 0 1 := by
   set i : {w : InfinitePlace K // w ≠ w₀} := ⟨w, hwe⟩ with hi
   set c : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
-    fun j => if j = i then Real.exp (y w₀) else y j.1 with hc
+    fun j ↦ if j = i then Real.exp (y w₀) else y j.1 with hc
   have hcmem : c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 := by
-    refine ⟨fun j => ?_, fun j => ?_⟩
-    · simp only [hc]
-      split_ifs
-      · exact Real.exp_nonneg _
-      · exact (hIcc j.1 j.2).1
-    · simp only [hc]
-      split_ifs
-      · exact Real.exp_le_one_iff.mpr hw₀
-      · exact (hIcc j.1 j.2).2
+    refine ⟨fun j ↦ ?_, fun j ↦ ?_⟩ <;> simp only [hc] <;> split_ifs
+    · exact Real.exp_nonneg _
+    · exact (hIcc j.1 j.2).1
+    · exact Real.exp_le_one_iff.mpr hw₀
+    · exact (hIcc j.1 j.2).2
   have hkey : faceMapSide K i (y w) c = expMapBasis y := by
     have hci : c i = Real.exp (y w₀) := by simp [hc]
-    have hfun : (fun w' => if hw' : w' = w₀ then (0 : ℝ) else
+    have hfun : (fun w' ↦ if hw' : w' = w₀ then (0 : ℝ) else
         if (⟨w', hw'⟩ : {w // w ≠ w₀}) = i then y w else c ⟨w', hw'⟩) =
-        fun w' => if w' = w₀ then 0 else y w' := by
+        fun w' ↦ if w' = w₀ then 0 else y w' := by
       funext w'
       by_cases hw'₀ : w' = w₀
       · simp only [dif_pos hw'₀, if_pos hw'₀]
       · simp only [dif_neg hw'₀, if_neg hw'₀]
         by_cases hw'w : (⟨w', hw'₀⟩ : {w // w ≠ w₀}) = i
-        · simp only [if_pos hw'w]
-          have : w' = w := by rw [hi] at hw'w; exact Subtype.ext_iff.mp hw'w
-          rw [this]
+        · obtain rfl : w' = w := by rw [hi, Subtype.mk_eq_mk] at hw'w; exact hw'w
+          simp only [if_pos hw'w]
         · simp only [hc, if_neg hw'w]
     rw [faceMapSide, expMapBasis_apply'' y, hci, hfun]
   refine Set.mem_iUnion.mpr ⟨i, Set.mem_iUnion₂.mpr ⟨y w, ?_, ⟨c, hcmem, hkey⟩⟩⟩
@@ -247,18 +235,17 @@ theorem image_boundary_subset_faces :
   push Not at hyni
   obtain ⟨w, hw⟩ := hyni
   have hw₀ : y w₀ ≤ 0 := by simpa using hyc w₀
-  have hIcc : ∀ v : InfinitePlace K, v ≠ w₀ → y v ∈ Icc (0 : ℝ) 1 := fun v hv => by
+  have hIcc : ∀ v : InfinitePlace K, v ≠ w₀ → y v ∈ Icc (0 : ℝ) 1 := fun v hv ↦ by
     simpa [hv] using hyc v
   by_cases hwe : w = w₀
   · rw [if_pos hwe, Set.mem_Iio, not_lt, hwe] at hw
     have hy0 : y w₀ = 0 := le_antisymm hw₀ hw
-    refine Or.inl ⟨fun i => y i.1, ⟨fun i => (hIcc i.1 i.2).1, fun i => (hIcc i.1 i.2).2⟩, ?_⟩
+    refine Or.inl ⟨fun i ↦ y i.1, ⟨fun i ↦ (hIcc i.1 i.2).1, fun i ↦ (hIcc i.1 i.2).2⟩, ?_⟩
     rw [faceMapZero]
     congr 1
     funext v
     by_cases hv : v = w₀
-    · simp only [dif_pos hv]
-      rw [hv, hy0]
+    · rw [dif_pos hv, hv, hy0]
     · simp only [dif_neg hv]
   · rw [if_neg hwe] at hw
     have h1 := hIcc w hwe
@@ -272,24 +259,23 @@ theorem image_boundary_subset_faces :
 `{w ≠ w₀}` via `equivFinRank`. -/
 def cubeRelabel (c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) :
     {w : InfinitePlace K // w ≠ w₀} → ℝ :=
-  fun j => c (equivFinRank.symm j)
+  fun j ↦ c (equivFinRank.symm j)
 
 open scoped Classical in
 theorem lipschitzWith_cubeRelabel : LipschitzWith 1 (cubeRelabel K) :=
-  LipschitzWith.of_edist_le fun c d => by
-    simp only [cubeRelabel, edist_pi_def]
-    exact Finset.sup_le fun j _ => edist_le_pi_edist c d (equivFinRank.symm j)
+  lipschitzWith_one_of_edist_apply_le (F := cubeRelabel K)
+    fun c d j ↦ edist_le_pi_edist c d (equivFinRank.symm j)
 
 theorem cubeRelabel_mem_Icc {c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ}
     (hc : c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1) :
     cubeRelabel K c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 :=
-  ⟨fun _ => hc.1 _, fun _ => hc.2 _⟩
+  ⟨fun _ ↦ hc.1 _, fun _ ↦ hc.2 _⟩
 
 theorem exists_cubeRelabel_eq {c' : {w : InfinitePlace K // w ≠ w₀} → ℝ}
     (hc' : c' ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1) :
     ∃ c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1, cubeRelabel K c = c' :=
-  ⟨fun j => c' (equivFinRank j), ⟨fun j => hc'.1 _, fun j => hc'.2 _⟩,
-    funext fun j => by simp [cubeRelabel]⟩
+  ⟨fun j ↦ c' (equivFinRank j), ⟨fun j ↦ hc'.1 _, fun j ↦ hc'.2 _⟩,
+    funext fun j ↦ by simp [cubeRelabel]⟩
 
 /-- The finite family covering the frontier: the zero map (index `inl ()`), the `w₀`-face map
 (`inr (inl ())`), and the side-face maps `faceMapSide i a` for `i ≠ w₀`, `a ∈ {0,1}`
@@ -298,9 +284,9 @@ through `cubeRelabel`. -/
 def frontierCoverFamily :
     (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) →
       (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K :=
-  Sum.elim (fun _ _ => 0)
-    (Sum.elim (fun _ => faceMapZero K ∘ clampUnit _ ∘ cubeRelabel K)
-      fun p => faceMapSide K p.1 (if p.2 then 1 else 0) ∘ clampUnit _ ∘ cubeRelabel K)
+  Sum.elim (fun _ _ ↦ 0)
+    (Sum.elim (fun _ ↦ faceMapZero K ∘ clampUnit _ ∘ cubeRelabel K)
+      fun p ↦ faceMapSide K p.1 (if p.2 then 1 else 0) ∘ clampUnit _ ∘ cubeRelabel K)
 
 /-- Every member of `frontierCoverFamily` is `M`-Lipschitz for a common constant `M`: each face
 map is `C¹` on the compact cube hence Lipschitz there (`exists_lipschitzWith_comp_clampUnit`), and
@@ -310,9 +296,9 @@ theorem exists_lipschitzWith_frontierCoverFamily :
     ∃ M : ℝ≥0, ∀ s, LipschitzWith M (frontierCoverFamily K s) := by
   classical
   obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_comp_clampUnit (contDiff_faceMapZero K)
-  choose Ms hMs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool =>
+  choose Ms hMs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool ↦
     exists_lipschitzWith_comp_clampUnit (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0))
-  refine ⟨M₀ ⊔ Finset.univ.sup Ms, fun s => ?_⟩
+  refine ⟨M₀ ⊔ Finset.univ.sup Ms, fun s ↦ ?_⟩
   rcases s with _ | _ | p
   · exact (LipschitzWith.const _).weaken zero_le
   · exact (hM₀.comp (lipschitzWith_cubeRelabel K)).weaken (by rw [mul_one]; exact le_sup_left)
@@ -352,7 +338,7 @@ theorem frontier_subset_frontierCoverFamily :
   · rintro x hx
     rw [Set.mem_singleton_iff] at hx
     subst hx
-    exact Set.mem_iUnion.mpr ⟨Sum.inl (), 0, ⟨le_rfl, fun _ => zero_le_one⟩, rfl⟩
+    exact Set.mem_iUnion.mpr ⟨Sum.inl (), 0, ⟨le_rfl, fun _ ↦ zero_le_one⟩, rfl⟩
 
 /-- **The Lipschitz cover of the frontier of `normAtAllPlaces '' (normLeOne K)`**
 (Gun–Ramaré–Sivaraman §3.3, after Debaene). This is the exact `hlip` regularity hypothesis of
@@ -367,8 +353,8 @@ theorem normLeOne_frontier_lipschitz_cover :
   classical
   obtain ⟨M, hM⟩ := exists_lipschitzWith_frontierCoverFamily K
   set e := Fintype.equivFin (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool))
-  refine ⟨_, M, fun j => frontierCoverFamily K (e.symm j), fun j => hM _, ?_⟩
-  rw [e.symm.surjective.iUnion_comp fun s => frontierCoverFamily K s '' Icc 0 1]
+  refine ⟨_, M, fun j ↦ frontierCoverFamily K (e.symm j), fun j ↦ hM _, ?_⟩
+  rw [e.symm.surjective.iUnion_comp fun s ↦ frontierCoverFamily K s '' Icc 0 1]
   exact frontier_subset_frontierCoverFamily K
 
 /-- The product distance estimate `dist (a u) (b v) ≤ ‖a‖ · dist u v + ‖v‖ · dist a b` in a
@@ -380,70 +366,36 @@ theorem dist_mul_le_norm_mul_dist {α : Type*} [NormedField α] (a b u v : α) :
   refine (norm_add_le _ _).trans ?_
   rw [norm_mul, norm_mul, mul_comm ‖a - b‖ ‖v‖]
 
-/-- The unit-circle exponential `t => exp(t i)` is globally `1`-Lipschitz: factoring
-`exp(α i) − exp(β i) = exp(β i)(exp((α − β) i) − 1)` reduces to the bound
-`‖exp(t i) − 1‖ ≤ |t|`, i.e. `2 − 2 cos t ≤ t²` via the half-angle `|sin (t/2)| ≤ |t/2|`. -/
+/-- The unit-circle exponential `t ↦ exp(t i)` is globally `1`-Lipschitz: it is `circleMap 0 1`,
+which is `|R| = 1`-Lipschitz by `lipschitzWith_circleMap`. -/
 theorem lipschitzWith_exp_ofReal_mul_I :
-    LipschitzWith 1 (fun t : ℝ => Complex.exp ((t : ℂ) * Complex.I)) := by
-  have hcos : ∀ t : ℝ, 2 - 2 * Real.cos t ≤ t ^ 2 := by
-    intro t
-    have heq : Real.cos t = 1 - 2 * Real.sin (t / 2) ^ 2 := by
-      have h := Real.cos_add (t / 2) (t / 2)
-      have h2 := Real.sin_sq_add_cos_sq (t / 2)
-      have ht : t / 2 + t / 2 = t := by ring
-      rw [ht] at h
-      nlinarith [h, h2]
-    have hs2 : Real.sin (t / 2) ^ 2 ≤ (t / 2) ^ 2 := by
-      rw [← sq_abs (Real.sin (t / 2)), ← sq_abs (t / 2)]
-      exact pow_le_pow_left₀ (abs_nonneg _) Real.abs_sin_le_abs 2
-    rw [heq]
-    nlinarith [hs2]
-  have hsub : ∀ t : ℝ, ‖Complex.exp ((t : ℂ) * Complex.I) - 1‖ ≤ |t| := by
-    intro t
-    have h1 : Complex.exp ((t : ℂ) * Complex.I) - 1
-        = ((Real.cos t - 1 : ℝ) : ℂ) + ((Real.sin t : ℝ) : ℂ) * Complex.I := by
-      rw [Complex.exp_mul_I, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
-      push_cast
-      ring
-    rw [h1, Complex.norm_def, Complex.normSq_add_mul_I,
-      show (Real.cos t - 1) ^ 2 + Real.sin t ^ 2 = 2 - 2 * Real.cos t by
-        nlinarith [Real.sin_sq_add_cos_sq t],
-      show |t| = Real.sqrt (t ^ 2) from (Real.sqrt_sq_eq_abs t).symm]
-    exact Real.sqrt_le_sqrt (hcos t)
-  refine LipschitzWith.of_dist_le_mul fun α β => ?_
-  rw [NNReal.coe_one, one_mul, Complex.dist_eq, Real.dist_eq]
-  have key : Complex.exp ((α : ℂ) * Complex.I) - Complex.exp ((β : ℂ) * Complex.I)
-      = Complex.exp ((β : ℂ) * Complex.I)
-        * (Complex.exp (((α - β : ℝ) : ℂ) * Complex.I) - 1) := by
-    rw [mul_sub, mul_one, ← Complex.exp_add]
-    push_cast
-    ring_nf
-  rw [key, norm_mul, Complex.norm_exp_ofReal_mul_I, one_mul]
-  exact hsub (α - β)
+    LipschitzWith 1 (fun t : ℝ ↦ Complex.exp ((t : ℂ) * Complex.I)) := by
+  rw [show (fun t : ℝ ↦ Complex.exp ((t : ℂ) * Complex.I)) = circleMap 0 1 from
+    funext fun t ↦ by simp [circleMap]]
+  simpa using lipschitzWith_circleMap 0 1
 
-/-- The phase reparametrization `θ => exp((2π θ − π) i)` is `2π`-Lipschitz: it is the
+/-- The phase reparametrization `θ ↦ exp((2π θ − π) i)` is `2π`-Lipschitz: it is the
 unit-circle exponential (`1`-Lipschitz) composed with the `2π`-Lipschitz affine map
-`θ => 2π θ − π`. -/
+`θ ↦ 2π θ − π`. -/
 theorem lipschitzWith_phase :
     LipschitzWith (2 * Real.pi).toNNReal
-      (fun t : ℝ =>
+      (fun t : ℝ ↦
         Complex.exp ((2 * (Real.pi : ℂ) * (t : ℂ) - (Real.pi : ℂ)) * Complex.I)) := by
-  have haff : LipschitzWith (2 * Real.pi).toNNReal (fun t : ℝ => 2 * Real.pi * t - Real.pi) := by
-    refine LipschitzWith.of_dist_le_mul fun x y => ?_
+  have haff : LipschitzWith (2 * Real.pi).toNNReal (fun t : ℝ ↦ 2 * Real.pi * t - Real.pi) := by
+    refine LipschitzWith.of_dist_le_mul fun x y ↦ ?_
     rw [Real.dist_eq, Real.dist_eq, Real.coe_toNNReal _ (by positivity),
       show 2 * Real.pi * x - Real.pi - (2 * Real.pi * y - Real.pi) = 2 * Real.pi * (x - y) by
         ring, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 2 * Real.pi)]
-  have hcomp : (fun t : ℝ =>
+  have hcomp : (fun t : ℝ ↦
         Complex.exp ((2 * (Real.pi : ℂ) * (t : ℂ) - (Real.pi : ℂ)) * Complex.I))
-      = (fun s : ℝ => Complex.exp ((s : ℂ) * Complex.I))
-        ∘ (fun t : ℝ => 2 * Real.pi * t - Real.pi) := by
+      = (fun s : ℝ ↦ Complex.exp ((s : ℂ) * Complex.I))
+        ∘ (fun t : ℝ ↦ 2 * Real.pi * t - Real.pi) := by
     funext t
     simp only [Function.comp_apply]
     push_cast
     ring_nf
-  rw [hcomp]
-  have := lipschitzWith_exp_ofReal_mul_I.comp haff
-  rwa [one_mul] at this
+  rw [hcomp, ← one_mul (2 * Real.pi).toNNReal]
+  exact lipschitzWith_exp_ofReal_mul_I.comp haff
 
 /-- The per-place phase-modulus distance bound: with `uθ = exp((2π θ − π) i)`,
 `dist (a uθc) (b uθd) ≤ ‖a‖ · (2π · dist θc θd) + dist a b`, using `‖uθd‖ = 1` and the
@@ -489,9 +441,8 @@ open scoped Classical in
 (one per complex place). The cardinalities match: `(d − 1) = (r − 1) + r₂` follows from
 `r₁ + 2 r₂ = d` (`card_add_two_mul_card_eq_rank`) and `r = r₁ + r₂`
 (`card_eq_nrRealPlaces_add_nrComplexPlaces`), with `r ≥ 1` (`Fintype.card_pos`). -/
-noncomputable def mixedCubeEquiv :
-    Fin (Module.finrank ℚ K - 1)
-      ≃ Fin (Fintype.card (InfinitePlace K) - 1) ⊕ {w : InfinitePlace K // IsComplex w} := by
+noncomputable def mixedCubeEquiv : Fin (Module.finrank ℚ K - 1)
+    ≃ Fin (Fintype.card (InfinitePlace K) - 1) ⊕ {w : InfinitePlace K // IsComplex w} := by
   apply Fintype.equivOfCardEq
   rw [Fintype.card_sum, Fintype.card_fin, Fintype.card_fin]
   have h1 : Fintype.card (InfinitePlace K) = nrRealPlaces K + nrComplexPlaces K :=
@@ -500,7 +451,7 @@ noncomputable def mixedCubeEquiv :
     card_add_two_mul_card_eq_rank K
   have hpos : 1 ≤ Fintype.card (InfinitePlace K) := Fintype.card_pos
   have h3 : nrComplexPlaces K = Fintype.card {w : InfinitePlace K // IsComplex w} := rfl
-  omega
+  lia
 
 /-- Lift a `realSpace`-valued cover map `ψ` to a `mixedSpace`-valued map, using the first
 `r − 1` cube coordinates as the modulus input to `ψ` and the last `r₂` coordinates as the phases
@@ -509,14 +460,13 @@ of the complex places, with the real places carrying the sign pattern `ε`.
 At a real place `w` the coordinate is `± (ψ ·) w`; at a complex place `w` it is
 `(ψ ·) w · exp((2π θ_w − π) i)`. By construction `normAtAllPlaces (liftToMixed ψ ε c) = ψ (…)`
 whenever the modulus values `(ψ ·) w` are nonnegative. -/
-noncomputable def liftToMixed
-    (ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K)
+noncomputable def liftToMixed (ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K)
     (ε : {w : InfinitePlace K // IsReal w} → Bool)
     (c : Fin (Module.finrank ℚ K - 1) → ℝ) : mixedSpace K :=
-  (fun w : {w : InfinitePlace K // IsReal w} =>
-      (if ε w then (1 : ℝ) else -1) * ψ (fun i => c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1,
-    fun w : {w : InfinitePlace K // IsComplex w} =>
-      (ψ (fun i => c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1 : ℂ) *
+  (fun w : {w : InfinitePlace K // IsReal w} ↦
+      (if ε w then (1 : ℝ) else -1) * ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1,
+    fun w : {w : InfinitePlace K // IsComplex w} ↦
+      (ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1 : ℂ) *
         Complex.exp ((2 * Real.pi * c ((mixedCubeEquiv K).symm (Sum.inr w)) - Real.pi) *
           Complex.I))
 
@@ -526,32 +476,29 @@ its lift `liftToMixed K ψ ε` is globally Lipschitz. The real coordinates are i
 `ψ`-coordinates (`M₀`); a complex coordinate `(ψ ·) w · exp((2π θ − π) i)` is bounded by the
 product estimate `dist (a u) (b v) ≤ ‖a‖ · dist u v + ‖v‖ · dist a b`, contributing
 `B · 2π` from the phase (`lipschitzWith_exp_ofReal_mul_I`) and `M₀` from the modulus. -/
-theorem lipschitzWith_liftToMixed
-    {ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K}
-    {M₀ : ℝ≥0} {B : ℝ}
-    (hψ : LipschitzWith M₀ ψ) (hB : ∀ c, ‖ψ c‖ ≤ B)
+theorem lipschitzWith_liftToMixed {ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K}
+    {M₀ : ℝ≥0} {B : ℝ} (hψ : LipschitzWith M₀ ψ) (hB : ∀ c, ‖ψ c‖ ≤ B)
     (ε : {w : InfinitePlace K // IsReal w} → Bool) :
     LipschitzWith (M₀ + (B * (2 * Real.pi)).toNNReal) (liftToMixed K ψ ε) := by
   have hBnn : 0 ≤ B := le_trans (norm_nonneg _) (hB 0)
   set N : ℝ≥0 := M₀ + (B * (2 * Real.pi)).toNNReal with hN
-  refine LipschitzWith.of_dist_le_mul fun c d => ?_
-  set yc : realSpace K := ψ (fun i => c ((mixedCubeEquiv K).symm (Sum.inl i))) with hyc
-  set yd : realSpace K := ψ (fun i => d ((mixedCubeEquiv K).symm (Sum.inl i))) with hyd
+  refine LipschitzWith.of_dist_le_mul fun c d ↦ ?_
+  set yc : realSpace K := ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) with hyc
+  set yd : realSpace K := ψ (fun i ↦ d ((mixedCubeEquiv K).symm (Sum.inl i))) with hyd
   have hmod : dist yc yd ≤ M₀ * dist c d := by
     rw [hyc, hyd]
-    refine le_trans (hψ.dist_le_mul _ _) ?_
+    refine (hψ.dist_le_mul _ _).trans ?_
     gcongr
-    exact (dist_pi_le_iff dist_nonneg).mpr fun i => dist_le_pi_dist c d _
+    exact (dist_pi_le_iff dist_nonneg).mpr fun i ↦ dist_le_pi_dist c d _
   have hmodc : ∀ w : InfinitePlace K, dist (yc w) (yd w) ≤ M₀ * dist c d :=
-    fun w => le_trans (dist_le_pi_dist yc yd w) hmod
-  have hyB : ∀ w : InfinitePlace K, ‖(yc w : ℂ)‖ ≤ B := fun w => by
-    rw [Complex.norm_real, Real.norm_eq_abs, ← Real.norm_eq_abs]
-    exact le_trans (norm_le_pi_norm yc w) (hB _)
+    fun w ↦ (dist_le_pi_dist yc yd w).trans hmod
+  have hyB : ∀ w : InfinitePlace K, ‖(yc w : ℂ)‖ ≤ B := fun w ↦ by
+    rw [Complex.norm_real]
+    exact (norm_le_pi_norm yc w).trans (hB _)
   rw [liftToMixed, liftToMixed, Prod.dist_eq]
-  refine max_le ((dist_pi_le_iff (by positivity)).mpr fun w => ?_)
-    ((dist_pi_le_iff (by positivity)).mpr fun w => ?_)
-  · simp only
-    have hsign : dist ((if ε w then (1 : ℝ) else -1) * yc w.1)
+  refine max_le ((dist_pi_le_iff (by positivity)).mpr fun w ↦ ?_)
+    ((dist_pi_le_iff (by positivity)).mpr fun w ↦ ?_)
+  · have hsign : dist ((if ε w then (1 : ℝ) else -1) * yc w.1)
         ((if ε w then (1 : ℝ) else -1) * yd w.1) = dist (yc w.1) (yd w.1) := by
       rw [Real.dist_eq, Real.dist_eq, ← mul_sub, abs_mul]
       split_ifs <;> simp
@@ -560,10 +507,7 @@ theorem lipschitzWith_liftToMixed
     gcongr
     rw [hN]
     exact_mod_cast le_self_add
-  · simp only
-    refine (dist_mul_exp_phase_le (yc w.1) (yd w.1) _ _).trans ?_
-    have hθ : dist (c ((mixedCubeEquiv K).symm (Sum.inr w)))
-        (d ((mixedCubeEquiv K).symm (Sum.inr w))) ≤ dist c d := dist_le_pi_dist c d _
+  · refine (dist_mul_exp_phase_le (yc w.1) (yd w.1) _ _).trans ?_
     have hmodcw : dist (yc w.1 : ℂ) (yd w.1 : ℂ) ≤ M₀ * dist c d := by
       rw [Complex.dist_eq, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs,
         ← Real.dist_eq]
@@ -572,7 +516,8 @@ theorem lipschitzWith_liftToMixed
             (d ((mixedCubeEquiv K).symm (Sum.inr w)))) + dist (yc w.1 : ℂ) (yd w.1 : ℂ)
         ≤ B * (2 * Real.pi * dist c d) + M₀ * dist c d := by
           gcongr
-          exact hyB w.1
+          · exact hyB w.1
+          · exact dist_le_pi_dist c d _
       _ = (↑M₀ + ↑(B * (2 * Real.pi)).toNNReal) * dist c d := by
           rw [Real.coe_toNNReal _ (by positivity)]
           ring
@@ -589,23 +534,20 @@ theorem exists_bound_frontierCoverFamily :
       Continuous g → ∃ B : ℝ, ∀ c, ‖g (clampUnit _ (cubeRelabel K c))‖ ≤ B := by
     intro g hg
     obtain ⟨B, hB⟩ := (isCompact_Icc.image hg).isBounded.subset_closedBall 0
-    refine ⟨B, fun c => ?_⟩
+    refine ⟨B, fun c ↦ ?_⟩
     have := hB (mem_image_of_mem g (clampUnit_mem_Icc _ (cubeRelabel K c)))
     rwa [Metric.mem_closedBall, dist_zero_right] at this
   obtain ⟨B₀, hB₀⟩ := hbd _ (contDiff_faceMapZero K).continuous
-  choose Bs hBs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool =>
+  choose Bs hBs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool ↦
     hbd _ (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0)).continuous
-  refine ⟨↑(B₀.toNNReal ⊔ Finset.univ.sup fun p => (Bs p).toNNReal), fun s c => ?_⟩
+  refine ⟨↑(B₀.toNNReal ⊔ Finset.univ.sup fun p ↦ (Bs p).toNNReal), fun s c ↦ ?_⟩
   rcases s with _ | _ | p
-  · have h0 : ‖frontierCoverFamily K (Sum.inl ()) c‖ = 0 := by simp [frontierCoverFamily]
-    rw [h0]
+  · simp only [frontierCoverFamily, Sum.elim_inl, norm_zero]
     positivity
-  · refine le_trans (hB₀ c) ?_
-    refine (Real.le_coe_toNNReal B₀).trans ?_
+  · refine (hB₀ c).trans <| (Real.le_coe_toNNReal B₀).trans ?_
     exact_mod_cast le_sup_left
-  · refine le_trans (hBs p c) ?_
-    refine (Real.le_coe_toNNReal (Bs p)).trans ?_
-    exact_mod_cast le_sup_of_le_right (Finset.le_sup (f := fun q => (Bs q).toNNReal)
+  · refine (hBs p c).trans <| (Real.le_coe_toNNReal (Bs p)).trans ?_
+    exact_mod_cast le_sup_of_le_right (Finset.le_sup (f := fun q ↦ (Bs q).toNNReal)
       (Finset.mem_univ p))
 
 /-- **Fibre covering.** If a point `y` of the `realSpace` frontier cover is `normAtAllPlaces x`,
@@ -618,32 +560,28 @@ theorem mem_iUnion_image_liftToMixed_of_eq
     {c' : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ} (hc' : c' ∈ Icc (0 : _) 1)
     {x : mixedSpace K} (hx : normAtAllPlaces x = ψ c') :
     x ∈ ⋃ ε : {w : InfinitePlace K // IsReal w} → Bool, liftToMixed K ψ ε '' Icc 0 1 := by
-  choose θ hθmem hθeq using fun w : {w : InfinitePlace K // IsComplex w} =>
+  choose θ hθmem hθeq using fun w : {w : InfinitePlace K // IsComplex w} ↦
     exists_phase_mem_Icc_mul_exp (x.2 w)
-  set ε : {w : InfinitePlace K // IsReal w} → Bool := fun w => decide (0 ≤ x.1 w) with hε
+  set ε : {w : InfinitePlace K // IsReal w} → Bool := fun w ↦ decide (0 ≤ x.1 w) with hε
   set c : Fin (Module.finrank ℚ K - 1) → ℝ :=
-    fun k => Sum.elim c' θ (mixedCubeEquiv K k) with hc
-  have hproj : (fun i => c ((mixedCubeEquiv K).symm (Sum.inl i))) = c' := by
+    fun k ↦ Sum.elim c' θ (mixedCubeEquiv K k) with hc
+  have hproj : (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) = c' := by
     funext i
-    rw [hc]
-    simp
-  refine Set.mem_iUnion.mpr ⟨ε, c, ⟨fun k => ?_, fun k => ?_⟩, ?_⟩
-  · change (0 : ℝ) ≤ Sum.elim c' θ (mixedCubeEquiv K k)
-    rcases (mixedCubeEquiv K k) with i | w
-    · exact hc'.1 i
-    · exact (hθmem w).1
-  · change Sum.elim c' θ (mixedCubeEquiv K k) ≤ (1 : ℝ)
-    rcases (mixedCubeEquiv K k) with i | w
-    · exact hc'.2 i
-    · exact (hθmem w).2
+    simp [hc]
+  have hck : ∀ k, c k ∈ Icc (0 : ℝ) 1 := fun k ↦ by
+    change Sum.elim c' θ (mixedCubeEquiv K k) ∈ Icc (0 : ℝ) 1
+    rcases mixedCubeEquiv K k with i | w
+    · exact ⟨hc'.1 i, hc'.2 i⟩
+    · exact hθmem w
+  refine Set.mem_iUnion.mpr ⟨ε, c, ⟨fun k ↦ (hck k).1, fun k ↦ (hck k).2⟩, ?_⟩
   · rw [liftToMixed, hproj]
     have hcph : ∀ w : {w : InfinitePlace K // IsComplex w},
-        c ((mixedCubeEquiv K).symm (Sum.inr w)) = θ w := fun w => by rw [hc]; simp
-    have hmodreal : ∀ w : {w : InfinitePlace K // IsReal w}, ψ c' w.1 = |x.1 w| := fun w => by
+        c ((mixedCubeEquiv K).symm (Sum.inr w)) = θ w := fun w ↦ by rw [hc]; simp
+    have hmodreal : ∀ w : {w : InfinitePlace K // IsReal w}, ψ c' w.1 = |x.1 w| := fun w ↦ by
       rw [← hx, normAtAllPlaces_apply, normAtPlace_apply_of_isReal w.2, ← Real.norm_eq_abs]
     have hmodcplx : ∀ w : {w : InfinitePlace K // IsComplex w}, ψ c' w.1 = ‖x.2 w‖ :=
-      fun w => by rw [← hx, normAtAllPlaces_apply, normAtPlace_apply_of_isComplex w.2]
-    refine Prod.ext (funext fun w => ?_) (funext fun w => ?_)
+      fun w ↦ by rw [← hx, normAtAllPlaces_apply, normAtPlace_apply_of_isComplex w.2]
+    refine Prod.ext (funext fun w ↦ ?_) (funext fun w ↦ ?_)
     · simp only [hε, hmodreal w]
       by_cases hpos : 0 ≤ x.1 w
       · rw [decide_eq_true hpos, if_pos rfl, one_mul, abs_of_nonneg hpos]
@@ -663,6 +601,22 @@ theorem frontier_normLeOne_subset_preimage :
   exact (continuous_normAtAllPlaces K).frontier_preimage_subset _
 
 open scoped Classical in
+private theorem frontier_normLeOne_subset_iUnion_image_liftToMixed_aux :
+    frontier (normLeOne K) ⊆
+      ⋃ p : (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) ×
+        ({w : InfinitePlace K // IsReal w} → Bool),
+        liftToMixed K (frontierCoverFamily K p.1) p.2 '' Icc 0 1 := by
+  refine (frontier_normLeOne_subset_preimage K).trans ?_
+  refine (Set.preimage_mono (frontier_subset_frontierCoverFamily K)).trans ?_
+  rw [Set.preimage_iUnion]
+  refine Set.iUnion_subset fun s ↦ ?_
+  rintro x ⟨c', hc', hxeq⟩
+  obtain ⟨ε, hε⟩ := Set.mem_iUnion.mp
+    (mem_iUnion_image_liftToMixed_of_eq (ψ := frontierCoverFamily K s) (c' := c')
+      (hc' := hc') (x := x) (hx := hxeq.symm))
+  exact Set.mem_iUnion.mpr ⟨(s, ε), hε⟩
+
+open scoped Classical in
 /-- **The Lipschitz cover of the frontier of `normLeOne K` in `mixedSpace K`.** Lifting the
 `realSpace` frontier cover (`normLeOne_frontier_lipschitz_cover`) along the fibres of
 `normAtAllPlaces`: the real-place signs are folded into a finite index together with the existing
@@ -677,25 +631,14 @@ theorem normLeOne_frontier_lipschitz_cover_mixedSpace :
   obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_frontierCoverFamily K
   obtain ⟨B, hB⟩ := exists_bound_frontierCoverFamily K
   set S := (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) ×
-    ({w : InfinitePlace K // IsReal w} → Bool) with hS
+    ({w : InfinitePlace K // IsReal w} → Bool)
   set Φ : S → (Fin (Module.finrank ℚ K - 1) → ℝ) → mixedSpace K :=
-    fun p => liftToMixed K (frontierCoverFamily K p.1) p.2 with hΦ
-  have hΦlip : ∀ p, LipschitzWith (M₀ + (B * (2 * Real.pi)).toNNReal) (Φ p) := fun p =>
-    lipschitzWith_liftToMixed (hψ := hM₀ p.1) (hB := hB p.1) (ε := p.2)
-  have hcover : frontier (normLeOne K) ⊆ ⋃ p, Φ p '' Icc 0 1 := by
-    refine (frontier_normLeOne_subset_preimage K).trans ?_
-    refine (Set.preimage_mono (frontier_subset_frontierCoverFamily K)).trans ?_
-    rw [Set.preimage_iUnion]
-    refine Set.iUnion_subset fun s => ?_
-    rintro x ⟨c', hc', hxeq⟩
-    obtain ⟨ε, hε⟩ := Set.mem_iUnion.mp
-      (mem_iUnion_image_liftToMixed_of_eq (ψ := frontierCoverFamily K s) (c' := c')
-        (hc' := hc') (x := x) (hx := hxeq.symm))
-    exact Set.mem_iUnion.mpr ⟨(s, ε), hε⟩
+    fun p ↦ liftToMixed K (frontierCoverFamily K p.1) p.2
   set e := Fintype.equivFin S
-  refine ⟨_, M₀ + (B * (2 * Real.pi)).toNNReal, fun j => Φ (e.symm j), fun j => hΦlip _, ?_⟩
-  rw [e.symm.surjective.iUnion_comp fun p => Φ p '' Icc 0 1]
-  exact hcover
+  refine ⟨_, M₀ + (B * (2 * Real.pi)).toNNReal, fun j ↦ Φ (e.symm j),
+    fun j ↦ lipschitzWith_liftToMixed (hψ := hM₀ _) (hB := hB _) (ε := _), ?_⟩
+  rw [e.symm.surjective.iUnion_comp fun p ↦ Φ p '' Icc 0 1]
+  exact frontier_normLeOne_subset_iUnion_image_liftToMixed_aux K
 
 open scoped Classical in
 /-- **The Lipschitz frontier cover of `normLeOne K`, transported to `index K → ℝ`.** The frontier
@@ -712,25 +655,19 @@ theorem normLeOne_frontier_lipschitz_cover_index :
         frontier ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K)) ⊆
           ⋃ j, φ j '' Icc 0 1 := by
   obtain ⟨m, M, φ, hφ, hcov⟩ := normLeOne_frontier_lipschitz_cover_mixedSpace K
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
-  have hcard1 : Fintype.card (index K) - 1 = Module.finrank ℚ K - 1 := by
-    rw [show Fintype.card (index K) = Module.finrank ℚ K by
-      rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]]
-  set g : Fin (Fintype.card (index K) - 1) ≃ Fin (Module.finrank ℚ K - 1) := finCongr hcard1 with hg
-  have hrelab : LipschitzWith 1
-      (fun c : Fin (Fintype.card (index K) - 1) → ℝ => (fun a => c (g.symm a))) :=
-    LipschitzWith.of_dist_le_mul fun c d => by
-      rw [NNReal.coe_one, one_mul]
-      exact (dist_pi_le_iff dist_nonneg).mpr fun a => dist_le_pi_dist c d (g.symm a)
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
+  set g : Fin (Fintype.card (index K) - 1) ≃ Fin (Module.finrank ℚ K - 1) := finCongr (by
+    rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank])
   refine ⟨m, ‖(Φ : mixedSpace K →L[ℝ] (index K → ℝ))‖₊ * (M * 1),
-    fun j c => Φ (φ j (fun a => c (g.symm a))),
-    fun j => Φ.lipschitz.comp ((hφ j).comp hrelab), ?_⟩
+    fun j c ↦ Φ (φ j (fun a ↦ c (g.symm a))),
+    fun j ↦ Φ.lipschitz.comp ((hφ j).comp
+      (IsometryEquiv.piCongrLeft' (Y := fun _ ↦ ℝ) g).isometry.lipschitz), ?_⟩
   rw [← Φ.coe_toHomeomorph, ← Φ.toHomeomorph.image_frontier]
   refine (Set.image_mono hcov).trans ?_
   rw [Set.image_iUnion]
-  refine Set.iUnion_subset fun j => ?_
+  refine Set.iUnion_subset fun j ↦ ?_
   rintro _ ⟨_, ⟨c, hc, rfl⟩, rfl⟩
-  exact Set.mem_iUnion.mpr ⟨j, ⟨fun a => c (g a), ⟨fun a => hc.1 _, fun a => hc.2 _⟩, by
+  exact Set.mem_iUnion.mpr ⟨j, ⟨fun a ↦ c (g a), ⟨fun a ↦ hc.1 _, fun a ↦ hc.2 _⟩, by
     simp⟩⟩
 
 end Chebotarev
