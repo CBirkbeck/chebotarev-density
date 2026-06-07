@@ -162,7 +162,7 @@ theorem autToPow_frobeniusClass_out
   rw [ZMod.coe_unitOfCoprime, ← ZMod.natCast_zmod_val ((hζ.autToPow K φ : (ZMod m)ˣ) : ZMod m)]
   exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
 
-/-! ### Sub-lemmas for `finrank_fixedField_le_one_of_forall_frobenius_mem`
+/-! ### Sub-lemmas for `finrank_fixedField_le_one_of_forall_frobenius_mem_of_coprime`
 
 The deep splitting/comparison content of the fixed-field reduction, established CFT-free. Step (A)
 (splitting) factors through a *downward Frobenius restriction* lemma
@@ -358,236 +358,6 @@ private theorem splitsCompletely_fixedField
     rw [Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver 𝔮 (𝔮.under (𝓞 K)) inferInstance
       (hunder ▸ hpbot), hinert, pow_one, hunder]
 
-/-- **Step (B): the fibred zeta comparison.** For `F = fixedField H` and `1 < s`,
-`[F : K] · Σ_{𝔭 unramified-in-L} N𝔭^{-s} ≤ Σ_{𝔮 of F} N𝔮^{-s}`. The `F`-prime sum restricted to
-primes lying over an unramified-in-`L` base regroups (along `𝔮 ↦ 𝔮 ∩ 𝓞 K`, an
-`Equiv.sigmaFiberEquiv`) into `Σ_𝔭 (#{𝔮 ∣ 𝔭}) · N𝔭^{-s} = [F : K] · Σ_𝔭 N𝔭^{-s}` by
-`splitsCompletely_fixedField`, and that restricted sum is `≤` the full `F`-prime sum. -/
-private theorem finrank_mul_unramified_le_univ
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
-    (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
-      ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H)
-    {s : ℝ} (hs : 1 < s) :
-    (Module.finrank K ↥(IntermediateField.fixedField H) : ℝ) *
-        primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
-      ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 ↥(IntermediateField.fixedField H)))) s := by
-  set F := IntermediateField.fixedField H with hF
-  haveI : IsScalarTower K F L := F.isScalarTower_mid'
-  haveI : IsGalois K F := IsGalois.of_fixedField_normal_subgroup H
-  haveI : NumberField F := NumberField.of_intermediateField F
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
-  set V : Set (Ideal (𝓞 F)) := {𝔮 | 𝔮.IsPrime ∧ UnramifiedIn K L (𝔮.under (𝓞 K))} with hV
-  -- packaged splitting data
-  have hcount : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → UnramifiedIn K L 𝔭 →
-      Nat.card {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭 ∧ 𝔮 ≠ ⊥}
-        = Module.finrank K ↥F := fun 𝔭 h𝔭p h𝔭unr => by
-    haveI := h𝔭p
-    exact (splitsCompletely_fixedField K L H 𝔭 h𝔭unr
-      (hH 𝔭 h𝔭p (UnramifiedIn.ne_bot K L h𝔭unr) h𝔭unr)).1
-  have hnorm : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → UnramifiedIn K L 𝔭 →
-      ∀ 𝔮 : Ideal (𝓞 F), 𝔮.IsPrime → 𝔮.LiesOver 𝔭 →
-        Ideal.absNorm 𝔮 = Ideal.absNorm 𝔭 := fun 𝔭 h𝔭p h𝔭unr 𝔮 h𝔮p h𝔮lo => by
-    haveI := h𝔭p
-    exact (splitsCompletely_fixedField K L H 𝔭 h𝔭unr
-      (hH 𝔭 h𝔭p (UnramifiedIn.ne_bot K L h𝔭unr) h𝔭unr)).2 𝔮 h𝔮p h𝔮lo
-  -- V ⊆ univ, so its sum is `≤` the universal `F`-prime sum.
-  have hVle : primeIdealZetaSum V s ≤
-      primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 F))) s :=
-    primeIdealZetaSum_le_of_subset (Set.subset_univ V) hs
-  rw [show primeIdealZetaSum V s = (Module.finrank K ↥F : ℝ) * primeIdealZetaSum U s
-      from ?_] at hVle
-  · exact hVle
-  -- the regrouping equality
-  set IU := {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}
-  set IV := {𝔮 : Ideal (𝓞 F) // 𝔮 ∈ V ∧ 𝔮.IsPrime ∧ 𝔮 ≠ ⊥}
-  have hφ_mem : ∀ 𝔮 : IV, (𝔮.1.under (𝓞 K)) ∈ U ∧ (𝔮.1.under (𝓞 K)).IsPrime
-      ∧ (𝔮.1.under (𝓞 K)) ≠ ⊥ := fun 𝔮 => by
-    haveI := 𝔮.2.2.1
-    exact ⟨⟨inferInstance, 𝔮.2.1.2⟩, inferInstance, Ideal.IsIntegral.comap_ne_bot (𝓞 K) 𝔮.2.2.2⟩
-  set φ : IV → IU := fun 𝔮 => ⟨𝔮.1.under (𝓞 K), hφ_mem 𝔮⟩ with hφdef
-  have hsummV : Summable (fun 𝔮 : IV => (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s)) :=
-    summable_prime_absNorm_rpow V hs
-  set e := Equiv.sigmaFiberEquiv φ
-  have hsummSig : Summable (fun p : Σ 𝔭 : IU, {𝔮 : IV // φ 𝔮 = 𝔭} =>
-      (Ideal.absNorm (e p).1 : ℝ) ^ (-s)) :=
-    (e.summable_iff (f := fun 𝔮 : IV => (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s))).mpr hsummV
-  rw [primeIdealZetaSum_def, ← e.tsum_eq (fun 𝔮 : IV => (Ideal.absNorm (𝔮.1) : ℝ) ^ (-s)),
-    hsummSig.tsum_sigma, primeIdealZetaSum_def, ← tsum_mul_left]
-  refine tsum_congr (fun 𝔭 => ?_)
-  haveI := 𝔭.2.2.1
-  have hfibeq : {𝔮 : IV // φ 𝔮 = 𝔭} ≃
-      {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭.1 ∧ 𝔮 ≠ ⊥} :=
-    { toFun := fun x => ⟨x.1.1, x.1.2.2.1, ⟨(Subtype.ext_iff.mp x.2).symm⟩, x.1.2.2.2⟩
-      invFun := fun y => ⟨⟨y.1, ⟨y.2.1, by
-          haveI := y.2.1; haveI := y.2.2.1
-          exact (y.2.2.1.over ▸ 𝔭.2.1.2 : UnramifiedIn K L (y.1.under (𝓞 K)))⟩, y.2.1, y.2.2.2⟩,
-        Subtype.ext (haveI := y.2.2.1; y.2.2.1.over.symm)⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
-  have hconst : ∀ x : {𝔮 : IV // φ 𝔮 = 𝔭}, (Ideal.absNorm (e ⟨𝔭, x⟩).1 : ℝ) ^ (-s)
-      = (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun x => by
-    change (Ideal.absNorm x.1.1 : ℝ) ^ (-s) = (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
-    rw [hnorm 𝔭.1 𝔭.2.2.1 𝔭.2.1.2 x.1.1 x.1.2.2.1 ⟨(Subtype.ext_iff.mp x.2).symm⟩]
-  -- the target prime set is finite, and `hfibeq` transports finiteness to the fibre
-  haveI : 𝔭.1.IsMaximal := 𝔭.2.2.1.isMaximal 𝔭.2.2.2
-  haveI : Finite (𝔭.1.primesOver (𝓞 F)) :=
-    (IsDedekindDomain.primesOver_finite 𝔭.1 (𝓞 F)).to_subtype
-  haveI hfinHC : Finite {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭.1 ∧ 𝔮 ≠ ⊥} := by
-    refine Finite.of_injective (β := 𝔭.1.primesOver (𝓞 F))
-      (fun y => ⟨y.1, y.2.1, y.2.2.1⟩) (fun a b hab => ?_)
-    apply Subtype.ext
-    have : (⟨a.1, a.2.1, a.2.2.1⟩ : 𝔭.1.primesOver (𝓞 F)).1
-        = (⟨b.1, b.2.1, b.2.2.1⟩ : 𝔭.1.primesOver (𝓞 F)).1 := congrArg Subtype.val hab
-    exact this
-  haveI : Finite {𝔮 : IV // φ 𝔮 = 𝔭} := Finite.of_equiv _ hfibeq.symm
-  rw [tsum_congr hconst, tsum_const, Nat.card_congr hfibeq,
-    hcount 𝔭.1 𝔭.2.2.1 𝔭.2.1.2, nsmul_eq_mul, mul_comm]
-
-/-- The bare prime sum over the unramified primes is asymptotic to `log(1/(s-1))`: it differs from
-the universal prime sum (`primeIdealZetaSum_univ_tendsto_log`) by the finitely-many ramified primes
-(`finite_ramifiedIn`), whose contribution is bounded and so negligible against `log → ∞`. (Replayed
-here from the private `Cyclotomic.lean` version, since `Cyclotomic.lean` imports this file.) -/
-private theorem primeIdealZetaSum_unramified_div_log_tendsto_one
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] :
-    Filter.Tendsto
-      (fun s : ℝ ↦
-        primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
-          / Real.log (1 / (s - 1)))
-      (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
-  set R : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} with hR
-  have hdisj : Disjoint U R :=
-    Set.disjoint_left.mpr fun 𝔭 hu hr => hr.2.2 hu.2
-  have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ U ∪ R := fun 𝔭 hp hne => by
-    by_cases hunr : UnramifiedIn K L 𝔭
-    · exact Or.inl ⟨hp, hunr⟩
-    · exact Or.inr ⟨hp, hne, hunr⟩
-  have hRfin : R.Finite := finite_ramifiedIn K L
-  obtain ⟨CR, hCR⟩ : ∃ CR : ℝ, ∀ᶠ s in nhdsWithin 1 (Set.Ioi 1), primeIdealZetaSum R s ≤ CR := by
-    refine ⟨Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ R ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, ?_⟩
-    filter_upwards [self_mem_nhdsWithin] with s hs
-    simp only [Set.mem_Ioi] at hs
-    exact primeIdealZetaSum_le_card_of_finite K hRfin (by linarith)
-  have hRzero : Filter.Tendsto (fun s : ℝ ↦ primeIdealZetaSum R s / Real.log (1 / (s - 1)))
-      (nhdsWithin 1 (Set.Ioi 1)) (nhds 0) := by
-    have hL := tendsto_log_one_div_sub_one_atTop
-    refine squeeze_zero_norm' ?_ (Filter.Tendsto.div_atTop tendsto_const_nhds hL (a := CR))
-    filter_upwards [hCR, hL.eventually_gt_atTop 0] with s hub hLpos
-    have hRnn : 0 ≤ primeIdealZetaSum R s := by
-      rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
-    rw [Real.norm_of_nonneg (div_nonneg hRnn hLpos.le)]
-    gcongr
-  have hcomb : Filter.Tendsto (fun s : ℝ ↦
-      primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s / Real.log (1 / (s - 1))
-        - primeIdealZetaSum R s / Real.log (1 / (s - 1))) (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
-    simpa using (primeIdealZetaSum_univ_tendsto_log K).sub hRzero
-  refine hcomb.congr' ?_
-  filter_upwards [self_mem_nhdsWithin] with s hs
-  simp only [Set.mem_Ioi] at hs
-  have hadd : primeIdealZetaSum U s + primeIdealZetaSum R s =
-      primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
-    rw [← primeIdealZetaSum_union_of_disjoint hdisj hs,
-      primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s]
-  rw [← sub_div, ← hadd, add_sub_cancel_right]
-
-/-- **The fixed field of a Frobenius-saturated subgroup is trivial** (CFT-free analytic core of
-`subgroup_eq_top_of_forall_frobenius_mem`, abelian case). If `H ≤ Gal(L/K)` contains the
-Frobenius `(frobeniusClass 𝔭).out` of every nonzero unramified prime `𝔭`, then `F = fixedField H`
-has degree `≤ 1` over `K`.
-
-In the abelian case every Frobenius conjugacy class is a singleton, so `(frobeniusClass 𝔭).out`
-is the genuine Frobenius and lies in `H = fixingSubgroup F` (`fixingSubgroup_fixedField`); hence
-its restriction to `F` is trivial and `𝔭` splits completely in `F`, contributing `[F:K]` primes of
-`F` of norm `N𝔭`. Comparing `Σ_{𝔮 of F} N𝔮^{-s}` with `[F:K] · Σ_{𝔭 of K unramified} N𝔭^{-s}`
-(both `~ log(1/(s-1))`) forces `[F:K] ≤ 1`.
-
-The reduction `[F:K] ≤ 1 ⇒ H = ⊤` is in `subgroup_eq_top_of_forall_frobenius_mem`. All
-field-theoretic instances for `F = fixedField H` are available (`IsGalois K F` via
-`IsGalois.of_fixedField_normal_subgroup` from `[IsMulCommutative]`; `NumberField F` via
-`NumberField.of_intermediateField`; `FiniteDimensional K F`). The proof has three pieces:
-
-* **(A) Splitting** (`splitsCompletely_fixedField`). For unramified `𝔭` with
-  `(frobeniusClass K L 𝔭).out ∈ H`, the number of primes of `𝓞 F` above `𝔭` is `[F:K]`, each of
-  absolute norm `N𝔭`. Routed through the *downward* Frobenius restriction
-  `isArithFrobAt_restrictNormal` (the mirror of the *upward* `arithFrobAt_restrictScalars_eq` in
-  `Main.lean`): composed with `σ_𝔭 ∈ H = fixingSubgroup F` it gives `frobeniusClass K ↥F 𝔭 = [1]`,
-  whence `card_primesAbove_mul_finrank_eq`/`finrank_residue_eq_orderOf` (`Frobenius.lean`) with
-  `F`-Frobenius of order `1`.
-* **(B) Comparison** (`finrank_mul_unramified_le_univ`).
-  `[F:K] · Σ_{unram 𝔭} N𝔭^{-s} ≤ Σ_{𝔮 of F} N𝔮^{-s}` via the prime fibration `𝔮 ↦ 𝔮 ∩ 𝓞 K`
-  (a `tsum`-over-`Sigma` regrouping `Σ_{𝔮 over unram 𝔭} N𝔮^{-s} = Σ_𝔭 (#𝔮∣𝔭) · N𝔭^{-s}`).
-* **(C) Limit.** Divide (B) by `log(1/(s-1))` and pass to the limit: the `K`-side ratio `→ 1`
-  (`primeIdealZetaSum_unramified_div_log_tendsto_one`, replayed locally) and the `F`-side `→ 1`
-  (`primeIdealZetaSum_univ_tendsto_log`, `Density.lean`), forcing `[F:K] · 1 ≤ 1`. -/
-private theorem finrank_fixedField_le_one_of_forall_frobenius_mem
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
-    (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
-      ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
-    Module.finrank K (IntermediateField.fixedField H) ≤ 1 := by
-  set F := IntermediateField.fixedField H with hF
-  haveI : IsGalois K F := IsGalois.of_fixedField_normal_subgroup H
-  haveI : NumberField F := NumberField.of_intermediateField F
-  set d : ℕ := Module.finrank K ↥F with hd
-  -- It suffices to show `(d : ℝ) ≤ 1`.
-  rw [← Nat.cast_le (α := ℝ), Nat.cast_one]
-  -- The `K`-unramified ratio and the `F`-universal ratio both tend to `1`.
-  set A : ℝ → ℝ := fun s ↦
-    primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s with hA
-  set B : ℝ → ℝ := fun s ↦
-    primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 ↥F))) s with hB
-  have hAtend : Filter.Tendsto (fun s ↦ A s / Real.log (1 / (s - 1)))
-      (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) :=
-    primeIdealZetaSum_unramified_div_log_tendsto_one K L
-  have hBtend : Filter.Tendsto (fun s ↦ B s / Real.log (1 / (s - 1)))
-      (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) :=
-    primeIdealZetaSum_univ_tendsto_log (↥F)
-  -- Step (B) inequality `d · A s ≤ B s` divided by the eventually-positive `log(1/(s-1))`.
-  have hLpos : ∀ᶠ s in nhdsWithin 1 (Set.Ioi 1), 0 < Real.log (1 / (s - 1)) :=
-    tendsto_log_one_div_sub_one_atTop.eventually_gt_atTop 0
-  have hev : ∀ᶠ s in nhdsWithin 1 (Set.Ioi 1),
-      (d : ℝ) * (A s / Real.log (1 / (s - 1))) ≤ B s / Real.log (1 / (s - 1)) := by
-    filter_upwards [hLpos, self_mem_nhdsWithin] with s hLs hs1
-    simp only [Set.mem_Ioi] at hs1
-    rw [mul_div_assoc']
-    exact div_le_div_of_nonneg_right (finrank_mul_unramified_le_univ K L H hH hs1) hLs.le
-  -- Pass to the limit: `d · 1 ≤ 1`.
-  have hlim := le_of_tendsto_of_tendsto (hAtend.const_mul (d : ℝ)) hBtend hev
-  simpa using hlim
-
-/-- **Frobenii generate the Galois group** (CFT-free, via the zeta asymptotics; abelian case). A
-subgroup of `Gal(L/K)` that contains the Frobenius representative of every nonzero prime of `K`
-unramified in `L` is all of `Gal(L/K)`.
-
-**Statement change (authorized by the orchestrator).** The hypothesis `[IsMulCommutative Gal(L/K)]`
-has been added (after `[FiniteDimensional K L]`). It is genuinely needed: the hypothesis only
-provides the chosen class *representative* `(frobeniusClass 𝔭).out ∈ H`, which suffices precisely
-when conjugacy classes are singletons, i.e. when `Gal(L/K)` is abelian (the only case the project
-consumes — `L = K(μ_m)`). For a general (non-abelian) `G` the out-only membership is too weak: a
-non-normal `H` containing one Frobenius conjugate per prime need not contain the whole class, and
-the split-completely transfer (hence the `[F:K]`-fold zeta multiplicity) fails. The general form
-would have to quantify over the entire class, not just `.out`.
-
-Proof: reduce `H = ⊤` to `[F:K] ≤ 1` for `F = fixedField H`
-(`Subgroup.card_eq_iff_eq_top` + `finrank_fixedField_eq_card` + `card_aut_eq_finrank`), then apply
-`finrank_fixedField_le_one_of_forall_frobenius_mem`. -/
-theorem subgroup_eq_top_of_forall_frobenius_mem
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
-    (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
-      ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
-    H = ⊤ := by
-  -- Reduce to `[F:K] ≤ 1` for `F = fixedField H`.
-  have hfk1 := finrank_fixedField_le_one_of_forall_frobenius_mem K L H hH
-  rw [← Subgroup.card_eq_iff_eq_top]
-  have hpos : 1 ≤ Module.finrank K (IntermediateField.fixedField H) := Module.finrank_pos
-  have hfk : Module.finrank K (IntermediateField.fixedField H) = 1 := le_antisymm hfk1 hpos
-  have htower := Module.finrank_mul_finrank K (IntermediateField.fixedField H) L
-  rw [hfk, one_mul] at htower
-  rw [IsGalois.card_aut_eq_finrank K L, ← htower, IntermediateField.finrank_fixedField_eq_card H]
-
 /-! ### Coprime-restricted Frobenii generation
 
 The κ-uniformity transfer in `ZetaProduct.lean` realizes only the residues that are *coprime-norm
@@ -690,10 +460,11 @@ section CoprimeRestrictedComparison
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
   [IsGalois K L] [FiniteDimensional K L] (m : ℕ) [NeZero m]
 
+omit [FiniteDimensional K L] in
 /-- The coprime-norm-unramified prime sum is asymptotic to `log(1/(s-1))`: it differs from the
-full unramified prime sum (`primeIdealZetaSum_unramified_div_log_tendsto_one`) by the finitely
-many unramified primes whose norm is *not* coprime to `m` (`finite_badPrimes'`), whose bounded
-contribution is negligible against `log → ∞`. -/
+universal prime sum (`primeIdealZetaSum_univ_tendsto_log`) by the finitely many excluded
+primes — ramified (`finite_ramifiedIn`) or with norm not coprime to `m` (`finite_badPrimes'`) —
+whose bounded contribution is negligible against `log → ∞`. -/
 private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
     Filter.Tendsto
       (fun s : ℝ ↦
@@ -704,22 +475,21 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
   set Uc : Set (Ideal (𝓞 K)) :=
     {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} with hUc
   set D : Set (Ideal (𝓞 K)) :=
-    {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ ¬ (Ideal.absNorm 𝔭).Coprime m} with hD
+    {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m)} with hD
   have hdisj : Disjoint Uc D :=
-    Set.disjoint_left.mpr fun 𝔭 hc hd => hd.2.2 hc.2.2
-  -- `Uc ∪ D = {unramified}`: an unramified prime is coprime-norm or not.
-  have hunion : Uc ∪ D = {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} := by
-    ext 𝔭
-    simp only [hUc, hD, Set.mem_union, Set.mem_setOf_eq]
-    constructor
-    · rintro (⟨hp, hunr, _⟩ | ⟨hp, hunr, _⟩) <;> exact ⟨hp, hunr⟩
-    · rintro ⟨hp, hunr⟩
-      by_cases hcop : (Ideal.absNorm 𝔭).Coprime m
-      · exact Or.inl ⟨hp, hunr, hcop⟩
-      · exact Or.inr ⟨hp, hunr, hcop⟩
-  -- `D` is finite: it is contained in the (finite) bad-prime set.
-  have hDfin : D.Finite :=
-    (finite_badPrimes' K m).subset fun 𝔭 hd => ⟨hd.1, hd.2.1.1, hd.2.2⟩
+    Set.disjoint_left.mpr fun 𝔭 hc hd => hd.2.2 ⟨hc.2.1, hc.2.2⟩
+  -- every nonzero prime is coprime-norm-unramified or excluded.
+  have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ Uc ∪ D := fun 𝔭 hp hne => by
+    by_cases h : UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m
+    · exact Or.inl ⟨hp, h.1, h.2⟩
+    · exact Or.inr ⟨hp, hne, h⟩
+  -- `D` is finite: ramified primes ∪ non-coprime-norm primes, both finite.
+  have hDfin : D.Finite := by
+    refine ((finite_ramifiedIn K L).union (finite_badPrimes' K m)).subset ?_
+    rintro 𝔭 ⟨hp, hne, hnot⟩
+    by_cases hunr : UnramifiedIn K L 𝔭
+    · exact Or.inr ⟨hp, hne, fun hcop => hnot ⟨hunr, hcop⟩⟩
+    · exact Or.inl ⟨hp, hne, hunr⟩
   obtain ⟨CD, hCD⟩ : ∃ CD : ℝ, ∀ᶠ s in nhdsWithin 1 (Set.Ioi 1), primeIdealZetaSum D s ≤ CD := by
     refine ⟨Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ D ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, ?_⟩
     filter_upwards [self_mem_nhdsWithin] with s hs
@@ -734,19 +504,19 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
       rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
     rw [Real.norm_of_nonneg (div_nonneg hDnn hLpos.le)]
     gcongr
-  -- The full-unramified ratio tends to `1`; subtract the (→0) excluded-prime ratio.
+  -- The universal ratio tends to `1`; subtract the (→0) excluded-prime ratio.
   have hcomb : Filter.Tendsto (fun s : ℝ ↦
-      primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
-          / Real.log (1 / (s - 1))
+      primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s / Real.log (1 / (s - 1))
         - primeIdealZetaSum D s / Real.log (1 / (s - 1))) (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
-    simpa using (primeIdealZetaSum_unramified_div_log_tendsto_one K L).sub hDzero
+    simpa using (primeIdealZetaSum_univ_tendsto_log K).sub hDzero
   refine hcomb.congr' ?_
   filter_upwards [self_mem_nhdsWithin] with s hs
   simp only [Set.mem_Ioi] at hs
-  -- `Σ_{Uc} + Σ_{D} = Σ_{unramified}` on the disjoint union.
+  -- `Σ_{Uc} + Σ_{D} = Σ_{univ}` on the disjoint cover of the nonzero primes.
   have hadd : primeIdealZetaSum Uc s + primeIdealZetaSum D s =
-      primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s := by
-    rw [← primeIdealZetaSum_union_of_disjoint hdisj hs, hunion]
+      primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
+    rw [← primeIdealZetaSum_union_of_disjoint hdisj hs,
+      primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s]
   rw [← sub_div, ← hadd, add_sub_cancel_right]
 
 omit [NeZero m] in
@@ -904,5 +674,30 @@ theorem subgroup_eq_top_of_forall_frobenius_mem_of_coprime
   rw [IsGalois.card_aut_eq_finrank K L, ← htower, IntermediateField.finrank_fixedField_eq_card H]
 
 end CoprimeRestrictedComparison
+
+/-- **Frobenii generate the Galois group** (CFT-free, via the zeta asymptotics; abelian case). A
+subgroup of `Gal(L/K)` that contains the Frobenius representative of every nonzero prime of `K`
+unramified in `L` is all of `Gal(L/K)`.
+
+**Statement change (authorized by the orchestrator).** The hypothesis `[IsMulCommutative Gal(L/K)]`
+has been added (after `[FiniteDimensional K L]`). It is genuinely needed: the hypothesis only
+provides the chosen class *representative* `(frobeniusClass 𝔭).out ∈ H`, which suffices precisely
+when conjugacy classes are singletons, i.e. when `Gal(L/K)` is abelian (the only case the project
+consumes — `L = K(μ_m)`). For a general (non-abelian) `G` the out-only membership is too weak: a
+non-normal `H` containing one Frobenius conjugate per prime need not contain the whole class, and
+the split-completely transfer (hence the `[F:K]`-fold zeta multiplicity) fails. The general form
+would have to quantify over the entire class, not just `.out`.
+
+Proof: reduce `H = ⊤` to `[F:K] ≤ 1` for `F = fixedField H`
+(`Subgroup.card_eq_iff_eq_top` + `finrank_fixedField_eq_card` + `card_aut_eq_finrank`), then apply
+`finrank_fixedField_le_one_of_forall_frobenius_mem`. -/
+theorem subgroup_eq_top_of_forall_frobenius_mem
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
+      ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
+    H = ⊤ :=
+  subgroup_eq_top_of_forall_frobenius_mem_of_coprime K L 1 H
+    fun 𝔭 hp hne hunr _ => hH 𝔭 hp hne hunr
 
 end Chebotarev
