@@ -83,6 +83,12 @@ candidates). Push to origin/development needs Chris (LEAN4_GUARDRAILS_BYPASS=1 g
   mathlib's `proofwidgets` (v0.0.100→v0.0.98) and `plausible` in lake-manifest.json
   (cache-poisoning). They were restored by hand; the warning "putting require mathlib
   last" from lake refers to this.
+- **Comparator certification PASS (2026-06-07)**: leanprover/comparator (kernel-level
+  judge) accepts all four headline theorems — statements export-identical to the
+  independent restatements in `certification/Challenge.lean`, axiom budget
+  `[propext, Quot.sound, Classical.choice]`, Lean kernel replays the proofs.
+  Re-run anytime: `./scripts/certify.sh` (prereqs documented in the script;
+  macOS uses comparator's fake-landrun shim, Linux uses real landrun).
 - **/overview COMPLETE**: 13 per-file inventories in `.mathlib-quality/overview/` +
   `PROJECT_OVERVIEW.md` (mathlib API audit, 7 duplication clusters, 12-item verified
   dead-code list ~415 lines, 8 upstream units, prioritised plan). Fold the dead-code
