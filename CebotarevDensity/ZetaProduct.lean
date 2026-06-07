@@ -2541,8 +2541,9 @@ theorem artinLSeries_analytic_extension
     change ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k = 0
     rw [Nat.floor_eq_zero.mpr ht, Finset.Icc_eq_empty (by norm_num), Finset.sum_empty]
   have hS_bigO : S =O[Filter.atTop] (fun t : ℝ => t ^ r) :=
-    (((sum_galoisCharacterCoeff_isBigO K L m hm χ _hχ).comp_tendsto tendsto_nat_floor_atTop).trans <|
-      isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0))
+    ((sum_galoisCharacterCoeff_isBigO K L m hm χ _hχ).comp_tendsto
+      tendsto_nat_floor_atTop).trans <|
+      isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0)
   refine ⟨fun s => s * mellin S (-s), ?_, fun s hs => ?_⟩
   · refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
       (isOpen_lt continuous_const Complex.continuous_re)
@@ -2674,7 +2675,7 @@ local instance galoisCharacter.instFintype
 /-- The Dirichlet series `L_χ(s) = ∑'_{𝔞 ≠ ⊥} χ(𝔞) N𝔞^{-s}` of a Galois character, as a function
 of `s`. This is the analytic engine of Sharifi 7.1.16–7.1.19; for `1 < Re s` it equals the Euler
 product over unramified primes (`exists_artinLSeries_eulerProduct_abelian`). -/
-private noncomputable def artinDirichletSeries
+noncomputable def artinDirichletSeries
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) (s : ℂ) : ℂ :=
   ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
@@ -2705,17 +2706,22 @@ private theorem norm_one_sub_inv_sub_one_le {y : ℂ} (hy : ‖y‖ ≤ 1 / 2) :
   calc ‖y‖ * ‖(1 - y)⁻¹‖ ≤ ‖y‖ * 2 := by gcongr
     _ = 2 * ‖y‖ := by ring
 
+/-- A nonzero prime ideal `𝔭` of a number ring has `2 ≤ N𝔭`: its norm is neither `0` (only `⊥` has
+norm `0`) nor `1` (only `⊤` has norm `1`). -/
+private theorem two_le_absNorm {R : Type*} [CommRing R] [IsDedekindDomain R]
+    [Module.Free ℤ R] [Module.Finite ℤ R] {𝔭 : Ideal R} (hp : 𝔭.IsPrime) (hb : 𝔭 ≠ ⊥) :
+    2 ≤ Ideal.absNorm 𝔭 := by
+  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => hb (Ideal.absNorm_eq_zero_iff.mp h)
+  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  lia
+
 /-- For a nonzero prime `𝔭` of a number ring and `Re s > 1`, `‖N𝔭^{-s}‖ ≤ 1/2` (since `N𝔭 ≥ 2`,
 `Re s > 1`). The bound that lets the Euler factors enter `norm_one_sub_inv_sub_one_le`. -/
 private theorem norm_absNorm_cpow_neg_le_half {R : Type*} [CommRing R] [IsDedekindDomain R]
     [Module.Free ℤ R] [Module.Finite ℤ R] {s : ℂ} (hs : 1 < s.re)
     (𝔭 : {𝔭 : Ideal R // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}) :
     ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ ≤ 1 / 2 := by
-  have hne0 : Ideal.absNorm 𝔭.1 ≠ 0 := fun h => 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
-  have h2le : 2 ≤ Ideal.absNorm 𝔭.1 := by
-    have hne1 : Ideal.absNorm 𝔭.1 ≠ 1 := fun h => 𝔭.2.1.ne_top (Ideal.absNorm_eq_one_iff.mp h)
-    have : 0 < Ideal.absNorm 𝔭.1 := by lia
-    lia
+  have h2le : 2 ≤ Ideal.absNorm 𝔭.1 := two_le_absNorm 𝔭.2.1 𝔭.2.2
   have hpos : 0 < Ideal.absNorm 𝔭.1 := by lia
   rw [Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re]
   have hb1 : (1 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := by exact_mod_cast (by lia : 1 ≤ Ideal.absNorm 𝔭.1)
@@ -2815,8 +2821,7 @@ private theorem multipliable_artinLocalFactor
   simpa using this
 
 /-- The map sending an unramified-below `L`-prime `𝔓` to the unramified `K`-prime `𝔓.under` below
-it. A fixed `def` (rather than an inline term with `inferInstance`) so the fibre subtypes parse
-without instance-resolution headaches. -/
+it. -/
 private def underUP
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ UnramifiedIn K L (𝔓.under (𝓞 K))}) :
@@ -2828,7 +2833,6 @@ private def underUP
     (𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ UnramifiedIn K L (𝔓.under (𝓞 K))}) :
     (underUP K L 𝔓).1 = 𝔓.1.under (𝓞 K) := rfl
 
-set_option maxHeartbeats 800000 in
 /-- The fibre of `underUP` over an unramified `K`-prime `c` is, after reindexing, the set of primes
 `𝔓` of `𝓞 L` lying over `c` (`LiesOver`). Used to match the fibre product against
 `dedekindZeta_local_factor_eq_product_artin_local`. -/
@@ -2841,12 +2845,16 @@ private def fiberUnderEquiv
   toFun 𝔓 := ⟨𝔓.1.1, 𝔓.1.2.1, ⟨by
     have h := congrArg Subtype.val 𝔓.2; rw [underUP_val] at h; rw [← h]⟩, 𝔓.1.2.2.1⟩
   invFun 𝔔 := ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.2, by
-      haveI := 𝔔.2.1; haveI := 𝔔.2.2.1; rw [← 𝔔.2.2.1.over]; exact c.2.2⟩,
-    by haveI := 𝔔.2.1; haveI := 𝔔.2.2.1; exact Subtype.ext (by rw [underUP_val]; exact 𝔔.2.2.1.over.symm)⟩
+      haveI := 𝔔.2.1; haveI := 𝔔.2.2.1; rw [← 𝔔.2.2.1.over]; exact c.2.2⟩, by
+    haveI := 𝔔.2.1; haveI := 𝔔.2.2.1
+    exact Subtype.ext (by rw [underUP_val]; exact 𝔔.2.2.1.over.symm)⟩
   left_inv 𝔓 := by ext; rfl
   right_inv 𝔔 := by ext; rfl
 
 set_option maxHeartbeats 1600000 in
+-- The nested `Ideal (𝓞 L)` prime/unramified-below subtypes force repeated `whnf` unfolding during
+-- the fiberwise `HasProd.sigma` regrouping; the default heartbeat budget is exhausted on the
+-- subtype-equivalence elaboration alone.
 /-- The unramified part of the prime-ideal Euler product equals `∏_χ L_χ`. Regroup the unramified
 `L`-primes fibrewise over the `K`-prime below them (`Equiv.sigmaFiberEquiv` +
 `Multipliable.tprod_sigma`); each fibre product is `∏_χ (1 - χ(σ_𝔭) N𝔭^{-s})^{-1}`
@@ -2898,7 +2906,8 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
     intro c
     haveI : c.1.IsPrime := c.2.1
     haveI : c.1.IsMaximal := c.2.1.isMaximal (UnramifiedIn.ne_bot K L c.2.2)
-    haveI : Finite (c.1.primesOver (𝓞 L)) := (IsDedekindDomain.primesOver_finite c.1 (𝓞 L)).to_subtype
+    haveI : Finite (c.1.primesOver (𝓞 L)) :=
+      (IsDedekindDomain.primesOver_finite c.1 (𝓞 L)).to_subtype
     haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} :=
       Finite.of_injective
         (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} =>
@@ -2933,27 +2942,20 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
   rw [artinDirichletSeries, ← exists_artinLSeries_eulerProduct_abelian K L χ s hs]
 
 set_option maxHeartbeats 800000 in
-/-- **Ingredient A, corrected** (Sharifi 7.1.16, p. 141, with the ramified factor made explicit).
-For `1 < Re s`,
-`ζ_L(s) = (∏_χ L_χ(s)) · R(s)`, where `L_χ = artinDirichletSeries K L χ` is the Euler product over
-**unramified** primes only, and the correction `R(s)` is the (finite) product of the Euler factors
-`(1 - N𝔓^{-s})^{-1}` over the primes `𝔓` of `𝓞 L` lying over a **ramified** prime of `𝓞 K`.
+-- Same nested-subtype `whnf` cost as `tprod_unramified_eq_prod_artinDirichletSeries`: the
+-- unramified/ramified `HasProd.mul_compl` partition and the two flattening `Equiv`s on the
+-- `Ideal (𝓞 L)` prime subtype overrun the default heartbeat budget.
+/-- **The zeta factorisation** (Sharifi 7.1.16, p. 141, with the ramified factor made explicit).
+For `1 < Re s`, `ζ_L(s) = (∏_χ L_χ(s)) · R(s)`, where `L_χ = artinDirichletSeries K L χ` is the
+Euler product over **unramified** primes only, and the correction `R(s)` is the (finite) product of
+the Euler factors `(1 - N𝔓^{-s})^{-1}` over the primes `𝔓` of `𝓞 L` lying over a **ramified**
+prime of `𝓞 K`.
 
-The naive identity `ζ_L = ∏_χ L_χ` is FALSE: `L_χ` drops the ramified primes (its ideal coefficient
-`χ(𝔭)` is `0` at ramified `𝔭`), whereas `ζ_L = ∏'_{all 𝔓}(1 - N𝔓^{-s})^{-1}` keeps them. `R`
-collects exactly the dropped factors. Since only finitely many primes ramify (`finite_ramifiedIn`),
-each with finitely many `𝔓` above, `R` is a finite product; it is nonzero for real `s > 1`
-(`N𝔓 ≥ 2`).
-
-Proof: the prime-ideal Euler product `ζ_L = ∏'_𝔓 (1 - N𝔓^{-s})^{-1}` is `Multipliable`
-(`hasProd_primeIdeal_factor`); regroup it fiberwise over `𝔭 ↦ 𝔓.under` (`HasProd.tprod_fiberwise`)
-and partition the outer product into unramified vs ramified `𝔭`
-(`Multipliable.tprod_subtype_mul_tprod_subtype_compl`). At an unramified `𝔭` the fibre product is
-`∏_χ (1 - χ(σ_𝔭) N𝔭^{-s})^{-1}` (`dedekindZeta_local_factor_eq_product_artin_local`); swapping the
-two finite/convergent products (`tprod_comm`) and summing the per-character Euler product over
-unramified primes (`exists_artinLSeries_eulerProduct_abelian`) gives `∏_χ L_χ`. The ramified part is
-`R` by definition. -/
-private theorem dedekindZeta_eq_prod_artinDirichletSeries
+The naive identity `ζ_L = ∏_χ L_χ` is false: `L_χ` drops the ramified primes (its ideal coefficient
+`χ(𝔭)` is `0` at ramified `𝔭`), whereas `ζ_L = ∏'_{all 𝔓}(1 - N𝔓^{-s})^{-1}` keeps them; `R`
+collects exactly the dropped factors. Only finitely many primes ramify, each with finitely many
+`𝔓` above, so `R` is a finite product, nonzero for real `s > 1`. -/
+theorem dedekindZeta_eq_prod_artinDirichletSeries
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] {s : ℂ} (hs : 1 < s.re) :
     NumberField.dedekindZeta L s =
@@ -3054,7 +3056,7 @@ of factors each continuous at `s = 1` and tending to the finite nonzero limit `(
 This is the `O(1)` gap between `log ζ_L` and `Σ_χ log ‖L_χ‖` in the corrected factorisation. -/
 private theorem log_norm_ramified_factor_bounded
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
+    [FiniteDimensional K L] [_hAb : IsMulCommutative Gal(L/K)] :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       |Real.log ‖∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
           ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹‖| ≤
@@ -3073,11 +3075,7 @@ private theorem log_norm_ramified_factor_bounded
   have hden1 : ∀ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(1 : ℂ))) ≠ 0 :=
     fun 𝔓 => by
-    have h2 : 2 ≤ Ideal.absNorm 𝔓.1 := by
-      have hne0 : Ideal.absNorm 𝔓.1 ≠ 0 := fun h => 𝔓.2.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
-      have hne1 : Ideal.absNorm 𝔓.1 ≠ 1 := fun h => 𝔓.2.1.ne_top (Ideal.absNorm_eq_one_iff.mp h)
-      have : 0 < Ideal.absNorm 𝔓.1 := by lia
-      lia
+    have h2 : 2 ≤ Ideal.absNorm 𝔓.1 := two_le_absNorm 𝔓.2.1 𝔓.2.2.1
     have hlt : ‖(Ideal.absNorm 𝔓.1 : ℂ) ^ (-(1 : ℂ))‖ < 1 := by
       rw [Complex.cpow_neg_one, norm_inv, Complex.norm_natCast]
       exact inv_lt_one_of_one_lt₀ (by exact_mod_cast (by lia : 1 < Ideal.absNorm 𝔓.1))
@@ -3220,7 +3218,7 @@ so `0 ≤ log ζ_K(s)` and `log ‖L_1(s)‖ ≤ log ζ_K(s) ≤ log(1/(s-1)) + 
 (`logDedekindZeta_sub_log_inv_sub_one_bounded` for `K`). -/
 private theorem log_norm_artinDirichletSeries_one_le
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
+    [FiniteDimensional K L] [_hAb : IsMulCommutative Gal(L/K)] :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       Real.log ‖artinDirichletSeries K L 1 (s : ℂ)‖ ≤ Real.log (1 / (s - 1)) + C := by
   obtain ⟨C, hC⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded K
@@ -3239,7 +3237,8 @@ private theorem log_norm_artinDirichletSeries_one_le
       rcases Nat.eq_zero_or_pos (Ideal.absNorm 𝔞.1) with h | h
       · exact absurd (Ideal.absNorm_eq_zero_iff.mp h) 𝔞.2
       · exact h
-    have hcast : (Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ)) = (((Ideal.absNorm 𝔞.1 : ℝ) ^ (-s) : ℝ) : ℂ) := by
+    have hcast : (Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ)) =
+        (((Ideal.absNorm 𝔞.1 : ℝ) ^ (-s) : ℝ) : ℂ) := by
       rw [Complex.ofReal_cpow (by positivity), Complex.ofReal_natCast]; norm_cast
     rw [hcast, Complex.norm_real, Complex.ofReal_re, Real.norm_of_nonneg (by positivity)]
   have hsum_norm : Summable fun 𝔞 : NonzeroIdeal K => ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ :=
@@ -3281,6 +3280,21 @@ private theorem log_norm_artinDirichletSeries_one_le
       exact Real.log_nonneg hζ_ge1
     · exact Real.log_le_log h0 hL1_le
   exact hlog_le.trans (by linarith [abs_le.mp hCs])
+
+open Classical in
+private theorem sum_ite_pole_zero_cancel
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] {χ : galoisCharacter K L} (hχ : χ ≠ 1) (a : ℝ) :
+    ∑ χ' : galoisCharacter K L, (if χ' = 1 then a else if χ' = χ then -a else 0) = 0 := by
+  have hsplit : ∀ χ' : galoisCharacter K L,
+      (if χ' = 1 then a else if χ' = χ then -a else 0) =
+        (if χ' = 1 then a else 0) + (if χ' = χ then -a else 0) := fun χ' => by
+    by_cases h1 : χ' = 1
+    · rw [if_pos h1, if_pos h1, if_neg (h1 ▸ Ne.symm hχ), add_zero]
+    · rw [if_neg h1, if_neg h1]; by_cases hc : χ' = χ <;> simp [hc]
+  rw [Finset.sum_congr rfl fun χ' _ => hsplit χ', Finset.sum_add_distrib,
+    Finset.sum_ite_eq' Finset.univ (1 : galoisCharacter K L), Finset.sum_ite_eq' Finset.univ χ]
+  simp
 
 open Filter Topology Set in
 /-- Sharifi 7.1.19 step 2 (p. 142): non-vanishing of `L(χ,1)` for
@@ -3403,26 +3417,8 @@ theorem artinLSeries_one_ne_zero
                 if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') :=
             Finset.sum_le_sum (fun χ' _ => hs_all χ')
         _ = ∑ χ' : galoisCharacter K L, C χ' := by
-            rw [Finset.sum_add_distrib]
-            -- the `ite` part sums to `0`: the `χ'=1` pole `+a` and the `χ'=χ` zero `-a` cancel
-            -- (they are distinct since `χ ≠ 1`).
-            have hsplit : ∀ χ' : galoisCharacter K L,
-                (if χ' = 1 then Real.log (1 / (s - 1)) else
-                  if χ' = χ then - Real.log (1 / (s - 1)) else 0) =
-                (if χ' = 1 then Real.log (1 / (s - 1)) else 0) +
-                  (if χ' = χ then - Real.log (1 / (s - 1)) else 0) := by
-              intro χ'
-              by_cases h1 : χ' = 1
-              · rw [if_pos h1, if_pos h1, if_neg (h1 ▸ (Ne.symm _hχ)), add_zero]
-              · rw [if_neg h1, if_neg h1]; by_cases hc : χ' = χ <;> simp [hc]
-            have hite : (∑ χ' : galoisCharacter K L,
-                (if χ' = 1 then Real.log (1 / (s - 1)) else
-                  if χ' = χ then - Real.log (1 / (s - 1)) else 0)) = 0 := by
-              rw [Finset.sum_congr rfl (fun χ' _ => hsplit χ'), Finset.sum_add_distrib,
-                Finset.sum_ite_eq' Finset.univ (1 : galoisCharacter K L),
-                Finset.sum_ite_eq' Finset.univ χ]
-              simp
-            rw [hite, zero_add]
+            rw [Finset.sum_add_distrib, sum_ite_pole_zero_cancel K L _hχ (Real.log (1 / (s - 1))),
+              zero_add]
     -- `log ζ_L.re ≤ Σ log‖L_χ‖ + C_R ≤ (∑ C χ') + C_R`
     have := abs_le.mp hCRs
     linarith [this.1, this.2]
