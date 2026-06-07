@@ -1,19 +1,20 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import CebotarevDensity
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-#doc (Manual) "Chebotarev: abelian case" =>
+tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mathbb{C}}\def\N{\mathbb{N}}\def\F{\mathbb{F}}\def\OK{\mathcal{O}_K}\def\Ocirc{\mathcal{O}}\def\Gal#1{\mathrm{Gal}(#1)}\def\Norm#1{\mathrm{N}(#1)}\def\fp{\mathfrak{p}}\def\fP{\mathfrak{P}}\def\Frob{\mathrm{Frob}}\def\Re{\operatorname{Re}}\def\re{\operatorname{Re}}\def\set#1{\left\{#1\right\}}\def\setof#1#2{\left\{#1\;\middle|\;#2\right\}}\def\abs#1{\left\lvert#1\right\rvert}\def\norm#1{\left\lVert#1\right\rVert}\def\ang#1{\left\langle#1\right\rangle}"#
 
-tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+#doc (Manual) "Chebotarev: abelian case" =>
 
 The abelian case is reduced to the cyclotomic case by Chebotarev's
 original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
 
-:::lemma "cyclic-subgroup-trivial-meet" (lean := "Chebotarev.cyclic_subgroup_meets_G_times_one_trivially")
+:::lemma_ "cyclic-subgroup-trivial-meet" (lean := "Chebotarev.cyclic_subgroup_meets_G_times_one_trivially")
 
 Let $`G, H` be finite groups, $`\sigma \in G`, $`\tau \in H`. If
 $`\abs{G}\mid\mathrm{ord}(\tau)`, then
@@ -29,7 +30,7 @@ $`\abs{G}\mid k`, hence $`\sigma^k = 1`.
 
 :::
 
-:::lemma "density-S-sigma-tau" (lean := "Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH")
+:::lemma_ "density-S-sigma-tau" (lean := "Chebotarev.liminf_density_S_sigma_ge_card_H_n_div_GH")
 
 Let $`L/K` be a finite abelian Galois extension with $`G=\Gal{L/K}`,
 $`\sigma\in G`, and $`m\ge 1` coprime to the discriminant of $`L`, so
@@ -65,7 +66,7 @@ lifts this to a $`K`-density of $`1/(\abs{G}\cdot\abs{H})`.
 
 :::
 
-:::lemma "H-n-over-H-formula" (lean := "Chebotarev.H_n_over_H_lower_bound_via_prime_factorisation")
+:::lemma_ "H-n-over-H-formula" (lean := "Chebotarev.H_n_over_H_tends_to_one")
 
 Let $`n = p_1^{k_1}\cdots p_r^{k_r}` with $`p_i` distinct primes,
 $`k_i\ge 1`. For an integer $`m \ge 1` with $`m \equiv 1 \pmod{n^j}`,
@@ -86,7 +87,7 @@ the prime-power factorisation of $`n` (Sharifi p.~144).
 
 :::
 
-:::lemma "H-n-over-H-tends-one" (lean := "Chebotarev.H_n_over_H_tends_to_one")
+:::lemma_ "H-n-over-H-tends-one" (lean := "Chebotarev.H_n_over_H_tends_to_one")
 
 As $`k \to \infty`,
 $`\abs{H_n}/\abs{(\Z/n^k\Z)^\times} \to 1`.
@@ -101,7 +102,7 @@ $`j \to \infty`: each factor tends to $`1`.
 
 :::
 
-:::lemma "liminf-ratio-ge-inv-card-G" (lean := "Chebotarev.liminf_ratio_ge_inv_card_G")
+:::lemma_ "liminf-ratio-ge-inv-card-G" (lean := "Chebotarev.liminf_ratio_ge_inv_card_G")
 
 For every $`\sigma\in G`,
 $`\delta_{\mathrm{inf}}\bigl(\setof{\fp}{\sigma_\fp = \sigma}\bigr)
@@ -120,7 +121,7 @@ $`m \equiv 1\pmod{\abs{G}^k}`, where $`\abs{H_n}/\abs{H}\to 1` by
 
 :::
 
-:::lemma "ratiosum-fibres-tendsto-one" (lean := "Chebotarev.ratioSum_frobeniusFibres_tendsto_one")
+:::lemma_ "ratiosum-fibres-tendsto-one" (lean := "Chebotarev.ratioSum_frobeniusFibres_tendsto_one")
 
 As $`s\downarrow 1`, the sum over $`\sigma\in G` of the density ratios
 of the fibres $`\setof{\fp}{\sigma_\fp=\sigma}` tends to $`1`.
@@ -138,7 +139,7 @@ unramified primes, which $`\to 1`.
 
 :::
 
-:::lemma "pigeonhole-density" (lean := "Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one")
+:::lemma_ "pigeonhole-density" (lean := "Chebotarev.tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one")
 
 Let $`g_i` ($`i` in a finite index set of size $`N`) be real functions
 with $`\liminf_{s\downarrow 1} g_i \ge 1/N` for each $`i`, and

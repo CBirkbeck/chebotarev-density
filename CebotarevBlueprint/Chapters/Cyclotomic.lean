@@ -1,20 +1,21 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import CebotarevDensity
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-#doc (Manual) "Chebotarev: cyclotomic case" =>
+tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mathbb{C}}\def\N{\mathbb{N}}\def\F{\mathbb{F}}\def\OK{\mathcal{O}_K}\def\Ocirc{\mathcal{O}}\def\Gal#1{\mathrm{Gal}(#1)}\def\Norm#1{\mathrm{N}(#1)}\def\fp{\mathfrak{p}}\def\fP{\mathfrak{P}}\def\Frob{\mathrm{Frob}}\def\Re{\operatorname{Re}}\def\re{\operatorname{Re}}\def\set#1{\left\{#1\right\}}\def\setof#1#2{\left\{#1\;\middle|\;#2\right\}}\def\abs#1{\left\lvert#1\right\rvert}\def\norm#1{\left\lVert#1\right\rVert}\def\ang#1{\left\langle#1\right\rangle}"#
 
-tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+#doc (Manual) "Chebotarev: cyclotomic case" =>
 
 For a cyclotomic extension $`L = K(\zeta_m)`, Chebotarev's theorem
 reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
 (pp.~142--143).
 
-:::lemma "cyclotomic-frobenius-norm-power" (lean := "Chebotarev.cyclotomic_frobenius_acts_as_norm_power")
+:::lemma_ "cyclotomic-frobenius-norm-power" (lean := "Chebotarev.cyclotomic_frobenius_acts_as_norm_power")
 
 Let $`L = K(\zeta_m)`, $`\fp` a nonzero prime of $`\OK` unramified in
 $`L`, and $`\fP` a prime of $`\Ocirc_L` above $`\fp`. Then for every
@@ -33,7 +34,7 @@ $`\Ocirc_L/\fP`) combined with the fact that $`\zeta_m` lifts
 isomorphically from the residue field for $`\fp\nmid m`.
 :::
 
-:::lemma "log-artin-asymp-character-sum" (lean := "Chebotarev.log_artinLSeries_asymp_character_sum")
+:::lemma_ "log-artin-asymp-character-sum" (lean := "Chebotarev.log_artinLSeries_asymp_character_sum")
 
 For every character $`\chi` of $`G`, the partial sum
 $`\sum_\fp \chi(\Frob_\fp) N\fp^{-s}` over $`\fp` unramified in $`L` is
@@ -51,7 +52,7 @@ Expand $`\log L(\chi, s)` via the Euler product
 bounded analogously to {bpref "prime-zeta-higher-tail-bounded"}[].
 :::
 
-:::lemma "character-orthogonality-eq" (lean := "Chebotarev.character_orthogonality_cyclotomic_eq")
+:::lemma_ "character-orthogonality-eq" (lean := "Chebotarev.character_orthogonality_cyclotomic_eq")
 
 Let $`L = K(\zeta_m)`, $`\sigma \in G`, and $`\fp` a nonzero prime of
 $`\OK` unramified in $`L` with $`\sigma_\fp` the conjugacy class of
@@ -65,7 +66,7 @@ $$`
 {uses "frobenius-class"}[]
 :::
 
-:::lemma "character-orthogonality-ne" (lean := "Chebotarev.character_orthogonality_cyclotomic_ne")
+:::lemma_ "character-orthogonality-ne" (lean := "Chebotarev.character_orthogonality_cyclotomic_ne")
 
 Let $`L = K(\zeta_m)`, $`\sigma \in G`, and $`\fp` a nonzero prime of
 $`\OK` unramified in $`L` whose Frobenius class is not the conjugacy
@@ -87,7 +88,7 @@ $`\chi(\Frob_\fp)` depends only on $`N\fp\bmod m`, and the sum reduces to
 the orthogonality relation on the cyclic group $`(\Z/m\Z)^\times`.
 :::
 
-:::lemma "primesum-fibre-asymp" (lean := "Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp")
+:::lemma_ "primesum-fibre-asymp" (lean := "Chebotarev.primeIdealZetaSum_frobeniusFibre_asymp")
 
 Let $`L = K(\zeta_m)` and $`\sigma \in G`. The Frobenius-fibre prime sum
 is asymptotic to $`(1/\abs{G})\log(1/(s-1))`:
@@ -119,7 +120,7 @@ pole, by {bpref "artin-one-ne-zero"}[]). Divide.
 {uses "artin-one-ne-zero"}[]
 :::
 
-:::lemma "ratio-glue-numerator" (lean := "Chebotarev.tendsto_ratio_of_log_asymp_numerator")
+:::lemma_ "ratio-glue-numerator" (lean := "Chebotarev.tendsto_ratio_of_log_asymp_numerator")
 
 If $`\mathrm{num}(s)/\log(1/(s-1)) \to c` and
 $`\mathrm{den}(s)/\log(1/(s-1)) \to 1` as $`s\downarrow 1`, then
@@ -134,7 +135,7 @@ $`s\in(1,2)` since $`1/(s-1) > 1`; apply the quotient rule for limits
 and cancel $`L`.
 :::
 
-:::lemma "cyclotomic-density-two-sided" (lean := "Chebotarev.cyclotomic_density_from_two_sided_asymp")
+:::lemma_ "cyclotomic-density-two-sided" (lean := "Chebotarev.cyclotomic_density_from_two_sided_asymp")
 
 Let $`L = K(\zeta_m)` and $`\sigma \in G`. Then
 $$`

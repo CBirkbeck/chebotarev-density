@@ -1,14 +1,15 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import CebotarevDensity
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-#doc (Manual) "Zeta factorisation for abelian extensions" =>
+tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mathbb{C}}\def\N{\mathbb{N}}\def\F{\mathbb{F}}\def\OK{\mathcal{O}_K}\def\Ocirc{\mathcal{O}}\def\Gal#1{\mathrm{Gal}(#1)}\def\Norm#1{\mathrm{N}(#1)}\def\fp{\mathfrak{p}}\def\fP{\mathfrak{P}}\def\Frob{\mathrm{Frob}}\def\Re{\operatorname{Re}}\def\re{\operatorname{Re}}\def\set#1{\left\{#1\right\}}\def\setof#1#2{\left\{#1\;\middle|\;#2\right\}}\def\abs#1{\left\lvert#1\right\rvert}\def\norm#1{\left\lVert#1\right\rVert}\def\ang#1{\left\langle#1\right\rangle}"#
 
-tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+#doc (Manual) "Zeta factorisation for abelian extensions" =>
 
 For an abelian Galois extension $`L/K` of number fields with
 $`G=\Gal{L/K}`, the Dedekind zeta function $`\zeta_L` factors as a
@@ -22,7 +23,7 @@ $`\chi: G \to \C^\times`.
 
 :::
 
-:::lemma "artin-euler-product-abelian" (lean := "Chebotarev.exists_artinLSeries_eulerProduct_abelian")
+:::lemma_ "artin-euler-product-abelian" (lean := "Chebotarev.exists_artinLSeries_eulerProduct_abelian")
 
 For an abelian character $`\chi: G \to \C^\times`, there is a function
 $`L(\chi, \cdot): \C \to \C` such that on $`\re(s) > 1`,
@@ -44,7 +45,7 @@ absolutely on $`\re(s) > 1` by comparison with $`\zeta_K`.
 
 :::
 
-:::lemma "dedekind-local-factor" (lean := "Chebotarev.dedekindZeta_local_factor_eq_product_artin_local")
+:::lemma_ "dedekind-local-factor" (lean := "Chebotarev.dedekindZeta_local_factor_eq_product_artin_local")
 
 For each unramified prime $`\fp` of $`\OK`, the local Euler factor of
 $`\zeta_L` at $`\fp` factors as
@@ -66,7 +67,7 @@ factor (Sharifi 7.1.16 step at $`\fp`).
 
 :::
 
-:::lemma "character-sum-geom-numbers" (lean := "Chebotarev.character_sum_geometry_of_numbers_bound")
+:::lemma_ "character-sum-geom-numbers" (lean := "Chebotarev.character_sum_geometry_of_numbers_bound")
 
 For a nontrivial character $`\chi: G \to \C^\times`, there is a
 constant $`C` such that
@@ -87,7 +88,7 @@ $`\sum_\zeta \zeta = 0`.
 
 :::
 
-:::lemma "artin-analytic-extension" (lean := "Chebotarev.artinLSeries_analytic_extension")
+:::lemma_ "artin-analytic-extension" (lean := "Chebotarev.artinLSeries_analytic_extension")
 
 For every nontrivial character $`\chi: G \to \C^\times`, the
 Dirichlet series
@@ -115,7 +116,7 @@ $`\re(s) > 1 - 1/[K:\Q]`.
 
 :::
 
-:::lemma "artin-one-ne-zero" (lean := "Chebotarev.artinLSeries_one_ne_zero")
+:::lemma_ "artin-one-ne-zero" (lean := "Chebotarev.artinLSeries_one_ne_zero")
 
 For every nontrivial character $`\chi: G \to \C^\times`,
 $`L(\chi, 1) \ne 0`. (Here $`L(\chi, 1)` refers to the analytic
@@ -137,7 +138,7 @@ contradicting $`\log\zeta_L(s) \sim \log(s-1)^{-1}`.
 
 :::
 
-:::theorem "dedekind-zeta-factorisation" (lean := "Chebotarev.exists_dedekindZeta_factorisation")
+:::theorem "dedekind-zeta-factorisation"
 
 Let $`L/K` be a finite abelian Galois extension of number fields.
 There is a family of functions

@@ -1,14 +1,15 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import CebotarevDensity
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-#doc (Manual) "Dirichlet density" =>
+tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mathbb{C}}\def\N{\mathbb{N}}\def\F{\mathbb{F}}\def\OK{\mathcal{O}_K}\def\Ocirc{\mathcal{O}}\def\Gal#1{\mathrm{Gal}(#1)}\def\Norm#1{\mathrm{N}(#1)}\def\fp{\mathfrak{p}}\def\fP{\mathfrak{P}}\def\Frob{\mathrm{Frob}}\def\Re{\operatorname{Re}}\def\re{\operatorname{Re}}\def\set#1{\left\{#1\right\}}\def\setof#1#2{\left\{#1\;\middle|\;#2\right\}}\def\abs#1{\left\lvert#1\right\rvert}\def\norm#1{\left\lVert#1\right\rVert}\def\ang#1{\left\langle#1\right\rangle}"#
 
-tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+#doc (Manual) "Dirichlet density" =>
 
 Throughout, $`K` denotes a number field, $`\OK` its ring of integers, and
 $`\fp` ranges over nonzero prime ideals of $`\OK` with absolute norm
@@ -78,7 +79,7 @@ converges to $`\log r` and is therefore bounded near $`1`.
 
 :::
 
-:::theorem "prime-zeta-ge-log-minus-bounded" (lean := "Chebotarev.primeIdealZetaSum_ge_log_minus_bounded")
+:::theorem "prime-zeta-ge-log-minus-bounded" (lean := "Chebotarev.log_minus_bounded_le_primeIdealZetaSum")
 
 There is a constant $`C` such that, for $`s>1` in a right neighbourhood
 of $`1`,
@@ -156,7 +157,7 @@ limit.
 
 :::
 
-## Density API
+# Density API
 
 The following routine API lemmas are used by the proofs of the
 corollaries in the final chapter ({bpref "chebotarev-density"}[]).

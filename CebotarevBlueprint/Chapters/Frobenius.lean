@@ -1,14 +1,15 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import CebotarevDensity
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-#doc (Manual) "Decomposition, inertia, Frobenius" =>
+tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mathbb{C}}\def\N{\mathbb{N}}\def\F{\mathbb{F}}\def\OK{\mathcal{O}_K}\def\Ocirc{\mathcal{O}}\def\Gal#1{\mathrm{Gal}(#1)}\def\Norm#1{\mathrm{N}(#1)}\def\fp{\mathfrak{p}}\def\fP{\mathfrak{P}}\def\Frob{\mathrm{Frob}}\def\Re{\operatorname{Re}}\def\re{\operatorname{Re}}\def\set#1{\left\{#1\right\}}\def\setof#1#2{\left\{#1\;\middle|\;#2\right\}}\def\abs#1{\left\lvert#1\right\rvert}\def\norm#1{\left\lVert#1\right\rVert}\def\ang#1{\left\langle#1\right\rangle}"#
 
-tex_prelude r#"\newcommand{\Z}{\mathbb{Z}}\newcommand{\Q}{\mathbb{Q}}\newcommand{\R}{\mathbb{R}}\newcommand{\C}{\mathbb{C}}\newcommand{\N}{\mathbb{N}}\newcommand{\F}{\mathbb{F}}\newcommand{\OK}{\mathcal{O}_K}\newcommand{\Ocirc}{\mathcal{O}}\newcommand{\Gal}[1]{\mathrm{Gal}(#1)}\newcommand{\Norm}[1]{\mathrm{N}(#1)}\newcommand{\fp}{\mathfrak{p}}\newcommand{\fP}{\mathfrak{P}}\newcommand{\Frob}{\mathrm{Frob}}\renewcommand{\Re}{\operatorname{Re}}\newcommand{\re}{\operatorname{Re}}\newcommand{\set}[1]{\left\{ #1 \right\}}\newcommand{\setof}[2]{\left\{ #1 \;\middle|\; #2 \right\}}\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}\newcommand{\ang}[1]{\left\langle #1 \right\rangle}"#
+#doc (Manual) "Decomposition, inertia, Frobenius" =>
 
 Let $`L/K` be a finite Galois extension of number fields with
 $`G=\Gal{L/K}`. The Galois group acts on ideals of $`\Ocirc_L` (via the
@@ -24,7 +25,7 @@ index $`1`, i.e. $`\fp\Ocirc_L` factors into distinct primes.
 
 :::
 
-:::definition "decomposition-group" (lean := "Chebotarev.decompositionGroup")
+:::definition "decomposition-group" (lean := "MulAction.stabilizer")
 
 For a prime $`\fP` of $`\Ocirc_L`, the *decomposition group* at
 $`\fP` is
@@ -35,7 +36,7 @@ $$`
 
 :::
 
-:::definition "inertia-group" (lean := "Chebotarev.inertiaGroup")
+:::definition "inertia-group" (lean := "Ideal.inertia")
 
 The *inertia group* at $`\fP` is
 $$`
@@ -63,7 +64,7 @@ arithmetic-Frobenius API (`IsArithFrobAt.exists_of_isInvariant` for
 existence, `IsArithFrobAt.mul_inv_mem_inertia` together with trivial
 inertia for uniqueness), so it is not restated as a separate project result.
 
-:::definition "frobenius-at" (lean := "Chebotarev.frobeniusAt")
+:::definition "frobenius-at" (lean := "IsArithFrobAt")
 
 For an unramified nonzero prime $`\fP` of $`\Ocirc_L`, the
 *Frobenius automorphism* $`\Frob_\fP\in G` is mathlib's
@@ -90,7 +91,7 @@ of the choice of $`\fP`.
 {uses "frobenius-at"}[]
 :::
 
-:::lemma "exists-frobenius-class" (lean := "Chebotarev.exists_frobeniusClass")
+:::lemma_ "exists-frobenius-class" (lean := "Chebotarev.exists_frobeniusClass")
 
 For a nonzero prime $`\fp` of $`\OK` unramified in $`L`, there exists a
 conjugacy class $`C \subseteq \Gal{L/K}` such that for every prime
@@ -100,7 +101,7 @@ Frobenius elements above $`\fp` are all conjugate.)
 {uses "frobenius-at"}[]
 :::
 
-:::lemma "frobenius-class-eq-mk" (lean := "Chebotarev.frobeniusClass_eq_mk_frobeniusAt")
+:::lemma_ "frobenius-class-eq-mk" (lean := "Chebotarev.frobeniusClass_eq_mk_of_isArithFrobAt")
 
 For a nonzero prime $`\fp` of $`\OK` unramified in $`L`, and any prime
 $`\fP` of $`\Ocirc_L` above $`\fp`,
@@ -121,7 +122,7 @@ property of $`\mathrm{choose\_spec}` at $`\fP` closes the goal.
 
 :::
 
-:::lemma "finite-ramified-primes" (lean := "Chebotarev.finite_ramifiedIn")
+:::lemma_ "finite-ramified-primes" (lean := "Chebotarev.finite_ramifiedIn")
 
 Only finitely many nonzero primes of $`\OK` ramify in $`L`.
 

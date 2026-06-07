@@ -8,9 +8,6 @@ pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 autoImplicit = false
 relaxedAutoImplicit = false
 maxSynthPendingDepth = 3
-linter.mathlibStandardSet = true
-linter.flexible = true
-linter.style.header = false
 
 [[require]]
 name = "mathlib"
@@ -22,6 +19,26 @@ name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
 rev = "master"
 
+# The mathlib linter options live on the main library only: the blueprint
+# library's import closure (Verso) does not define them.
 [[lean_lib]]
 name = "CebotarevDensity"
 globs = ["CebotarevDensity"]
+
+[lean_lib.leanOptions]
+linter.mathlibStandardSet = true
+linter.flexible = true
+linter.style.header = false
+
+[[require]]
+name = "VersoBlueprint"
+git = "https://github.com/leanprover/verso-blueprint"
+rev = "v4.30.0"
+
+[[lean_lib]]
+name = "CebotarevBlueprint"
+globs = ["CebotarevBlueprint"]
+
+[[lean_exe]]
+name = "blueprint-gen"
+root = "CebotarevBlueprintMain"
