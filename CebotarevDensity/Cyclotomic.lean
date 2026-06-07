@@ -2,6 +2,7 @@ module
 
 public import CebotarevDensity.ZetaProduct
 public import CebotarevDensity.CyclotomicNormResidue
+public import CebotarevDensity.ForMathlib.CharacterOrthogonality
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.NumberTheory.Cyclotomic.Basic
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Basic
@@ -175,16 +176,9 @@ private theorem sum_galoisCharacter_eq_card_or_zero
     rw [if_pos rfl]
     simp only [map_one, Units.val_one, Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
     rw [← Nat.card_eq_fintype_card, CommGroup.card_monoidHom_of_hasEnoughRootsOfUnity G ℂ]
-  · rw [if_neg hg]
-    obtain ⟨ψ, hψ⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
-    set S : ℂ := ∑ χ : G →* ℂˣ, (χ g : ℂ) with hS
-    have key : (ψ g : ℂ) * S = S := by
-      rw [hS, Finset.mul_sum, ← Equiv.sum_comp (Equiv.mulLeft ψ) fun χ : G →* ℂˣ ↦ (χ g : ℂ)]
-      refine Finset.sum_congr rfl fun χ _ ↦ ?_
-      simp only [Equiv.coe_mulLeft, MonoidHom.mul_apply, Units.val_mul]
-    have hfactor : ((ψ g : ℂ) - 1) * S = 0 := by linear_combination key
-    have hne : (ψ g : ℂ) - 1 ≠ 0 := sub_ne_zero.mpr fun h ↦ hψ (Units.val_eq_one.mp h)
-    exact (mul_eq_zero.mp hfactor).resolve_left hne
+  · -- The `g ≠ 1` branch is the shared column-orthogonality relation.
+    rw [if_neg hg]
+    exact sum_char_apply_eq_zero_of_ne_one hg
 
 /-- Sharifi 7.2.1 step (iii) — character orthogonality for the cyclotomic
 case (p. 142), **matching case**: when `frobeniusClass K L 𝔭 =

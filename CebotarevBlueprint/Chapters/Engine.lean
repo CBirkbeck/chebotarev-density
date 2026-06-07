@@ -259,8 +259,35 @@ correspondence shifting the residue by $`u`, so $`\kappa_{a} =
 \kappa_{a\cdot u}` for all $`a`, and every $`u\in S` is so realized.
 Hence $`\frac{1}{N}\sum_a\chi(a)\#\{\dots\}\to\bigl(\sum_{a\in
 S}\chi(a)\bigr)\kappa_1`, and $`\sum_{a\in S}\chi(a) = 0` by row
-orthogonality for the nontrivial character $`\chi`. The average tends to
+orthogonality for the nontrivial character $`\chi`
+({bpref "character-orthogonality-shared"}[]). The average tends to
 zero.
+
+{uses "character-orthogonality-shared"}[]
+:::
+
+:::lemma_ "character-orthogonality-shared" (lean := "sum_char_self_eq_zero_of_ne_one")
+
+Let $`G` be a finite abelian group and $`\widehat G = (G\to\C^\times)` its
+character group. Both orthogonality directions hold: *row* — for a
+nontrivial character $`\chi` one has $`\sum_{g\in G}\chi(g) = 0`; and
+*column* — for $`g\ne 1` one has $`\sum_{\chi\in\widehat G}\chi(g) = 0`.
+This is the project's single shared home for finite-abelian $`\C^\times`
+character orthogonality (kept in the root namespace as an upstream
+candidate), feeding the cyclotomic Frobenius count and the Fourier/realizer
+uniformity argument alike.
+
+:::
+
+:::proof "character-orthogonality-shared"
+
+Both directions are the same translation-reindexing trick. For the column
+sum pick a separating character $`\chi_0` with $`\chi_0(g)\ne 1` (available
+since $`\C` has enough roots of unity); reindexing by
+$`\chi\mapsto\chi_0\chi` scales the sum by $`\chi_0(g)`, so a factor
+$`\chi_0(g)-1\ne 0` annihilates it. For the row sum separate instead by a
+group element $`g_0` with $`\chi(g_0)\ne 1` and reindex by
+$`g\mapsto g_0 g`.
 
 :::
 
