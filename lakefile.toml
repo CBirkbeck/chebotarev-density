@@ -39,6 +39,13 @@ rev = "v4.30.0"
 name = "CebotarevBlueprint"
 globs = ["CebotarevBlueprint"]
 
+# Comparator certification harness (not a default target): the headline
+# statements with `sorry`, verified against CebotarevDensity.Main by
+# leanprover/comparator. See scripts/certify.sh.
+[[lean_lib]]
+name = "Challenge"
+srcDir = "certification"
+
 [[lean_exe]]
 name = "blueprint-gen"
 root = "CebotarevBlueprintMain"

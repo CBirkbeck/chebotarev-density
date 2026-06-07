@@ -1,0 +1,12 @@
+{
+    "challenge_module": "Challenge",
+    "solution_module": "CebotarevDensity.Main",
+    "theorem_names": [
+        "Chebotarev.chebotarev_density",
+        "Chebotarev.chebotarev_density_of_comm",
+        "Chebotarev.density_split_completely",
+        "Chebotarev.dirichlet_primes_in_AP"
+    ],
+    "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+    "enable_nanoda": false
+}
