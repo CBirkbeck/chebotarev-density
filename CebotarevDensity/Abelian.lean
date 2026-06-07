@@ -577,7 +577,7 @@ the Step-1 helpers; so the block carries no `Abelian` dependency and no import c
 This leaf is now a one-line application of the shared lemma at `L ↦ M`, no longer a replica. -/
 private theorem density_lift_through_fixedField_repl
     (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M] [IsGalois K M]
-    [FiniteDimensional K M] (σM : Gal(M/K)) (E : IntermediateField K M) (σE : Gal(M/E))
+    (σM : Gal(M/K)) (E : IntermediateField K M) (σE : Gal(M/E))
     (_hσE : letI : IsScalarTower K ↥E M := E.isScalarTower_mid'; σE.restrictScalars K = σM)
     (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σM))
     (_hab : HasDirichletDensity
@@ -714,7 +714,7 @@ This packages the compositum infrastructure (`compositum_charProd_bijective` /
 leaves. -/
 private theorem exists_crossing_family_tagged
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
+    [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
     (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
     ∃ (t : Ideal (𝓞 K) → (ZMod m)ˣ)
       (S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K))),
@@ -814,7 +814,7 @@ private theorem exists_crossing_family_tagged
 
 private theorem exists_cyclotomicCrossing_fibres
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (hm : 1 ≤ m)
+    [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (hm : 1 ≤ m)
     (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
     ∃ S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K)),
       (Set.univ : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S ∧
@@ -836,7 +836,7 @@ linear-disjointness via the everywhere-unramified intersection / `discr_dvd_disc
 consumer `liminf_ratio_ge_inv_card_G` drives `m` along admissible primes. -/
 theorem liminf_density_S_sigma_ge_card_H_n_div_GH
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
+    [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
     (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
     (Nat.card {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} : ℝ)
         / (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ))
@@ -1298,7 +1298,7 @@ private theorem exists_admissible_prime (n d : ℕ) (hn : 1 ≤ n) (k : ℕ) :
 primes in arithmetic progression). The lower half of Sharifi 7.2.2 Step 2 (p. 144). -/
 theorem liminf_ratio_ge_inv_card_G
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
+    [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     (Nat.card Gal(L/K) : ℝ)⁻¹
       ≤ Filter.liminf
           (fun s : ℝ ↦
@@ -1366,7 +1366,7 @@ to `1` as `s ↓ 1` since the ramified primes are finite
 partition the unramified primes. -/
 theorem ratioSum_frobeniusFibres_tendsto_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] :
+    [hAb : IsMulCommutative Gal(L/K)] :
     Filter.Tendsto
       (fun s : ℝ ↦ ∑ σ : Gal(L/K),
         primeIdealZetaSum
@@ -1567,7 +1567,7 @@ For an abelian Galois extension `L/K` of number fields and any
 `tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one` forces each to the
 limit `1/|G|`. -/
 theorem chebotarev_abelian
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
+    [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
     HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ}

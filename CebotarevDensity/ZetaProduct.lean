@@ -564,23 +564,20 @@ theorem card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre
 
 /-- The image of a character `χ` of a finite abelian group is exactly `μ_{orderOf χ}`, so every
 `ζ` with `ζ ^ orderOf χ = 1` lies in the image of `χ`. -/
-theorem charFibre_mem_range
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (ζ : ℂˣ)
+theorem charFibre_mem_range {G : Type*} [CommGroup G] [Finite G] (χ : G →* ℂˣ) (ζ : ℂˣ)
     (hζ : ζ ^ orderOf χ = 1) :
-    ∃ g : Gal(L/K), χ g = ζ := by
+    ∃ g : G, χ g = ζ := by
   classical
-  letI : CommGroup Gal(L/K) := { mul_comm := mul_comm' }
   haveI : NeZero (orderOf χ) := ⟨(orderOf_pos_iff.mpr (isOfFinOrder_of_finite χ)).ne'⟩
   haveI : Finite (MonoidHom.range χ) :=
     Finite.of_surjective χ.rangeRestrict χ.rangeRestrict_surjective
-  have hpow : ∀ g : Gal(L/K), (χ g) ^ orderOf χ = 1 := fun g => by
+  have hpow : ∀ g : G, (χ g) ^ orderOf χ = 1 := fun g => by
     rw [← MonoidHom.pow_apply, pow_orderOf_eq_one, MonoidHom.one_apply]
   have hsub : MonoidHom.range χ ≤ rootsOfUnity (orderOf χ) ℂ := by
     rintro x ⟨g, rfl⟩; exact (mem_rootsOfUnity (orderOf χ) (χ g)).mpr (hpow g)
   have hcard_roots : Nat.card (rootsOfUnity (orderOf χ) ℂ) = orderOf χ := by
     rw [Nat.card_eq_fintype_card, Complex.card_rootsOfUnity]
-  have hpowexp : ∀ g : Gal(L/K), (χ g) ^ Monoid.exponent (MonoidHom.range χ) = 1 := fun g => by
+  have hpowexp : ∀ g : G, (χ g) ^ Monoid.exponent (MonoidHom.range χ) = 1 := fun g => by
     have hmem : χ g ∈ MonoidHom.range χ := ⟨g, rfl⟩
     simpa using congrArg Subtype.val (Monoid.pow_exponent_eq_one (⟨χ g, hmem⟩ : MonoidHom.range χ))
   have hoe : orderOf χ = Monoid.exponent (MonoidHom.range χ) := by
@@ -603,13 +600,10 @@ theorem charFibre_mem_range
 `ζ ^ orderOf χ = 1`, the fibre `{g : χ g = ζ}` is a coset of `ker χ`, so
 `Nat.card {g : χ g = ζ} = Nat.card (MonoidHom.ker χ)`, independent of `ζ`. This `ζ`-independence is
 what makes leaf G's leading constant `C = |ker χ| · κ` independent of `ζ`. -/
-theorem card_charFibre_eq_card_ker
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (ζ : ℂˣ)
+theorem card_charFibre_eq_card_ker {G : Type*} [CommGroup G] [Finite G] (χ : G →* ℂˣ) (ζ : ℂˣ)
     (hζ : ζ ^ orderOf χ = 1) :
-    Nat.card {g : Gal(L/K) // χ g = ζ} = Nat.card (MonoidHom.ker χ) := by
-  letI : CommGroup Gal(L/K) := { mul_comm := mul_comm' }
-  obtain ⟨g₀, hg₀⟩ : ∃ g : Gal(L/K), χ g = ζ := charFibre_mem_range K L χ ζ hζ
+    Nat.card {g : G // χ g = ζ} = Nat.card (MonoidHom.ker χ) := by
+  obtain ⟨g₀, hg₀⟩ : ∃ g : G, χ g = ζ := charFibre_mem_range χ ζ hζ
   refine Nat.card_congr (Equiv.ofBijective (fun g => (⟨g.1 * g₀⁻¹, ?_⟩ : MonoidHom.ker χ)) ?_)
   · rw [MonoidHom.mem_ker, map_mul, map_inv, g.2, hg₀, mul_inv_cancel]
   · constructor
@@ -2127,7 +2121,8 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
       rw [← hζuval]
       exact ⟨fun h => Units.ext h, fun h => congrArg Units.val h⟩
     rw [heq]
-    exact card_charFibre_eq_card_ker K L χ ζu hζun
+    letI : CommGroup Gal(L/K) := { mul_comm := mul_comm' }
+    exact card_charFibre_eq_card_ker χ ζu hζun
   have hcardℝ : (Fintype.card {g : Gal(L/K) // (χ g : ℂ) = ζ} : ℝ) = (κ₀ : ℝ) := by
     rw [← Nat.card_eq_fintype_card, hSκ₀]
   -- **Combine (1)+(2)+(3):** `|B − C·N| ≤ κ₀·C₂·P`.

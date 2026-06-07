@@ -51,7 +51,7 @@ supplies the coprimality.
 imports — can consume it without an import cycle.) -/
 theorem cyclotomic_frobenius_acts_as_norm_power
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K))
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] (𝔭 : Ideal (𝓞 K))
     [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hcop : (Ideal.absNorm 𝔭).Coprime m)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hP : 𝔓.LiesOver 𝔭) :
     haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
@@ -101,7 +101,7 @@ a primitive `m`-th root `ζ` of unity in `L`, and a prime `𝔭` of `K` unramifi
 representative `(frobeniusClass K L 𝔭).out` to the unit `N𝔭 mod m`. -/
 theorem autToPow_frobeniusClass_out
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     {ζ : L} (hζ : IsPrimitiveRoot ζ m) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     (hunr : UnramifiedIn K L 𝔭) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
     hζ.autToPow K ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) =
@@ -144,7 +144,7 @@ restriction `σ ↾ F : Gal(F/K)`: `σ • algebraMap (𝓞 F) (𝓞 L) y = alge
 Checked after the (injective) embedding `𝓞 L → L`, via `AlgEquiv.restrictNormal_commutes`. -/
 private theorem smul_algebraMap_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (F : IntermediateField K L) [IsGalois K F]
+    (F : IntermediateField K L) [IsGalois K F]
     (σ : L ≃ₐ[K] L) (y : 𝓞 F) :
     haveI : IsScalarTower K F L := F.isScalarTower_mid'
     σ • (algebraMap (𝓞 F) (𝓞 L) y) = algebraMap (𝓞 F) (𝓞 L) ((σ.restrictNormal F) • y) := by
@@ -172,7 +172,7 @@ The defining congruence `σ x ≡ x^{N𝔭} (mod 𝔓)` descends along `𝓞 F �
 action intertwining (`smul_algebraMap_eq`) and `(𝔓 ∩ 𝓞 F) ∩ 𝓞 K = 𝔓 ∩ 𝓞 K` (`Ideal.under_under`). -/
 private theorem isArithFrobAt_restrictNormal
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (F : IntermediateField K L) [IsGalois K F] (σ : L ≃ₐ[K] L)
+    (F : IntermediateField K L) [IsGalois K F] (σ : L ≃ₐ[K] L)
     (𝔓 : Ideal (𝓞 L)) (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) :
     haveI : IsScalarTower K F L := F.isScalarTower_mid'
     IsArithFrobAt (𝓞 K) (σ.restrictNormal F) (𝔓.under (𝓞 F)) := by
@@ -188,7 +188,7 @@ for a prime `𝔮` of `𝓞 F` over `𝔭`, pick `𝔓` of `𝓞 L` over `𝔮`;
 descends to `𝔮` via `Algebra.IsUnramifiedAt.of_liesOver`. -/
 private theorem unramifiedIn_intermediateField
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (F : IntermediateField K L) [IsGalois K F]
+    (F : IntermediateField K L) [IsGalois K F]
     (𝔭 : Ideal (𝓞 K)) (hunr : UnramifiedIn K L 𝔭) :
     UnramifiedIn K (↥F) 𝔭 := by
   haveI : IsScalarTower K F L := F.isScalarTower_mid'
@@ -215,7 +215,7 @@ restriction to `F` is the identity (`IntermediateField.restrictNormalHom_ker`), 
 downward restriction `isArithFrobAt_restrictNormal` it is the `F`-Frobenius at `𝔮 = 𝔓 ∩ 𝓞 F`. -/
 private theorem frobeniusClass_fixedField_eq_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (hmem : ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     haveI : IsGalois K (IntermediateField.fixedField H) :=
@@ -260,7 +260,7 @@ private theorem frobeniusClass_fixedField_eq_one
 `finrank_residue_eq_orderOf`. Shared by the count and norm forms below. -/
 private theorem finrank_residue_fixedField_eq_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (hmem : ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     haveI : IsGalois K (IntermediateField.fixedField H) :=
@@ -287,7 +287,7 @@ from `card_primesAbove_mul_finrank_eq` (`Frobenius.lean`) with residue degree
 `1` (`finrank_residue_fixedField_eq_one`). -/
 private theorem card_primesOver_fixedField_eq_finrank
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (hmem : ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     Nat.card {𝔮 : Ideal (𝓞 ↥(IntermediateField.fixedField H)) //
@@ -311,7 +311,7 @@ the inertia degree `f(𝔮 ∣ 𝔭) = 1` (`finrank_residue_fixedField_eq_one`) 
 `Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver`. -/
 private theorem absNorm_eq_of_liesOver_fixedField
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (hmem : ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     haveI : IsGalois K (IntermediateField.fixedField H) :=
@@ -428,9 +428,9 @@ end CoprimeRestricted
 section CoprimeRestrictedComparison
 
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
-  [IsGalois K L] [FiniteDimensional K L] (m : ℕ) [NeZero m]
+  [IsGalois K L] (m : ℕ) [NeZero m]
 
-omit [FiniteDimensional K L] in
+
 /-- The coprime-norm-unramified prime sum is asymptotic to `log(1/(s-1))`: it differs from the
 universal prime sum (`primeIdealZetaSum_univ_tendsto_log`) by the finitely many excluded
 primes — ramified (`finite_ramifiedIn`) or with norm not coprime to `m` (`finite_badPrimes'`) —
@@ -486,7 +486,7 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
       primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s]
   rw [← sub_div, ← hadd, add_sub_cancel_right]
 
-omit [IsGalois K L] [FiniteDimensional K L] [NeZero m] in
+omit [IsGalois K L] [NeZero m] in
 /-- The nonzero primes of `𝓞 F` lying over a fixed maximal prime `𝔭` of `𝓞 K` form a finite type,
 for `F` an intermediate field Galois over `K`: they inject into the finite `𝔭.primesOver (𝓞 F)`. -/
 private theorem finite_primesLiesOver_ne_bot (F : IntermediateField K L) [IsGalois K F]
@@ -632,7 +632,7 @@ unchanged): reduce `H = ⊤` to `[F:K] ≤ 1` and apply
 `finrank_fixedField_le_one_of_forall_frobenius_mem_of_coprime`. -/
 theorem subgroup_eq_top_of_forall_frobenius_mem_of_coprime
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m] (H : Subgroup Gal(L/K))
     (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
       (Ideal.absNorm 𝔭).Coprime m → ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     H = ⊤ := by
@@ -664,7 +664,7 @@ Proof: reduce `H = ⊤` to `[F:K] ≤ 1` for `F = fixedField H`
 `finrank_fixedField_le_one_of_forall_frobenius_mem`. -/
 theorem subgroup_eq_top_of_forall_frobenius_mem
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
+    [IsMulCommutative Gal(L/K)] (H : Subgroup Gal(L/K))
     (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
       ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     H = ⊤ :=

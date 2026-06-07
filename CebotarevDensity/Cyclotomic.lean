@@ -94,7 +94,7 @@ half-plane `Re s > 1` (p. 142). Verbatim source quote: "log L(χ,s) ~
 Σ_𝔭 χ(𝔭) N𝔭^{-s} for Re(s) > 1". -/
 theorem log_artinLSeries_asymp_character_sum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
+    [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
@@ -191,7 +191,7 @@ case (p. 142), **matching case**: when `frobeniusClass K L 𝔭 =
 ConjClasses.mk σ`, the character sum equals `|G|`. -/
 theorem character_orthogonality_cyclotomic_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
@@ -216,7 +216,7 @@ when `frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ`, the character sum
 vanishes. -/
 theorem character_orthogonality_cyclotomic_ne
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     (_hunr : UnramifiedIn K L 𝔭) (_h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
@@ -427,7 +427,7 @@ private noncomputable def twistedPrimeSum
 summable: it is dominated by the summable real prime sum `Σ_𝔭 N𝔭^{-s}` (for `1 < s`). -/
 private theorem summable_twistedPrimeSum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (χ : galoisCharacter K L) {s : ℝ} (hs : 1 < s) :
+    (χ : galoisCharacter K L) {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))) := by
   have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
@@ -464,7 +464,7 @@ which is nonzero at `s = 1` (`artinLSeries_one_ne_zero` / LF5), the twisted prim
 `Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. -/
 private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
+    [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
     (_hχ : χ ≠ 1) (Lf : ℂ → ℂ)
     (hLf_an : AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re})
     (hLf_eq : ∀ s : ℂ, 1 < s.re →
@@ -622,7 +622,7 @@ feed both to `artinLSeries_prime_sum_bounded_of_analytic_extension`. So this gap
 the same geometry-of-numbers leaf** as LF4/LF5; its only extra content is the bridge. -/
 private theorem artinLSeries_prime_sum_bounded_of_ne_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [hAb : IsMulCommutative Gal(L/K)] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
@@ -647,7 +647,7 @@ Comparing the two yields `|G| · P_σ(s) = log(1/(s-1)) + O(1)`, hence `P_σ(s)/
 ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` equals `|G|`. -/
 private theorem sum_charTwist_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     (hunr : UnramifiedIn K L 𝔭) (h : frobeniusClass K L 𝔭 = ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
@@ -663,7 +663,7 @@ private theorem sum_charTwist_eq
 ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` vanishes. -/
 private theorem sum_charTwist_ne
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [Fintype (galoisCharacter K L)] (σ : Gal(L/K)) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     (hunr : UnramifiedIn K L 𝔭) (h : frobeniusClass K L 𝔭 ≠ ConjClasses.mk σ) :
     (∑ χ : galoisCharacter K L,
@@ -679,8 +679,7 @@ private theorem sum_charTwist_ne
 the universal prime sum by only finitely many ramified primes, whose bounded contribution is
 negligible against `log → ∞`. -/
 private theorem primeIdealZetaSum_unramified_div_log_tendsto_one
-    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] :
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
     Tendsto
       (fun s : ℝ ↦
         primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
@@ -728,7 +727,7 @@ unramified prime sum `primeIdealZetaSum U s` plus the real part of the `χ ≠ 1
 `∑_{χ≠1} (χ σ)⁻¹ · twistedPrimeSum χ s`. -/
 private theorem card_mul_frobeniusFibre_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [Fintype (galoisCharacter K L)] [DecidableEq (galoisCharacter K L)] (σ : Gal(L/K))
     {s : ℝ} (hs : 1 < s) :
     (Nat.card Gal(L/K) : ℝ) *
@@ -827,7 +826,7 @@ private theorem card_mul_frobeniusFibre_eq
 `{σ_𝔭 = σ}` is asymptotic to `(1/|G|) log(1/(s-1))` as `s ↓ 1`. -/
 theorem primeIdealZetaSum_frobeniusFibre_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2)
     (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
@@ -925,7 +924,7 @@ Source: "on the one hand we have Σ_χ χ(σ)^{-1} log L(χ,s) ~ |G|
 ~ log ζ_K(s) ~ log(s-1)^{-1}". Comparing yields density `1/|G|`. -/
 theorem cyclotomic_density_from_two_sided_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2)
     (σ : Gal(L/K)) :
     Tendsto
       (fun s : ℝ ↦
@@ -944,7 +943,7 @@ For `K` a number field, `m ≥ 1`, and `L = K(μ_m)` the `m`-th cyclotomic
 extension of `K`, every `σ ∈ Gal(L/K)` is the Frobenius of a set of primes
 of `𝓞 K` (unramified in `L`) of Dirichlet density `1 / |Gal(L/K)|`. -/
 theorem chebotarev_cyclotomic
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2)
     (σ : Gal(L/K)) :
     HasDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
@@ -956,7 +955,7 @@ theorem chebotarev_cyclotomic
 inequality. Used in the abelian case to feed into the
 `HasLowerDirichletDensity.mono` chain. -/
 theorem chebotarev_cyclotomic_lowerDensity_ge
-    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2)
     (σ : Gal(L/K)) :
     HasLowerDirichletDensity
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧

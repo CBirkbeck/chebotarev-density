@@ -53,7 +53,7 @@ above `𝔭` with `Frob_𝔓 = σ` and those with `Frob_𝔓 = σ'` (via `IsArit
 two Frobenius fibres have equal cardinality. -/
 theorem frobeniusFibre_card_eq_of_isConj
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hunr : UnramifiedIn K L 𝔭)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hunr : UnramifiedIn K L 𝔭)
     (σ σ' : Gal(L/K)) (hc : IsConj σ σ') :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (_ : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
         IsArithFrobAt (𝓞 K) σ 𝔓}
@@ -89,7 +89,7 @@ above `𝔭` is `|C|` times the number with `Frob_𝔓 = σ`: partition by the (
 Frobenius via `Finset.card_eq_sum_card_fiberwise`, then `Finset.sum_const` using `hequi`. -/
 theorem card_primesAbove_eq_card_carrier_mul_frobeniusFibre
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (hσ : ConjClasses.mk σ = C)
+    (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (hσ : ConjClasses.mk σ = C)
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭) (hCfrob : frobeniusClass K L 𝔭 = C)
     (hequi : ∀ σ' : Gal(L/K), IsConj σ σ' →
       Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (_ : 𝔓.LiesOver 𝔭) (_ : 𝔓 ≠ ⊥),
@@ -158,7 +158,7 @@ p. 143). The Frobenius elements of the primes above `𝔭` sweep out the conjuga
 the total number of primes above `𝔭`. -/
 theorem count_frobenius_eq_sigma_mul_card_carrier
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
+    (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (_ : 𝔓.LiesOver 𝔭)
@@ -182,7 +182,7 @@ together with `Σ N𝔭^{-s} ~ Σ NP^{-s}` (Sharifi 7.1.12 applied to both
 `K` and `E`). -/
 theorem count_primes_above_with_frobenius_eq_sigma
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
+    (σ : Gal(L/K)) (C : ConjClasses Gal(L/K)) (_hσ : ConjClasses.mk σ = C)
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hunr : UnramifiedIn K L 𝔭)
     (_hCfrob : frobeniusClass K L 𝔭 = C) :
     Nat.card {𝔓 : Ideal (𝓞 L) // ∃ (_ : 𝔓.IsPrime) (_ : 𝔓.LiesOver 𝔭)
@@ -199,7 +199,7 @@ over `K` tends to `1` as `s ↓ 1`. Both `Σ_univ^{↥E}` and `Σ_univ^K` are as
 `log(1/(s-1))` (`primeIdealZetaSum_univ_tendsto_log`, the `↥E` instance via
 `NumberField.of_intermediateField`), so their ratio of ratios cancels. This is the
 Lean form of Sharifi's "`Σ_𝔭 N𝔭^{-s} ~ Σ_P NP^{-s}`" (p. 143). -/
-private theorem univ_ratio_E_K_tendsto_one [FiniteDimensional K L] (E : IntermediateField K L) :
+private theorem univ_ratio_E_K_tendsto_one (E : IntermediateField K L) :
     Tendsto (fun s : ℝ ↦ primeIdealZetaSum (univ : Set (Ideal (𝓞 ↥E))) s
         / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s) (𝓝[>] 1) (𝓝 1) := by
   have hcancel := (primeIdealZetaSum_univ_tendsto_log (↥E)).div
@@ -227,7 +227,7 @@ residue classes to the `N(𝔓 ∩ 𝓞 K)`-th power too, i.e. it is a `K`-Frobe
 
 mathlib has only `isConj_arithFrobAt` (conjugacy of `arithFrobAt` at primes over the same
 base); the restriction-through-a-subextension identity is the new tower content. -/
-theorem arithFrobAt_restrictScalars_eq [FiniteDimensional K L] (E : IntermediateField K L)
+theorem arithFrobAt_restrictScalars_eq (E : IntermediateField K L)
     (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (hunrK : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1)
     (_hunrE : Ideal.ramificationIdx (𝔓.under (𝓞 ↥E)) 𝔓 = 1)
     (hnorm : Nat.card (𝓞 ↥E ⧸ 𝔓.under (𝓞 ↥E)) = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))) :
@@ -268,7 +268,7 @@ definition inert in `L`"). For an unramified `𝔓` of `𝓞 L` over `𝔭 = �
 every `E`-automorphism fixes `𝔓` (its restriction to `K` lies in `⟨σ⟩ = D_𝔓`). In particular
 `𝔓` is the unique prime of `𝓞 L` above `𝔓 ∩ 𝓞 E`. -/
 private theorem stabilizer_intermediate_eq_top_of_frobenius
-    [FiniteDimensional K L] (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hunrK : UnramifiedIn K L (𝔓.under (𝓞 K))) (hPK : 𝔓.LiesOver (𝔓.under (𝓞 K)))
     (hfrob : IsArithFrobAt (𝓞 K) σ 𝔓)
     (_horderE : orderOf σ = Nat.card Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ)))) :
@@ -318,7 +318,7 @@ decomposition group of `𝔓` in `Gal(L/E)` being all of `Gal(L/E)` forces the i
 `f(𝔓 ∣ P) = [L : E] = f`, hence by the tower law `f(P ∣ 𝔭) = f(𝔓 ∣ 𝔭)/f(𝔓 ∣ P) = f/f = 1`.
 The residue field of `P` over `K` is therefore trivial, i.e. `N P = N 𝔭`. -/
 private theorem inertiaDeg_under_E_eq_one_of_frobenius
-    [FiniteDimensional K L] (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hunrK : UnramifiedIn K L (𝔓.under (𝓞 K))) (hPK : 𝔓.LiesOver (𝔓.under (𝓞 K)))
     (hfrob : IsArithFrobAt (𝓞 K) σ 𝔓)
     (horderE : orderOf σ = Nat.card Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ)))) :
@@ -392,7 +392,7 @@ open scoped Pointwise in
 definition inert in `L`"). Since `stabilizer Gal(L/E) 𝔓 = ⊤` and `Gal(L/E)` acts transitively
 on the primes above `𝔓 ∩ 𝓞 E`, any prime `𝔔` of `𝓞 L` above `𝔓 ∩ 𝓞 E` equals `𝔓`. -/
 private theorem eq_of_liesOver_under_E_of_frobenius
-    [FiniteDimensional K L] (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hunrK : UnramifiedIn K L (𝔓.under (𝓞 K))) (hPK : 𝔓.LiesOver (𝔓.under (𝓞 K)))
     (hfrob : IsArithFrobAt (𝓞 K) σ 𝔓)
     (horderE : orderOf σ = Nat.card Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
@@ -420,7 +420,7 @@ private theorem eq_of_liesOver_under_E_of_frobenius
 `E`-Frobenius `Frob^E_𝔓` restricts to `σ`, hence (as `σ_E` also restricts to `σ` and
 `restrictScalars` is injective) `Frob^E_𝔓 = σ_E`. -/
 private theorem arithFrobAt_E_eq_of_isArithFrobAt
-    [FiniteDimensional K L] (σ : Gal(L/K))
+    (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (hσE : letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
         (IntermediateField.fixedField (Subgroup.zpowers σ)).isScalarTower_mid'
@@ -466,7 +466,7 @@ with `Frob^E_P = [σ_E]` and `f(P ∣ 𝔭) = 1`. Hence the two fibres are equin
 with the proven count `count_primes_above_with_frobenius_eq_sigma` this gives the number of
 such `P` over `𝔭` as `|G|/(f·|C|)`. -/
 private theorem card_fibre_E_eq_card_fibre_L
-    [FiniteDimensional K L] (σ : Gal(L/K))
+    (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (hσE : letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
         (IntermediateField.fixedField (Subgroup.zpowers σ)).isScalarTower_mid'
@@ -620,7 +620,7 @@ private theorem card_fibre_E_eq_card_fibre_L
 is a prime of `𝓞 E` above an unramified-in-`L` prime `𝔭 = P ∩ 𝓞 K`, unramified in `L`, with
 `Frob^E_P = [σ_E]` and degree one over `K`, then the `K`-Frobenius class of `𝔭` is `[σ]`. -/
 private theorem frobeniusClass_under_eq_of_mem_fibre
-    [FiniteDimensional K L] (σ : Gal(L/K))
+    (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (hσE : letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
         (IntermediateField.fixedField (Subgroup.zpowers σ)).isScalarTower_mid'
@@ -697,7 +697,7 @@ each `𝔭 ∈ S` has exactly `|G|/(f·|C|)` such primes `P` (the fibre bijectio
 `card_fibre_E_eq_card_fibre_L` together with the proven count
 `count_primes_above_with_frobenius_eq_sigma`), and `N P = N 𝔭` for degree-one `P`. -/
 private theorem primeIdealZetaSum_fibre_eq_smul
-    [FiniteDimensional K L] (σ : Gal(L/K))
+    (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (hσE : letI : IsScalarTower K ↥(IntermediateField.fixedField (Subgroup.zpowers σ)) L :=
         (IntermediateField.fixedField (Subgroup.zpowers σ)).isScalarTower_mid'
@@ -850,7 +850,7 @@ degree `≥ 2` is bounded by `[E:K]·Σ_𝔭 N𝔭^{-2}`. Indeed `N P = N𝔭^{f
 (`Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver`), so `N P^{-s} ≤ N𝔭^{-2}` for `s ≥ 1` and
 `N𝔭 ≥ 2`; grouping the `E`-primes by their `K`-prime fibre (each of size `≤ [E:K]` via
 `Ideal.card_primesOverFinset_le_finrank`) gives the bound. -/
-private theorem primeIdealZetaSum_degTwo_le [FiniteDimensional K L] (σ : Gal(L/K)) {s : ℝ}
+private theorem primeIdealZetaSum_degTwo_le (σ : Gal(L/K)) {s : ℝ}
     (hs : 1 < s) (Aset : Set (Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))))
     (hA : Aset = {P | P.IsPrime ∧ P ≠ ⊥ ∧
       UnramifiedIn K L (P.under (𝓞 K)) ∧ 2 ≤ (P.under (𝓞 K)).inertiaDeg P}) :
@@ -965,7 +965,7 @@ private theorem primeIdealZetaSum_degTwo_le [FiniteDimensional K L] (σ : Gal(L/
 `K`-prime is ramified in `L` lie over one of the finitely many ramified `K`-primes
 (`finite_ramifiedIn`), and each `K`-prime has finitely many primes of `𝓞 E` above it
 (`IsDedekindDomain.primesOver_finite`); hence the set is finite. -/
-private theorem ramifiedBelow_finite [FiniteDimensional K L] (σ : Gal(L/K))
+private theorem ramifiedBelow_finite (σ : Gal(L/K))
     (Bset : Set (Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))))
     (hB : Bset = {P | P.IsPrime ∧ P ≠ ⊥ ∧ ¬ UnramifiedIn K L (P.under (𝓞 K))}) :
     Bset.Finite := by
@@ -992,7 +992,7 @@ This is the asymptotic content that the (false) exact identity
 `Σ_S = (f|C|/|G|)·Σ_T` elided: the relation `Σ_𝔭 N𝔭⁻ˢ ~ Σ_P NP⁻ˢ` holds only in the
 `s → 1⁺` limit, with the higher-degree primes of `E` over `K` forming the discrepancy. -/
 private theorem primeIdealZetaSum_T2_div_univ_tendsto_zero
-    [FiniteDimensional K L] (σ : Gal(L/K))
+    (σ : Gal(L/K))
     (σE : Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))))
     (T₂set : Set (Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ)))))
     (hT₂ : T₂set = {P : Ideal (𝓞 ↥(IntermediateField.fixedField (Subgroup.zpowers σ))) |
@@ -1071,7 +1071,7 @@ generates `Gal(L/E)` and a prime with `Frob^E_𝔓 = σ_E` has `Frob^K_𝔓 = σ
 the hypothesis `hab` is the abelian-case output for `L/E` from
 `chebotarev_abelian`. -/
 theorem density_lift_through_fixedField
-    [FiniteDimensional K L] (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
+    (σ : Gal(L/K)) (E : IntermediateField K L) (σE : Gal(L/E))
     (hσE : letI : IsScalarTower K ↥E L := E.isScalarTower_mid'; σE.restrictScalars K = σ)
     (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σ))
     (_hab : HasDirichletDensity

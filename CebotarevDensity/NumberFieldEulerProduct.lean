@@ -220,7 +220,7 @@ lemma dedekindZeta_eq_tsum_idealNormMultiplicity {s : ℂ} (hs : 1 < s.re) :
       lia
     exact_mod_cast Nat.card_congr hequiv
 
-lemma summable_tsum_symGeometric (α : Type*) [Fintype α] [Finite α] {z : ℂ}
+lemma summable_tsum_symGeometric (α : Type*) [Fintype α] {z : ℂ}
     (hz : ‖z‖ < 1) :
     Summable (fun n : ℕ => (Fintype.card (Sym α n) : ℂ) * z ^ n) ∧
       (∑' n : ℕ, (Fintype.card (Sym α n) : ℂ) * z ^ n) = ((1 - z)⁻¹) ^ Fintype.card α := by

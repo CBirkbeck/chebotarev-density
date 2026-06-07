@@ -126,7 +126,7 @@ theorem ConjClasses_carrier_card_pos
 /-- Existence of *infinitely many* primes with each Frobenius conjugacy class
 — a qualitative corollary of `chebotarev_density`. -/
 theorem infinite_setOf_frobenius_class
-    [FiniteDimensional K L] (C : ConjClasses Gal(L/K)) :
+    (C : ConjClasses Gal(L/K)) :
     Set.Infinite
       {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = C} := by
@@ -336,7 +336,7 @@ Frobenius class is `mk σ` iff `N𝔭 ≡ a [n]`: `autToPow_frobeniusClass_out` 
 Frobenius as `N𝔭 mod n`, and `autToPow` is injective (and the group is abelian, so `mk` is). -/
 private theorem frobeniusClass_eq_iff_residue
     (n : ℕ) [NeZero n] (L : Type*) [Field L] [NumberField L] [Algebra ℚ L] [IsGalois ℚ L]
-    [IsCyclotomicExtension {n} ℚ L] [FiniteDimensional ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
+    [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit)
     (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] (hunr : UnramifiedIn ℚ L 𝔭)
@@ -386,7 +386,7 @@ private theorem residue_iff_half (n' : ℕ) (hcop : Nat.Coprime 2 n')
 by `frobeniusClass_eq_iff_residue`, so a prime of `F ∖ I` has norm sharing a factor with `n`. -/
 private theorem dirichlet_AP_fibre_diff_image_subset_bad
     (n : ℕ) (L : Type*) [Field L] [NumberField L] [Algebra ℚ L] [IsGalois ℚ L] [NeZero n]
-    [IsCyclotomicExtension {n} ℚ L] [FiniteDimensional ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
+    [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit) :
     {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
@@ -410,7 +410,7 @@ private theorem dirichlet_AP_fibre_diff_image_subset_bad
 Frobenius is `mk σ` by `frobeniusClass_eq_iff_residue`, placing it in `F`. -/
 private theorem dirichlet_AP_image_diff_fibre_subset_bad
     (n : ℕ) (L : Type*) [Field L] [NumberField L] [Algebra ℚ L] [IsGalois ℚ L] [NeZero n]
-    [IsCyclotomicExtension {n} ℚ L] [FiniteDimensional ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
+    [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit) :
     (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) '' {p : ℕ | p.Prime ∧ (p : ZMod n) = a} \
