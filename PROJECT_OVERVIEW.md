@@ -56,7 +56,7 @@ Per-file inventories with full per-declaration entries are in
 | `ForMathlib/LogOneDivSubOne.lean` | 2 | 58 | `log(1/(s-1)) → ∞` + ratio squeeze | upstream candidate |
 | `NumberFieldEulerProduct.lean` | 25 | ~1000 | `ζ_K` Euler products (plain + χ-weighted) | unweighted ⊂ weighted (dedup candidate) |
 | `Frobenius.lean` | 16 | ~450 | `UnramifiedIn`, `frobeniusClass` on `IsArithFrobAt` | clean |
-| `CyclotomicNormResidue.lean` | ~36 | ~660 | `autToPow`-Frobenius dictionary | CL1-cleaned this session |
+| `CyclotomicNormResidue.lean` | 20 | 674 | `autToPow`-Frobenius dictionary | CL1-cleaned; 4 helpers replicated from ZetaProduct (Cluster G) |
 | `ZetaProduct.lean` | ~73 | 3598 | `ζ_L = ∏ L_χ`, leaf-G fibre counts, `L(χ,1) ≠ 0` | 4 dead decls; 5 maxHeartbeats |
 | `Cyclotomic.lean` | 20 | 1034 | cyclotomic Chebotarev | 1 dead decl |
 | `Abelian.lean` | 43 | 1751 | compositum crossing + `H_n` ratio | 4 dead decls |

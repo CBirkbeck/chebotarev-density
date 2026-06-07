@@ -62,6 +62,37 @@ Remaining board: CL1 (the /cleanup campaign over the session's ~6000 new lines),
 (blueprint sync — the new modules + the hm/hcop restatements), UP1 (mathlib-upstream
 candidates). Push to origin/development needs Chris (LEAN4_GUARDRAILS_BYPASS=1 git push).
 
+**2026-06-07 follow-on session (this update):**
+
+- **BP1 / verso migration COMPLETE end-to-end**: `lake build CebotarevBlueprint` green
+  (4086 jobs, 0 warnings) and the HTML site generates
+  (`lake env lean --run CebotarevBlueprintMain.lean --output _out/site`;
+  `_out/site/html-multi/index.html` + preview manifest both present; summary shows 72
+  completed entries / 0 sorries). Hard-won build facts: `tex_prelude` is a *command*
+  (before `#doc`, not in the body); chapters must `import CebotarevDensity` for
+  `(lean := …)` resolution; the lemma directive is spelled `:::lemma_`; the KaTeX
+  validator shares a macro context across spans so the prelude must be idempotent
+  (`\def`, not `\newcommand`); mathlib linter options are scoped to the
+  `CebotarevDensity` lib in lakefile.toml (the Verso closure doesn't define them).
+- **verso-blueprint v4.30.0 vs toolchain v4.31.0-rc1**: one upstream proof breaks
+  (`HoverRender.lean` `hexDigits.size` reducibility). Local patch applied in
+  `.lake/packages/VersoBlueprint` (volatile!) and checked in at
+  `scripts/patches/verso-blueprint-v4.30-on-v4.31-toolchain.patch`;
+  `scripts/ci-pages.sh` applies it idempotently. Drop when upstream publishes v4.31.
+- **DO NOT re-run `lake update VersoBlueprint`** without re-checking pins: it downgrades
+  mathlib's `proofwidgets` (v0.0.100→v0.0.98) and `plausible` in lake-manifest.json
+  (cache-poisoning). They were restored by hand; the warning "putting require mathlib
+  last" from lake refers to this.
+- **/overview COMPLETE**: 13 per-file inventories in `.mathlib-quality/overview/` +
+  `PROJECT_OVERVIEW.md` (mathlib API audit, 7 duplication clusters, 12-item verified
+  dead-code list ~415 lines, 8 upstream units, prioritised plan). Fold the dead-code
+  deletes into each file's CL1 batch.
+- **CL1 progress**: CNR done (pre-existing); Main batch 1 committed (−33 lines, gates
+  green, 3 ConjClasses renames queued in `.mathlib-quality/renames.jsonl`); Main batch 2
+  + LatticePointCount workers in flight at handover-write time. Remaining: Density,
+  Frobenius, NFEP, LogOneDivSubOne, NormLeOneLipschitz, FixedFieldDensity, Cyclotomic,
+  Abelian, ZetaProduct, ICC.
+
 Gap B's proof (the session centerpiece; ~8 worker-layers in ICC + the ZetaProduct assembly):
 ξ-uniform coset workhorse → explicit-constant cone-point cell counts → per-residue effective
 equidistribution → the κ-transfer via the cell-level divisible-density ratio (coprime class
