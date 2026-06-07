@@ -65,38 +65,29 @@ theorem cyclotomic_frobenius_acts_as_norm_power
   have hζ : IsPrimitiveRoot ζ m := (mem_primitiveRoots (NeZero.pos m)).mp hζmem
   set z : 𝓞 L := hζ.toInteger
   have hzc : (algebraMap (𝓞 L) L) z = ζ := rfl
-  have hzpr : IsPrimitiveRoot z m := hζ.toInteger_isPrimitiveRoot
-  have hzpow : z ^ m = 1 := hzpr.pow_eq_one
+  have hzpow : z ^ m = 1 := hζ.toInteger_isPrimitiveRoot.pow_eq_one
   set q := Ideal.absNorm 𝔭
   have h𝔭ne : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
   have hcopP : (Ideal.absNorm 𝔓).Coprime m := by
     rw [Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver 𝔓 𝔭 ‹𝔭.IsPrime› h𝔭ne]
     exact Nat.Coprime.pow_left _ hcop
   have hN1 : Ideal.absNorm 𝔓 ≠ 1 := fun h => ‹𝔓.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
-  have hinj := Ideal.rootsOfUnityMapQuot_injective (I := 𝔓) m hN1 hcopP
-  have hLpow : (φ • z) ^ m = 1 := by rw [← smul_pow', hzpow, smul_one]
-  have hRpow : (z ^ q) ^ m = 1 := by rw [← pow_mul, mul_comm, pow_mul, hzpow, one_pow]
-  set uL := rootsOfUnity.mkOfPowEq (φ • z) hLpow
-  set uR := rootsOfUnity.mkOfPowEq (z ^ q) hRpow
-  have hcoeL : ((uL : (𝓞 L)ˣ) : 𝓞 L) = φ • z := rootsOfUnity.coe_mkOfPowEq _
-  have hcoeR : ((uR : (𝓞 L)ˣ) : 𝓞 L) = z ^ q := rootsOfUnity.coe_mkOfPowEq _
-  -- `φ • z ≡ z^q (mod 𝔓)`: the residue characterisation of `arithFrobAt` (`mk_apply`), with
-  -- `q = N𝔭 = N(𝔓 ∩ 𝓞 K) = Nat.card (𝓞 K ⧸ 𝔓 ∩ 𝓞 K)`.
+  have hmnotmem : (m : 𝓞 L) ∉ 𝔓 := by
+    intro hmem
+    have hd := Ideal.absNorm_dvd_absNorm_of_le ((Ideal.span_singleton_le_iff_mem _).mpr hmem)
+    rw [Ideal.absNorm_span_singleton, show ((m : ℕ) : 𝓞 L) = algebraMap ℤ (𝓞 L) (m : ℤ) by
+        push_cast; rfl, Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
+    exact hN1 ((hcopP.pow_right _).eq_one_of_dvd hd)
   have hqcard : q = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K)) := by
     change Ideal.absNorm 𝔭 = Nat.card (𝓞 K ⧸ 𝔓.under (𝓞 K))
-    rw [show 𝔭 = 𝔓.under (𝓞 K) from (Ideal.LiesOver.over (p := 𝔭) (P := 𝔓)),
+    rw [show 𝔭 = 𝔓.under (𝓞 K) from Ideal.LiesOver.over (p := 𝔭) (P := 𝔓),
       Ideal.absNorm_apply, Submodule.cardQuot_apply]
-  have hmkeq : Ideal.Quotient.mk 𝔓 (arithFrobAt (𝓞 K) Gal(L/K) 𝔓 • z)
-      = Ideal.Quotient.mk 𝔓 (z ^ q) := by
-    rw [Ideal.Quotient.eq, hqcard]
-    exact IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓 z
-  have hmapeq : Ideal.rootsOfUnityMapQuot 𝔓 m uL = Ideal.rootsOfUnityMapQuot 𝔓 m uR := by
-    apply Units.ext
-    rwa [Ideal.rootsOfUnityMapQuot_apply 𝔓 m uL.2, Ideal.rootsOfUnityMapQuot_apply 𝔓 m uR.2,
-      hcoeL, hcoeR]
-  have hfinal : φ • z = z ^ q := by rw [← hcoeL, ← hcoeR, hinj hmapeq]
-  have hmap : (algebraMap (𝓞 L) L) (φ • z) = (algebraMap (𝓞 L) L) (z ^ q) := by rw [hfinal]
-  rwa [show (algebraMap (𝓞 L) L) (φ • z) = φ ζ from rfl, map_pow, hzc] at hmap
+  have key := (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓).apply_of_pow_eq_one hzpow hmnotmem
+  rw [← hqcard] at key
+  have hmap := congrArg (algebraMap (𝓞 L) L) key
+  rw [map_pow] at hmap
+  rwa [show (algebraMap (𝓞 L) L) ((MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) φ) z) = φ ζ from rfl,
+    hzc] at hmap
 
 /-- Powers of a primitive `n`-th root of unity agree iff the exponents are congruent mod `n`
 (the easy direction: equal powers force congruent exponents). Reduce both exponents mod `n`
