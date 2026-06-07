@@ -677,69 +677,6 @@ private theorem prod_primePow_count_eq (S : Finset {𝔭 : Ideal (𝓞 L) // �
     rw [Multiset.count_eq_zero_of_notMem hc, pow_zero] at hp
     exact hp rfl)).symm
 
-open UniqueFactorizationMonoid in
-/-- **Prime-ideal Euler product** (Sharifi, *Algebraic Number Theory*, Theorem 7.1.12,
-p. 140): for `1 < Re s`, `ζ_K(s) = ∏_𝔭 (1 - N𝔭^{-s})^{-1}` over the nonzero prime ideals. -/
-theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
-    NumberField.dedekindZeta L s =
-      ∏' 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
-        (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
-  classical
-  set P := {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}
-  set D : NonzeroIdeal L → ℂ := fun 𝔞 => (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) with hD
-  set idealOfExp : (S : Finset P) → (S →₀ ℕ) → NonzeroIdeal L :=
-    fun S e => ⟨∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ e 𝔭,
-      Finset.prod_ne_zero_iff.mpr (fun 𝔭 _ => pow_ne_zero _ 𝔭.1.2.2)⟩ with hidealOfExp
-  have hsumD : HasSum D (NumberField.dedekindZeta L s) := hasSum_nonzeroIdeal_absNorm_cpow L hs
-  have hnormD : Summable fun 𝔞 : NonzeroIdeal L => ‖D 𝔞‖ := hsumD.summable.norm
-  have hinj : ∀ S : Finset P, Function.Injective (idealOfExp S) := by
-    intro S e e' h
-    rw [hidealOfExp, Subtype.mk.injEq] at h
-    ext 𝔮
-    rw [← factorization_idealOfExp_eq L S e 𝔮, ← factorization_idealOfExp_eq L S e' 𝔮, h]
-  have hmem : ∀ (S : Finset P) (𝔞 : NonzeroIdeal L),
-      (∀ p ∈ normalizedFactors 𝔞.1, ∃ 𝔭 ∈ S, 𝔭.1 = p) →
-      𝔞 ∈ Set.range (idealOfExp S) := by
-    intro S 𝔞 hsupp
-    refine ⟨Finsupp.onFinset S.attach
-      (fun 𝔭 => (normalizedFactors 𝔞.1).count 𝔭.1.1) (by simp), ?_⟩
-    rw [hidealOfExp, Subtype.ext_iff]
-    simpa only [Finsupp.onFinset_apply] using prod_primePow_count_eq L S 𝔞 hsupp
-  have hpartial : ∀ S : Finset P,
-      (∏ 𝔭 ∈ S, (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
-        = ∑' 𝔞 : Set.range (idealOfExp S), D 𝔞.1 := by
-    intro S
-    rw [prod_eulerFactor_eq_tsum_exponentVector L hs S]
-    rw [show (fun e : S →₀ ℕ => ∏ 𝔭 ∈ S.attach, (Ideal.absNorm 𝔭.1.1 : ℂ) ^ (-(e 𝔭 : ℂ) * s))
-        = fun e : S →₀ ℕ => D (idealOfExp S e) from funext fun e => by
-      rw [hidealOfExp, hD]
-      exact prod_absNorm_cpow_eq_absNorm_prod_pow_cpow L S (fun 𝔭 => e 𝔭)]
-    exact (tsum_range (fun 𝔞 : NonzeroIdeal L => D 𝔞) (hinj S)).symm
-  refine (HasProd.tprod_eq ?_).symm
-  rw [HasProd, SummationFilter.unconditional, Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨F, hF⟩ := ((tendsto_tsum_compl_atTop_zero (fun 𝔞 => ‖D 𝔞‖)).eventually
-    (gt_mem_nhds hε)).exists
-  refine ⟨F.biUnion (primeFactorsOf L), fun S hS => ?_⟩
-  have hF_sub : ∀ 𝔞 ∈ F, 𝔞 ∈ Set.range (idealOfExp S) := by
-    intro 𝔞 h𝔞F
-    refine hmem S 𝔞 fun p hp => ?_
-    obtain ⟨𝔭, h𝔭, rfl⟩ := mem_primeFactorsOf L 𝔞 p hp
-    exact ⟨𝔭, hS (Finset.mem_biUnion.mpr ⟨𝔞, h𝔞F, h𝔭⟩), rfl⟩
-  rw [dist_eq_norm, hpartial S, ← hsumD.tsum_eq]
-  have hsplit : ∑' 𝔞 : NonzeroIdeal L, D 𝔞 =
-      (∑' 𝔞 : Set.range (idealOfExp S), D 𝔞.1) +
-        ∑' 𝔞 : ↥(Set.range (idealOfExp S))ᶜ, D 𝔞.1 :=
-    (hsumD.summable.tsum_subtype_add_tsum_subtype_compl _).symm
-  rw [hsplit, sub_add_cancel_left, norm_neg]
-  refine (norm_tsum_le_tsum_norm (hnormD.subtype _)).trans_lt ?_
-  refine lt_of_le_of_lt ?_ hF
-  refine (hnormD.subtype _).tsum_le_tsum_of_inj
-    (fun 𝔞 : ↥(Set.range (idealOfExp S))ᶜ =>
-      (⟨𝔞.1, fun h => 𝔞.2 (hF_sub 𝔞.1 h)⟩ : {x // x ∉ F}))
-    (fun x y h => Subtype.ext (congrArg (fun z : {x // x ∉ F} => (z : NonzeroIdeal L)) h))
-    (fun _ _ => norm_nonneg _) (fun _ => le_rfl) (hnormD.subtype _)
-
 /-! ### Weighted prime-ideal Euler product
 
 A completely-multiplicative weight `w : Ideal (𝓞 L) → ℂ` with `‖w 𝔞‖ ≤ 1` twists the
@@ -892,6 +829,20 @@ theorem weighted_eulerProduct_eq_tsum {s : ℂ} (hs : 1 < s.re)
       (⟨𝔞.1, fun h => 𝔞.2 (hF_sub 𝔞.1 h)⟩ : {x // x ∉ F}))
     (fun x y h => Subtype.ext (congrArg (fun z : {x // x ∉ F} => (z : NonzeroIdeal L)) h))
     (fun _ _ => norm_nonneg _) (fun _ => le_rfl) (hnormD.subtype _)
+
+open UniqueFactorizationMonoid in
+/-- **Prime-ideal Euler product** (Sharifi, *Algebraic Number Theory*, Theorem 7.1.12,
+p. 140): for `1 < Re s`, `ζ_K(s) = ∏_𝔭 (1 - N𝔭^{-s})^{-1}` over the nonzero prime ideals. -/
+theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
+    NumberField.dedekindZeta L s =
+      ∏' 𝔭 : {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
+        (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
+  -- Specialise the weighted Euler product at the trivial weight `w ≡ 1`.
+  have hw := weighted_eulerProduct_eq_tsum L hs (fun _ => 1) (by simp) (by simp) (by simp)
+  -- `1 * x = x` collapses the weighted product/sum to the unweighted ones (under both binders).
+  simp only [one_mul] at hw
+  -- Weighted lemma: `∏_𝔭 (1 - N𝔭^{-s})⁻¹ = ∑_𝔞 N𝔞^{-s}`; chain with `∑_𝔞 N𝔞^{-s} = ζ_K(s)`.
+  exact (hw.trans (hasSum_nonzeroIdeal_absNorm_cpow L hs).tsum_eq).symm
 
 /-- For real `s > 1`, `ζ_K(s)` is a positive real (Sharifi Def 7.1.11, p. 140). -/
 theorem dedekindZeta_re_pos_of_one_lt (s : ℝ) (hs : 1 < s) :
