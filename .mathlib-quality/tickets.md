@@ -84,7 +84,7 @@ the chain is sorry-free *modulo L3*.
     `clampUnit`; assembly over `Unit ⊕ Unit ⊕ ({w ≠ w₀} × Bool)` with the `equivFinRank`
     relabeling isometry. Future-mathlib-PR material. /cleanup ran (body 79→7, helpers extracted).
 
-### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: in_progress
+### [GB] exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (Gap B = L2) — Status: done (2026-06-07)
 - File: ZetaProduct.lean (sorry at ~846) · ALL INPUTS PROVEN as of 2026-06-06 except one:
   - DONE sorry-free: coset workhorse; mixed-space GA-lift; index-transport; per-residue effective
     ideal count `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` (axiom-clean!);
@@ -173,3 +173,45 @@ the chain is sorry-free *modulo L3*.
 - File: Main.lean:~1370 (sorry at 1375) · Depends on: AB1 chain + fixed-field reduction (Main.lean
   sub-lemmas) · Sharifi 7.2.2 Step 1 counting argument + assembly.
 - Sketch: decomposition.md L12.
+
+### [DONE-2026-06-07] PROJECT MAIN LINE COMPLETE
+- `chebotarev_density`, `chebotarev_density_of_comm`, `density_split_completely`,
+  `dirichlet_primes_in_AP`, `chebotarev_abelian`, `chebotarev_cyclotomic`: ALL proven,
+  axioms exactly [propext, Classical.choice, Quot.sound], zero sorries project-wide
+  (independent cache-bypassing audit at commit c1eb32c; build green 3805 jobs).
+- GB: closed via 8 ICC worker-layers + the ZetaProduct assembly (see HANDOVER §2).
+- AB1: closed via the decomposition (master/C1-C5) — C2a via
+  linearDisjoint_of_isGalois_isCoprime_discr; C5 by relocating Main's Step-1 block into
+  the new module CebotarevDensity/FixedFieldDensity.lean.
+- M-corollary `dirichlet_primes_in_AP`: closed (CyclotomicField n ℚ instantiation, the
+  finite-symmDiff density transfer, the 2-mod-4 CRT reduction).
+
+### [CL1] /cleanup campaign over the session's new code — Status: open
+- **Files** (in priority order): ForMathlib/IdealCongruenceCount.lean (~3800 lines, the
+  8-layer onion — many helpers can likely be consolidated), ZetaProduct.lean (GapBAssembly
+  section ~600 new lines), Abelian.lean (AB1 leaves + helpers), Main.lean (AP helpers),
+  FixedFieldDensity.lean (relocated block — docstring/audit pass only),
+  CyclotomicNormResidue.lean (+coprime-generation variant), NormLeOneLipschitz.lean.
+- **Type**: cleanup. Invoke /cleanup per file (full 10-phase workflow). Expect
+  long-line/unused-variable warnings (a few pre-existing), naming-gate renames on
+  worker-generated helper names, and structure-gate decomposition flags on the larger
+  assembly proofs.
+- Depends on: nothing (main line done).
+
+### [BP1] blueprint sync — Status: open
+- The blueprint (blueprint/src/subsections/*.tex) predates the session: needs (i) the
+  hm : m % 4 ≠ 2 hypotheses on the cyclotomic chain (the B2 repair), (ii) the new modules
+  (FixedFieldDensity, CyclotomicNormResidue, ForMathlib/{IdealCongruenceCount,
+  NormLeOneLipschitz, LatticePointCount}), (iii) AB1's hcop/hm4 restatement + the
+  leaf structure, (iv) the GB decomposition narrative, (v) \lean{} refs for the new
+  public theorems. Then leanblueprint pdf/web/checkdecls.
+- Depends on: CL1 (names may change in cleanup — sync after).
+
+### [UP1] mathlib-upstream candidates — Status: open
+- Strongest candidates surfaced this session: sum_nthRootsFinset_eq_zero;
+  normLeOne_frontier_lipschitz_cover (+ the mixedSpace lift); the ξ-uniform coset
+  workhorse exists_card_coset_inter_smul_sub_volume_mul_rpow_le; the per-residue
+  effective ideal count chain; exists_mk0_eq_absNorm_coprime (coprime class reps);
+  the finite-symmDiff density transfer; subgroup_eq_top_of_forall_frobenius_mem(_of_coprime).
+- Depends on: CL1.
+
