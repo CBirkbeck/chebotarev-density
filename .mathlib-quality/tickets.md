@@ -228,5 +228,13 @@ the chain is sorry-free *modulo L3*.
   workhorse exists_card_coset_inter_smul_sub_volume_mul_rpow_le; the per-residue
   effective ideal count chain; exists_mk0_eq_absNorm_coprime (coprime class reps);
   the finite-symmDiff density transfer; subgroup_eq_top_of_forall_frobenius_mem(_of_coprime).
+- From /overview (PROJECT_OVERVIEW.md Part 5, full ranked list there): LogOneDivSubOne
+  (trivial first PR), the NLOL phase block (t ↦ e^{it} 1-Lipschitz; zero deps),
+  LatticePointCount (whole file), the finite-abelian character cluster (G →* ℂˣ
+  row/column orthogonality + prod_one_sub_nthRoots + prod_galoisCharacter_one_sub +
+  charEval_ker_card), crt_single_coset, tendsto_div_atTop_of_sub_mul_rpow_le, and
+  Main's three ConjClasses lemmas (carrier_card_eq_one_of_comm / carrier_card_pos /
+  mk_one_carrier_card_eq_one — relocate to a root-namespace home so `ConjClasses.`
+  dot-names are real; rename deferred in renames.jsonl pending that move).
 - Depends on: CL1.
 
