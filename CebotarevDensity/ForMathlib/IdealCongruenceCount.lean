@@ -2113,175 +2113,24 @@ private theorem cardNormLeResidueClass_eq_dvd {K : Type*} [Field K] [NumberField
   refine Nat.card_congr
     (((Equiv.dvd 𝔟).subtypeEquiv (fun I => ?_)).trans
       (Equiv.subtypeSubtypeEquivSubtypeInter (fun J : (Ideal (𝓞 K))⁰ ↦ 𝔟 ∣ J) _))
-  -- predicate correspondence under `I ↦ 𝔟 · I`
   have hnorm : absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
       = absNorm (𝔟 : Ideal (𝓞 K)) * absNorm (I : Ideal (𝓞 K)) := by
     simp_rw [Equiv.dvd_apply, Submonoid.coe_mul, _root_.map_mul]
   have hcls : ClassGroup.mk0 ((Equiv.dvd 𝔟) I) = ClassGroup.mk0 I * ClassGroup.mk0 𝔟 := by
     rw [Equiv.dvd_apply, map_mul, mul_comm]
-  -- norm `≤`
   have hle : (absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) ≤
       N * absNorm (𝔟 : Ideal (𝓞 K))) ↔ (absNorm (I : Ideal (𝓞 K)) ≤ N) := by
     rw [hnorm, mul_comm (absNorm (𝔟 : Ideal (𝓞 K))) (absNorm (I : Ideal (𝓞 K))),
       Nat.mul_le_mul_right_iff hNb]
-  -- residue
   have hres : (((absNorm (I : Ideal (𝓞 K)) : ZMod c)) = x) ↔
       (((absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) : ZMod c)) =
         x * (absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) := by
     rw [hnorm, Nat.cast_mul, mul_comm ((absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c))
       ((absNorm (I : Ideal (𝓞 K)) : ZMod c)), hu.mul_left_inj]
-  -- class
   have hcl : (ClassGroup.mk0 I = C) ↔
       (ClassGroup.mk0 ((Equiv.dvd 𝔟) I) = C * ClassGroup.mk0 𝔟) := by
     rw [hcls, mul_left_inj]
   rw [← hle, ← hres, ← hcl]
-
-open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
-  NumberField.InfinitePlace in
-/-- **Decoupled-bound cone-point count** (the free-real-bound reparametrisation of
-`exists_card_idealSet_residue_le`). For a fixed ideal `J`, modulus `m`, residue `b`, the number of
-cone points `a ∈ idealSet K J` of `mixedEmbedding.norm ≤ s` whose integer norm is `≡ b (mod m)` is
-`κ·s + O(s^{1-1/d})`, **with the same leading constant `κ = ∑ L_p` for every `J`-instance**
-(the per-(orthant, coset) leading sum). Proof: identical to `exists_card_idealSet_residue_le` but
-with the dilation `t = s^{1/d}` (so `t^d = s`, `t^{d-1} = s^{1-1/d}`) replacing `(N·N(J))^{1/d}`. -/
-private theorem exists_card_idealSet_residue_real_le {K : Type*} [Field K] [NumberField K]
-    (m : ℕ) [NeZero m] (b : ℕ) (J : (Ideal (𝓞 K))⁰) :
-    ∃ κ C' : ℝ, ∀ s : ℝ, 1 ≤ s →
-      |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-          ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * s|
-        ≤ C' * s ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  classical
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
-  set d := Module.finrank ℚ K with hd
-  have hdpos : 0 < d := Module.finrank_pos
-  have hdne : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hdpos.ne'
-  have hm : (m : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne m)
-  obtain ⟨T, hT⟩ := exists_latticeEquiv_image_idealLattice J
-  obtain ⟨mc, M, φ, hφ, hcovraw⟩ := normLeOne_frontier_lipschitz_cover_index K
-  have hcov : ∃ (mc : ℕ) (M : ℝ≥0) (φ : Fin mc → (Fin (Fintype.card (index K) - 1) → ℝ) →
-      (index K → ℝ)), (∀ j, LipschitzWith M (φ j)) ∧
-      frontier (Φ '' (normLeOne K)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := ⟨mc, M, φ, hφ, hcovraw⟩
-  -- per-(orthant,coset) effective estimates
-  choose L C hLC using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) =>
-    exists_card_residue_fibre_sub_mul_rpow_le m hm b J T hT hcov p.1 p.2
-  refine ⟨∑ p, L p, ∑ p, |C p|, fun s hs => ?_⟩
-  set tN : ℝ := s ^ ((d : ℝ)⁻¹) with htN
-  have hs0 : (0 : ℝ) < s := lt_of_lt_of_le one_pos hs
-  have htN1 : 1 ≤ tN := Real.one_le_rpow hs (by positivity)
-  have htNd : tN ^ d = s := by
-    rw [htN, ← Real.rpow_natCast (s ^ ((d : ℝ)⁻¹)) d, ← Real.rpow_mul hs0.le,
-      inv_mul_cancel₀ hdne, Real.rpow_one]
-  -- partition the count by (orthant, coset)
-  have hpart : Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))}
-      = ∑ p : Finset {w : NumberField.InfinitePlace K // NumberField.InfinitePlace.IsReal w} ×
-          (index K → ZMod m),
-        Nat.card {a : idealSet K J //
-          (mixedEmbedding.norm (a : mixedSpace K) ≤ tN ^ d ∧
-            ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : NumberField.InfinitePlace K //
-            NumberField.InfinitePlace.IsReal w} => (a : mixedSpace K).1 w < 0) = p.1) ∧
-          (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = p.2} := by
-    rw [htNd]
-    let cls : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} →
-        Finset {w : NumberField.InfinitePlace K // NumberField.InfinitePlace.IsReal w} ×
-          (index K → ZMod m) :=
-      fun a => (Finset.univ.filter (fun w => (a.1 : mixedSpace K).1 w < 0),
-        fun i => (round ((T.symm (Φ (a.1 : mixedSpace K))) i) : ZMod m))
-    haveI hfinbase : Finite {a : idealSet K J //
-        mixedEmbedding.norm (a : mixedSpace K) ≤ s} :=
-      finite_idealSet_norm_le J _
-    haveI : ∀ p : Finset {w : NumberField.InfinitePlace K //
-        NumberField.InfinitePlace.IsReal w} × (index K → ZMod m),
-        Finite {a : idealSet K J //
-          (mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-            ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : NumberField.InfinitePlace K //
-            NumberField.InfinitePlace.IsReal w} => (a : mixedSpace K).1 w < 0) = p.1) ∧
-          (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = p.2} := fun p =>
-      Finite.of_injective (fun a => (⟨a.1, a.2.1.1⟩ : {a : idealSet K J //
-        mixedEmbedding.norm (a : mixedSpace K) ≤ s}))
-        (fun x y h => Subtype.ext (by simpa using h))
-    rw [← Nat.card_sigma]
-    refine Nat.card_congr ((Equiv.sigmaFiberEquiv cls).symm.trans (Equiv.sigmaCongrRight fun p =>
-      ?_))
-    exact {
-      toFun := fun a => ⟨a.1.1, ⟨a.1.2, by
-          have := a.2; simp only [cls, Prod.ext_iff] at this; exact ⟨this.1, this.2⟩⟩⟩
-      invFun := fun a => ⟨⟨a.1, a.2.1⟩, by simp only [cls, Prod.ext_iff]; exact ⟨a.2.2.1, a.2.2.2⟩⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl }
-  rw [hpart, Nat.cast_sum]
-  -- the error exponent: `tN^(d-1) = s^(1-1/d)`
-  have htNd1 : tN ^ (d - 1 : ℕ) = s ^ (1 - (d : ℝ)⁻¹) := by
-    have hdcast : ((d - 1 : ℕ) : ℝ) = (d : ℝ) - 1 := by
-      rw [Nat.cast_sub hdpos]; simp
-    rw [htN, ← Real.rpow_natCast (s ^ ((d : ℝ)⁻¹)) (d - 1), ← Real.rpow_mul hs0.le, hdcast]
-    congr 1
-    rw [inv_mul_eq_div, sub_div, div_self hdne, one_div]
-  -- rewrite the leading term as a sum and bound termwise
-  have hlead : (∑ p, L p) * s = ∑ p, L p * tN ^ d := by
-    rw [← Finset.sum_mul, htNd]
-  rw [hlead, ← Finset.sum_sub_distrib]
-  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-  have hbound : (∑ p, |C p|) * s ^ (1 - (d : ℝ)⁻¹) = ∑ p, |C p| * tN ^ (d - 1 : ℕ) := by
-    simp_rw [htNd1, Finset.sum_mul]
-  rw [hbound]
-  refine Finset.sum_le_sum (fun p _ => ?_)
-  refine (hLC p tN htN1).trans ?_
-  gcongr
-  exact le_abs_self _
-
-open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
-/-- **Decoupled-bound `J'`-divisible principal residue count.** The free-real-bound version of
-`exists_card_dvd_principal_residue_eq_sub_mul_rpow_le`: for a fixed ideal `J'`, modulus `m`, residue
-`b`, the number of `J'`-divisible principal ideals of norm `≤ s` with norm residue `b (mod m)` is
-`κ·s + O(s^{1-1/d})`. The torsion bridge `card_isPrincipal_dvd_norm_le_residue` (at bound `s`)
-equates the ideal count times `torsionOrder K` with the cone-point count, so dividing the
-(decoupled) cone-point estimate `exists_card_idealSet_residue_real_le m b J'` by `torsionOrder K`
-transfers it. -/
-private theorem exists_card_dvd_principal_residue_real_le {K : Type*} [Field K] [NumberField K]
-    (m : ℕ) [NeZero m] (b : ℕ) (J' : (Ideal (𝓞 K))⁰) :
-    ∃ κ C' : ℝ, ∀ s : ℝ, 1 ≤ s →
-      |(Nat.card {I : (Ideal (𝓞 K))⁰ // (J' : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-            (IsPrincipal (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
-            ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) - κ * s|
-        ≤ C' * s ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  obtain ⟨κ₀, C₀, hcore⟩ := exists_card_idealSet_residue_real_le m b J'
-  have htors : (0 : ℝ) < torsionOrder K := by
-    exact_mod_cast (torsionOrder K).pos_of_ne_zero (torsionOrder_ne_zero K)
-  refine ⟨κ₀ / torsionOrder K, C₀ / torsionOrder K, fun s hs => ?_⟩
-  have hcount : (Nat.card {I : (Ideal (𝓞 K))⁰ // (J' : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-      (IsPrincipal (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) * torsionOrder K
-      = (Nat.card {a : idealSet K J' // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-        ((intNorm (idealSetEquiv K J' a).val : ZMod m) = (b : ZMod m))} : ℝ) := by
-    rw [← Nat.cast_mul]; congr 1
-    exact card_isPrincipal_dvd_norm_le_residue J' m b s
-  have he : |(Nat.card {I : (Ideal (𝓞 K))⁰ // (J' : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-      (IsPrincipal (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) - κ₀ / torsionOrder K * s|
-      = |(Nat.card {a : idealSet K J' // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-        ((intNorm (idealSetEquiv K J' a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ₀ * s| /
-        torsionOrder K := by
-    rw [eq_div_iff htors.ne', ← hcount,
-      show ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J' : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-          (IsPrincipal (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) *
-            (torsionOrder K : ℝ) - κ₀ * s)
-        = (torsionOrder K : ℝ) * ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J' : Ideal (𝓞 K)) ∣
-          (I : Ideal (𝓞 K)) ∧ (IsPrincipal (I : Ideal (𝓞 K)) ∧
-          (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) -
-            κ₀ / torsionOrder K * s) by field_simp,
-      abs_mul, abs_of_pos htors, mul_comm]
-  rw [he, div_le_iff₀ htors]
-  calc |(Nat.card {a : idealSet K J' // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
-        ((intNorm (idealSetEquiv K J' a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ₀ * s|
-      ≤ C₀ * s ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := hcore s hs
-    _ = C₀ / torsionOrder K * s ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) * torsionOrder K := by
-        field_simp
 
 /-- **Multiples below a bound collapse to the floor.** For `0 < m` and `m ∣ a`, the bound `a ≤ N`
 is equivalent to `a ≤ m·⌊N/m⌋` (the largest multiple of `m` not exceeding `N`). -/
@@ -2307,15 +2156,9 @@ private theorem cardNormLeResidueClassDvd_floor_collapse {K : Type*} [Field K]
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
   have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
   rw [cardNormLeResidueClassDvd, cardNormLeResidueClassDvd]
-  refine Nat.card_congr (Equiv.subtypeEquivRight fun J => ?_)
-  -- the only difference between the two predicates is the norm bound
-  constructor
-  · rintro ⟨hb, ⟨hle, hres⟩, hcls⟩
-    have hNdvd : NB ∣ Ideal.absNorm (J : Ideal (𝓞 K)) := map_dvd Ideal.absNorm hb
-    exact ⟨hb, ⟨(Nat.le_iff_le_mul_div_of_dvd hNB hNdvd N).mp hle, hres⟩, hcls⟩
-  · rintro ⟨hb, ⟨hle, hres⟩, hcls⟩
-    have hNdvd : NB ∣ Ideal.absNorm (J : Ideal (𝓞 K)) := map_dvd Ideal.absNorm hb
-    exact ⟨hb, ⟨(Nat.le_iff_le_mul_div_of_dvd hNB hNdvd N).mpr hle, hres⟩, hcls⟩
+  refine Nat.card_congr (Equiv.subtypeEquivRight fun J => and_congr_right fun hb =>
+    and_congr_left fun _ => and_congr_left fun _ =>
+      Nat.le_iff_le_mul_div_of_dvd hNB (map_dvd Ideal.absNorm hb) N)
 
 open Ideal in
 /-- **Ideal-coprimality to `(n)` implies norm-coprimality to `n`.** If an integral ideal `J` is
@@ -2330,7 +2173,6 @@ private theorem absNorm_coprime_of_isCoprime_span {K : Type*} [Field K] [NumberF
   obtain ⟨p, hp, hpJ, hpn⟩ := Nat.Prime.not_coprime_iff_dvd.mp hnc
   obtain ⟨P, hPmax, hPunder, hPdvd⟩ :=
     Ideal.exists_isMaximal_dvd_of_dvd_absNorm' hp (J : Ideal (𝓞 K)) hpJ
-  -- `J ≤ P` and `span{n} ≤ P`, so `J ⊔ span{n} ≤ P ≠ ⊤`.
   have hJP : (J : Ideal (𝓞 K)) ≤ P := Ideal.le_of_dvd hPdvd
   have hpP : (p : 𝓞 K) ∈ P := by
     have hpZ : (p : ℤ) ∈ Ideal.under ℤ P := by
@@ -2654,11 +2496,9 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     ∃ J : (Ideal (𝓞 K))⁰, ClassGroup.mk0 J = D ∧
       (Ideal.absNorm (J : Ideal (𝓞 K))).Coprime n := by
   classical
-  -- Trivial case `n = 1`: any representative works (`Coprime _ 1`).
   rcases eq_or_ne n 1 with rfl | hn1
   · obtain ⟨J, hJ⟩ := ClassGroup.mk0_surjective D
     exact ⟨J, hJ, Nat.coprime_one_right _⟩
-  -- Main case `n ≥ 2`. Pick `J₀` a representative of `D⁻¹`.
   have hn2 : 2 ≤ n := by omega
   obtain ⟨J₀, hJ₀⟩ := ClassGroup.mk0_surjective D⁻¹
   have hJ₀ne : (J₀ : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero J₀
@@ -2667,7 +2507,6 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     simpa using (Nat.cast_ne_zero (R := 𝓞 K)).mpr hn.ne'
   have h𝔫ne : 𝔫 ≠ ⊥ := by
     rw [h𝔫, Ne, Ideal.span_singleton_eq_bot]; exact hnZ
-  -- `𝔫 ≠ ⊤`: `absNorm 𝔫 = n^d ≥ 2^1 > 1`, while `absNorm ⊤ = 1`.
   have h𝔫top : 𝔫 ≠ ⊤ := by
     intro htop
     have hN : Ideal.absNorm 𝔫 = n ^ Module.finrank ℤ (𝓞 K) := by
@@ -2677,12 +2516,10 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     have : 2 ≤ n ^ Module.finrank ℤ (𝓞 K) :=
       le_trans hn2 (Nat.le_self_pow hd.ne' n)
     omega
-  -- `IsDedekindDomain.exists_sup_span_eq` on `𝔫·J₀ ≤ J₀`: get `a` with `𝔫·J₀ ⊔ span{a} = J₀`.
   have hle : 𝔫 * (J₀ : Ideal (𝓞 K)) ≤ (J₀ : Ideal (𝓞 K)) := Ideal.mul_le_left
   have hIne : 𝔫 * (J₀ : Ideal (𝓞 K)) ≠ 0 := by
     rw [Ne, mul_eq_zero, not_or]; exact ⟨h𝔫ne, hJ₀ne⟩
   obtain ⟨a, ha⟩ := IsDedekindDomain.exists_sup_span_eq hle hIne
-  -- `a ≠ 0`: else `𝔫·J₀ = J₀`, cancel to `𝔫 = ⊤`, contradicting `h𝔫top`.
   have hane : a ≠ 0 := by
     intro hbot
     rw [hbot, Ideal.span_singleton_zero, sup_bot_eq] at ha
@@ -2690,14 +2527,12 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     have : (J₀ : Ideal (𝓞 K)) * 𝔫 = (J₀ : Ideal (𝓞 K)) * ⊤ := by
       rw [Ideal.mul_top, mul_comm]; exact ha
     exact mul_left_cancel₀ hJ₀ne this
-  -- `span{a} ≤ J₀`, so `J₀ ∣ span{a}`; write `span{a} = J₀·J₁`.
   have haJ₀ : Ideal.span {a} ≤ (J₀ : Ideal (𝓞 K)) := le_sup_right.trans (le_of_eq ha)
   obtain ⟨J₁, hJ₁⟩ : (J₀ : Ideal (𝓞 K)) ∣ Ideal.span {a} := Ideal.dvd_iff_le.mpr haJ₀
   have hJ₁ne : J₁ ≠ ⊥ := by
     intro hbot
     rw [hbot, Ideal.mul_bot, Ideal.span_singleton_eq_bot] at hJ₁
     exact hane hJ₁
-  -- `𝔫 ⊔ J₁ = ⊤` (coprime): cancel `J₀` from `J₀·(𝔫 ⊔ J₁) = J₀`.
   have hcop : 𝔫 ⊔ J₁ = ⊤ := by
     have hkey : (J₀ : Ideal (𝓞 K)) * (𝔫 ⊔ J₁) = (J₀ : Ideal (𝓞 K)) * ⊤ := by
       calc (J₀ : Ideal (𝓞 K)) * (𝔫 ⊔ J₁)
@@ -2711,8 +2546,7 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     rw [Submodule.zero_eq_bot, Ne, Ideal.span_singleton_eq_bot]; exact hane
   set J₁' : (Ideal (𝓞 K))⁰ := ⟨J₁, hJ₁mem⟩ with hJ₁'
   refine ⟨J₁', ?_, ?_⟩
-  · -- `[J₁] = [J₀]⁻¹ = D`: `span{a} = J₀·J₁` is principal, so `[J₀]·[J₁] = 1`.
-    have hsa_mem : Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hsaZ
+  · have hsa_mem : Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hsaZ
     have hprinc : ClassGroup.mk0 (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = 1 :=
       (ClassGroup.mk0_eq_one_iff hsa_mem).mpr ⟨a, rfl⟩
     have hfact : (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = J₀ * J₁' := by
@@ -2720,8 +2554,7 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     rw [hfact, map_mul, hJ₀] at hprinc
     have hinv := mul_eq_one_iff_eq_inv.mp hprinc
     rw [← inv_inv (ClassGroup.mk0 J₁'), ← hinv, inv_inv]
-  · -- Norm-coprimality from `IsCoprime J₁ 𝔫`.
-    have hcopI : IsCoprime (J₁ : Ideal (𝓞 K)) 𝔫 := by
+  · have hcopI : IsCoprime (J₁ : Ideal (𝓞 K)) 𝔫 := by
       rw [Ideal.isCoprime_iff_sup_eq, sup_comm]; exact hcop
     exact absNorm_coprime_of_isCoprime_span J₁' n (by
       simpa only [hJ₁'] using hcopI)
@@ -2785,7 +2618,6 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
     with hLdef
   set L' : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
     with hL'def
-  -- finiteness instance from `relIndex(L', L) = N(𝔟) ≠ 0`.
   have hrel : L'.toAddSubgroup.relIndex L.toAddSubgroup = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) :=
     relIndex_chart_eq_absNorm J 𝔟 T T' hT hT'
   have hNB : 0 < Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := absNorm_pos_of_nonZeroDivisors 𝔟
@@ -2800,7 +2632,6 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
         = L'.toAddSubgroup.relIndex L.toAddSubgroup from rfl, hrel]
     exact hcop
   have hLL' : L' ≤ L := chart_sublattice_le J 𝔟 T T' hT hT'
-  -- coset `ξ_k = T (k.val)` lies in `L` (it is the rep of `J`-coset `k`).
   have hξkL : (T (fun i => ((k i).val : ℝ)) : index K → ℝ) ∈ L := by
     have hv : (fun i => ((k i).val : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) := by
       rw [mem_span_int_basisFun_iff]
@@ -2815,7 +2646,6 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
         funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]] at hmem
   obtain ⟨ξ', hξ'L', hcoset⟩ := crt_single_coset L L' hLL' m hcopC hξkL
   refine ⟨ξ', ?_⟩
-  -- `Φ '' Λ_{𝔟J} = ↑L'` (as sets).
   have hΦΛ' : ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
       (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) = ↑L' := by
     rw [hL'def, ← hT', map_span_int_linearEquiv,
@@ -2823,71 +2653,17 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
         = Set.range ((Pi.basisFun ℝ (index K)).map T') from by
       rw [show ⇑((Pi.basisFun ℝ (index K)).map T') = ⇑T' ∘ ⇑(Pi.basisFun ℝ (index K)) from by
         funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]]
-  -- `idealSet K (𝔟J) ⊆ idealSet K J`.
   have hincl : idealSet K (𝔟 * J) ⊆ idealSet K J := by
     intro x hx
     exact ⟨hx.1, idealLattice_mul_le J 𝔟 hx.2⟩
-  -- real coordinates of `Φ x` are the real coordinates of `x`; cone homogeneity.
-  have hΦreal : ∀ (x : mixedSpace K) (w : {w : InfinitePlace K // IsReal w}),
-      Φ x (Sum.inl w) = x.1 w := fun x w => by
-    rw [hΦ, Module.Basis.equivFunL_apply, mixedEmbedding.stdBasis_apply_isReal]
-  have hcone : {x : mixedSpace K | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d}
-      = t • normLeOne K := cone_normLe_eq_smul_normLeOne ht
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
-  have htinv : (0 : ℝ) < t⁻¹ := inv_pos.mpr (lt_of_lt_of_le one_pos ht)
   have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
     Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
-  have hnz : ∀ x ∈ t • normLeOne K, ∀ w : {w : InfinitePlace K // IsReal w}, x.1 w ≠ 0 := by
-    rintro _ ⟨z, hz, rfl⟩ w
-    have hcx : t • z ∈ fundamentalCone K := smul_mem_of_mem hz.1 ht0
-    have hp := fundamentalCone.normAtPlace_pos_of_mem hcx w.1
-    rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
-    exact fun h => by simp [h] at hp
-  -- region membership equivalence (copied from `card_fibre_eq_card_cell`, ideal `J`).
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
       (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
         (mixedEmbedding.norm x ≤ t ^ d ∧
-          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) := by
-    intro x hx
-    rw [Set.smul_set_inter₀ ht0, Set.mem_inter_iff, ← hΦ, ← himg]
-    constructor
-    · rintro ⟨hmem, horth⟩
-      rw [Set.mem_image] at hmem
-      obtain ⟨z, hz, hzeq⟩ := hmem
-      have hxcone : x ∈ t • normLeOne K := by rwa [Φ.injective hzeq] at hz
-      have hnorm : x ∈ {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d} := by
-        rw [hcone]; exact hxcone
-      refine ⟨hnorm.2, ?_⟩
-      ext w
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0] at horth
-      obtain ⟨hneg, hpos⟩ := horth
-      refine ⟨fun hlt => ?_, fun hw => ?_⟩
-      · by_contra hws
-        have h2 := hpos w hws
-        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
-        nlinarith [h2, htinv, hlt]
-      · have h2 := hneg w hw
-        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
-        rcases lt_or_gt_of_ne (hnz x hxcone w) with h | h
-        · exact h
-        · nlinarith [h2, htinv, h]
-    · rintro ⟨hnorm, horth⟩
-      have hxcone : x ∈ t • normLeOne K := by rw [← hcone]; exact ⟨hx.1, hnorm⟩
-      refine ⟨⟨x, hxcone, rfl⟩, ?_⟩
-      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0]
-      refine ⟨fun w hw => ?_, fun w hw => ?_⟩
-      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
-        have hlt : x.1 w < 0 := by
-          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := horth ▸ hw
-          simpa using this
-        nlinarith [hlt, htinv]
-      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
-        have hxw : ¬ x.1 w < 0 := fun hlt => hw (by
-          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := by simpa using hlt
-          rwa [horth] at this)
-        nlinarith [not_lt.mp hxw, htinv]
-  -- the counting bijection `f a = Φ a`.
+          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) :=
+    fun x hx => mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
   set f : {a : idealSet K (𝔟 * J) //
       mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
       (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
@@ -2956,15 +2732,17 @@ The four stages below assemble the geometry-of-numbers kernel
   leading constant `vol(Ds)/|det ((m·)∘T)|` made explicit (the existential of
   `exists_card_cell_sub_mul_rpow_le` re-bound to the term its proof constructs).
 * **B** (`exists_card_idealSet_residue_real_le_dvd`): the summed `𝔟J`-cone-point residue count
-  with leading constant `κ_J/N(𝔟)`, `κ_J` the `J`-cone-point constant of
-  `exists_card_idealSet_residue_real_le`. Per `(orthant, J-coset)` cell, case on whether the
-  `J`-cell carries the residue `b`: if so the `𝔟J`-residue filter is vacuous (constancy on the
-  `J`-coset), so the count is the gateway full cell count `vol(Ds)/|det ((m·)∘T')|·t^d`; if not,
-  every `𝔟J`-point is a `J`-point of the wrong residue, so the count is `0`. The det ratio
-  `|det ((m·)∘T')| = N(𝔟)·|det ((m·)∘T)|` makes the per-cell ratio exactly `N(𝔟)`.
-* **C** (`exists_card_dvd_principal_residue_real_le_dvd`, principalization): the `𝔟J`-cone count is
-  the `𝔟`-and-`J`-divisible principal count (coprime `J,𝔟` ⟹ `J ∣ I ∧ 𝔟 ∣ I ⟺ 𝔟J ∣ I`), which
-  through `card_principalize` is `cardNormLeResidueClassDvd`.
+  with leading constant `κ_J/N(𝔟)`, `κ_J` the `J`-cone-point constant assembled from the per-cell
+  constants of `exists_card_residue_fibre_sub_mul_rpow_le_explicit`. Per `(orthant, J-coset)` cell,
+  case on whether the `J`-cell carries the residue `b`: if so the `𝔟J`-residue filter is vacuous
+  (constancy on the `J`-coset), so the count is the gateway full cell count
+  `vol(Ds)/|det ((m·)∘T')|·t^d`; if not, every `𝔟J`-point is a `J`-point of the wrong residue, so
+  the count is `0`. The det ratio `|det ((m·)∘T')| = N(𝔟)·|det ((m·)∘T)|` makes the per-cell ratio
+  exactly `N(𝔟)`.
+* **C** (`card_principalize_dvd`, principalization): the `𝔟J`-cone count is the
+  `𝔟`-and-`J`-divisible principal count (coprime `J,𝔟` ⟹ `J ∣ I ∧ 𝔟 ∣ I ⟺ 𝔟J ∣ I`), which through
+  `card_principalize` is
+  `cardNormLeResidueClassDvd`.
 * **D**: `tendsto_div_atTop_of_sub_mul_rpow_le` + `tendsto_nhds_unique` against `hκfull`. -/
 
 open Ideal NumberField NumberField.mixedEmbedding Submodule Pointwise in
@@ -3138,7 +2916,6 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le_explicit {K : Type*} [
   set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
   have hcard : Fintype.card (index K) = Module.finrank ℚ K := by
     rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]
-  -- residue is determined by (orthant, coset): reuse the constancy proof
   have hconst : ∀ a a' : idealSet K J,
       Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => (a : mixedSpace K).1 w < 0)
         = s →
@@ -3249,12 +3026,10 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
   have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (absNorm_pos_of_nonZeroDivisors 𝔟).ne'
   have hcard : Fintype.card (index K) = d := by
     rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]
-  -- the `𝔟J`-cell estimate at the finer chart `T'` (independent of the residue case)
   obtain ⟨cellC', hcell'⟩ := exists_card_cell_sub_mul_rpow_le_explicit T' m hm
     (Φ '' (normLeOne K)) (Φ.lipschitz.isBounded_image (isBounded_normLeOne K))
     ((Φ.toHomeomorph.toMeasurableEquiv).measurableSet_image.mpr (measurableSet_normLeOne K))
     hcov (Sum.inl : {w : InfinitePlace K // IsReal w} → index K) s
-  -- the det ratio `vol/|det ((m·)∘T')| = (vol/|det ((m·)∘T)|)/N(𝔟)`
   have hdetratio : MeasureTheory.volume.real (Φ '' (normLeOne K) ∩ Os)
         / |LinearMap.det (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T'
           : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)) : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))|
@@ -3270,8 +3045,7 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
         (a : mixedSpace K).1 w < 0) = s) ∧
       ((fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))
-  · -- residue holds on the `J`-cell: drop the residue filter on the `𝔟J`-count
-    obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
+  · obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
     rw [if_pos ⟨a₀, horth₀, hcos₀, hres₀⟩]
     have hdrop : Nat.card {a : idealSet K (𝔟 * J) //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
@@ -3289,7 +3063,6 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
       · rintro ⟨⟨hn, _⟩, ho, hc⟩; exact ⟨hn, ho, hc⟩
       · rintro ⟨hn, ho, hc⟩
         refine ⟨⟨hn, ?_⟩, ho, hc⟩
-        -- `a` is a `J`-point in cell `(s, k)`, hence same residue as `a₀`, i.e. `b`
         have haJ : (a : mixedSpace K) ∈ idealSet K J :=
           ⟨a.2.1, idealLattice_mul_le J 𝔟 a.2.2⟩
         have hkey := residue_fibre_const_aux m b J T hT s k ⟨(a : mixedSpace K), haJ⟩ a₀ ho hc
@@ -3300,8 +3073,7 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
     have hcell'' := hcell' ξ' t ht
     rw [smul_chart_lattice_eq T' m hm, ← hOs, hdetratio, hcard] at hcell''
     exact hcell''.trans (by gcongr; exact le_abs_self _)
-  · -- residue fails on the `J`-cell: the `𝔟J`-count is empty
-    rw [if_neg hQ, zero_div, zero_mul, sub_zero]
+  · rw [if_neg hQ, zero_div, zero_mul, sub_zero]
     have hempty : IsEmpty {a : idealSet K (𝔟 * J) //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
           ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod m) = (b : ZMod m))) ∧
@@ -3316,8 +3088,8 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
-/-- **Cone-point residue count partitions over `(orthant, coset)` cells** (the `hpart` step of
-`exists_card_idealSet_residue_real_le`, extracted for a general ideal `I₀` and chart `Tc`). -/
+/-- **Cone-point residue count partitions over `(orthant, coset)` cells** (the partition step
+feeding `exists_card_idealSet_residue_real_le_dvd`, for a general ideal `I₀` and chart `Tc`). -/
 private theorem card_idealSet_residue_eq_sum_cell {K : Type*} [Field K] [NumberField K]
     (m : ℕ) [NeZero m] (b : ℕ) (I₀ : (Ideal (𝓞 K))⁰)
     (Tc : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)) (S : ℝ) :
@@ -3366,8 +3138,8 @@ private theorem card_idealSet_residue_eq_sum_cell {K : Type*} [Field K] [NumberF
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
-/-- **Summed cell estimate → global cone-count estimate** (the summing step of
-`exists_card_idealSet_residue_real_le`, extracted). Given per-cell effective estimates at dilation
+/-- **Summed cell estimate → global cone-count estimate** (the summing step feeding
+`exists_card_idealSet_residue_real_le_dvd`). Given per-cell effective estimates at dilation
 `tN = S^{1/d}`, the global cone-residue count obeys `|count(S) - (∑ L)·S| ≤ (∑ C)·S^{1-1/d}`. -/
 private theorem card_residue_sum_bound_aux {K : Type*} [Field K] [NumberField K]
     (m : ℕ) [NeZero m] (b : ℕ) (I₀ : (Ideal (𝓞 K))⁰)
@@ -3606,7 +3378,8 @@ representative `J` of `D⁻¹` with `N(J)` coprime to `N(𝔟)·c`. Principalize
 * `κfull` is the leading constant of the cone-point count of `idealSet K J` (the `J`-lattice
   `Λ_J = mixedEmbedding.idealLattice K (mk0 K J)`), namely
   `κfull = (∑_{cells qualifying for residue} vol(D₀ ∩ orthant)) / ((c·N(J))^d · covol(Λ_J) · w)`,
-  `w = torsionOrder K`, via `exists_card_dvd_principal_residue_real_le (c·N(J)) (y.val·N(J)) J`.
+  `w = torsionOrder K`, via the `J`-cone estimate of
+  `exists_card_idealSet_residue_real_le_dvd (c·N(J)) (y.val·N(J)) J 𝔟` (the live STAGE B route).
 * the `𝔟`-divisible count, after the same principalization, is the cone-point count of the
   *sublattice* `Λ_{𝔟J} ⊆ Λ_J`, which is index `N(𝔟)` (`covol(Λ_{𝔟J}) = N(𝔟)·covol(Λ_J)`, from
   `NumberField.mixedEmbedding.covolume_idealLattice` since `absNorm(𝔟J) = N(𝔟)·N(J)`), with the
@@ -3785,7 +3558,7 @@ by `N(𝔟)` (for `N(𝔟)` a unit mod `c`):
 `lim #{[I]=C, N(I)≤M, N(I)≡x}/M = lim #{[I]=C·[𝔟], N(I)≤M, N(I)≡x·N(𝔟)}/M`.
 
 Equivalently, the cone-point leading constants
-`κ_J := (exists_card_idealSet_residue_real_le (c·N(J)) (x·N(J)) J).choose` of the two
+`κ_J := (exists_card_idealSet_residue_real_le_dvd (c·N(J)) _ (x·N(J)) J 𝔟 _).choose` of the two
 principalizations (at a common representative `J` of `C⁻¹` and at `𝔟J`) satisfy
 `κ_{𝔟J}·N(𝔟) = κ_J`. This is the covolume / CRT equidistribution content: `Λ_{𝔟J} ⊆ Λ_J` is an
 index-`N(𝔟)` sublattice (`covol(Λ_{𝔟J}) = N(𝔟)·covol(Λ_J)`,
