@@ -50,6 +50,23 @@ namespace Chebotarev
 variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
   [Algebra K L] [IsGalois K L]
 
+-- The unramified-prime subtype reindexes the `primeIdealZetaSum` index subtype for the unramified
+-- set. The plain-lambda anonymous-constructor form (not an `Equiv` coercion) keeps both projections
+-- `rfl`, so `Injective.tsum_eq` / `comp_injective` go through without the coercion whnf-explosion.
+omit [NumberField K] [NumberField L] in
+private theorem unramifiedPrime_toPrimeNeBot_injective :
+    Function.Injective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+        {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+  fun _ _ hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
+
+omit [NumberField K] [NumberField L] in
+private theorem unramifiedPrime_toPrimeNeBot_surjective :
+    Function.Surjective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+        {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
+  fun 𝔮 ↦ ⟨⟨𝔮.1, 𝔮.2.1.1, 𝔮.2.1.2⟩, Subtype.ext rfl⟩
+
 /-! ### Sub-lemmas for `chebotarev_cyclotomic`
 
 Decomposed per Sharifi 7.2.1 proof (p. 142–143). Source quote
@@ -77,20 +94,18 @@ half-plane `Re s > 1` (p. 142). Verbatim source quote: "log L(χ,s) ~
 Σ_𝔭 χ(𝔭) N𝔭^{-s} for Re(s) > 1". -/
 theorem log_artinLSeries_asymp_character_sum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
             (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
         ≤ C * Real.log (1 / (s - 1)) + C := by
-  -- The value of `χ` on any conjugacy-class representative is a root of unity, hence norm `1`.
-  have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c => by
+  have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c ↦ by
     obtain ⟨n, hn, hpow⟩ := isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite c.out)
     refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
     simpa using congrArg (Units.val) (show (χ c.out) ^ n = 1 by rw [← map_pow, hpow, map_one])
   obtain ⟨C, hC⟩ := primeIdealZetaSum_le_log_plus_bounded K
   refine ⟨max C 1, ?_⟩
-  -- Near `s ↓ 1`, `1/(s-1) → +∞`, so `log (1/(s-1)) ≥ 0`.
   have hlogpos : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), 0 ≤ Real.log (1 / (s - 1)) := by
     have h2 : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), s < 2 :=
       nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
@@ -100,48 +115,32 @@ theorem log_artinLSeries_asymp_character_sum
     exact Real.log_nonneg ((one_le_div₀ hpos).2 (by linarith))
   filter_upwards [hC, hlogpos, self_mem_nhdsWithin] with s hCs hlog hs1
   simp only [Set.mem_Ioi] at hs1
-  -- Triangle inequality: `‖∑' χ(Frob)·N𝔭⁻ˢ‖ ≤ ∑' ‖χ(Frob)·N𝔭⁻ˢ‖ = ∑' N𝔭⁻ˢ` (real, nonneg).
-  -- The summand norm `‖χ(Frob 𝔭) · N𝔭⁻ˢ‖ = N𝔭^{-s}` (since `‖χ(Frob)‖ = 1`).
   have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ =
-        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 => by
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ by
     have hpos : 0 < Ideal.absNorm 𝔭.1 := by
-      have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h =>
+      have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h ↦
         UnramifiedIn.ne_bot K L 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
       lia
     rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
       Complex.ofReal_re]
-  -- Identify the bare unramified-prime tsum with `primeIdealZetaSum U s` for the unramified set `U`,
-  -- via a plain-lambda injection into the `U`-prime subtype (as in `summable_prime2_absNorm_rpow`):
-  -- the anonymous-constructor projection reduces by `rfl`, unlike an `Equiv` coercion, avoiding both
-  -- the leftover `↑(heU 𝔭)` mismatch and the heavy `comp_injective` whnf-explosion.
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
-  have hinj : Function.Injective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
-        (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
-          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
-  -- the injection is also surjective (`U`-membership gives prime + unramified), so it reindexes the
-  -- whole `U`-prime tsum.
-  have hsurj : Function.Surjective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
-        (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
-          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-    fun 𝔮 => ⟨⟨𝔮.1, 𝔮.2.1.1, 𝔮.2.1.2⟩, Subtype.ext rfl⟩
-  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
+  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
-    ((summable_prime_absNorm_rpow U hs1).comp_injective hinj).congr fun 𝔭 => rfl
+    ((summable_prime_absNorm_rpow U hs1).comp_injective
+      (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
   have hUtsum : primeIdealZetaSum U s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
     rw [primeIdealZetaSum_def]
-    exact (hinj.tsum_eq (f := fun 𝔮 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
-      (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s))
-      (by rw [hsurj.range_eq]; exact Set.subset_univ _)).symm
-  have hsumnorm : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+    refine ((unramifiedPrime_toPrimeNeBot_injective K L).tsum_eq
+      (f := fun 𝔮 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
+        (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s)) ?_).symm
+    rw [(unramifiedPrime_toPrimeNeBot_surjective K L).range_eq]
+    exact Set.subset_univ _
+  have hsumnorm : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖) :=
-    hs0.congr fun 𝔭 => (hnormterm 𝔭).symm
-  -- `∑' N𝔭⁻ˢ` over unramified primes = `primeIdealZetaSum U s ≤ primeIdealZetaSum univ s`.
+    hs0.congr fun 𝔭 ↦ (hnormterm 𝔭).symm
   have hle : (∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
     rw [← hUtsum]
@@ -180,11 +179,11 @@ private theorem sum_galoisCharacter_eq_card_or_zero
     obtain ⟨ψ, hψ⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
     set S : ℂ := ∑ χ : G →* ℂˣ, (χ g : ℂ) with hS
     have key : (ψ g : ℂ) * S = S := by
-      rw [hS, Finset.mul_sum, ← Equiv.sum_comp (Equiv.mulLeft ψ) fun χ : G →* ℂˣ => (χ g : ℂ)]
-      refine Finset.sum_congr rfl fun χ _ => ?_
+      rw [hS, Finset.mul_sum, ← Equiv.sum_comp (Equiv.mulLeft ψ) fun χ : G →* ℂˣ ↦ (χ g : ℂ)]
+      refine Finset.sum_congr rfl fun χ _ ↦ ?_
       simp only [Equiv.coe_mulLeft, MonoidHom.mul_apply, Units.val_mul]
     have hfactor : ((ψ g : ℂ) - 1) * S = 0 := by linear_combination key
-    have hne : (ψ g : ℂ) - 1 ≠ 0 := sub_ne_zero.mpr fun h => hψ (Units.val_eq_one.mp h)
+    have hne : (ψ g : ℂ) - 1 ≠ 0 := sub_ne_zero.mpr fun h ↦ hψ (Units.val_eq_one.mp h)
     exact (mul_eq_zero.mp hfactor).resolve_left hne
 
 /-- Sharifi 7.2.1 step (iii) — character orthogonality for the cyclotomic
@@ -201,7 +200,7 @@ theorem character_orthogonality_cyclotomic_eq
   have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
   set τ := (frobeniusClass K L 𝔭).out
   have hsummand : ∀ χ : galoisCharacter K L,
-      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
+      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ ↦ by
     rw [map_mul, map_inv, Units.val_mul, Units.val_inv_eq_inv_val]
   have hmk : ConjClasses.mk τ = frobeniusClass K L 𝔭 := Quotient.out_eq _
   have heq : σ * τ⁻¹ = 1 := by
@@ -225,10 +224,10 @@ theorem character_orthogonality_cyclotomic_ne
   have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
   set τ := (frobeniusClass K L 𝔭).out
   have hsummand : ∀ χ : galoisCharacter K L,
-      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ => by
+      (χ σ : ℂ) * ((χ τ : ℂ))⁻¹ = (χ (σ * τ⁻¹) : ℂ) := fun χ ↦ by
     rw [map_mul, map_inv, Units.val_mul, Units.val_inv_eq_inv_val]
   have hmk : ConjClasses.mk τ = frobeniusClass K L 𝔭 := Quotient.out_eq _
-  have hne : σ * τ⁻¹ ≠ 1 := fun hσ =>
+  have hne : σ * τ⁻¹ ≠ 1 := fun hσ ↦
     _h <| hmk.symm.trans (congrArg ConjClasses.mk (mul_inv_eq_one.mp hσ)).symm
   simp_rw [hsummand]
   rw [sum_galoisCharacter_eq_card_or_zero Gal(L/K) (σ * τ⁻¹), if_neg hne]
@@ -241,33 +240,30 @@ type `ι` with a "norm exponent base" `N : ι → ℕ` (`2 ≤ N i`) and a unit-
 `c : ι → ℂ`. The substrate is `g(s) = Σ_i -Log(1 - c i · N i⁻ˢ)` (the "log sum") and the per-term
 weight `w i s = c i · N i⁻ˢ`. -/
 
-/-- The per-term log-sum function `s ↦ -Log(1 - c·N⁻ˢ)` is differentiable on `s > 1` and the log
-sum `g(s) = Σ_i -Log(1 - c i · N i⁻ˢ)` is differentiable at each `s₀ > 1`. The derivative bound
-`‖d/ds (-Log(1-w))‖ ≤ 2·log N · N⁻ˢ` is summable on a half-line `(1+ε, ∞) ∋ s₀` by dominating
-`log N ≤ N^{ε/2}/(ε/2)`, reducing to `Σ_i N i^{-(1+ε/2)} < ∞`. -/
+/-- The log sum `g(s) = Σ_i -Log(1 - c i · N i⁻ˢ)` is differentiable at each `s₀ > 1`. -/
 private theorem differentiableAt_logSum_of_two_le
     {ι : Type*} (N : ι → ℕ) (c : ι → ℂ) (s₀ : ℝ) (hs₀ : 1 < s₀)
     (hN : ∀ i, 2 ≤ N i) (hc : ∀ i, ‖c i‖ = 1)
-    (hsummr : ∀ r : ℝ, 1 < r → Summable (fun i => (N i : ℝ) ^ (-r))) :
+    (hsummr : ∀ r : ℝ, 1 < r → Summable (fun i ↦ (N i : ℝ) ^ (-r))) :
     DifferentiableAt ℝ
-      (fun s : ℝ => ∑' i, -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) s₀ := by
+      (fun s : ℝ ↦ ∑' i, -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) s₀ := by
   set ε : ℝ := (s₀ - 1) / 2 with hε
   set t : Set ℝ := Set.Ioi (1 + ε) with ht
   have htopen : IsOpen t := isOpen_Ioi
   have htconn : IsPreconnected t := (convex_Ioi _).isPreconnected
   have hs₀t : s₀ ∈ t := by rw [ht]; simp only [Set.mem_Ioi]; rw [hε]; linarith
-  set g : ι → ℝ → ℂ := fun i s => -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ))) with hg
-  set g' : ι → ℝ → ℂ := fun i s =>
+  set g : ι → ℝ → ℂ := fun i s ↦ -Complex.log (1 - c i * (N i : ℂ) ^ (-(s : ℂ))) with hg
+  set g' : ι → ℝ → ℂ := fun i s ↦
     -((-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) /
         (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) with hg'
-  set u : ι → ℝ := fun i => 2 * Real.log (N i) * (N i : ℝ) ^ (-(1 + ε)) with hu
-  have hNRpos : ∀ i, (0 : ℝ) < N i := fun i => by have := hN i; positivity
-  have hN1 : ∀ i, (1 : ℝ) ≤ N i := fun i => by have := hN i; exact_mod_cast Nat.one_le_of_lt this
-  have hlog0 : ∀ i, 0 ≤ Real.log (N i) := fun i => Real.log_nonneg (hN1 i)
-  have hwn : ∀ i, ∀ s : ℝ, ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ = (N i : ℝ) ^ (-s) := fun i s => by
-    rw [norm_mul, hc, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN i; omega),
+  set u : ι → ℝ := fun i ↦ 2 * Real.log (N i) * (N i : ℝ) ^ (-(1 + ε)) with hu
+  have hNRpos : ∀ i, (0 : ℝ) < N i := fun i ↦ by have := hN i; positivity
+  have hN1 : ∀ i, (1 : ℝ) ≤ N i := fun i ↦ by have := hN i; exact_mod_cast Nat.one_le_of_lt this
+  have hlog0 : ∀ i, 0 ≤ Real.log (N i) := fun i ↦ Real.log_nonneg (hN1 i)
+  have hwn : ∀ i, ∀ s : ℝ, ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ = (N i : ℝ) ^ (-s) := fun i s ↦ by
+    rw [norm_mul, hc, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN i; lia),
       Complex.neg_re, Complex.ofReal_re]
-  have hN2s : ∀ i, ∀ s : ℝ, 1 ≤ s → (2 : ℝ) ≤ (N i : ℝ) ^ s := fun i s hs => by
+  have hN2s : ∀ i, ∀ s : ℝ, 1 ≤ s → (2 : ℝ) ≤ (N i : ℝ) ^ s := fun i s hs ↦ by
     have h2N : (2 : ℝ) ≤ N i := by have := hN i; exact_mod_cast this
     calc (2 : ℝ) ≤ (N i : ℝ) := h2N
       _ = (N i : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
@@ -301,17 +297,17 @@ private theorem differentiableAt_logSum_of_two_le
               ring
   have hderiv : ∀ i, ∀ s ∈ t, HasDerivAt (g i) (g' i s) s := by
     intro i s hst
-    have hN0 : (N i : ℂ) ≠ 0 := by exact_mod_cast (by have := hN i; omega : N i ≠ 0)
-    have hpow : HasDerivAt (fun z : ℂ => (N i : ℂ) ^ (-z))
+    have hN0 : (N i : ℂ) ≠ 0 := by exact_mod_cast (by have := hN i; lia : N i ≠ 0)
+    have hpow : HasDerivAt (fun z : ℂ ↦ (N i : ℂ) ^ (-z))
         ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)) (s : ℂ) := by
-      have houter : HasDerivAt (fun z : ℂ => (N i : ℂ) ^ z)
+      have houter : HasDerivAt (fun z : ℂ ↦ (N i : ℂ) ^ z)
           ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ)) (-(s : ℂ)) :=
         (Complex.hasStrictDerivAt_const_cpow (Or.inl hN0)).hasDerivAt
       exact houter.comp (s : ℂ) (hasDerivAt_neg' (s : ℂ))
-    have hin : HasDerivAt (fun z : ℂ => 1 - c i * (N i : ℂ) ^ (-z))
+    have hin : HasDerivAt (fun z : ℂ ↦ 1 - c i * (N i : ℂ) ^ (-z))
         (-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) (s : ℂ) := by
       simpa using (hpow.const_mul (c i)).const_sub 1
-    have hlog : HasDerivAt (fun z : ℂ => Complex.log (1 - c i * (N i : ℂ) ^ (-z)))
+    have hlog : HasDerivAt (fun z : ℂ ↦ Complex.log (1 - c i * (N i : ℂ) ^ (-z)))
         ((-(c i * ((N i : ℂ) ^ (-(s : ℂ)) * Complex.log (N i : ℂ) * (-1)))) /
           (1 - c i * (N i : ℂ) ^ (-(s : ℂ)))) (s : ℂ) := hin.clog (by simpa using hslit i s hst)
     exact (hlog.neg).comp_ofReal
@@ -337,10 +333,10 @@ private theorem differentiableAt_logSum_of_two_le
       apply Real.rpow_le_rpow_of_exponent_le (hN1 i); linarith
     have hrn1 : 0 ≤ (N i : ℝ) ^ (-(1 + ε)) := Real.rpow_nonneg (hNRpos i).le _
     nlinarith [hden, hlog0 i, hrns, hmono, mul_nonneg hrns (hlog0 i), mul_nonneg hrn1 (hlog0 i)]
-  have hg0 : Summable fun i => g i s₀ := by
-    have hbase : Summable (fun i => (N i : ℝ) ^ (-s₀)) := hsummr s₀ hs₀
+  have hg0 : Summable fun i ↦ g i s₀ := by
+    have hbase : Summable (fun i ↦ (N i : ℝ) ^ (-s₀)) := hsummr s₀ hs₀
     refine Summable.of_norm ?_
-    refine Summable.of_nonneg_of_le (fun i => norm_nonneg _) ?_ (hbase.mul_left 2)
+    refine Summable.of_nonneg_of_le (fun i ↦ norm_nonneg _) ?_ (hbase.mul_left 2)
     intro i
     set w : ℂ := c i * (N i : ℂ) ^ (-(s₀ : ℂ)) with hw
     have hwlei : ‖w‖ ≤ 1 / 2 := hwle i s₀ hs₀t
@@ -361,34 +357,31 @@ private theorem differentiableAt_logSum_of_two_le
     hs₀t).differentiableAt
 
 /-- `exp(g(s)) = ∏_i (1 - w i s)⁻¹` for the log sum `g`, when the weights `w i = c i · N i⁻ˢ` are
-summable and `1 - w i` avoids the slit. Uses `Complex.cexp_tsum_eq_tprod` with `f i = (1-w i)⁻¹`
-and `Log(f i) = -Log(1 - w i)`. -/
+summable and `1 - w i` avoids the slit. -/
 private theorem cexp_logSum_eq_tprod
     {ι : Type*} (w : ι → ℂ) (hsumw : Summable w) (hslit : ∀ i, (1 - w i) ∈ Complex.slitPlane) :
     Complex.exp (∑' i, -Complex.log (1 - w i)) = ∏' i, (1 - w i)⁻¹ := by
-  set f : ι → ℂ := fun i => (1 - w i)⁻¹ with hf
-  have hfn : ∀ i, f i ≠ 0 := fun i => inv_ne_zero (Complex.slitPlane_ne_zero (hslit i))
-  have hlogf : ∀ i, Complex.log (f i) = -Complex.log (1 - w i) := fun i => by
+  set f : ι → ℂ := fun i ↦ (1 - w i)⁻¹ with hf
+  have hfn : ∀ i, f i ≠ 0 := fun i ↦ inv_ne_zero (Complex.slitPlane_ne_zero (hslit i))
+  have hlogf : ∀ i, Complex.log (f i) = -Complex.log (1 - w i) := fun i ↦ by
     rw [hf, Complex.log_inv _ (Complex.slitPlane_arg_ne_pi (hslit i))]
-  have hsumlog : Summable (fun i => Complex.log (f i)) :=
-    (hsumw.clog_one_sub.neg).congr fun i => (hlogf i).symm
+  have hsumlog : Summable (fun i ↦ Complex.log (f i)) :=
+    (hsumw.clog_one_sub.neg).congr fun i ↦ (hlogf i).symm
   simp_rw [← hlogf]
   exact Complex.cexp_tsum_eq_tprod hfn hsumlog
 
 /-- The derivative of the log sum `g` at `s₀ > 1` equals the logarithmic derivative `Lf'/Lf` of any
-function `Lf` with `exp(g s) = Lf ↑s` near `s₀`, differentiable at `↑s₀` with `Lf ↑s₀ ≠ 0`.
-Differentiate both sides of `exp(g s) = Lf ↑s`: the single-valued derivative sidesteps the branch
-ambiguity of `log Lf`. -/
+function `Lf` with `exp(g s) = Lf ↑s` near `s₀`, differentiable at `↑s₀` with `Lf ↑s₀ ≠ 0`. -/
 private theorem hasDerivAt_logSum_eq_logDeriv
     (G : ℝ → ℂ) (G' : ℂ) (s₀ : ℝ) (hs₀ : 1 < s₀) (Lf : ℂ → ℂ) (hG : HasDerivAt G G' s₀)
     (hLfdiff : DifferentiableAt ℂ Lf (s₀ : ℂ))
     (heq : ∀ s : ℝ, 1 < s → Complex.exp (G s) = Lf (s : ℂ)) (hLf0 : Lf (s₀ : ℂ) ≠ 0) :
     G' = deriv Lf (s₀ : ℂ) / Lf (s₀ : ℂ) := by
-  have hexpG : HasDerivAt (fun s : ℝ => Complex.exp (G s)) (G' * Complex.exp (G s₀)) s₀ := by
+  have hexpG : HasDerivAt (fun s : ℝ ↦ Complex.exp (G s)) (G' * Complex.exp (G s₀)) s₀ := by
     simpa [mul_comm] using hG.cexp
-  have hLfreal : HasDerivAt (fun s : ℝ => Lf (s : ℂ)) (deriv Lf (s₀ : ℂ)) s₀ :=
+  have hLfreal : HasDerivAt (fun s : ℝ ↦ Lf (s : ℂ)) (deriv Lf (s₀ : ℂ)) s₀ :=
     (hLfdiff.hasDerivAt).comp_ofReal
-  have hev : (fun s : ℝ => Complex.exp (G s)) =ᶠ[𝓝 s₀] (fun s : ℝ => Lf (s : ℂ)) := by
+  have hev : (fun s : ℝ ↦ Complex.exp (G s)) =ᶠ[𝓝 s₀] (fun s : ℝ ↦ Lf (s : ℂ)) := by
     filter_upwards [Ioi_mem_nhds hs₀] with s hs using heq s hs
   have hdereq : G' * Complex.exp (G s₀) = deriv Lf (s₀ : ℂ) :=
     hexpG.unique (hLfreal.congr_of_eventuallyEq hev)
@@ -397,8 +390,7 @@ private theorem hasDerivAt_logSum_eq_logDeriv
   linear_combination hdereq
 
 /-- Mean-value packaging: if `G` is differentiable on `(1, ∞)` with derivative `F`, and `F` is
-continuous on the compact `[1, 2]`, then `‖G‖` is bounded as `s ↓ 1` (by `‖G 2‖ + M` where `M`
-bounds `‖F‖` on `[1, 2]`), via `Convex.norm_image_sub_le_of_norm_deriv_le` on `[s, 2]`. -/
+continuous on the compact `[1, 2]`, then `‖G‖` is bounded as `s ↓ 1`. -/
 private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
     (G : ℝ → ℂ) (F : ℝ → ℂ) (hGderiv : ∀ s : ℝ, 1 < s → HasDerivAt G (F s) s)
     (hFcont : ContinuousOn F (Set.Icc 1 2)) :
@@ -410,9 +402,9 @@ private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
   filter_upwards [self_mem_nhdsWithin, h2] with s hs1 hs2
   simp only [Set.mem_Ioi] at hs1
   have hsub : Set.Icc s 2 ⊆ Set.Icc (1 : ℝ) 2 := Set.Icc_subset_Icc hs1.le le_rfl
-  have hdiff : ∀ x ∈ Set.Icc s 2, DifferentiableAt ℝ G x := fun x hx =>
+  have hdiff : ∀ x ∈ Set.Icc s 2, DifferentiableAt ℝ G x := fun x hx ↦
     (hGderiv x (lt_of_lt_of_le hs1 hx.1)).differentiableAt
-  have hbnd : ∀ x ∈ Set.Icc s 2, ‖deriv G x‖ ≤ M := fun x hx => by
+  have hbnd : ∀ x ∈ Set.Icc s 2, ‖deriv G x‖ ≤ M := fun x hx ↦ by
     rw [(hGderiv x (lt_of_lt_of_le hs1 hx.1)).deriv]; exact hM x (hsub hx)
   have hmvt : ‖G s - G 2‖ ≤ M * ‖s - 2‖ :=
     Convex.norm_image_sub_le_of_norm_deriv_le hdiff hbnd (convex_Icc s 2)
@@ -438,51 +430,38 @@ private theorem summable_twistedPrimeSum
     [FiniteDimensional K L] (χ : galoisCharacter K L) {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))) := by
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
-  have hinj : Function.Injective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
-        (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
-          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
-  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
-    ((summable_prime_absNorm_rpow U hs).comp_injective hinj).congr fun 𝔭 => rfl
-  have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c => by
+    ((summable_prime_absNorm_rpow _ hs).comp_injective
+      (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
+  have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c ↦ by
     obtain ⟨n, hn, hpow⟩ := isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite c.out)
     refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
     simpa using congrArg (Units.val) (show (χ c.out) ^ n = 1 by rw [← map_pow, hpow, map_one])
   have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ =
-        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 => by
+        (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ by
     have hpos : 0 < Ideal.absNorm 𝔭.1 := by
-      have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h =>
+      have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h ↦
         UnramifiedIn.ne_bot K L 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
       lia
     rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
       Complex.ofReal_re]
-  exact Summable.of_norm (hs0.congr fun 𝔭 => (hnormterm 𝔭).symm)
+  exact Summable.of_norm (hs0.congr fun 𝔭 ↦ (hnormterm 𝔭).symm)
 
 /-- For nonzero prime ideals `𝔭` (so `𝔭 ≠ ⊤` and `N𝔭 ≠ 0`), the absolute norm is `≥ 2`. -/
 private theorem two_le_absNorm_prime
     (K : Type*) [Field K] [NumberField K] (𝔭 : Ideal (𝓞 K)) (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
     2 ≤ Ideal.absNorm 𝔭 := by
-  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => hne (Ideal.absNorm_eq_zero_iff.mp h)
-  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h ↦ hne (Ideal.absNorm_eq_zero_iff.mp h)
+  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h ↦ hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
   lia
 
 /-- **Complex-analytic bridge of Dirichlet's argument (the substantive content of the cyclotomic
 case).** Given the analytic extension `Lf` of `L(χ,·)` — analytic on `Z(1-[K:ℚ]⁻¹)` and agreeing
 with the ideal Dirichlet series on `Re s > 1` (the `artinLSeries_analytic_extension` / LF4 leaf) —
 which is nonzero at `s = 1` (`artinLSeries_one_ne_zero` / LF5), the twisted prime sum
-`Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`.
-
-Proof (pure complex analysis; see decomposition.md "χ≠1 chain"): write `P_χ(s) = g_χ(s) - R_χ(s)`
-with `g_χ(s) = Σ_𝔭 -Log(1 - χ(Frob 𝔭) N𝔭⁻ˢ)` and `R_χ` the prime-power tail
-(`‖R_χ‖ ≤ Σ_𝔭 N𝔭⁻² < ∞`, uniformly on `Re s ≥ 1`). By the Euler product
-(`exists_artinLSeries_eulerProduct_abelian`) and `Complex.cexp_tsum_eq_tprod`, `exp(g_χ(s)) = Lf(s)`
-on `Re s > 1`, so `g_χ' = logDeriv Lf = Lf'/Lf`, continuous at `1` (`Lf` analytic, `Lf 1 ≠ 0`) hence
-bounded near `1`; the mean value inequality (`Convex.norm_image_sub_le_of_norm_deriv_le`) then
-bounds `g_χ`. The derivative is single-valued, sidestepping the branch/monodromy of `log Lf`. -/
+`Σ_𝔭 χ(Frob 𝔭) N𝔭⁻ˢ` stays bounded as `s ↓ 1`. -/
 private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L)
@@ -496,31 +475,22 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
       ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
   classical
-  -- Index, "norm base" `N`, unit-norm coefficient `c`, the weight `w` and the log sum `G`.
   set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
-  set N : ι → ℕ := fun 𝔭 => Ideal.absNorm 𝔭.1
-  set c : ι → ℂ := fun 𝔭 => (χ (frobeniusClass K L 𝔭.1).out : ℂ) with hc
-  set G : ℝ → ℂ := fun s => ∑' 𝔭 : ι, -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) with hGdef
-  have hc1 : ∀ 𝔭 : ι, ‖c 𝔭‖ = 1 := fun 𝔭 => by
+  set N : ι → ℕ := fun 𝔭 ↦ Ideal.absNorm 𝔭.1
+  set c : ι → ℂ := fun 𝔭 ↦ (χ (frobeniusClass K L 𝔭.1).out : ℂ) with hc
+  set G : ℝ → ℂ := fun s ↦ ∑' 𝔭 : ι, -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) with hGdef
+  have hc1 : ∀ 𝔭 : ι, ‖c 𝔭‖ = 1 := fun 𝔭 ↦ by
     rw [hc]
     obtain ⟨n, hn, hpow⟩ :=
       isOfFinOrder_iff_pow_eq_one.mp (isOfFinOrder_of_finite (frobeniusClass K L 𝔭.1).out)
     refine Complex.norm_eq_one_of_pow_eq_one (n := n) ?_ (by lia)
     simpa using congrArg Units.val
       (show (χ (frobeniusClass K L 𝔭.1).out) ^ n = 1 by rw [← map_pow, hpow, map_one])
-  have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 =>
+  have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 ↦
     two_le_absNorm_prime K 𝔭.1 𝔭.2.1 (UnramifiedIn.ne_bot K L 𝔭.2.2)
-  -- `Σ_𝔭 N𝔭⁻ʳ` is summable over the unramified subtype for every `r > 1`.
-  have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-r)) := by
-    intro r hr
-    set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
-    have hinj : Function.Injective
-        (fun 𝔭 : ι =>
-          (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
-            {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-      fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
-    exact ((summable_prime_absNorm_rpow U hr).comp_injective hinj).congr fun 𝔭 => rfl
-  -- `‖w 𝔭 s‖ = N𝔭⁻ˢ`, and `‖w 𝔭 s‖ < 1` for `s > 1`; hence the slit-plane condition.
+  have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι ↦ (N 𝔭 : ℝ) ^ (-r)) := fun r hr ↦
+    ((summable_prime_absNorm_rpow _ hr).comp_injective
+      (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
   have hwn : ∀ 𝔭 : ι, ∀ s : ℝ, ‖c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ = (N 𝔭 : ℝ) ^ (-s) := by
     intro 𝔭 s
     rw [norm_mul, hc1, one_mul, Complex.norm_natCast_cpow_of_pos (by have := hN2 𝔭; lia),
@@ -534,45 +504,41 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
     rw [sub_eq_add_neg]
     exact Complex.mem_slitPlane_of_norm_lt_one
       (z := -(c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) (by simpa using hlt)
-  -- `exp(G s) = Lf ↑s` for `s > 1`, via the Euler product and `cexp_logSum_eq_tprod`.
   have hexpeq : ∀ s : ℝ, 1 < s → Complex.exp (G s) = Lf (s : ℂ) := by
     intro s hs
     have hsc : 1 < ((s : ℂ)).re := by simpa using hs
-    have hsumw : Summable (fun 𝔭 : ι => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
+    have hsumw : Summable (fun 𝔭 : ι ↦ c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
       summable_twistedPrimeSum K L χ hs
-    rw [hGdef, cexp_logSum_eq_tprod _ hsumw (fun 𝔭 => hslit 𝔭 s hs)]
-    rw [show (fun 𝔭 : ι => (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))⁻¹)
-        = (fun 𝔭 : ι => (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ)
+    rw [hGdef, cexp_logSum_eq_tprod _ hsumw (fun 𝔭 ↦ hslit 𝔭 s hs)]
+    rw [show (fun 𝔭 : ι ↦ (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))⁻¹)
+        = (fun 𝔭 : ι ↦ (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ)
             * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹) from rfl,
       exists_artinLSeries_eulerProduct_abelian K L χ (s : ℂ) hsc, ← hLf_eq (s : ℂ) hsc]
-  -- `Lf ↑s ≠ 0` for `s ≥ 1`: at `s = 1` it is `hLf0`; for `s > 1` it is `exp(G s) ≠ 0`.
   have hLf_ne : ∀ s : ℝ, 1 ≤ s → Lf (s : ℂ) ≠ 0 := by
     intro s hs
     rcases eq_or_lt_of_le hs with hs1 | hs1
     · rw [← hs1]; simpa using hLf0
     · rw [← hexpeq s hs1]; exact Complex.exp_ne_zero _
-  -- `F := s ↦ Lf'(↑s)/Lf(↑s)` is continuous on the compact `[1, 2]`.
   set D : Set ℂ := {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} with hD
   have hDopen : IsOpen D := by rw [hD]; exact isOpen_lt continuous_const Complex.continuous_re
   have hanNhd : AnalyticOnNhd ℂ Lf D := (hDopen.analyticOn_iff_analyticOnNhd).mp hLf_an
-  have hmemD : ∀ s : ℝ, 1 ≤ s → (s : ℂ) ∈ D := fun s hs => by
+  have hmemD : ∀ s : ℝ, 1 ≤ s → (s : ℂ) ∈ D := fun s hs ↦ by
     rw [hD]; simp only [Set.mem_setOf_eq, Complex.ofReal_re]
     have hfr : 0 < Module.finrank ℚ K := Module.finrank_pos
     have : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by positivity
     linarith
-  have hLfdiff : ∀ s : ℝ, 1 ≤ s → DifferentiableAt ℂ Lf (s : ℂ) := fun s hs =>
+  have hLfdiff : ∀ s : ℝ, 1 ≤ s → DifferentiableAt ℂ Lf (s : ℂ) := fun s hs ↦
     (hanNhd (s : ℂ) (hmemD s hs)).differentiableAt
-  set F : ℝ → ℂ := fun s => deriv Lf (s : ℂ) / Lf (s : ℂ) with hF
+  set F : ℝ → ℂ := fun s ↦ deriv Lf (s : ℂ) / Lf (s : ℂ) with hF
   have hFcont : ContinuousOn F (Set.Icc 1 2) := by
-    have hLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ => Lf (s : ℂ)) s := fun s hs =>
+    have hLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ ↦ Lf (s : ℂ)) s := fun s hs ↦
       ((hanNhd (s : ℂ) (hmemD s hs)).continuousAt).comp Complex.continuous_ofReal.continuousAt
-    have hdLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ => deriv Lf (s : ℂ)) s := fun s hs =>
+    have hdLfca : ∀ s : ℝ, 1 ≤ s → ContinuousAt (fun s : ℝ ↦ deriv Lf (s : ℂ)) s := fun s hs ↦
       (((hanNhd (s : ℂ) (hmemD s hs)).deriv).continuousAt).comp
         Complex.continuous_ofReal.continuousAt
-    refine ContinuousOn.div ?_ ?_ (fun s hs => hLf_ne s hs.1)
-    · exact fun s hs => (hdLfca s hs.1).continuousWithinAt
-    · exact fun s hs => (hLfca s hs.1).continuousWithinAt
-  -- `G` is differentiable on `(1, ∞)` with `deriv G s = F s` (identified via `exp(G) = Lf`).
+    refine ContinuousOn.div ?_ ?_ (fun s hs ↦ hLf_ne s hs.1)
+    · exact fun s hs ↦ (hdLfca s hs.1).continuousWithinAt
+    · exact fun s hs ↦ (hLfca s hs.1).continuousWithinAt
   have hGderiv : ∀ s : ℝ, 1 < s → HasDerivAt G (F s) s := by
     intro s hs
     have hGdiff : DifferentiableAt ℝ G s :=
@@ -581,15 +547,12 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
       hasDerivAt_logSum_eq_logDeriv G (deriv G s) s hs Lf hGdiff.hasDerivAt
         (hLfdiff s hs.le) hexpeq (hLf_ne s hs.le)
     rw [hF] at hval ⊢
-    rw [← hval]; exact hGdiff.hasDerivAt
-  -- `‖G s‖ ≤ C_g` eventually (mean value inequality).
+    rw [← hval]
+    exact hGdiff.hasDerivAt
   obtain ⟨Cg, hCg⟩ := norm_bounded_nhdsGT_of_deriv_continuousOn G F hGderiv hFcont
-  -- `‖R_χ s‖ ≤ M_R` eventually: each `‖-Log(1-w) - w‖ ≤ N𝔭⁻²`, summed `≤ Σ_𝔭 N𝔭⁻²`.
   set MR : ℝ := ∑' 𝔭 : ι, (N 𝔭 : ℝ) ^ (-(2 : ℝ))
-  have hsumN2 : Summable (fun 𝔭 : ι => (N 𝔭 : ℝ) ^ (-(2 : ℝ))) := hsummr 2 one_lt_two
-  have hNRpos : ∀ 𝔭 : ι, (0 : ℝ) < N 𝔭 := fun 𝔭 => by have := hN2 𝔭; positivity
-  -- Per-term tail bound `‖-Log(1-w 𝔭) - w 𝔭‖ ≤ N𝔭⁻²` (uniform in `s > 1`), used for both the
-  -- `R_χ` norm bound and the summability of the log sum.
+  have hsumN2 : Summable (fun 𝔭 : ι ↦ (N 𝔭 : ℝ) ^ (-(2 : ℝ))) := hsummr 2 one_lt_two
+  have hNRpos : ∀ 𝔭 : ι, (0 : ℝ) < N 𝔭 := fun 𝔭 ↦ by have := hN2 𝔭; positivity
   have hterm : ∀ s : ℝ, 1 < s → ∀ 𝔭 : ι,
       ‖-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖
         ≤ (N 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
@@ -617,31 +580,28 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
       ring_nf
     exact hsq.trans (hwsq.trans_le (Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith)))
   have hsumtail : ∀ s : ℝ, 1 < s →
-      Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
-        - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := fun s hs =>
-    Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 => norm_nonneg _) (hterm s hs) hsumN2)
+      Summable (fun 𝔭 : ι ↦ -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
+        - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := fun s hs ↦
+    Summable.of_norm (Summable.of_nonneg_of_le (fun 𝔭 ↦ norm_nonneg _) (hterm s hs) hsumN2)
   have hRbdd : ∀ s : ℝ, 1 < s →
       ‖∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
           - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))‖ ≤ MR := by
     intro s hs
     refine (norm_tsum_le_tsum_norm (hsumtail s hs).norm).trans ?_
     exact (hsumtail s hs).norm.tsum_le_tsum (hterm s hs) hsumN2
-  -- Assemble: `P_χ s = G s - R_χ s`, so `‖P_χ s‖ ≤ ‖G s‖ + ‖R_χ s‖ ≤ Cg + MR`.
   refine ⟨Cg + MR, ?_⟩
   filter_upwards [hCg, self_mem_nhdsWithin] with s hCgs hs1
   simp only [Set.mem_Ioi] at hs1
-  -- `P_χ = G - R`, by `tsum_sub` (both summable).
-  have hsumw : Summable (fun 𝔭 : ι => c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
+  have hsumw : Summable (fun 𝔭 : ι ↦ c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) :=
     summable_twistedPrimeSum K L χ hs1
-  have hsumG : Summable (fun 𝔭 : ι => -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) := by
+  have hsumG : Summable (fun 𝔭 : ι ↦ -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))) := by
     simpa using (hsumtail s hs1).add hsumw
-  -- `P_χ s = G s - R_χ s`.
   have hPsub : (∑' 𝔭 : ι, c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
       = G s - ∑' 𝔭 : ι, (-Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ)))
           - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) := by
     rw [hGdef, ← hsumG.tsum_sub
-      ((hsumG.sub hsumw).congr fun 𝔭 => rfl)]
-    refine tsum_congr fun 𝔭 => ?_
+      ((hsumG.sub hsumw).congr fun 𝔭 ↦ rfl)]
+    refine tsum_congr fun 𝔭 ↦ ?_
     ring
   calc ‖∑' 𝔭 : ι, (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖
       = ‖∑' 𝔭 : ι, c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))‖ := rfl
@@ -684,8 +644,7 @@ The orthogonality collapse runs the character sum `∑_χ (χ σ)⁻¹ · (∑'_
 Comparing the two yields `|G| · P_σ(s) = log(1/(s-1)) + O(1)`, hence `P_σ(s)/log → 1/|G|`. -/
 
 /-- The character-twist orthogonality collapse, matching case. When `frobeniusClass K L 𝔭 =
-ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` equals `|G|`. Reindexes the proven
-`character_orthogonality_cyclotomic_eq` along `χ ↦ χ⁻¹`. -/
+ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` equals `|G|`. -/
 private theorem sum_charTwist_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
@@ -695,14 +654,13 @@ private theorem sum_charTwist_eq
         ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭).out : ℂ)) = (Nat.card Gal(L/K) : ℂ) := by
   rw [← character_orthogonality_cyclotomic_eq K L m σ 𝔭 hunr h,
     ← Equiv.sum_comp (Equiv.inv (galoisCharacter K L))
-      fun χ : galoisCharacter K L => (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹]
-  refine Finset.sum_congr rfl fun χ _ => ?_
+      fun χ : galoisCharacter K L ↦ (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹]
+  refine Finset.sum_congr rfl fun χ _ ↦ ?_
   rw [Equiv.inv_apply, MonoidHom.inv_apply, MonoidHom.inv_apply, Units.val_inv_eq_inv_val,
     Units.val_inv_eq_inv_val, inv_inv, mul_comm]
 
 /-- The character-twist orthogonality collapse, non-matching case. When `frobeniusClass K L 𝔭 ≠
-ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` vanishes. Reindexes the proven
-`character_orthogonality_cyclotomic_ne` along `χ ↦ χ⁻¹`. -/
+ConjClasses.mk σ`, the inner sum `∑_χ (χ σ)⁻¹ · χ(Frob 𝔭)` vanishes. -/
 private theorem sum_charTwist_ne
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
@@ -712,14 +670,14 @@ private theorem sum_charTwist_ne
         ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭).out : ℂ)) = 0 := by
   rw [← character_orthogonality_cyclotomic_ne K L m σ 𝔭 hunr h,
     ← Equiv.sum_comp (Equiv.inv (galoisCharacter K L))
-      fun χ : galoisCharacter K L => (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹]
-  refine Finset.sum_congr rfl fun χ _ => ?_
+      fun χ : galoisCharacter K L ↦ (χ σ : ℂ) * ((χ (frobeniusClass K L 𝔭).out : ℂ))⁻¹]
+  refine Finset.sum_congr rfl fun χ _ ↦ ?_
   rw [Equiv.inv_apply, MonoidHom.inv_apply, MonoidHom.inv_apply, Units.val_inv_eq_inv_val,
     Units.val_inv_eq_inv_val, inv_inv, mul_comm]
 
 /-- The bare prime sum over the unramified primes is asymptotic to `log(1/(s-1))`: it differs from
-the universal prime sum (`primeIdealZetaSum_univ_tendsto_log`) by the finitely-many ramified primes
-(`finite_ramifiedIn`), whose contribution is bounded and so negligible against `log → ∞`. -/
+the universal prime sum by only finitely many ramified primes, whose bounded contribution is
+negligible against `log → ∞`. -/
 private theorem primeIdealZetaSum_unramified_div_log_tendsto_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] :
@@ -728,33 +686,30 @@ private theorem primeIdealZetaSum_unramified_div_log_tendsto_one
         primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
           / Real.log (1 / (s - 1)))
       (𝓝[>] 1) (𝓝 1) := by
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
-  set R : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} with hR
-  -- `U` and `R` are disjoint and together exhaust the nonzero primes.
+  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
+  set R : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭}
   have hdisj : Disjoint U R :=
-    Set.disjoint_left.mpr fun 𝔭 hu hr => hr.2.2 hu.2
-  have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ U ∪ R := fun 𝔭 hp hne => by
+    Set.disjoint_left.mpr fun 𝔭 hu hr ↦ hr.2.2 hu.2
+  have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ U ∪ R := fun 𝔭 hp hne ↦ by
     by_cases hunr : UnramifiedIn K L 𝔭
     · exact Or.inl ⟨hp, hunr⟩
     · exact Or.inr ⟨hp, hne, hunr⟩
   have hRfin : R.Finite := finite_ramifiedIn K L
-  -- The ramified contribution is bounded by the number of ramified primes.
   obtain ⟨CR, hCR⟩ : ∃ CR : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), primeIdealZetaSum R s ≤ CR := by
     refine ⟨Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ R ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, ?_⟩
     filter_upwards [self_mem_nhdsWithin] with s hs
     simp only [Set.mem_Ioi] at hs
     exact primeIdealZetaSum_le_card_of_finite K hRfin (by linarith)
-  -- `R s / log → 0` (bounded numerator, `log → ∞`).
   have hRzero : Tendsto (fun s : ℝ ↦ primeIdealZetaSum R s / Real.log (1 / (s - 1)))
       (𝓝[>] 1) (𝓝 0) := by
     have hL := tendsto_log_one_div_sub_one_atTop
     refine squeeze_zero_norm' ?_ (Filter.Tendsto.div_atTop tendsto_const_nhds hL (a := CR))
     filter_upwards [hCR, hL.eventually_gt_atTop 0] with s hub hLpos
     have hRnn : 0 ≤ primeIdealZetaSum R s := by
-      rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
+      rw [primeIdealZetaSum_def]
+      exact tsum_nonneg fun _ ↦ Real.rpow_nonneg (by positivity) _
     rw [Real.norm_of_nonneg (div_nonneg hRnn hLpos.le)]
-    gcongr -- `R s / log ≤ CR / log`
-  -- `U s / log = univ s / log − R s / log → 1 − 0 = 1`.
+    gcongr
   have hcomb : Tendsto (fun s : ℝ ↦
       primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s / Real.log (1 / (s - 1))
         - primeIdealZetaSum R s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
@@ -768,12 +723,9 @@ private theorem primeIdealZetaSum_unramified_div_log_tendsto_one
       primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s]
   rw [← sub_div, ← hadd, add_sub_cancel_right]
 
-/-- The orthogonality-collapsed master identity (real form). Summing the twisted prime sums against
-`(χ σ)⁻¹` over all characters and collapsing the inner character sum by orthogonality
-(`sum_charTwist_eq`/`_ne`) gives `|G| · P_σ(s)`; splitting off the trivial character `χ = 1` (whose
-twisted sum is the bare unramified prime sum `primeIdealZetaSum U s`) leaves a remainder bounded by
-the `χ ≠ 1` Artin sums. This packages both sides into the single real equation
-`|G| · P_σ(s) = primeIdealZetaSum U s + (remainder).re`. -/
+/-- The orthogonality-collapsed master identity (real form): `|G| · P_σ(s)` equals the bare
+unramified prime sum `primeIdealZetaSum U s` plus the real part of the `χ ≠ 1` remainder
+`∑_{χ≠1} (χ σ)⁻¹ · twistedPrimeSum χ s`. -/
 private theorem card_mul_frobeniusFibre_eq
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
@@ -786,16 +738,14 @@ private theorem card_mul_frobeniusFibre_eq
         + (∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
             ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s).re := by
   classical
-  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
-  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} with hU
+  have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
   set Sσ : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
-    frobeniusClass K L 𝔭 = ConjClasses.mk σ} with hSσ
-  -- `N𝔭⁻ˢ` over the unramified prime subtype, as a complex cast.
+    frobeniusClass K L 𝔭 = ConjClasses.mk σ}
   have hfreal : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
-      (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) = ((Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) : ℝ) := fun 𝔭 => by
+      (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) = ((Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) : ℝ) := fun 𝔭 ↦ by
     rw [show (-(s : ℂ)) = ((-s : ℝ) : ℂ) by push_cast; ring,
       Complex.ofReal_cpow (by positivity), Complex.ofReal_natCast]
-  -- INTERCHANGE: `∑_χ (χσ)⁻¹ ∑'_𝔭 χ(Frob) N𝔭⁻ˢ = ∑'_𝔭 (∑_χ (χσ)⁻¹ χ(Frob)) N𝔭⁻ˢ`.
   have hinterchange : (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s)
       = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
           (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ))
@@ -803,66 +753,62 @@ private theorem card_mul_frobeniusFibre_eq
     have hstep : ∀ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s
         = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
             ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ)
-              * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) := fun χ => by
+              * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) := fun χ ↦ by
       rw [twistedPrimeSum, ← tsum_mul_left]
-      exact tsum_congr fun 𝔭 => by ring
-    rw [Finset.sum_congr rfl fun χ _ => hstep χ,
-      ← Summable.tsum_finsetSum (fun χ _ =>
-        ((summable_twistedPrimeSum K L χ hs).mul_left ((χ σ : ℂ))⁻¹).congr fun 𝔭 => by ring)]
-    exact tsum_congr fun 𝔭 => (Finset.sum_mul _ _ _).symm
-  -- COLLAPSE: the inner character sum is `N` on the fibre `Sσ`, else `0`.
+      exact tsum_congr fun 𝔭 ↦ by ring
+    rw [Finset.sum_congr rfl fun χ _ ↦ hstep χ,
+      ← Summable.tsum_finsetSum (fun χ _ ↦
+        ((summable_twistedPrimeSum K L χ hs).mul_left ((χ σ : ℂ))⁻¹).congr fun 𝔭 ↦ by ring)]
+    exact tsum_congr fun 𝔭 ↦ (Finset.sum_mul _ _ _).symm
   have hcollapse : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ))
           * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))
         = if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then
-            (Nat.card Gal(L/K) : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) else 0 := fun 𝔭 => by
-    haveI := 𝔭.2.1
+            (Nat.card Gal(L/K) : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) else 0 := fun 𝔭 ↦ by
+    have := 𝔭.2.1
     by_cases h : frobeniusClass K L 𝔭.1 = ConjClasses.mk σ
     · rw [sum_charTwist_eq K L m σ 𝔭.1 𝔭.2.2 h, if_pos h]
     · rw [sum_charTwist_ne K L m σ 𝔭.1 𝔭.2.2 h, if_neg h, zero_mul]
-  -- FIBRE TSUM (real): `P_σ s = ∑'_𝔭 (if frob=mkσ then N𝔭⁻ˢ else 0)` over the unramified subtype.
-  -- plain-lambda injection (anonymous-constructor projections reduce by `rfl`).
   have hfinj : Function.Injective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ Sσ ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ Sσ ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
         (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2.1⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
-    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
+    fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
   have hfibre : primeIdealZetaSum Sσ s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
         (if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) else 0) :=
     by
     rw [primeIdealZetaSum_def, ← hfinj.tsum_eq
-      (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+      (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
         if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) else 0)
       ?_]
-    · exact tsum_congr fun 𝔭 => (if_pos 𝔭.2.1.2.2).symm
+    · exact tsum_congr fun 𝔭 ↦ (if_pos 𝔭.2.1.2.2).symm
     · rintro 𝔭 h𝔭
       have h : frobeniusClass K L 𝔭.1 = ConjClasses.mk σ := by
-        by_contra hne; exact h𝔭 (if_neg hne)
+        by_contra hne
+        exact h𝔭 (if_neg hne)
       exact ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2, h⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩, rfl⟩
-  -- `M s = N · (P_σ s : ℂ)` (computation a).
   have hMa : (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s)
       = (Nat.card Gal(L/K) : ℂ) * (primeIdealZetaSum Sσ s : ℂ) := by
     rw [hinterchange, tsum_congr hcollapse, hfibre, Complex.ofReal_tsum, ← tsum_mul_left]
-    refine tsum_congr fun 𝔭 => ?_
+    refine tsum_congr fun 𝔭 ↦ ?_
     rw [apply_ite (Complex.ofReal), mul_ite, Complex.ofReal_zero, mul_zero, hfreal 𝔭]
-  -- `M s = (U-sum : ℂ) + remainder` (computation b): split off the trivial character.
   have h1inj : Function.Injective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
         (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
-    fun a b hab => Subtype.ext (Subtype.mk_eq_mk.mp hab)
+    fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
   have h1surj : Function.Surjective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} =>
+      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
         (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
-    fun 𝔭 => ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩, rfl⟩
+    fun 𝔭 ↦ ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩, rfl⟩
   have h1term : ((1 : galoisCharacter K L) σ : ℂ)⁻¹ * twistedPrimeSum K L 1 s
       = (primeIdealZetaSum U s : ℂ) := by
     rw [show ((1 : galoisCharacter K L) σ : ℂ) = 1 by simp, inv_one, one_mul, twistedPrimeSum,
       primeIdealZetaSum_def, Complex.ofReal_tsum,
-      ← h1inj.tsum_eq (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+      ← h1inj.tsum_eq (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
         ((1 : galoisCharacter K L) (frobeniusClass K L 𝔭.1).out : ℂ)
           * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))
         (by rw [h1surj.range_eq]; exact Set.subset_univ _)]
-    refine tsum_congr fun 𝔭 => ?_
+    refine tsum_congr fun 𝔭 ↦ ?_
     rw [show ((1 : galoisCharacter K L) (frobeniusClass K L 𝔭.1).out : ℂ) = 1 by simp, one_mul,
       hfreal ⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2⟩]
   have hMb : (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s)
@@ -870,7 +816,6 @@ private theorem card_mul_frobeniusFibre_eq
         + ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
             ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s := by
     rw [← h1term, ← Finset.add_sum_erase _ _ (Finset.mem_univ (1 : galoisCharacter K L))]
-  -- take real parts: `U-sum` and `N · P_σ` are real, so the real equation falls out.
   have heq : (Nat.card Gal(L/K) : ℂ) * (primeIdealZetaSum Sσ s : ℂ) = (primeIdealZetaSum U s : ℂ)
       + ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
           ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s := hMa.symm.trans hMb
@@ -878,15 +823,8 @@ private theorem card_mul_frobeniusFibre_eq
   simpa [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.natCast_re,
     Complex.natCast_im] using this
 
-/-- Sharifi 7.2.1 step (iv-a) — the numerator asymptotic. The prime-sum
-over the Frobenius fibre `{σ_𝔭 = σ}` is asymptotic to
-`(1/|G|) log(1/(s-1))` as `s ↓ 1`. This packages the orthogonality
-relations (`character_orthogonality_cyclotomic_eq`/`_ne`) summed against
-the log-asymptotic of the Artin L-functions
-(`log_artinLSeries_asymp_character_sum`) with the simple pole of `ζ_K`
-(only `χ = 1` contributes a pole, by `artinLSeries_one_ne_zero`):
-`Σ_χ χ(σ)⁻¹ log L(χ,s) ~ |G| Σ_{σ_𝔭=σ} N𝔭^{-s}` on one side and
-`~ log ζ_K(s) ~ log(1/(s-1))` on the other. -/
+/-- Sharifi 7.2.1 step (iv-a) — the numerator asymptotic. The prime-sum over the Frobenius fibre
+`{σ_𝔭 = σ}` is asymptotic to `(1/|G|) log(1/(s-1))` as `s ↓ 1`. -/
 theorem primeIdealZetaSum_frobeniusFibre_asymp
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L] (hm : m % 4 ≠ 2)
@@ -899,16 +837,14 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
           / Real.log (1 / (s - 1)))
       (𝓝[>] 1) (𝓝 ((Nat.card Gal(L/K) : ℝ)⁻¹)) := by
   classical
-  haveI : Fintype (galoisCharacter K L) := Fintype.ofFinite _
-  haveI : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
+  have : Fintype (galoisCharacter K L) := Fintype.ofFinite _
+  have : IsMulCommutative Gal(L/K) := IsCyclotomicExtension.isMulCommutative (S := {m}) K L
   set N : ℕ := Nat.card Gal(L/K) with hN
   have hNpos : 0 < N := Nat.card_pos
-  -- the `χ ≠ 1` remainder and its boundedness near `s = 1`.
-  set B : ℝ → ℂ := fun s => ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
-    ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s with hB
-  -- each `‖(χσ)⁻¹ · twistedPrimeSum χ s‖ ≤ Cχ` (norm-1 coefficient × bounded Artin sum).
+  set B : ℝ → ℂ := fun s ↦ ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
+    ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s
   have hterm : ∀ χ : galoisCharacter K L, χ ≠ 1 → ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
-      ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ hχ => by
+      ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ hχ ↦ by
     obtain ⟨C, hC⟩ := artinLSeries_prime_sum_bounded_of_ne_one K L m hm χ hχ
     refine ⟨C, ?_⟩
     filter_upwards [hC] with s hs
@@ -920,10 +856,9 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
         (by lia), inv_one]
     rw [norm_mul, hnorm1, one_mul]
     exact hs
-  -- total bounding function (junk `0` off the `χ ≠ 1` set).
   have hCfun : ∀ χ : galoisCharacter K L, ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ),
       χ ∈ Finset.univ.erase (1 : galoisCharacter K L) →
-        ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ => by
+        ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C := fun χ ↦ by
     by_cases hχ : χ = 1
     · refine ⟨0, ?_⟩
       filter_upwards with s hmem
@@ -937,13 +872,12 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
     refine ⟨∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L), C χ, ?_⟩
     have hall : ∀ᶠ s in 𝓝[>] (1 : ℝ), ∀ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
         ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ ≤ C χ :=
-      (eventually_all_finset _).mpr fun χ hmem => (hC χ).mono fun s hs => hs hmem
+      (eventually_all_finset _).mpr fun χ hmem ↦ (hC χ).mono fun s hs ↦ hs hmem
     filter_upwards [hall] with s hs
     calc ‖B s‖ ≤ ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L),
           ‖((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s‖ := norm_sum_le _ _
       _ ≤ ∑ χ ∈ Finset.univ.erase (1 : galoisCharacter K L), C χ :=
-        Finset.sum_le_sum fun χ hχ => hs χ hχ
-  -- `B(·).re / log → 0` (bounded numerator, `log → ∞`).
+        Finset.sum_le_sum fun χ hχ ↦ hs χ hχ
   have hBlog : Tendsto (fun s : ℝ ↦ (B s).re / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 0) := by
     have hL := tendsto_log_one_div_sub_one_atTop
     refine squeeze_zero_norm' ?_ (Filter.Tendsto.div_atTop tendsto_const_nhds hL (a := CB))
@@ -951,7 +885,6 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
     rw [Real.norm_eq_abs, abs_div, abs_of_pos hLpos]
     gcongr
     exact (RCLike.abs_re_le_norm (B s)).trans hub
-  -- COMBINE: `P_σ/log = (1/N)·(U/log + B.re/log) → (1/N)·(1 + 0) = (N:ℝ)⁻¹`.
   have hlim : Tendsto (fun s : ℝ ↦ (N : ℝ)⁻¹ *
       (primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s
           / Real.log (1 / (s - 1))
@@ -965,7 +898,8 @@ theorem primeIdealZetaSum_frobeniusFibre_asymp
       primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ} s
       = primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} s + (B s).re := by
-    rw [hN]; exact card_mul_frobeniusFibre_eq K L m σ hs
+    rw [hN]
+    exact card_mul_frobeniusFibre_eq K L m σ hs
   rw [← add_div, ← hmaster, mul_div_assoc, ← mul_assoc,
     inv_mul_cancel₀ (by exact_mod_cast hNpos.ne'), one_mul]
 
