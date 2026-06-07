@@ -18,7 +18,7 @@ Branch: **`development`**. Many local commits are unpushed — push with
 
 ---
 
-## 2. Current state (2026-06-06): the analytic chain is DONE; 3 sorries remain
+## 2. Current state (2026-06-07): GAP B CLOSED — chebotarev_cyclotomic unconditional
 
 **PROVEN this session (2026-06-05/06), all verified by cache-bypassing `lake env lean` +
 `#print axioms` + an adversarial read:**
@@ -29,16 +29,32 @@ Branch: **`development`**. Many local commits are unpushed — push with
 | **LF4** `artinLSeries_analytic_extension` | ZetaProduct.lean | proven (`Lf s := s · mellin S (-s)`; coefficient regrouping; mathlib `LSeries_eq_mul_integral` (Roblot) + `mellin_differentiableAt_of_isBigO_rpow`); LF4/LF5 chain restated at cyclotomic generality (m-threading — same rationale as leaf G's expert-review restatement) |
 | **Gap A** `normLeOne_frontier_lipschitz` | **`ForMathlib/NormLeOneLipschitz.lean`** | **proven sorry-free, axiom-clean** `[propext, Classical.choice, Quot.sound]`. The former "deepest gap". Frontier of `expMapBasis '' paramSet` ⊆ image of box boundary ∪ {0}; faces cube-parametrized (`t = exp (x w₀)` linearizes the unbounded direction, `t = 0` absorbs `{0}`); C¹ face maps Lipschitz on the cube + global via `clampUnit`. Mathlib-PR material. |
 
-**The 3 remaining sorries** (the whole project):
+**MILESTONE 2026-06-07 (the marathon session, 40+ commits): GAP B IS CLOSED.** Audit
+(cache-bypassing `lake env lean`, full build green):
 
 ```
-ZetaProduct.lean:846   Gap B = exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (L2)
-Abelian.lean:157       AB1  = exists_cyclotomicCrossing_fibres (compositum crossing)
-Main.lean:1375         M1   = chebotarev_density (top-level assembly)
+chebotarev_cyclotomic                                   [propext, Classical.choice, Quot.sound]
+exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le (L2)  same
+character_sum_geometry_of_numbers_bound (LF3)           same
+dirichlet_primes_in_AP                                  same axioms as chebotarev_cyclotomic
 ```
 
-Everything else — the full L-function chain, leaf G, LF1–LF12, L1 (Widmer), Gap A — is proven.
-Gap B is the only remaining *analytic* mathematics; AB1/M1 are algebraic infrastructure + glue.
+Sorry-free files: ICC, ZetaProduct, CNR, Cyclotomic, Main (incl. the `chebotarev_density`
+assembly and `dirichlet_primes_in_AP`), Density, Frobenius, NumberFieldEulerProduct. The ONLY
+remaining sorries: Abelian's AB1 leaves (master `exists_crossing_family_tagged`, C1
+`gal_compositum_prod_iso`, C5 `density_lift_through_fixedField_repl`) — endgame worker in
+flight (C5 by relocating Main's Abelian-independent Step-1 block into a new
+`FixedFieldDensity` module; C1 by joint-restriction injectivity + tower-degree counting via
+the proven C2a; the master assembling C1–C5 + `chebotarev_cyclotomic` at `M/F`).
+
+Gap B's proof (the session centerpiece; ~8 worker-layers in ICC + the ZetaProduct assembly):
+ξ-uniform coset workhorse → explicit-constant cone-point cell counts → per-residue effective
+equidistribution → the κ-transfer via the cell-level divisible-density ratio (coprime class
+reps via `IsDedekindDomain.exists_sup_span_eq`; covolume ratio `covol(𝔟J) = N𝔟·covol(J)`;
+CRT single-coset equidistribution; the vacuous-filter qualifying-match) → Fourier inversion
+over the realized-residue subgroup → the `realizedResidues` comap-trick with the
+coprime-restricted Frobenii generation (CNR) → the bad-part Euler-tail assembly with the
+d = 1 branch (K-internal Eisenstein different-ideal argument).
 
 ## 3. Gap B: the arithmetic engine is DONE; assembly remains
 
