@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual

@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -40,7 +41,7 @@ with the convention $`\chi(\fp) = 0` on ramified primes.
 
 :::proof "artin-euler-product-abelian"
 
-Sharifi Prop.~7.1.18 (p.~141). The Euler product converges
+{Informal.citet sharifi (kind := proposition) (index := "7.1.18")}[] (p.~141). The Euler product converges
 absolutely on $`\re(s) > 1` by comparison with $`\zeta_K`.
 
 :::
@@ -63,7 +64,7 @@ $$`
 Standard cyclic-group character theory applied to the residue Galois
 group: the characters of $`\Gal{(\Ocirc_L/\fP)/(\OK/\fp)}` separate
 elements, and the indicated product over $`\chi` recovers the local
-factor (Sharifi 7.1.16 step at $`\fp`).
+factor ({Informal.citet sharifi (kind := theorem) (index := "7.1.16")}[] step at $`\fp`).
 
 :::
 
@@ -84,7 +85,7 @@ $$`
 :::proof "character-sum-geom-numbers"
 
 Geometry-of-numbers count of ideals in a norm-bounded region
-(Sharifi 7.1.19, p.~142, step~1). The character value
+({Informal.citet sharifi (kind := theorem) (index := "7.1.19")}[], p.~142, step~1). The character value
 $`\chi(\mathfrak a)` depends only on the Frobenius
 $`\sigma_{\mathfrak a}`, which the cyclotomic dictionary
 {bpref "autopow-frobenius-residue"}[] identifies with the norm residue
@@ -117,8 +118,8 @@ is well-defined.
 
 :::proof "artin-analytic-extension"
 
-Combine {bpref "character-sum-geom-numbers"}[] (Sharifi 7.1.19 step 1a)
-with Sharifi Lemma 7.1.5 (p.~138, a generic Dirichlet-series
+Combine {bpref "character-sum-geom-numbers"}[] ({Informal.citet sharifi (kind := theorem) (index := "7.1.19")}[] step 1a)
+with {Informal.citet sharifi (kind := lemma) (index := "7.1.5")}[] (p.~138, a generic Dirichlet-series
 convergence criterion from a polynomial bound on partial sums):
 given $`\bigl|\sum_{n\le N}a_n\bigr|\le CN^{u}`, the Dirichlet series
 $`\sum_n a_n n^{-s}` converges absolutely and uniformly on every
@@ -141,7 +142,7 @@ extension of {bpref "artin-analytic-extension"}[].)
 
 :::proof "artin-one-ne-zero"
 
-Sharifi 7.1.19 step 2 (p.~142). Write
+{Informal.citet sharifi (kind := theorem) (index := "7.1.19")}[] step 2 (p.~142). Write
 $`\log\zeta_L(t) = \sum_\chi \log L(\chi, t)` for $`t > 1`. Up to a
 bounded function as $`t \to 1^+`, the right side has absolute value
 at least $`\bigl(1 - \sum_\chi m_\chi\bigr)\log(t-1)^{-1}`, where

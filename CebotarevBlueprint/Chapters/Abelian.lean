@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -12,7 +13,8 @@ tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mat
 #doc (Manual) "Chebotarev: abelian case" =>
 
 The abelian case is reduced to the cyclotomic case by Chebotarev's
-original crossing trick. Source: Sharifi 7.2.2 Step 2 (pp.~143--144).
+original crossing trick. Source:
+{Informal.citet sharifi (kind := theorem) (index := "7.2.2")}[] Step 2 (pp.~143--144).
 
 :::lemma_ "cyclic-subgroup-trivial-meet" (lean := "Chebotarev.cyclic_subgroup_meets_G_times_one_trivially")
 
@@ -47,7 +49,7 @@ $`\delta\bigl(\set{\fp : \sigma_\fp = \sigma}\bigr) = 1/(\abs{G}\cdot\abs{H})`
 — that is mathematically wrong (the set $`\set{\sigma_\fp = \sigma}`
 has density $`1/\abs{G}`, not $`1/(\abs{G}\cdot\abs{H})`). The actual
 per-$`m` step that feeds into the proof of $`\delta(\sigma_\fp = \sigma)
-= 1/\abs{G}` is the $`\liminf` lower bound above (Sharifi p.~144).
+= 1/\abs{G}` is the $`\liminf` lower bound above ({Informal.citet sharifi (kind := page) (index := "144")}[]).
 
 {uses "cyclic-subgroup-trivial-meet"}[]
 {uses "chebotarev-cyclotomic"}[]
@@ -83,7 +85,7 @@ $$`
 :::proof "H-n-over-H-formula"
 
 Direct combinatorial computation on $`(\Z/m\Z)^\times` using CRT and
-the prime-power factorisation of $`n` (Sharifi p.~144).
+the prime-power factorisation of $`n` ({Informal.citet sharifi (kind := page) (index := "144")}[]).
 
 :::
 

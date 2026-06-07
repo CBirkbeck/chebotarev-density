@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -12,8 +13,8 @@ tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mat
 #doc (Manual) "Chebotarev: cyclotomic case" =>
 
 For a cyclotomic extension $`L = K(\zeta_m)`, Chebotarev's theorem
-reduces directly to Dirichlet's argument. Source: Sharifi 7.2.1
-(pp.~142--143).
+reduces directly to Dirichlet's argument. Source:
+{Informal.citet sharifi (kind := theorem) (index := "7.2.1")}[] (pp.~142--143).
 
 :::lemma_ "cyclotomic-frobenius-norm-power" (lean := "Chebotarev.cyclotomic_frobenius_acts_as_norm_power")
 
@@ -99,7 +100,7 @@ $$`
 :::proof "character-orthogonality-ne"
 
 Standard finite-group character orthogonality for the dual of $`G`
-(Sharifi 7.2.1 step at p.~142). Under the isomorphism
+({Informal.citet sharifi (kind := theorem) (index := "7.2.1")}[] step at p.~142). Under the isomorphism
 $`G\cong(\Z/m\Z)^\times` from {bpref "cyclotomic-frobenius-norm-power"}[],
 $`\chi(\Frob_\fp)` depends only on $`N\fp\bmod m`, and the sum reduces to
 the orthogonality relation on the cyclic group $`(\Z/m\Z)^\times`.

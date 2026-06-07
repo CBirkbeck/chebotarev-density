@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -15,12 +16,12 @@ The abelian case of Chebotarev is, in this development, fed not by class
 field theory but by an effective geometry-of-numbers count of integral
 ideals in a norm-residue class. This chapter assembles the public layer
 of that engine: an effective lattice-point count with a Lipschitz-boundary
-error term (Widmer / Gun–Ramaré–Sivaraman), its transport to the ideal
+error term (Widmer; {Informal.citet "gun-ramare-sivaraman"}[]), its transport to the ideal
 lattice, a Fourier/realizer argument that makes the leading constant
 uniform over the residues that actually occur as ideal norms, and the
 CFT-free dictionary tying Frobenius elements to norm residues in a
 cyclotomic extension. The chapter closes with the fixed-field density
-transfer (Sharifi 7.2.2 Step 1) and the log-asymptotic ratio lemma.
+transfer ({Informal.citet sharifi (kind := theorem) (index := "7.2.2")}[] Step 1) and the log-asymptotic ratio lemma.
 
 Throughout, $`\Lambda` denotes the standard integer lattice
 $`\Z^\iota\subseteq\R^\iota` and $`d` an ambient dimension (the degree
@@ -135,7 +136,7 @@ $$`
   \;\le\; C\,t^{d-1},
 `
 with the implied constant $`C` uniform in $`\xi`. This is the
-Widmer / Gun–Ramaré–Sivaraman $`\xi`-uniform coset count.
+Widmer / {Informal.citet "gun-ramare-sivaraman"}[] $`\xi`-uniform coset count.
 
 {uses "unit-grid-lattice-count"}[]
 {uses "normleone-frontier-cover"}[]
@@ -251,8 +252,8 @@ $$`
 
 Each residue $`a\in S` has a well-defined density $`\kappa_a =
 \lim_N \#\{\Norm{I}\le N, \Norm{I}\equiv a\}/N`
-({bpref "ideal-count-by-norm-residue"}[]). The realizer transfer (Lang VI
-§3) shows these densities are *constant* on $`S`: if $`\mathfrak b` has
+({bpref "ideal-count-by-norm-residue"}[]). The realizer transfer
+({Informal.citet "lang-ant"}[], Ch. VI §3) shows these densities are *constant* on $`S`: if $`\mathfrak b` has
 norm residue $`u\in S`, then $`I\mapsto\mathfrak b\,I` is a measure-preserving
 correspondence shifting the residue by $`u`, so $`\kappa_{a} =
 \kappa_{a\cdot u}` for all $`a`, and every $`u\in S` is so realized.
@@ -281,7 +282,7 @@ residue.
 
 Pick a prime $`\fP\mid\fp` and let $`\varphi = \Frob_\fP`. The cyclotomic
 Frobenius acts on roots of unity as the $`\Norm{\fp}`-power map,
-$`\varphi(\zeta) = \zeta^{\Norm{\fp}}` (Sharifi 7.2.1(i)); since the
+$`\varphi(\zeta) = \zeta^{\Norm{\fp}}` ({Informal.citet sharifi (kind := theorem) (index := "7.2.1")}[](i)); since the
 cyclotomic character $`\chi_{\mathrm{cyc}}` is defined by
 $`\sigma(\zeta) = \zeta^{\chi_{\mathrm{cyc}}(\sigma)}` and $`\zeta` has
 exact order $`m`, equal powers of $`\zeta` have congruent exponents mod
@@ -337,7 +338,7 @@ $$`
   \;=\; \frac{\abs{[\sigma]}}{\abs{G}},
   \qquad f = \mathrm{ord}(\sigma).
 `
-This is Sharifi 7.2.2 Step 1.
+This is {Informal.citet sharifi (kind := theorem) (index := "7.2.2")}[] Step 1.
 
 {uses "dirichlet-density"}[]
 {uses "frobenius-class"}[]

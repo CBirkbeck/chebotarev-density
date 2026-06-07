@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CebotarevDensity
+import CebotarevBlueprint.Refs
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -31,7 +32,7 @@ $`\OK`.
 :::
 
 The denominator is asymptotically $`\log\bigl(1/(s-1)\bigr)` as
-$`s\downarrow 1` (Sharifi Prop.~7.1.12, p.~140); the lemmas below break
+$`s\downarrow 1` ({Informal.citet sharifi (kind := proposition) (index := "7.1.12")}[], p.~140); the lemmas below break
 out the analytic ingredients.
 
 :::theorem "prime-zeta-higher-tail-bounded" (lean := "Chebotarev.primeIdealZetaHigherTail_bounded")

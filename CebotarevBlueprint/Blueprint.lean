@@ -10,6 +10,7 @@ import CebotarevBlueprint.Chapters.Engine
 import CebotarevBlueprint.Chapters.Cyclotomic
 import CebotarevBlueprint.Chapters.Abelian
 import CebotarevBlueprint.Chapters.Main
+import CebotarevBlueprint.Refs
 import CebotarevDensity
 
 open Verso.Genre
@@ -35,13 +36,14 @@ axioms. This has been certified by `leanprover/comparator` (statement-identity
 against the intended statements, axiom-budget audit, and kernel replay of every
 proof term).
 
-The proof follows the modern exposition of Stevenhagen–Lenstra (*Chebotarëv and his
-density theorem*, Appendix) and Sharifi (*Algebraic Number Theory*, §7.2). Both
-references are included under `docs/`.
+The proof follows the modern exposition of {Informal.citet "stevenhagen-lenstra"}[]
+(*Chebotarëv and his density theorem*, Appendix) and
+{Informal.citet sharifi (kind := section) (index := "7.2")}[]
+(*Algebraic Number Theory*). Both references are included under `docs/`.
 
 **Outline.** The proof proceeds in three reductions, and needs no class field
 theory — it is essentially Chebotarev's original strategy as expounded by
-Stevenhagen–Lenstra:
+{Informal.citet "stevenhagen-lenstra"}[]:
 
 1. *Foundations.* We define the Dirichlet density of a set of prime ideals via the
    Dirichlet series $`\sum_{\fp\in S} \Norm{\fp}^{-s}` normalised against the same
@@ -80,3 +82,7 @@ Stevenhagen–Lenstra:
 
 {blueprint_graph}
 {blueprint_summary}
+
+# References
+
+{blueprint_bibliography}
