@@ -90,35 +90,15 @@ theorem cyclotomic_frobenius_acts_as_norm_power
     hzc] at hmap
 
 /-- Powers of a primitive `n`-th root of unity agree iff the exponents are congruent mod `n`
-(the easy direction: equal powers force congruent exponents). Reduce both exponents mod `n`
-(killing `μ^n = 1`) and apply injectivity of `i ↦ μ^i` below `n` (`IsPrimitiveRoot.pow_inj`). -/
+(the easy direction: equal powers force congruent exponents). -/
 private theorem pow_natModEq_of_pow_eq {S : Type*} [CommRing S] [IsDomain S] {μ : S} {n : ℕ}
-    [NeZero n] (hμ : IsPrimitiveRoot μ n) {a b : ℕ} (h : μ ^ a = μ ^ b) : a ≡ b [MOD n] := by
-  have hpos : 0 < n := NeZero.pos n
-  have ha : μ ^ a = μ ^ (a % n) := by
-    conv_lhs => rw [← Nat.div_add_mod a n, pow_add, pow_mul, hμ.pow_eq_one, one_pow, one_mul]
-  have hb : μ ^ b = μ ^ (b % n) := by
-    conv_lhs => rw [← Nat.div_add_mod b n, pow_add, pow_mul, hμ.pow_eq_one, one_pow, one_mul]
-  exact hμ.pow_inj (Nat.mod_lt a hpos) (Nat.mod_lt b hpos) (by rw [← ha, ← hb, h])
-
-/-- A `MonoidHom` into a commutative group is constant on conjugacy classes: conjugate elements
-have the same image (cancel the conjugator, which commutes with everything in the target). -/
-private theorem MonoidHom.map_eq_of_isConj {G H : Type*} [Group G] [CommGroup H] (f : G →* H)
-    {a b : G} (h : IsConj a b) : f a = f b := by
-  obtain ⟨c, hc⟩ := h
-  have hcc : f (↑c * a) = f (b * ↑c) := by rw [hc.eq]
-  rw [map_mul, map_mul] at hcc
-  exact mul_right_cancel ((mul_comm (f ↑c) (f a)).symm ▸ hcc)
+    [NeZero n] (hμ : IsPrimitiveRoot μ n) {a b : ℕ} (h : μ ^ a = μ ^ b) : a ≡ b [MOD n] :=
+  hμ.eq_orderOf ▸ (hμ.isOfFinOrder (NeZero.ne n)).pow_eq_pow_iff_modEq.mp h
 
 /-- **The cyclotomic Frobenius is the norm residue** (multiplicative form). For `L = K(μ_m)`,
 a primitive `m`-th root `ζ` of unity in `L`, and a prime `𝔭` of `K` unramified in `L` with
 `N𝔭` coprime to `m`, the cyclotomic character `IsPrimitiveRoot.autToPow` sends the Frobenius
-representative `(frobeniusClass K L 𝔭).out` to the unit `N𝔭 mod m`. Follows from the
-element-level action `Frob_𝔭 ζ = ζ^{N𝔭}` (`cyclotomic_frobenius_acts_as_norm_power`), which pins
-the `autToPow` value by definition. `autToPow` lands in the abelian group `(ZMod m)ˣ`, so it is
-conjugation-invariant: the value on the class representative `.out` equals the value on an honest
-arithmetic Frobenius `arithFrobAt 𝔓` at some prime `𝔓 | 𝔭`, to which the element-level action
-applies. -/
+representative `(frobeniusClass K L 𝔭).out` to the unit `N𝔭 mod m`. -/
 theorem autToPow_frobeniusClass_out
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L] [FiniteDimensional K L]
@@ -126,32 +106,26 @@ theorem autToPow_frobeniusClass_out
     (hunr : UnramifiedIn K L 𝔭) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
     hζ.autToPow K ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) =
       ZMod.unitOfCoprime (Ideal.absNorm 𝔭) hcop := by
-  -- An honest Frobenius `φ = arithFrobAt 𝔓` at a chosen prime `𝔓 | 𝔭`.
   obtain ⟨𝔓, h𝔓prime, h𝔓lo, _⟩ := exists_prime_liesOver K L 𝔭 (UnramifiedIn.ne_bot K L hunr)
   haveI := h𝔓prime
   haveI := h𝔓lo
   haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 h𝔓lo))
-  set φ : L ≃ₐ[K] L := arithFrobAt (𝓞 K) Gal(L/K) 𝔓 with hφ
-  -- `.out` is conjugate to `φ`, and `autToPow` (into the abelian `(ZMod m)ˣ`) is conj-invariant.
+  set φ : L ≃ₐ[K] L := arithFrobAt (𝓞 K) Gal(L/K) 𝔓
   have hclass : frobeniusClass K L 𝔭 = ConjClasses.mk φ :=
     frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 hunr φ 𝔓
       (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓) h𝔓lo
   have hconj : IsConj ((frobeniusClass K L 𝔭).out) φ := by
     rw [← ConjClasses.mk_eq_mk_iff_isConj, ← hclass, ConjClasses.mk, Quotient.out_eq]
-  rw [MonoidHom.map_eq_of_isConj (hζ.autToPow K) hconj]
-  -- Element-level action `φ ζ = ζ ^ N𝔭`, then the multiplicative dictionary.
+  rw [isConj_iff_eq.mp ((hζ.autToPow K).map_isConj hconj)]
   have hact : φ ζ = ζ ^ Ideal.absNorm 𝔭 :=
     cyclotomic_frobenius_acts_as_norm_power K L m 𝔭 hunr hcop 𝔓 h𝔓lo ζ
       ((mem_primitiveRoots (NeZero.pos m)).mpr hζ)
-  -- `ζ ^ (autToPow φ).val = φ ζ = ζ ^ N𝔭` pins `(autToPow φ).val ≡ N𝔭 [MOD m]`.
   have hspec := hζ.autToPow_spec K φ
   rw [hact] at hspec
-  have hmod : ((hζ.autToPow K φ : ZMod m)).val ≡ Ideal.absNorm 𝔭 [MOD m] :=
-    pow_natModEq_of_pow_eq hζ hspec
   apply Units.ext
   rw [ZMod.coe_unitOfCoprime, ← ZMod.natCast_zmod_val ((hζ.autToPow K φ : (ZMod m)ˣ) : ZMod m)]
-  exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
+  exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr (pow_natModEq_of_pow_eq hζ hspec)
 
 /-! ### Sub-lemmas for `finrank_fixedField_le_one_of_forall_frobenius_mem_of_coprime`
 
@@ -175,19 +149,16 @@ private theorem smul_algebraMap_eq
     haveI : IsScalarTower K F L := F.isScalarTower_mid'
     σ • (algebraMap (𝓞 F) (𝓞 L) y) = algebraMap (𝓞 F) (𝓞 L) ((σ.restrictNormal F) • y) := by
   haveI : IsScalarTower K F L := F.isScalarTower_mid'
-  have hbridgeL : ∀ (g : L ≃ₐ[K] L) (x : 𝓞 L), ((g • x : 𝓞 L) : L) = g • (x : L) := fun g x =>
+  have hbridgeL : ∀ (g : L ≃ₐ[K] L) (x : 𝓞 L), ((g • x : 𝓞 L) : L) = g • (x : L) := fun g x ↦
     by simpa [Algebra.smul_def] using
       (smul_distrib_smul (G := L ≃ₐ[K] L) (R := 𝓞 L) (S := L) g x 1).symm
-  have hbridgeF : ∀ (g : F ≃ₐ[K] F) (z : 𝓞 F), ((g • z : 𝓞 F) : F) = g • ((z : F)) := fun g z =>
+  have hbridgeF : ∀ (g : F ≃ₐ[K] F) (z : 𝓞 F), ((g • z : 𝓞 F) : F) = g • ((z : F)) := fun g z ↦
     by simpa [Algebra.smul_def] using
       (smul_distrib_smul (G := F ≃ₐ[K] F) (R := 𝓞 F) (S := F) g z 1).symm
   have hcoe : ∀ z : 𝓞 F, ((algebraMap (𝓞 F) (𝓞 L) z : 𝓞 L) : L) = algebraMap F L (z : F) :=
-    fun z => by
-      rw [show ((algebraMap (𝓞 F) (𝓞 L) z : 𝓞 L) : L)
-            = algebraMap (𝓞 L) L (algebraMap (𝓞 F) (𝓞 L) z) from rfl,
-        ← IsScalarTower.algebraMap_apply (𝓞 F) (𝓞 L) L,
-        show ((z : F)) = algebraMap (𝓞 F) F z from rfl,
-        ← IsScalarTower.algebraMap_apply (𝓞 F) F L]
+    fun z ↦ by
+      rw [RingOfIntegers.coe_eq_algebraMap, ← IsScalarTower.algebraMap_apply (𝓞 F) (𝓞 L) L,
+        RingOfIntegers.coe_eq_algebraMap, ← IsScalarTower.algebraMap_apply (𝓞 F) F L]
   rw [RingOfIntegers.ext_iff]
   change ((σ • algebraMap (𝓞 F) (𝓞 L) y : 𝓞 L) : L)
       = ((algebraMap (𝓞 F) (𝓞 L) ((σ.restrictNormal F) • y) : 𝓞 L) : L)
