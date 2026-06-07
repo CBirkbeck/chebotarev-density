@@ -186,7 +186,7 @@ the chain is sorry-free *modulo L3*.
 - M-corollary `dirichlet_primes_in_AP`: closed (CyclotomicField n ℚ instantiation, the
   finite-symmDiff density transfer, the 2-mod-4 CRT reduction).
 
-### [CL1] /cleanup campaign over the session's new code — Status: in progress
+### [CL1] /cleanup campaign over the session's new code — Status: **done** (2026-06-07, 13/13 files, ~45 commits, net ≈ −1700 lines)
 - **Done**: CyclotomicNormResidue (6 commits, 909→674 lines); Main batch 1 (file-level
   + 8 public theorems, −33 lines, 3 ConjClasses renames queued to renames.jsonl).
 - **In flight** (2026-06-07): Main batch 2 (remaining 11 decls), LatticePointCount.
@@ -231,7 +231,7 @@ the chain is sorry-free *modulo L3*.
   re-link if made public); item (i)–(iv) content enrichment (hm-hypotheses prose, GB
   narrative chapter) can be incremental on the verso side.
 
-### [CL2] finish-line cleanup (Chris directive 2026-06-07) — Status: in progress
+### [CL2] finish-line cleanup (Chris directive 2026-06-07) — Status: **done** (zero maxHeartbeats project-wide; Clusters A–G all closed; simp tags in; /generalise campaign: 59 FiniteDimensional drops + Monoid/CommGroup weakenings + the ForMathlib sweep). Held for Chris: ideal-encoding unification; NFEP ℂ→RCLike big-changes; headline [FiniteDimensional] drop (needs comparator Challenge update + recertify).
 - **Zero maxHeartbeats project-wide (HARD)**: exactly 2 remain, both ZetaProduct
   (tprod_unramified_eq_prod_artinDirichletSeries 1600000 @2849;
   dedekindZeta_eq_prod_artinDirichletSeries 800000 @2939). Both verified to whnf-timeout
