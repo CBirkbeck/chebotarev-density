@@ -1,7 +1,17 @@
 # Project Overview: chebotarev-density
 
 Generated: 2026-06-07 (post-completion review — the main theorem `Chebotarev.chebotarev_density`
-is fully proven, zero sorries project-wide, axiom-clean at `[propext, Classical.choice, Quot.sound]`).
+is fully proven, zero sorries project-wide, axiom-clean at `[propext, Classical.choice, Quot.sound]`,
+and kernel-certified by leanprover/comparator).
+
+> **Execution status (updated end of 2026-06-07):** the CL1 cleanup campaign executed this
+> review across all 13 files (≈ −1 500 lines net): Part 7's deletes are done (8 executed,
+> 3 kept by blueprint-anchor ruling), Clusters B/C/F are executed, Cluster A's safe step and
+> Cluster E's helper-sharing are done, the API swaps (insertPiEquiv, clampUnit→projIcc) are
+> in, and a dedicated /generalise campaign (drop-test sweeps, all files) landed 6+ weakenings
+> incl. a new filter-general squeeze lemma. Remaining work is tracked as the CL2 ticket
+> (zero-maxHeartbeats decomposition, Cluster G hoist, Cluster D consolidation, Cluster E
+> w≡1 residual, simp tags) and UP1 (upstreaming). Per-item status: `.mathlib-quality/tickets.md`.
 
 Full per-declaration inventories (every declaration, with What/How/Hypotheses/Uses/Used-by):
 `.mathlib-quality/overview/<File>.md` — one file per module, 13 files. This document is the
