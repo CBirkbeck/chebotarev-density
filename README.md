@@ -62,6 +62,6 @@ leanblueprint checkdecls     # verify Lean refs in blueprint
 
 ## Provenance
 
-Originally developed under `flt-regular-bernoulli` (Birkbeck). Spun out
+Originally developed under `flt-regular-bernoulli` (Birkbeck--Brasca). Spun out
 to a standalone repo to keep Chebotarev as a general-purpose theorem
 independent of the Kummer-criterion / FLT37 narrative.
