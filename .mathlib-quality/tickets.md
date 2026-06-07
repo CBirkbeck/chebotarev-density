@@ -186,26 +186,41 @@ the chain is sorry-free *modulo L3*.
 - M-corollary `dirichlet_primes_in_AP`: closed (CyclotomicField n ℚ instantiation, the
   finite-symmDiff density transfer, the 2-mod-4 CRT reduction).
 
-### [CL1] /cleanup campaign over the session's new code — Status: open
-- **Files** (in priority order): ForMathlib/IdealCongruenceCount.lean (~3800 lines, the
-  8-layer onion — many helpers can likely be consolidated), ZetaProduct.lean (GapBAssembly
-  section ~600 new lines), Abelian.lean (AB1 leaves + helpers), Main.lean (AP helpers),
-  FixedFieldDensity.lean (relocated block — docstring/audit pass only),
-  CyclotomicNormResidue.lean (+coprime-generation variant), NormLeOneLipschitz.lean.
+### [CL1] /cleanup campaign over the session's new code — Status: in progress
+- **Done**: CyclotomicNormResidue (6 commits, 909→674 lines); Main batch 1 (file-level
+  + 8 public theorems, −33 lines, 3 ConjClasses renames queued to renames.jsonl).
+- **In flight** (2026-06-07): Main batch 2 (remaining 11 decls), LatticePointCount.
+- **Queued**: Density, Frobenius, NumberFieldEulerProduct, LogOneDivSubOne,
+  NormLeOneLipschitz, FixedFieldDensity, Cyclotomic, Abelian, ZetaProduct,
+  ForMathlib/IdealCongruenceCount (largest last — fold in PROJECT_OVERVIEW.md's
+  consolidation clusters A–C and the dead-code deletes for ICC).
+- **Per-file riders from PROJECT_OVERVIEW.md Part 7** (verified dead code — delete in
+  that file's batch): ZetaProduct (Dirichlet-test trio, normLeOne_frontier_lipschitz
+  wrapper), ICC (exists_generator_diff_of_coset, exists_card_dvd_principal_residue_real_le),
+  Cyclotomic (log_artinLSeries_asymp_character_sum), Abelian (gal_compositum_prod_iso,
+  cyclic_subgroup_meets_G_times_one_trivially, H_n_over_H_tends_to_one — blueprint-linked,
+  re-point chapter first —, chebotarev_abelian_lowerDensity_per_m, inline
+  map_eq_of_isConj_comm), NFEP (insertPiEquiv → mathlib composition; verify
+  tsum_symGeometric).
 - **Type**: cleanup. Invoke /cleanup per file (full 10-phase workflow). Expect
   long-line/unused-variable warnings (a few pre-existing), naming-gate renames on
   worker-generated helper names, and structure-gate decomposition flags on the larger
   assembly proofs.
 - Depends on: nothing (main line done).
 
-### [BP1] blueprint sync — Status: open
-- The blueprint (blueprint/src/subsections/*.tex) predates the session: needs (i) the
-  hm : m % 4 ≠ 2 hypotheses on the cyclotomic chain (the B2 repair), (ii) the new modules
-  (FixedFieldDensity, CyclotomicNormResidue, ForMathlib/{IdealCongruenceCount,
-  NormLeOneLipschitz, LatticePointCount}), (iii) AB1's hcop/hm4 restatement + the
-  leaf structure, (iv) the GB decomposition narrative, (v) \lean{} refs for the new
-  public theorems. Then leanblueprint pdf/web/checkdecls.
-- Depends on: CL1 (names may change in cleanup — sync after).
+### [BP1] blueprint sync — Status: **done** (superseded by the verso migration, 2026-06-07)
+- The LaTeX leanblueprint was migrated wholesale to verso-blueprint:
+  `CebotarevBlueprint/Chapters/{Density,Frobenius,ZetaProduct,Cyclotomic,Abelian,Main}.lean`
+  + `Blueprint.lean`, all 1:1 from blueprint/src. `lake build CebotarevBlueprint` green
+  (0 warnings); HTML site generates to `_out/site/html-multi/` (index + dep-graph +
+  summary: 72 completed entries, 0 sorries). Stale `\lean{}` refs repointed during
+  migration (IsArithFrobAt, MulAction.stabilizer, Ideal.inertia, the le-orientation
+  renames). The legacy `blueprint/src` LaTeX tree is now redundant — decide with Chris
+  whether to delete it or keep it frozen.
+- Residual (folds into CL1 per-file batches): `dedekind-zeta-factorisation` entry is
+  Lean-unlinked (its decl `dedekindZeta_eq_prod_artinDirichletSeries` is private —
+  re-link if made public); item (i)–(iv) content enrichment (hm-hypotheses prose, GB
+  narrative chapter) can be incremental on the verso side.
 
 ### [UP1] mathlib-upstream candidates — Status: open
 - Strongest candidates surfaced this session: sum_nthRootsFinset_eq_zero;
