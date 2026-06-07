@@ -823,35 +823,15 @@ private theorem exists_cyclotomicCrossing_fibres
       (∀ τ, HasDirichletDensity (S τ)
           ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
   obtain ⟨t, S, hsub, htag, hd⟩ := exists_crossing_family_tagged K L σ m hm hm4 hcop
-  -- Distinct `τ` give disjoint fibres because the global `M`-Frobenius tag separates them.
-  refine ⟨S, pairwiseDisjoint_of_tag t (Subtype.val) Subtype.val_injective S htag, hsub, hd⟩
+  exact ⟨S, pairwiseDisjoint_of_tag t Subtype.val Subtype.val_injective S htag, hsub, hd⟩
 
-/-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)`
-coming from one choice of cyclotomic crossing modulus `m`. Source quote
-(p. 144): "δ_inf(S_σ) ≥ |H_n|/(|G|·|H|)".
-
-Sketch: for each `τ ∈ H_n` (i.e., `|G| ∣ ord(τ)`), apply the cyclotomic
-case to `L(μ_m)/F` where `F = K(μ_m)^{⟨(σ,τ)⟩}`; this yields density
-`1/(|G|·|H|)` of primes of `K` whose Frobenius in `Gal(L(μ_m)/K) = G×H`
-equals `(σ,τ)`. Each such prime contributes to `S_σ` (the
-`K`-projection drops the `τ` component to `σ`), and the contributions
-from distinct `τ` are disjoint. Summing over `τ ∈ H_n` gives the
-lower bound.
-
-**Previous form** (corrected 2026-05-28): the earlier statement claimed
-`δ(S_σ) = 1/(|G|·|H|)` with the set `S_σ` (= primes with Frobenius `σ`
-in `Gal(L/K)`), which was mathematically wrong — that set has density
-`1/|G|` (Chebotarev abelian), not `1/(|G|·|H|)`. The actual sub-step
-Sharifi uses is the per-`m` lower bound on `δ_inf(S_σ)`, captured by
-the present statement.
-
-Without `L(μ_m)` explicitly in scope, we state the conclusion of the
-per-`m` summation step directly: a lower bound `|H_n(m)|/(|G|·|H(m)|)`
-on the `liminf` of the density ratio for `S_σ` in `K`.
+/-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)` coming from one
+cyclotomic crossing modulus `m`: `|H_n(m)|/(|G|·|H(m)|)` bounds the `liminf` of the
+density ratio for `S_σ` in `K`. Source quote (p. 144): "δ_inf(S_σ) ≥ |H_n|/(|G|·|H|)".
 
 The crossing is only valid at *admissible* `m`, so this per-`m` bound carries the same
 two hypotheses as `exists_cyclotomicCrossing_fibres`: `hm4 : m % 4 ≠ 2` (feeding the
-repaired cyclotomic case) and `hcop : ((NumberField.discr L).natAbs).Coprime m` (the
+cyclotomic case) and `hcop : ((NumberField.discr L).natAbs).Coprime m` (the
 linear-disjointness via the everywhere-unramified intersection / `discr_dvd_discr`). The
 consumer `liminf_ratio_ge_inv_card_G` drives `m` along admissible primes. -/
 theorem liminf_density_S_sigma_ge_card_H_n_div_GH
@@ -868,22 +848,17 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
               / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
           (𝓝[>] 1) := by
   classical
-  -- The Frobenius fibre `S_σ` and the crossing constant `c = 1/(|G|·|H|)`.
   set Sσ : Set (Ideal (𝓞 K)) :=
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ frobeniusClass K L 𝔭 = ConjClasses.mk σ}
     with hSσ
   set c : ℝ := (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹ with hc
-  -- The cyclotomic-crossing fibres (substantive content isolated in the sub-lemma).
   obtain ⟨S, hpd, hsub, hd⟩ := exists_cyclotomicCrossing_fibres K L σ m _hm hm4 hcop
-  -- Index type `H_n(m)` is finite; work over its `Finset.univ`.
   have : Fintype {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} := Fintype.ofFinite _
   set t : Finset {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} := Finset.univ with ht
-  -- The finite disjoint union of the fibres has density `|t| • c = |H_n|/(|G|·|H|)`.
   have hpd' : (t : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S := by
     rw [ht, Finset.coe_univ]; exact hpd
   have hUdens : HasDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) :=
     hasDirichletDensity_biUnion_const t S c hpd' (fun i _ => hd i)
-  -- The union sits inside `S_σ`, so its lower density bounds `liminf(P_{S_σ}/P_univ)`.
   have hUsub : (⋃ i ∈ t, S i) ⊆ Sσ := Set.iUnion₂_subset fun i _ => hsub i
   have hUlow : HasLowerDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) := hUdens.hasLower
   have hSσlow : HasLowerDirichletDensity Sσ
@@ -891,7 +866,6 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
         (fun s : ℝ ↦ primeIdealZetaSum Sσ s / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
         (𝓝[>] 1)) := rfl
   have hmono := HasLowerDirichletDensity.mono hUsub hUlow hSσlow
-  -- Identify `|t| • c` with the goal's left-hand side `|H_n|/(|G|·|H|)`.
   have htcard : (t.card : ℝ) • c
       = (Nat.card {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} : ℝ)
           / (Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ)) := by
@@ -1009,8 +983,7 @@ private theorem bad_le_torsion (G : Type*) [Finite G] [Monoid G] (M p v : ℕ)
 divide `d`: the contrapositive of the prime-power criterion `n ∣ d`. -/
 private theorem exists_prime_pow_not_dvd (n d : ℕ) (hn : n ≠ 0) (hd : d ≠ 0) (hndvd : ¬ n ∣ d) :
     ∃ p ∈ n.primeFactors, ¬ p ^ (n.factorization p) ∣ d := by
-  by_contra hcon
-  push Not at hcon
+  by_contra! hcon
   apply hndvd
   rw [← Nat.factorization_le_iff_dvd hn hd]
   intro p
@@ -1109,8 +1082,7 @@ private theorem perprime_bound (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) (hn2
     rw [← orderOf_dvd_iff_pow_eq_one]
     refine dvd_capped E (orderOf x) p v hp hEne ?_ ?_
     · rw [hE]; exact Monoid.order_dvd_exponent x
-    · by_contra hcon
-      push Not at hcon
+    · by_contra! hcon
       exact hx ((Nat.Prime.pow_dvd_iff_le_factorization hp (orderOf_pos x).ne').mpr (by omega))
   have hEM : p ^ (k * v - v - 1) ≤ E / M := by
     rw [hEdivM]; exact pow_le_pow_right₀ hp.one_le (by omega)
@@ -1148,8 +1120,7 @@ private theorem perprime_bound_exp (G : Type*) [CommGroup G] [Finite G] (p a v :
     rw [← orderOf_dvd_iff_pow_eq_one]
     refine dvd_capped E (orderOf x) p v hp hEne ?_ ?_
     · rw [hE]; exact Monoid.order_dvd_exponent x
-    · by_contra hcon
-      push Not at hcon
+    · by_contra! hcon
       exact hx ((Nat.Prime.pow_dvd_iff_le_factorization hp (orderOf_pos x).ne').mpr (by omega))
   have hEM : p ^ (a - v - 1) ≤ E / M := by
     rw [hEdivM]; exact pow_le_pow_right₀ hp.one_le (by omega)
@@ -1219,19 +1190,11 @@ theorem H_n_over_H_tends_to_one (n : ℕ) (_hn : 1 ≤ n) :
         / Nat.card ((ZMod (n ^ k))ˣ))
       Filter.atTop (𝓝 1) := by
   classical
-  rcases eq_or_lt_of_le _hn with hn1 | hn2'
-  · have hn1' : n = 1 := hn1.symm
-    subst hn1'
-    have hconst : ∀ k : ℕ, (Nat.card {τ : (ZMod (1 ^ k))ˣ // (1 : ℕ) ∣ orderOf τ} : ℝ)
-        / Nat.card ((ZMod (1 ^ k))ˣ) = 1 := by
-      intro k
-      have hg : Nat.card {τ : (ZMod (1 ^ k))ˣ // (1 : ℕ) ∣ orderOf τ}
-          = Nat.card ((ZMod (1 ^ k))ˣ) := by
-        rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
-        exact Fintype.card_congr (Equiv.subtypeUnivEquiv (fun x => one_dvd _))
-      rw [hg]
-      have hpos : 0 < Nat.card ((ZMod (1 ^ k))ˣ) := Nat.card_pos
-      field_simp
+  rcases eq_or_lt_of_le _hn with rfl | hn2'
+  · have hconst : ∀ k : ℕ, (Nat.card {τ : (ZMod (1 ^ k))ˣ // (1 : ℕ) ∣ orderOf τ} : ℝ)
+        / Nat.card ((ZMod (1 ^ k))ˣ) = 1 := fun k => by
+      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x => one_dvd _)),
+        div_self (by exact_mod_cast Nat.card_pos.ne')]
     rw [tendsto_congr hconst]; exact tendsto_const_nhds
   · have hn2 : 2 ≤ n := hn2'
     set total : ℕ → ℕ := fun k => Nat.card ((ZMod (n ^ k))ˣ) with htotal
@@ -1283,17 +1246,56 @@ theorem H_n_over_H_tends_to_one (n : ℕ) (_hn : 1 ≤ n) :
     rw [tendsto_congr heq]
     simpa using hbadratio.const_sub (1 : ℝ)
 
-/-- Per-`σ` lower bound `δ_inf(S_σ) ≥ 1/|G|`, the limit of the per-`m`
-bound `liminf_density_S_sigma_ge_card_H_n_div_GH` as `m → ∞` along a sequence of
+/-- For a sequence of moduli `m k` with `n ^ k` dividing the exponent of `(ZMod (m k))ˣ`,
+the ratio `|H_n(m k)|/|H(m k)| → 1` as `k → ∞`: the `n = 1` case is constant `1`, and the
+`n ≥ 2` case is squeezed between `1 - Σ_{p ∣ n} p^{-(k·v_p(n) - v_p(n) - 1)} → 1` and `1`. -/
+private theorem ratio_card_dvd_orderOf_tendsto_one (n : ℕ) (hn1 : 1 ≤ n) (m : ℕ → ℕ)
+    (hmNeZero : ∀ k, NeZero (m k))
+    (hdvd : ∀ k, 1 ≤ k → ∀ p ∈ n.primeFactors,
+      p ^ (k * n.factorization p) ∣ Monoid.exponent (ZMod (m k))ˣ) :
+    Filter.Tendsto (fun k : ℕ ↦ (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
+      / Nat.card ((ZMod (m k))ˣ)) Filter.atTop (𝓝 1) := by
+  rcases eq_or_lt_of_le hn1 with hn1' | hn2'
+  · have hconst : ∀ k, (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
+        / Nat.card ((ZMod (m k))ˣ) = 1 := fun k => by
+      have := hmNeZero k
+      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x => hn1'.symm ▸ one_dvd _)),
+        div_self (by exact_mod_cast Nat.card_pos.ne')]
+    rw [tendsto_congr hconst]; exact tendsto_const_nhds
+  · have hn2 : 2 ≤ n := hn2'
+    set S : ℕ → ℝ := fun k => ∑ p ∈ n.primeFactors,
+      (1 : ℝ) / (p : ℝ) ^ (k * n.factorization p - n.factorization p - 1) with hSdef
+    have hSt : Filter.Tendsto S Filter.atTop (𝓝 0) := by
+      rw [hSdef, show (0 : ℝ) = ∑ _p ∈ n.primeFactors, (0 : ℝ) by simp]
+      refine tendsto_finsetSum _ (fun p hp => ?_)
+      have hpp : p.Prime := Nat.prime_of_mem_primeFactors hp
+      exact summand_tendsto p (n.factorization p) hpp.two_le
+        (Nat.Prime.factorization_pos_of_dvd hpp (by omega) (Nat.dvd_of_mem_primeFactors hp))
+    have hlo : Filter.Tendsto (fun k => 1 - S k) Filter.atTop (𝓝 1) := by
+      simpa using hSt.const_sub 1
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds ?_
+      (Filter.Eventually.of_forall (fun k => ?_))
+    · filter_upwards [Filter.eventually_ge_atTop 1] with k hk1
+      exact H_n_ratio_ge (ZMod (m k))ˣ n k hn2 hk1 (hdvd k hk1)
+    · have := hmNeZero k
+      rw [div_le_one (by exact_mod_cast (Nat.card_pos : 0 < Nat.card ((ZMod (m k))ˣ)))]
+      exact_mod_cast Nat.card_le_card_of_injective
+        (Subtype.val : {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} → _) Subtype.val_injective
+
+/-- For each `k` there is a prime `m > d` with `m % 4 ≠ 2` and `n ^ k ∣ m - 1`: an admissible
+modulus for the cyclotomic crossing, from Dirichlet's theorem on primes in `1 (mod 4·n^k)`. -/
+private theorem exists_admissible_prime (n d : ℕ) (hn : 1 ≤ n) (k : ℕ) :
+    ∃ m : ℕ, m.Prime ∧ d < m ∧ m % 4 ≠ 2 ∧ n ^ k ∣ m - 1 := by
+  obtain ⟨m, hmgt, hmp, hmeq⟩ := Nat.forall_exists_prime_gt_and_modEq (max d 1)
+    (q := 4 * n ^ k) (by positivity) (Nat.coprime_one_left _)
+  have hdvd : 4 * n ^ k ∣ m - 1 := (Nat.modEq_iff_dvd' hmp.one_lt.le).mp hmeq.symm
+  refine ⟨m, hmp, by omega, ?_, dvd_trans ⟨4, by ring⟩ hdvd⟩
+  have := dvd_trans ⟨n ^ k, rfl⟩ hdvd; omega
+
+/-- Per-`σ` lower bound `δ_inf(S_σ) ≥ 1/|G|`, the limit of the per-`m` bound
+`liminf_density_S_sigma_ge_card_H_n_div_GH` as `m → ∞` along a sequence of
 *admissible primes* `m_k ≡ 1 (mod 4·n^k)` with `m_k > |disc L|` (Dirichlet's theorem on
-primes in arithmetic progression, `Nat.forall_exists_prime_gt_and_modEq`). Such `m_k`
-satisfy both hypotheses of the per-`m` bound: `m_k % 4 = 1 ≠ 2`, and a prime exceeding
-`|disc L|` is coprime to it. For prime `m_k`, the unit group `(ZMod m_k)ˣ` is cyclic of
-exponent `m_k - 1`, and `n^k ∣ m_k - 1`, so `H_n_ratio_ge` gives
-`|H_n|/|H| ≥ 1 - Σ_{p ∣ n} p^{-(k·v_p(n) - v_p(n) - 1)} → 1` as `k → ∞` (each summand
-`→ 0` by `summand_tendsto`). This replaces the earlier `m = n^k` route, which is invalid
-here because `n^k` need not be admissible. This is the lower half of Sharifi 7.2.2 Step 2
-(p. 144). -/
+primes in arithmetic progression). The lower half of Sharifi 7.2.2 Step 2 (p. 144). -/
 theorem liminf_ratio_ge_inv_card_G
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
@@ -1317,104 +1319,44 @@ theorem liminf_ratio_ge_inv_card_G
       (𝓝[>] 1) with hLinf
   have hnpos : 0 < n := hn ▸ Nat.card_pos
   have hn1 : 1 ≤ n := hnpos
-  -- The discriminant bound `dB = |disc L|`, which is positive.
   set dB : ℕ := (NumberField.discr L).natAbs with hdB
   have hdBpos : 0 < dB := by rw [hdB, Int.natAbs_pos]; exact NumberField.discr_ne_zero L
-  -- For each `k`, choose an admissible prime `m_k > max dB 1` with `m_k ≡ 1 (mod 4·n^k)`.
-  have hchoose : ∀ k : ℕ, ∃ m : ℕ, m.Prime ∧ dB < m ∧ m % 4 ≠ 2 ∧ n ^ k ∣ m - 1 := by
-    intro k
-    have hq : (4 * n ^ k) ≠ 0 := by positivity
-    obtain ⟨m, hmgt, hmp, hmeq⟩ :=
-      Nat.forall_exists_prime_gt_and_modEq (max dB 1) hq (Nat.coprime_one_left _)
-    have hm1 : 1 ≤ m := hmp.one_lt.le
-    have hdvd : 4 * n ^ k ∣ m - 1 := (Nat.modEq_iff_dvd' hm1).mp hmeq.symm
-    refine ⟨m, hmp, by omega, ?_, dvd_trans ⟨4, by ring⟩ hdvd⟩
-    have h4 : (4 : ℕ) ∣ m - 1 := dvd_trans ⟨n ^ k, rfl⟩ hdvd
-    omega
-  choose m hmp hmgt hm4 hmdvd using hchoose
-  -- Admissibility consequences: each `m k` is `≥ 1`, nonzero, and coprime to `dB`.
+  choose m hmp hmgt hm4 hmdvd using exists_admissible_prime n dB hn1
   have hm1 : ∀ k, 1 ≤ m k := fun k => (hmp k).one_lt.le
   have hmne : ∀ k, m k ≠ 0 := fun k => (hmp k).pos.ne'
   have hmNeZero : ∀ k, NeZero (m k) := fun k => ⟨hmne k⟩
   have hmcop : ∀ k, dB.Coprime (m k) := fun k => by
     rw [Nat.coprime_comm, (hmp k).coprime_iff_not_dvd]
     exact fun hdvd => absurd (Nat.le_of_dvd hdBpos hdvd) (Nat.not_le.mpr (hmgt k))
-  -- The exponent of `(ZMod (m k))ˣ` (cyclic, `m k` prime) is `m k - 1`, divisible by `n^k`.
   have hexp : ∀ k, Monoid.exponent (ZMod (m k))ˣ = m k - 1 := fun k => by
     haveI : Fact (m k).Prime := ⟨hmp k⟩
     rw [IsCyclic.exponent_eq_card, Nat.card_eq_fintype_card, ZMod.card_units_eq_totient,
       Nat.totient_prime (hmp k)]
-  -- Each lower-bound term `(|H_n(m k)|/|H(m k)|)·n⁻¹ ≤ L_inf` from the per-`m` bound (LF10).
   have hbound : ∀ k : ℕ,
       (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
           / Nat.card ((ZMod (m k))ˣ) * (n : ℝ)⁻¹ ≤ L_inf := by
     intro k
-    have hLF10 := liminf_density_S_sigma_ge_card_H_n_div_GH K L σ (m k) (hm1 k) (hm4 k)
+    have hbnd := liminf_density_S_sigma_ge_card_H_n_div_GH K L σ (m k) (hm1 k) (hm4 k)
       (hdB ▸ hmcop k)
-    rw [← hn] at hLF10
-    rw [← hLinf] at hLF10
-    refine le_trans (le_of_eq ?_) hLF10
+    rw [← hn, ← hLinf] at hbnd
+    refine le_trans (le_of_eq ?_) hbnd
     have hHpos : (0 : ℝ) < Nat.card ((ZMod (m k))ˣ) := by
       have := hmNeZero k
       exact_mod_cast Nat.card_pos
     have hnR : (n : ℝ) ≠ 0 := by exact_mod_cast hnpos.ne'
     field_simp
-  -- The sequence of lower bounds tends to `n⁻¹`. Branch on `n = 1` vs `n ≥ 2`.
+  have hexpdvd : ∀ k, 1 ≤ k → ∀ p ∈ n.primeFactors,
+      p ^ (k * n.factorization p) ∣ Monoid.exponent (ZMod (m k))ˣ := fun k _ p hp => by
+    rw [hexp k]
+    refine dvd_trans ?_ (hmdvd k)
+    calc p ^ (k * n.factorization p) = (p ^ n.factorization p) ^ k := by rw [← pow_mul, mul_comm]
+      _ ∣ n ^ k := pow_dvd_pow_of_dvd (Nat.ordProj_dvd n p) k
   have htends : Filter.Tendsto
       (fun k : ℕ ↦ (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
           / Nat.card ((ZMod (m k))ˣ) * (n : ℝ)⁻¹)
       Filter.atTop (𝓝 ((n : ℝ)⁻¹)) := by
-    -- The ratio `r k = |H_n(m k)|/|H(m k)|` tends to `1`.
-    have hr1 : Filter.Tendsto
-        (fun k : ℕ ↦ (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
-            / Nat.card ((ZMod (m k))ˣ)) Filter.atTop (𝓝 1) := by
-      rcases eq_or_lt_of_le hn1 with hn1' | hn2'
-      · -- `n = 1`: `H_n = univ`, ratio `≡ 1`.
-        have hconst : ∀ k, (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
-            / Nat.card ((ZMod (m k))ˣ) = 1 := by
-          intro k
-          have := hmNeZero k
-          have hg : Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} = Nat.card ((ZMod (m k))ˣ) := by
-            rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
-            exact Fintype.card_congr (Equiv.subtypeUnivEquiv (fun x => hn1'.symm ▸ one_dvd _))
-          have hposc : (0 : ℝ) < Nat.card ((ZMod (m k))ˣ) := by exact_mod_cast Nat.card_pos
-          rw [hg, div_self hposc.ne']
-        rw [tendsto_congr hconst]; exact tendsto_const_nhds
-      · -- `n ≥ 2`: squeeze `1 - S(k) ≤ r k ≤ 1` with `S(k) → 0`.
-        have hn2 : 2 ≤ n := hn2'
-        set S : ℕ → ℝ := fun k => ∑ p ∈ n.primeFactors,
-          (1 : ℝ) / (p : ℝ) ^ (k * n.factorization p - n.factorization p - 1) with hSdef
-        have hSt : Filter.Tendsto S Filter.atTop (𝓝 0) := by
-          rw [hSdef, show (0 : ℝ) = ∑ _p ∈ n.primeFactors, (0 : ℝ) by simp]
-          refine tendsto_finsetSum _ (fun p hp => ?_)
-          have hpp : p.Prime := Nat.prime_of_mem_primeFactors hp
-          exact summand_tendsto p (n.factorization p) hpp.two_le
-            (Nat.Prime.factorization_pos_of_dvd hpp (by omega) (Nat.dvd_of_mem_primeFactors hp))
-        have hlo : Filter.Tendsto (fun k => 1 - S k) Filter.atTop (𝓝 1) := by
-          simpa using hSt.const_sub 1
-        -- Upper bound `r k ≤ 1` holds for all `k`; lower bound `1 - S k ≤ r k` for `k ≥ 1`.
-        refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds ?_
-          (Filter.Eventually.of_forall (fun k => ?_))
-        · filter_upwards [Filter.eventually_ge_atTop 1] with k hk1
-          -- `1 - S k ≤ r k` from `H_n_ratio_ge`, using `n^k ∣ exponent (ZMod (m k))ˣ`.
-          have hexpdvd : ∀ p ∈ n.primeFactors,
-              p ^ (k * n.factorization p) ∣ Monoid.exponent (ZMod (m k))ˣ := by
-            intro p hp
-            rw [hexp k]
-            refine dvd_trans ?_ (hmdvd k)
-            calc p ^ (k * n.factorization p) = (p ^ n.factorization p) ^ k := by
-                  rw [← pow_mul, mul_comm]
-              _ ∣ n ^ k := pow_dvd_pow_of_dvd (Nat.ordProj_dvd n p) k
-          exact H_n_ratio_ge (ZMod (m k))ˣ n k hn2 hk1 hexpdvd
-        · -- `r k ≤ 1`.
-          have := hmNeZero k
-          have hpos : 0 < Nat.card ((ZMod (m k))ˣ) := Nat.card_pos
-          rw [div_le_one (by exact_mod_cast hpos)]
-          have hle : Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} ≤ Nat.card ((ZMod (m k))ˣ) :=
-            Nat.card_le_card_of_injective (Subtype.val) Subtype.val_injective
-          exact_mod_cast hle
-    simpa using hr1.mul_const ((n : ℝ)⁻¹)
-  -- Hence `n⁻¹ ≤ L_inf` by `le_of_tendsto` (the limit of the lower bounds is `n⁻¹`).
+    simpa using
+      (ratio_card_dvd_orderOf_tendsto_one n hn1 m hmNeZero hexpdvd).mul_const ((n : ℝ)⁻¹)
   exact le_of_tendsto htends (Filter.Eventually.of_forall hbound)
 
 /-- The density ratios of the `|G|` Frobenius-fibres `S_σ` (over
@@ -1496,27 +1438,17 @@ omit [DenselyOrdered α] [l.NeBot] in
 /-- A finite sum of below-bounded functions is below-bounded. -/
 private lemma sum_isBoundedUnder_ge {κ : Type*} (g : κ → ι → α) (t : Finset κ)
     (h : ∀ j ∈ t, l.IsBoundedUnder (· ≥ ·) (g j)) :
-    l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ t, g j x) := by
-  classical
-  induction t using Finset.induction with
-  | empty => simpa using (isBoundedUnder_const (r := (· ≥ ·)) (l := l) (a := (0 : α)))
-  | insert a s ha ih =>
-      simpa [Finset.sum_insert ha, Pi.add_def] using
-        isBoundedUnder_ge_add (h a (Finset.mem_insert_self a s))
-          (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
+    l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ t, g j x) :=
+  funext (fun x ↦ Finset.sum_apply x t g) ▸
+    Filter.isBoundedUnder_sum (fun _ _ ↦ isBoundedUnder_ge_add) le_rfl t h
 
 omit [DenselyOrdered α] [l.NeBot] in
 /-- A finite sum of above-bounded functions is above-bounded. -/
 private lemma sum_isBoundedUnder_le {κ : Type*} (g : κ → ι → α) (t : Finset κ)
     (h : ∀ j ∈ t, l.IsBoundedUnder (· ≤ ·) (g j)) :
-    l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ t, g j x) := by
-  classical
-  induction t using Finset.induction with
-  | empty => simpa using (isBoundedUnder_const (r := (· ≤ ·)) (l := l) (a := (0 : α)))
-  | insert a s ha ih =>
-      simpa [Finset.sum_insert ha, Pi.add_def] using
-        isBoundedUnder_le_add (h a (Finset.mem_insert_self a s))
-          (ih fun j hj ↦ h j (Finset.mem_insert_of_mem hj))
+    l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ t, g j x) :=
+  funext (fun x ↦ Finset.sum_apply x t g) ▸
+    Filter.isBoundedUnder_sum (fun _ _ ↦ isBoundedUnder_le_add) le_rfl t h
 
 /-- Superadditivity of `liminf` over a `Finset.sum`: the sum of the `liminf`s is
 at most the `liminf` of the sum. -/
@@ -1649,22 +1581,11 @@ theorem chebotarev_abelian
         / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
     (fun τ ↦ ?_) (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
   · simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
-  -- each ratio of nonnegative Dirichlet sums is `≥ 0`, hence bounded below by `0`
   · have hzeta_nonneg : ∀ (S : Set (Ideal (𝓞 K))) (s : ℝ), 0 ≤ primeIdealZetaSum S s := by
       intro S s
       rw [primeIdealZetaSum_def]
       exact tsum_nonneg fun _ ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _
     exact isBoundedUnder_of_eventually_ge (a := 0)
       (Filter.Eventually.of_forall fun s ↦ div_nonneg (hzeta_nonneg _ s) (hzeta_nonneg _ s))
-
-/-- The lower-density bound `δ_inf ≥ |H_n|/(|G|·|H|)` from the full abelian
-density, extracted via `HasDirichletDensity.hasLower`. -/
-theorem chebotarev_abelian_lowerDensity_per_m
-    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) :
-    HasLowerDirichletDensity
-      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
-        frobeniusClass K L 𝔭 = ConjClasses.mk σ}
-      ((Nat.card Gal(L/K) : ℝ)⁻¹) :=
-  (chebotarev_abelian K L σ).hasLower
 
 end Chebotarev
