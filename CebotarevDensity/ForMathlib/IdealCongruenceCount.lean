@@ -961,7 +961,6 @@ private theorem mem_span_int_basisFun_iff {ι : Type*} [Finite ι] (v : ι → �
     exact sum_mem (fun i _ => zsmul_mem (subset_span (Set.mem_range_self i)) _)
 
 open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
-set_option backward.isDefEq.respectTransparency false in
 open Classical in
 /-- **Residue-decorated torsion bridge.** Mathlib's `card_isPrincipal_dvd_norm_le` refined by a
 norm-residue condition: the number of `J`-divisible principal ideals of norm `≤ s` whose norm is
@@ -1034,7 +1033,6 @@ private theorem card_isPrincipal_dvd_norm_le_residue {K : Type*} [Field K] [Numb
 
 /-! ### The per-(orthant, coset) workhorse wrapper -/
 
-set_option linter.unusedFintypeInType false in
 /-- **Per-cell effective count.** Specialisation of the workhorse
 `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` to the `m`-sublattice `m • (T '' ℤ^ι)`
 (realised as `T' '' ℤ^ι` with `T' = (m • ·) ∘ T`) and the orthant-cut region `D₀ ∩ orthant`
@@ -1046,7 +1044,7 @@ private theorem exists_card_cell_sub_mul_rpow_le {ι : Type*} [Fintype ι]
     (hbdd : Bornology.IsBounded D₀) (hmeas : MeasurableSet D₀)
     (hlip : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
       (∀ j, LipschitzWith M (φ j)) ∧ frontier D₀ ⊆ ⋃ j, φ j '' Set.Icc 0 1)
-    {κ : Type*} [Fintype κ] (g : κ → ι) (s : Finset κ) :
+    {κ : Type*} [Finite κ] (g : κ → ι) (s : Finset κ) :
     ∃ leadC C : ℝ, ∀ ξ : ι → ℝ, ∀ t : ℝ, 1 ≤ t →
       |(Nat.card ↑((ξ +ᵥ
           (((LinearEquiv.smulOfNeZero ℝ (ι → ℝ) (m : ℝ) hm).trans T) ''
@@ -1060,6 +1058,7 @@ private theorem exists_card_cell_sub_mul_rpow_le {ι : Type*} [Fintype ι]
   have hDsbdd : Bornology.IsBounded Ds := hbdd.subset Set.inter_subset_left
   have hOclosed : IsClosed {y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} := by
     classical
+    have : Fintype κ := Fintype.ofFinite κ
     rw [setOf_and]
     refine IsClosed.inter ?_ ?_
     · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) ≤ 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) ≤ 0} := by
@@ -1123,28 +1122,24 @@ private theorem sub_mem_nsmul_of_coord_eq {K : Type*} [Field K] [NumberField K]
       (∀ i, (T.symm (Φ x)) i = (n i : ℝ)) →
         ∀ i, round ((T.symm (Φ x)) i) = n i := fun x n h i => by
     rw [h i, round_intCast]
-  -- coordinatewise divisibility, then the integer quotient vector `p`
   have hdvd : ∀ i, (m : ℤ) ∣ (n₁ i - n₂ i) := fun i => by
     have h := hcos i
     rw [hround x₁ n₁ hn₁ i, hround x₂ n₂ hn₂ i] at h
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd, Int.cast_sub, sub_eq_zero]
     exact h
   choose p hp using hdvd
-  -- the chart difference is `m` times the integer vector `p`
   have hdiff : T.symm (Φ x₁) - T.symm (Φ x₂) = (m : ℝ) • (fun i => (p i : ℝ)) := by
     funext i
     rw [Pi.sub_apply, Pi.smul_apply, hn₁ i, hn₂ i, smul_eq_mul]
     have hZ : (n₁ i - n₂ i : ℤ) = (m : ℤ) * p i := hp i
     have : (n₁ i : ℝ) - (n₂ i : ℝ) = (m : ℝ) * (p i : ℝ) := by exact_mod_cast hZ
     linarith
-  -- `T (↑p)` lies in the lattice image, so `↑p` lifts to a lattice element `z`
   have hpmem : (fun i => (p i : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) :=
     (mem_span_int_basisFun_iff _).mpr (fun i => ⟨p i, rfl⟩)
   have hTp : T (fun i => (p i : ℝ)) ∈ Φ '' (mixedEmbedding.idealLattice K
       (FractionalIdeal.mk0 K J) : Set (mixedSpace K)) := by
     rw [← hT]; exact ⟨_, hpmem, rfl⟩
   obtain ⟨z, hzmem, hzeq⟩ := hTp
-  -- transport the difference back through `Φ`
   refine ⟨z, hzmem, ?_⟩
   have hkey : Φ (x₁ - x₂) = Φ ((m : ℝ) • z) := by
     rw [map_sub, map_smul]
@@ -1171,7 +1166,6 @@ private theorem norm_zmod_eq_of_emb_sub_mem {K : Type*} [Field K] [NumberField K
   simp only [FractionalIdeal.coe_mk0] at hyK
   obtain ⟨w, _, hweq⟩ := hyK
   rw [Algebra.linearMap_apply] at hweq
-  -- `x = y + m·w` in `𝓞 K`
   have hkey : mixedEmbedding K ((x - y : 𝓞 K) : K)
       = mixedEmbedding K (((m : 𝓞 K) * w : 𝓞 K) : K) := by
     push_cast
@@ -1233,13 +1227,11 @@ private theorem mem_coset_iff_cos_eq {K : Type*} [Field K] [NumberField K]
   rw [← hΦ] at hn
   have hround : ∀ i, round ((T.symm (Φ x)) i) = n i := fun i => by rw [hn i, round_intCast]
   simp only [hround, Set.mem_vadd_set, Set.mem_image, SetLike.mem_coe]
-  -- reduce the goal class equality to the integer divisibility criterion
   have hgoal : (∀ i, ((n i : ZMod m)) = k i) ↔ (∀ i, (m : ℤ) ∣ (n i - (k i).val)) := by
     refine forall_congr' fun i => ?_
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd, Int.cast_sub, sub_eq_zero, Int.cast_natCast,
       ZMod.natCast_zmod_val]
   rw [hgoal]
-  -- key: the coset element corresponds to the integer vector `p` with `n i = (k i).val + m·p i`
   have hkey : ∀ p : index K → ℤ,
       (T ((fun i => ((k i).val : ℝ)) + (m : ℝ) • (fun i => (p i : ℝ))) = Φ x) ↔
         (∀ i, n i = (k i).val + (m : ℤ) * p i) := fun p => by
@@ -1268,6 +1260,78 @@ private theorem mem_coset_iff_cos_eq {K : Type*} [Field K] [NumberField K]
       ⟨_, (mem_span_int_basisFun_iff _).mpr (fun i => ⟨p i, rfl⟩), rfl⟩, ?_⟩
     rw [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, vadd_eq_add, ← map_add]
     exact (hkey p).mpr (fun i => by have := hp i; omega)
+
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
+  NumberField.InfinitePlace Classical in
+/-- **Cone-cell membership ⟺ norm bound and sign pattern.** For a cone point `x ∈ idealSet K J`
+and `t ≥ 1`, the chart image `Φ x` lies in the dilated orthant cell
+`t • (Φ '' normLeOne K ∩ orthant_s)` iff `mixedEmbedding.norm x ≤ t^d` and the negative real
+coordinates of `x` are exactly `s`. Shared region-membership step of `card_fibre_eq_card_cell`
+and `exists_card_fibre_dvd_eq_card_cell`. -/
+private theorem mem_smul_cell_iff_norm_le_and_filter_eq {K : Type*} [Field K] [NumberField K]
+    (J : (Ideal (𝓞 K))⁰) (s : Finset {w : InfinitePlace K // IsReal w}) {t : ℝ} (ht : 1 ≤ t)
+    {x : mixedSpace K} (hx : x ∈ idealSet K J) :
+    (mixedEmbedding.stdBasis K).equivFunL x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL ''
+        (normLeOne K) ∩ {y : index K → ℝ |
+          (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))}) ↔
+      (mixedEmbedding.norm x ≤ t ^ Module.finrank ℚ K ∧
+        Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s) := by
+  classical
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
+  set d := Module.finrank ℚ K with hd
+  have hΦreal : ∀ (x : mixedSpace K) (w : {w : InfinitePlace K // IsReal w}),
+      Φ x (Sum.inl w) = x.1 w := fun x w => by
+    rw [hΦ, Module.Basis.equivFunL_apply, mixedEmbedding.stdBasis_apply_isReal]
+  have hcone : {x : mixedSpace K | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d}
+      = t • normLeOne K := cone_normLe_eq_smul_normLeOne ht
+  have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
+  have htinv : (0 : ℝ) < t⁻¹ := inv_pos.mpr (lt_of_lt_of_le one_pos ht)
+  have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
+    Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
+  have hnz : ∀ x ∈ t • normLeOne K, ∀ w : {w : InfinitePlace K // IsReal w}, x.1 w ≠ 0 := by
+    rintro _ ⟨z, hz, rfl⟩ w
+    have hcx : t • z ∈ fundamentalCone K := smul_mem_of_mem hz.1 ht0
+    have hp := fundamentalCone.normAtPlace_pos_of_mem hcx w.1
+    rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
+    exact fun h => by simp [h] at hp
+  rw [Set.smul_set_inter₀ ht0, Set.mem_inter_iff, ← himg]
+  constructor
+  · rintro ⟨hmem, horth⟩
+    rw [Set.mem_image] at hmem
+    obtain ⟨z, hz, hzeq⟩ := hmem
+    have hxcone : x ∈ t • normLeOne K := by rwa [Φ.injective hzeq] at hz
+    have hnorm : x ∈ {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d} := by
+      rw [hcone]; exact hxcone
+    refine ⟨hnorm.2, ?_⟩
+    ext w
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0] at horth
+    obtain ⟨hneg, hpos⟩ := horth
+    refine ⟨fun hlt => ?_, fun hw => ?_⟩
+    · by_contra hws
+      have h2 := hpos w hws
+      rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
+      nlinarith [h2, htinv, hlt]
+    · have h2 := hneg w hw
+      rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
+      rcases lt_or_gt_of_ne (hnz x hxcone w) with h | h
+      · exact h
+      · nlinarith [h2, htinv, h]
+  · rintro ⟨hnorm, horth⟩
+    have hxcone : x ∈ t • normLeOne K := by rw [← hcone]; exact ⟨hx.1, hnorm⟩
+    refine ⟨⟨x, hxcone, rfl⟩, ?_⟩
+    rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0]
+    refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+    · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
+      have hlt : x.1 w < 0 := by
+        have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := horth ▸ hw
+        simpa using this
+      nlinarith [hlt, htinv]
+    · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
+      have hxw : ¬ x.1 w < 0 := fun hlt => hw (by
+        have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := by simpa using hlt
+        rwa [horth] at this)
+      nlinarith [not_lt.mp hxw, htinv]
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
@@ -1300,13 +1364,6 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
   set d := Module.finrank ℚ K with hd
   set T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ) :=
     (LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T with hT'
-  -- real coordinates of `Φ x` are the real coordinates of `x`
-  have hΦreal : ∀ (x : mixedSpace K) (w : {w : InfinitePlace K // IsReal w}),
-      Φ x (Sum.inl w) = x.1 w := fun x w => by
-    rw [hΦ, Module.Basis.equivFunL_apply, mixedEmbedding.stdBasis_apply_isReal]
-  -- the cone-region homogeneity
-  have hcone : {x : mixedSpace K | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d}
-      = t • normLeOne K := cone_normLe_eq_smul_normLeOne ht
   set f : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
       (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
         (a : mixedSpace K).1 w < 0) = s) ∧
@@ -1316,63 +1373,15 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
     apply Subtype.ext; apply Subtype.ext
     exact Φ.injective h
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
-  have htinv : (0 : ℝ) < t⁻¹ := inv_pos.mpr (lt_of_lt_of_le one_pos ht)
   have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
     Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
   set Os : Set (index K → ℝ) :=
     {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))} with hOs
-  -- cone points have nonzero real coordinates
-  have hnz : ∀ x ∈ t • normLeOne K, ∀ w : {w : InfinitePlace K // IsReal w}, x.1 w ≠ 0 := by
-    rintro _ ⟨z, hz, rfl⟩ w
-    have hcx : t • z ∈ fundamentalCone K := smul_mem_of_mem hz.1 ht0
-    have hp := fundamentalCone.normAtPlace_pos_of_mem hcx w.1
-    rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
-    exact fun h => by simp [h] at hp
-  -- the region membership equivalence
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
       (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
         (mixedEmbedding.norm x ≤ t ^ d ∧
-          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) := by
-    intro x hx
-    rw [Set.smul_set_inter₀ ht0, Set.mem_inter_iff, ← hΦ, ← himg]
-    constructor
-    · rintro ⟨hmem, horth⟩
-      rw [Set.mem_image] at hmem
-      obtain ⟨z, hz, hzeq⟩ := hmem
-      have hxcone : x ∈ t • normLeOne K := by rwa [Φ.injective hzeq] at hz
-      have hnorm : x ∈ {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d} := by
-        rw [hcone]; exact hxcone
-      refine ⟨hnorm.2, ?_⟩
-      ext w
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0] at horth
-      obtain ⟨hneg, hpos⟩ := horth
-      refine ⟨fun hlt => ?_, fun hw => ?_⟩
-      · by_contra hws
-        have h2 := hpos w hws
-        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
-        nlinarith [h2, htinv, hlt]
-      · have h2 := hneg w hw
-        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
-        rcases lt_or_gt_of_ne (hnz x hxcone w) with h | h
-        · exact h
-        · nlinarith [h2, htinv, h]
-    · rintro ⟨hnorm, horth⟩
-      have hxcone : x ∈ t • normLeOne K := by rw [← hcone]; exact ⟨hx.1, hnorm⟩
-      refine ⟨⟨x, hxcone, rfl⟩, ?_⟩
-      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0]
-      refine ⟨fun w hw => ?_, fun w hw => ?_⟩
-      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
-        have hlt : x.1 w < 0 := by
-          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := horth ▸ hw
-          simpa using this
-        nlinarith [hlt, htinv]
-      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
-        have hxw : ¬ x.1 w < 0 := fun hlt => hw (by
-          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := by simpa using hlt
-          rwa [horth] at this)
-        nlinarith [not_lt.mp hxw, htinv]
-  -- the coset is contained in the chart image of the ideal lattice
+          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) :=
+    fun x hx => mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
   have hsub : ((T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
       (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
         (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))))
@@ -1444,7 +1453,6 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le {K : Type*} [Field K] 
   set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
   have hcard : Fintype.card (index K) = Module.finrank ℚ K := by
     rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]
-  -- residue is determined by (orthant, coset)
   have hconst : ∀ a a' : idealSet K J,
       Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => (a : mixedSpace K).1 w < 0)
         = s →
@@ -1490,14 +1498,12 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le {K : Type*} [Field K] 
         rw [congrFun hcos i, congrFun hcos' i])
     push_cast
     rw [hnormeq]
-  -- abbreviation for the residue-free fibre predicate
   by_cases hQ : ∃ a : idealSet K J,
       (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
         (a : mixedSpace K).1 w < 0) = s) ∧
       ((fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))
-  · -- residue holds on the whole cell: count equals the cell count
-    obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
+  · obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
     obtain ⟨leadC, cellC, hcell⟩ := exists_card_cell_sub_mul_rpow_le T m hm
       (Φ '' (normLeOne K)) (Φ.lipschitz.isBounded_image (isBounded_normLeOne K))
       ((Φ.toHomeomorph.toMeasurableEquiv).measurableSet_image.mpr (measurableSet_normLeOne K))
@@ -1525,8 +1531,7 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le {K : Type*} [Field K] 
       rw [hcard]
     rw [hpow1, hpow2]
     exact hcell (T (fun i => ((k i).val : ℝ))) t ht
-  · -- residue fails on the whole cell: count is zero
-    refine ⟨0, 0, fun t ht => ?_⟩
+  · refine ⟨0, 0, fun t ht => ?_⟩
     have hempty : IsEmpty {a : idealSet K J //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
           ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
@@ -1613,7 +1618,6 @@ private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberFie
   have hcov : ∃ (mc : ℕ) (M : ℝ≥0) (φ : Fin mc → (Fin (Fintype.card (index K) - 1) → ℝ) →
       (index K → ℝ)), (∀ j, LipschitzWith M (φ j)) ∧
       frontier (Φ '' (normLeOne K)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := ⟨mc, M, φ, hφ, hcovraw⟩
-  -- per-(orthant,coset) effective estimates
   choose L C hLC using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) =>
     exists_card_residue_fibre_sub_mul_rpow_le m hm b J T hT hcov p.1 p.2
   refine ⟨(∑ p, L p) * NJ, (∑ p, |C p|) * (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹), fun N hN => ?_⟩
@@ -1625,7 +1629,6 @@ private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberFie
   have htNd : tN ^ d = ((N * NJ : ℕ) : ℝ) := by
     rw [htN, ← Real.rpow_natCast (((N * NJ : ℕ) : ℝ) ^ ((d : ℝ)⁻¹)) d, ← Real.rpow_mul
       (by positivity), inv_mul_cancel₀ hdne, Real.rpow_one]
-  -- partition the count by (orthant, coset)
   have hpart : Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
         ((N * NJ : ℕ) : ℝ) ∧ ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))}
       = ∑ p : Finset {w : NumberField.InfinitePlace K // NumberField.InfinitePlace.IsReal w} ×
@@ -1667,7 +1670,6 @@ private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberFie
       left_inv := fun _ => rfl
       right_inv := fun _ => rfl }
   rw [hpart, Nat.cast_sum]
-  -- the error exponent: `tN^(d-1) = N^(1-1/d) · NJ^(1-1/d)`
   have htNd1 : tN ^ (d - 1 : ℕ) = (N : ℝ) ^ (1 - (d : ℝ)⁻¹) * (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
     have hdcast : ((d - 1 : ℕ) : ℝ) = (d : ℝ) - 1 := by
       rw [Nat.cast_sub hdpos]; simp
@@ -1675,7 +1677,6 @@ private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberFie
       ← Real.rpow_mul (by positivity), hdcast, Nat.cast_mul,
       Real.mul_rpow (Nat.cast_nonneg N) (Nat.cast_nonneg NJ)]
     congr 1 <;> · rw [inv_mul_eq_div, sub_div, div_self hdne, one_div]
-  -- rewrite the leading term as a sum and bound termwise
   have hlead : (∑ p, L p) * (NJ : ℝ) * (N : ℝ) = ∑ p, L p * tN ^ d := by
     rw [← Finset.sum_mul]
     rw [htNd]; push_cast; ring
@@ -1772,10 +1773,8 @@ private theorem exists_card_norm_le_residue_class_eq_sub_mul_rpow_le
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  -- Pick a representative `J` of `C⁻¹`.
   obtain ⟨J, hJ⟩ := ClassGroup.mk0_surjective C⁻¹
   have hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K)) := absNorm_pos_of_nonZeroDivisors J
-  -- The residue on the principalized side is modulo `c·N(J)` at value `a.val·N(J)`.
   haveI : NeZero (c * Ideal.absNorm (J : Ideal (𝓞 K))) :=
     ⟨Nat.mul_ne_zero (NeZero.ne c) hNJ.ne'⟩
   obtain ⟨κ, C', hκ⟩ := exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
@@ -1795,7 +1794,6 @@ private theorem tendsto_div_atTop_of_sub_mul_rpow_le {f : ℕ → ℝ} {κ C' : 
     Filter.Tendsto (fun N : ℕ => f N / (N : ℝ)) Filter.atTop (nhds κ) := by
   have hdne : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hd.ne'
   have hdpos : (0 : ℝ) < (d : ℝ)⁻¹ := by positivity
-  -- The dominating sequence `|C'| · N^{-1/d}` tends to `0`.
   have hzero : Filter.Tendsto (fun N : ℕ => |C'| * (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
       by
     have h1 : Filter.Tendsto (fun x : ℝ => x ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
@@ -1803,7 +1801,6 @@ private theorem tendsto_div_atTop_of_sub_mul_rpow_le {f : ℕ → ℝ} {κ C' : 
     have h2 : Filter.Tendsto (fun N : ℕ => (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
       h1.comp tendsto_natCast_atTop_atTop
     simpa using h2.const_mul |C'|
-  -- Squeeze `‖f N / N - κ‖ = |f N / N - κ|` between `0` and the dominating sequence.
   rw [tendsto_iff_norm_sub_tendsto_zero]
   refine squeeze_zero' (Filter.Eventually.of_forall fun N => norm_nonneg _) ?_ hzero
   filter_upwards [Filter.eventually_ge_atTop 1] with N hN
@@ -1812,7 +1809,6 @@ private theorem tendsto_div_atTop_of_sub_mul_rpow_le {f : ℕ → ℝ} {κ C' : 
   rw [Real.norm_eq_abs, div_sub' hNne, abs_div, abs_of_pos hNpos, div_le_iff₀ hNpos,
     mul_comm (N : ℝ) κ]
   refine (hbound N hN).trans ?_
-  -- `C' · N^{1-1/d} ≤ |C'| · N^{-1/d} · N`, using `N^{1-1/d} = N^{-1/d} · N`.
   have hsplit : (N : ℝ) ^ (1 - (d : ℝ)⁻¹) = (N : ℝ) ^ (-(d : ℝ)⁻¹) * (N : ℝ) := by
     rw [show (1 : ℝ) - (d : ℝ)⁻¹ = -(d : ℝ)⁻¹ + 1 by ring, Real.rpow_add hNpos, Real.rpow_one]
   rw [hsplit, ← mul_assoc]
@@ -1833,11 +1829,9 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  -- Per-class constants.
   choose κf C'f hκf using fun C : ClassGroup (𝓞 K) =>
     exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c a C
   refine ⟨∑ C : ClassGroup (𝓞 K), κf C, ∑ C : ClassGroup (𝓞 K), |C'f C|, fun N hN => ?_⟩
-  -- Split the count and the leading term over the class group.
   rw [card_norm_le_residue_eq_sum_class c a N]
   rw [show ((∑ C : ClassGroup (𝓞 K),
         Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
@@ -1896,49 +1890,11 @@ private theorem sum_char_apply_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Fini
   · exact h
 
 open scoped Classical in
-/-- **κ-uniformity over the realized-residue subgroup (the geometric core).** The Dirichlet
-density of ideals with a fixed norm residue is **constant on the subgroup `S` of realized
-residues**: if `a, a' ∈ S` and the counts `cardNormLeResidue K c a` and `cardNormLeResidue K c a'`
-have densities `κ` and `κ'` (limits of `count / N`), then `κ = κ'`.
-
-This is the analytic heart of the Chebotarev abelian step (the `g`-independence of the
-Frobenius-fibre density over the image subgroup of ideal norms — the `ℚ(i)`-trap avoidance:
-uniformity over the **image subgroup**, never over all of `(ℤ/c)ˣ`).
-
-### Status: the single remaining gap of `IdealCongruenceCount`.
-
-The classical statement (Lang, *Algebraic Number Theory* GTM 110, Ch. VI §3 Thm 3;
-Gun–Ramaré–Sivaraman, JNT 243 (2023), Thm 1) is **true**, but the elementary `κ`-transfer
-sketched in earlier drafts (multiply by a realizing ideal `𝔟`, sandwich) does **not** close:
-multiplication by `𝔟` scales the norm by `N𝔟 ≥ 1`, so it only yields the lossy
-`κ_a ≤ N𝔟 · κ_{a·t}` (and, with the inverse, `1 ≤ N𝔟 · N𝔟'`), never the needed equality —
-there is no norm-preserving ideal map shifting the residue. The genuine proof is geometric and
-goes through the per-`(orthant, coset)` cell structure already built in this file
-(`exists_card_idealSet_residue_le`): the per-residue density is
-`κ_a = N(J)·∑_{cells (s,k)} ⟦residue holds on cell⟧ · vol(D₀ ∩ orthant s)/|det T'|`, summed over
-ideal classes. Two ingredients close it:
-
-* **Orthant volume symmetry.** `vol(D₀ ∩ orthant s)` is independent of the sign pattern `s`,
-  since `D₀ = Φ '' normLeOne K` is sign-symmetric (mathlib's `volume_negAt_plusPart` /
-  `volume_eq_two_pow_mul_volume_plusPart`, transported through the chart `Φ`). Hence each cell
-  contributes the same `κ₀ = vol(D₀)/(2^{r₁}·|det T'|)` and `κ_a = κ₀·N(J)·#{qualifying cells}`.
-
-* **Equinumerosity of qualifying cells across `S`.** Multiplication by an element `y ∈ 𝓞 K`
-  invertible mod the per-class modulus `c·N(J)` permutes the cells `(s,k)` and shifts the
-  signed-norm residue by `Norm y`, giving a bijection between the qualifying-cell sets for
-  residues `a` and `a·(Norm y)`. The obstruction is that this needs **element** realizers `y`
-  coprime to `c·N(J)`, whereas the available hypothesis `hS` supplies **ideal** realizers `𝔟`
-  with no control of coprimality to the (class-dependent) factor `N(J)`.
-
-**The proof here is instead the Fourier route**: the hypothesis `hF` — for every nontrivial
-character `χ` of `S`, the `χ`-twisted count average `(∑_{s ∈ S} χ(s)·count_s(N))/N → 0` — says
-all nontrivial Fourier coefficients of the density function `s ↦ κ_s` on `S` vanish, so by
-finite-abelian Fourier inversion (`sum_char_apply_eq_zero_of_ne_one` orthogonality) that
-function is constant on `S`. `hF` is discharged by the Gap-B consumer (`ZetaProduct.lean`) via
-the proven LF3 character-sum bound `character_sum_geometry_of_numbers_bound` through
-`autToPow_frobeniusClass_out`: each character of the realized subgroup pulls back to a Galois
-character of `Gal(K(μ_m)/K)`, and the twisted counts are the `galoisCharacterOnIdeal` partial
-sums up to the bad-prime corrections. -/
+/-- **κ-uniformity over the realized-residue subgroup.** Under Fourier-decay `hF` (all nontrivial
+`S`-character twists of the residue counts have vanishing density), the residue-count densities
+`κ, κ'` of any `a, a' ∈ S` coincide. Proof by finite-abelian Fourier inversion: `hF` says every
+nontrivial Fourier coefficient of `s ↦ κ_s` on `S` vanishes, so column orthogonality
+(`sum_char_apply_eq_zero_of_ne_one`) makes `κ_·` constant on `S`. -/
 private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field K] [NumberField K]
     {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
     (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
@@ -1957,12 +1913,11 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
     exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
   have hκa : κ = κf ⟨a, ha⟩ := tendsto_nhds_unique hκ (hκf ⟨a, ha⟩)
   have hκa' : κ' = κf ⟨a', ha'⟩ := tendsto_nhds_unique hκ' (hκf ⟨a', ha'⟩)
-  -- All nontrivial `S`-Fourier coefficients of `s ↦ κf s` vanish.
   have hhat : ∀ χ : S →* ℂˣ, χ ≠ 1 →
       ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) = 0 := by
     intro χ hχ
     refine tendsto_nhds_unique ?_ (hF χ hχ)
-    have hsum := tendsto_finset_sum Finset.univ fun s (_ : s ∈ Finset.univ) =>
+    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) =>
       ((Complex.continuous_ofReal.tendsto (κf s)).comp (hκf s)).const_mul ((χ s : ℂˣ) : ℂ)
     refine hsum.congr fun N => ?_
     rw [Finset.sum_div]
@@ -1970,7 +1925,6 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
     simp only [Function.comp_apply]
     push_cast
     ring
-  -- Fourier inversion: `card · κf u = ∑ κf` for every `u`, hence `κf` is constant.
   have hinv : ∀ u : S, (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ) = ∑ s : S, (κf s : ℂ) := by
     intro u
     have horth : ∀ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ))
@@ -2011,24 +1965,13 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
   exact_mod_cast hfc
 
 open scoped Classical in
-/-- **Norm-residue density transfer (κ-uniformity over realized residues).** Under the
-Fourier-decay hypothesis `hF` — for every nontrivial character `χ` of `S ≤ (ℤ/c)ˣ`, the
-`χ`-twisted count average over `S` tends to `0` — the leading densities of
-`exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` can be taken **equal across `S`**: there
-is **one** pair `(κ, C')` for which the effective estimate
-`|#{N(I) ≤ N, N(I) ≡ a} − κ·N| ≤ C'·N^{1-1/d}` holds for every `a ∈ S` simultaneously. This is
-the `g`-independence input of the Frobenius-fibre equidistribution (the `ℚ(i)`-trap avoidance:
-uniformity over the **image subgroup** of ideal norms, never over all of `(ℤ/c)ˣ`).
-
-`hF` is discharged by the consumer (Gap B in `ZetaProduct.lean`) via the proven
-`character_sum_geometry_of_numbers_bound` (LF3) through `autToPow_frobeniusClass_out`: each
-`S`-character pulls back to a Galois character, and the twisted counts are the
-`galoisCharacterOnIdeal` partial sums up to bad-prime corrections.
-
-Proof: the per-residue leading constants are the limits of `count / N`
-(`tendsto_div_atTop_of_sub_mul_rpow_le`), so they are constant on `S` by Fourier inversion
-(`cardNormLeResidue_density_eq_of_mem_subgroup`); take that common value as `κ` and the sum of
-the per-residue error constants over the finite `ZMod c` as `C'`. -/
+/-- **Norm-residue density transfer.** Under Fourier-decay `hF` (every nontrivial `S`-character
+twist of the residue counts has vanishing density), the effective estimate
+`|#{N(I) ≤ N, N(I) ≡ a} − κ·N| ≤ C'·N^{1-1/d}` holds with a single pair `(κ, C')` for all `a ∈ S`
+simultaneously. The per-residue leading constants are the limits of `count / N`
+(`tendsto_div_atTop_of_sub_mul_rpow_le`), hence constant on `S`
+(`cardNormLeResidue_density_eq_of_mem_subgroup`); `κ` is that common value and `C'` the sum of the
+per-residue error constants over `ZMod c`. -/
 theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
     (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (S : Subgroup (ZMod c)ˣ)
     (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
@@ -2043,20 +1986,16 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  -- Per-residue effective constants and the per-residue density (limit of `count / N`).
   choose κf C'f hκf using exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le K c
   choose κlim hκlim using exists_tendsto_cardNormLeResidue_div K c
-  -- The leading constant for residue `a` is its density.
   have hκfeq : ∀ a : ZMod c, κf a = κlim a := fun a =>
     tendsto_nhds_unique
       (tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hκf a N hN)) (hκlim a)
   refine ⟨κlim ((1 : (ZMod c)ˣ) : ZMod c), ∑ b : ZMod c, |C'f b|, fun a ha N hN => ?_⟩
-  -- Constancy of the density over `S`: `κlim a = κlim 1`.
   have hconst : κlim ((a : (ZMod c)ˣ) : ZMod c) = κlim ((1 : (ZMod c)ˣ) : ZMod c) :=
     cardNormLeResidue_density_eq_of_mem_subgroup hF ha (one_mem S)
       (hκlim ((a : (ZMod c)ˣ) : ZMod c)) (hκlim ((1 : (ZMod c)ˣ) : ZMod c))
   rw [← hconst, ← hκfeq ((a : (ZMod c)ˣ) : ZMod c)]
-  -- Reduce to the per-residue effective bound and dominate the error constant.
   refine (hκf ((a : (ZMod c)ˣ) : ZMod c) N hN).trans
     (mul_le_mul_of_nonneg_right ?_ (Real.rpow_nonneg (Nat.cast_nonneg N) _))
   exact (le_abs_self _).trans (Finset.single_le_sum
