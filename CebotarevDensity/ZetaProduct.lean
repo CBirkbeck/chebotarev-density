@@ -122,7 +122,7 @@ theorem galoisCharacterOnIdeal_mul
     Multiset.map_add, Multiset.prod_add]
 
 /-- The ideal character of the unit ideal `⊤` is `1` (empty product). -/
-theorem galoisCharacterOnIdeal_one
+@[simp] theorem galoisCharacterOnIdeal_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) :
     galoisCharacterOnIdeal K L χ ⊤ = 1 := by
@@ -473,7 +473,7 @@ noncomputable def frobeniusIdeal (K L : Type*) [Field K] [NumberField K] [Field 
 
 open Classical in
 /-- `frobeniusIdeal` of a prime is the chosen Frobenius representative. -/
-theorem frobeniusIdeal_apply_prime
+@[simp] theorem frobeniusIdeal_apply_prime
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [IsMulCommutative Gal(L/K)] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) :
     frobeniusIdeal K L 𝔭 = (frobeniusClass K L 𝔭).out := by
@@ -492,7 +492,7 @@ theorem frobeniusIdeal_mul
     UniqueFactorizationMonoid.normalizedFactors_mul h𝔞 h𝔟, Multiset.map_add, Multiset.prod_add]
 
 /-- `frobeniusIdeal` of the unit ideal is `1` (empty product). -/
-theorem frobeniusIdeal_one
+@[simp] theorem frobeniusIdeal_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [IsMulCommutative Gal(L/K)] :
     frobeniusIdeal K L ⊤ = 1 := by
@@ -2221,7 +2221,7 @@ private theorem finite_nonzeroIdeal_absNorm_eq
     (fun _ _ _ _ => Subtype.ext)
 
 /-- The `0`-th coefficient vanishes: no nonzero ideal has norm `0`, so the fibre is empty. -/
-private theorem galoisCharacterCoeff_zero
+@[simp] private theorem galoisCharacterCoeff_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) : galoisCharacterCoeff K L χ 0 = 0 := by
   have : IsEmpty {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = 0} :=
@@ -2750,10 +2750,32 @@ private def fiberUnderEquiv
   left_inv 𝔓 := by ext; rfl
   right_inv 𝔔 := by ext; rfl
 
-set_option maxHeartbeats 1600000 in
--- The nested `Ideal (𝓞 L)` prime/unramified-below subtypes force repeated `whnf` unfolding during
--- the fiberwise `HasProd.sigma` regrouping; the default heartbeat budget is exhausted on the
--- subtype-equivalence elaboration alone.
+/-- Flatten the doubly-nested unramified-below prime subtype `{{𝔓 // prime ∧ ≠⊥} // unram}` to the
+triply-nested `{𝔓 // prime ∧ ≠⊥ ∧ unram}`. Extracted as a top-level `def` (with a fully ascribed
+signature) so the subtype equivalence is elaborated once, not re-`whnf`'d inside each big
+reindexing proof. -/
+private def unramifiedFlattenEquiv
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
+    {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // UnramifiedIn K L (𝔓.1.under (𝓞 K))} ≃
+      {𝔔 : Ideal (𝓞 L) // 𝔔.IsPrime ∧ 𝔔 ≠ ⊥ ∧ UnramifiedIn K L (𝔔.under (𝓞 K))} where
+  toFun 𝔓 := ⟨𝔓.1.1, 𝔓.1.2.1, 𝔓.1.2.2, 𝔓.2⟩
+  invFun 𝔔 := ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.1⟩, 𝔔.2.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Flatten the doubly-nested ramified-below prime subtype `{{𝔓 // prime ∧ ≠⊥} // ¬unram}` to the
+triply-nested `{𝔓 // prime ∧ ≠⊥ ∧ ¬unram}`. Extracted as a top-level `def` (with a fully ascribed
+signature) so the subtype equivalence is elaborated once, not re-`whnf`'d inside the big reindexing
+proof. -/
+private def ramifiedFlattenEquiv
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
+    {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))} ≃
+      {𝔔 : Ideal (𝓞 L) // 𝔔.IsPrime ∧ 𝔔 ≠ ⊥ ∧ ¬ UnramifiedIn K L (𝔔.under (𝓞 K))} where
+  toFun 𝔓 := ⟨𝔓.1.1, 𝔓.1.2.1, 𝔓.1.2.2, 𝔓.2⟩
+  invFun 𝔔 := ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.1⟩, 𝔔.2.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 /-- The unramified part of the prime-ideal Euler product equals `∏_χ L_χ`. Regroup the unramified
 `L`-primes fibrewise over the `K`-prime below them (`Equiv.sigmaFiberEquiv` +
 `Multipliable.tprod_sigma`); each fibre product is `∏_χ (1 - χ(σ_𝔭) N𝔭^{-s})^{-1}`
@@ -2790,14 +2812,7 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
         (f := fun 𝔓 : {x : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
             UnramifiedIn K L (x.1.under (𝓞 K))} =>
           (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ - 1) hsumU
-    let e : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ UnramifiedIn K L (𝔓.under (𝓞 K))} ≃
-        {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-          UnramifiedIn K L (𝔓.1.under (𝓞 K))} :=
-      { toFun := fun 𝔓 => ⟨⟨𝔓.1, 𝔓.2.1, 𝔓.2.2.1⟩, 𝔓.2.2.2⟩
-        invFun := fun 𝔓 => ⟨𝔓.1.1, 𝔓.1.2.1, 𝔓.1.2.2, 𝔓.2⟩
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl }
-    exact (Equiv.multipliable_iff e).mpr hmul1
+    exact (Equiv.multipliable_iff (unramifiedFlattenEquiv K L).symm).mpr hmul1
   -- each fibre over `c` is finite (finitely many primes above `c`) and its product is `G c`
   have hfibHasProd : ∀ c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       HasProd (fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
@@ -2840,10 +2855,60 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
   refine Finset.prod_congr rfl fun χ _ => ?_
   rw [artinDirichletSeries, ← exists_artinLSeries_eulerProduct_abelian K L χ s hs]
 
-set_option maxHeartbeats 800000 in
--- Same nested-subtype `whnf` cost as `tprod_unramified_eq_prod_artinDirichletSeries`: the
--- unramified/ramified `HasProd.mul_compl` partition and the two flattening `Equiv`s on the
--- `Ideal (𝓞 L)` prime subtype overrun the default heartbeat budget.
+/-- Partition `ζ_L`'s prime-ideal Euler product into the unramified-below and ramified-below halves,
+via `HasProd.mul_compl` (the off-the-shelf `tprod_subtype_mul_tprod_subtype_compl` `comp_injective`s
+and whnf-times-out). Extracted from `dedekindZeta_eq_prod_artinDirichletSeries` so the
+`HasProd.mul_compl`/`HasProd.unique` higher-order unification on the `Ideal (𝓞 L)` prime subtype is
+elaborated once. -/
+private theorem dedekindZeta_eq_unramifiedNested_mul_ramifiedNested
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    {s : ℂ} (hs : 1 < s.re) :
+    NumberField.dedekindZeta L s =
+      (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
+          UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹) *
+        ∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
+          ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ := by
+  -- pin the base function `f` and partition set `S` explicitly, so `HasProd.mul_compl` performs
+  -- no higher-order unification (`?f ∘ Subtype.val`) on the nested `Ideal (𝓞 L)` prime subtype —
+  -- that unification is the `whnf` bomb; once `f`/`S` are supplied it is a cheap defeq check.
+  let f : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} → ℂ :=
+    fun 𝔓 => (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
+  let S : Set {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} :=
+    {𝔓 | UnramifiedIn K L (𝔓.1.under (𝓞 K))}
+  have hSU := (multipliable_primeIdeal_factor_subtype L hs
+    (fun 𝔓 => UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
+  have hSUc := (multipliable_primeIdeal_factor_subtype L hs
+    (fun 𝔓 => ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
+  exact ((hSU.mul_compl (f := f) (s := S) hSUc).unique
+    (hasProd_primeIdeal_factor L hs)).symm
+
+/-- The unramified-below half of `ζ_L`'s prime product (in nested-subtype form) equals `∏_χ L_χ`:
+flatten the nested subtype with `unramifiedFlattenEquiv`, then apply
+`tprod_unramified_eq_prod_artinDirichletSeries`. Extracted so the `Equiv.tprod_eq` reindexing is
+elaborated once. -/
+private theorem tprod_unramifiedNested_eq_prod_artin
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] {s : ℂ} (hs : 1 < s.re) :
+    (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
+        UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹)
+      = ∏' χ : galoisCharacter K L, artinDirichletSeries K L χ s := by
+  rw [← tprod_unramified_eq_prod_artinDirichletSeries K L hs]
+  exact Equiv.tprod_eq (unramifiedFlattenEquiv K L)
+    (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
+
+/-- The ramified-below half of `ζ_L`'s prime product (in nested-subtype form) equals the same
+product indexed by the flat triply-nested ramified subtype: flatten with `ramifiedFlattenEquiv`.
+Extracted so the `Equiv.tprod_eq` reindexing is elaborated once. -/
+private theorem tprod_ramifiedNested_eq_ramified
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    {s : ℂ} :
+    (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
+        ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹)
+      = ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
+            ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ := by
+  exact Equiv.tprod_eq (ramifiedFlattenEquiv K L)
+    (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
+
 /-- **The zeta factorisation** (Sharifi 7.1.16, p. 141, with the ramified factor made explicit).
 For `1 < Re s`, `ζ_L(s) = (∏_χ L_χ(s)) · R(s)`, where `L_χ = artinDirichletSeries K L χ` is the
 Euler product over **unramified** primes only, and the correction `R(s)` is the (finite) product of
@@ -2862,45 +2927,8 @@ theorem dedekindZeta_eq_prod_artinDirichletSeries
         ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
             ¬ UnramifiedIn K L (𝔓.under (𝓞 K))},
           (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ := by
-  classical
-  -- partition the prime product into unramified-below vs ramified-below, via `HasProd.mul_compl`
-  -- (the off-the-shelf `tprod_subtype_mul_tprod_subtype_compl` `comp_injective`s and times out)
-  have hSU := (multipliable_primeIdeal_factor_subtype L hs
-    (fun 𝔓 => UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
-  have hSUc := (multipliable_primeIdeal_factor_subtype L hs
-    (fun 𝔓 => ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
-  have hpart : NumberField.dedekindZeta L s =
-      (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-          UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹) *
-        ∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-          ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ :=
-    ((hSU.mul_compl hSUc).unique (hasProd_primeIdeal_factor L hs)).symm
-  rw [hpart]
-  -- the unramified part: flatten the nested subtype to `U`, then apply the unramified lemma
-  have hunr : (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-        UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹)
-      = ∏' χ : galoisCharacter K L, artinDirichletSeries K L χ s := by
-    rw [← tprod_unramified_eq_prod_artinDirichletSeries K L hs]
-    let e : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // UnramifiedIn K L (𝔓.1.under (𝓞 K))} ≃
-        {𝔔 : Ideal (𝓞 L) // 𝔔.IsPrime ∧ 𝔔 ≠ ⊥ ∧ UnramifiedIn K L (𝔔.under (𝓞 K))} :=
-      { toFun := fun 𝔓 => ⟨𝔓.1.1, 𝔓.1.2.1, 𝔓.1.2.2, 𝔓.2⟩
-        invFun := fun 𝔔 => ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.1⟩, 𝔔.2.2.2⟩
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl }
-    exact Equiv.tprod_eq e (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
-  -- the ramified part: flatten the complement subtype to the `R` index
-  have hram : (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-          ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹)
-      = ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-            ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ := by
-    let e : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))} ≃
-        {𝔔 : Ideal (𝓞 L) // 𝔔.IsPrime ∧ 𝔔 ≠ ⊥ ∧ ¬ UnramifiedIn K L (𝔔.under (𝓞 K))} :=
-      { toFun := fun 𝔓 => ⟨𝔓.1.1, 𝔓.1.2.1, 𝔓.1.2.2, 𝔓.2⟩
-        invFun := fun 𝔔 => ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.1⟩, 𝔔.2.2.2⟩
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl }
-    exact Equiv.tprod_eq e (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
-  rw [hunr, hram]
+  rw [dedekindZeta_eq_unramifiedNested_mul_ramifiedNested K L hs,
+    tprod_unramifiedNested_eq_prod_artin K L hs, tprod_ramifiedNested_eq_ramified K L]
 
 /-- The primes `𝔓` of `𝓞 L` lying over a **ramified** `K`-prime form a finite set: only finitely
 many `K`-primes ramify (`finite_ramifiedIn`), and each has finitely many primes above it. -/
