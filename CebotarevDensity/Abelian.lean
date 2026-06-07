@@ -125,7 +125,9 @@ private theorem hasDirichletDensity_biUnion_const {F : Type*} [Field F] [NumberF
       rw [Finset.set_biUnion_insert, hcard]
       exact hbase.union_of_disjoint hdisjUnion hrec
 
-/-- Sharifi 7.2.2 Step 2 cyclotomic-crossing core (p. 144). For `m ≥ 1` and `σ ∈ G`,
+/-! ### Cyclotomic-crossing core `exists_cyclotomicCrossing_fibres` (Sharifi 7.2.2 Step 2)
+
+Sharifi 7.2.2 Step 2 cyclotomic-crossing core (p. 144). For `m ≥ 1` and `σ ∈ G`,
 there is a family of prime sets `S_{σ,τ}` of `K` indexed by `τ ∈ H_n(m) =
 {τ : (ℤ/mℤ)ˣ // |G| ∣ ord τ}`, pairwise disjoint, each contained in the Frobenius
 fibre `S_σ`, and each of Dirichlet density exactly `1/(|G|·|H(m)|)` (with
@@ -159,9 +161,189 @@ around it (mirroring how the analytic gap is isolated in the cyclotomic case).
 As stated with `∀ m ≥ 1` the conclusion is false/unprovable at degenerate `m`; the
 consumer `liminf_ratio_ge_inv_card_G` chooses `m` prime with `m ≡ 1 mod 4·|G|^k`, which
 secures both hypotheses (`m % 4 = 1`; a prime exceeding `|disc L|` is coprime to it). -/
-private theorem exists_cyclotomicCrossing_fibres
+/-! #### Internal decomposition of `exists_cyclotomicCrossing_fibres`
+
+The crossing's geometric content is isolated in the *tagged-family* master leaf
+`exists_crossing_family_tagged` below: it produces the per-`τ` fibre sets `S_{σ,τ}` of `K`
+*together with a single global tag* `t : Ideal (𝓞 K) → (ℤ/mℤ)ˣ` recording the
+`H`-component of each prime's `Gal(M/K) = G × H`-Frobenius. The tag makes distinct-`τ` fibres
+disjoint (a prime has one well-defined `M`-Frobenius), so `exists_cyclotomicCrossing_fibres`
+reduces to that master leaf by a generic *distinct-tags ⟹ pairwise-disjoint* argument
+(`pairwiseDisjoint_of_tag`), with no further geometry.
+
+The master leaf is in turn intended to be discharged from the following five TRUE
+infrastructure leaves (Sharifi 7.2.2 Step 2, p. 144), each independently attackable and
+stated against the compositum `M = L(μ_m)` (carrier `CyclotomicField m L` with its
+`K`-algebra/scalar-tower structure). They are pinned here as the decomposition targets:
+
+* `cyclotomicField_finrank_eq` (C2a) — `[K(μ_m):K] = φ(m)` from `hcop` (the deep
+  ramification/Minkowski input: a prime ramifying in `K(μ_m)` divides `m`, hence is coprime
+  to `disc L`, so `K ∩ L = K` and `Gal(K(μ_m)/K) ≅ (ℤ/mℤ)ˣ` has full order `φ(m)`).
+* `gal_compositum_prod_iso` (C1) — `Gal(M/K) ≅ G × Gal(M/L)` via the restriction-pair, the
+  linear-disjointness `G × H` splitting (uses the degree count C2a / `hcop`).
+* `compositum_isCyclotomic_over_fixedField` (C3) — for any `g ∈ Gal(M/K)` the fixed field
+  `F = M^⟨g⟩` has `M/F` cyclotomic; applied at `g = (σ,τ)`, where the trivial meet
+  `⟨(σ,τ)⟩ ∩ (G × {1}) = 1` (`cyclic_subgroup_meets_G_times_one_trivially`, needs
+  `|G| ∣ ord τ`) gives `M = F(μ_m)`.
+* `frobeniusClass_proj` (C4) — a prime with `Gal(M/K)`-Frobenius `(σ,τ)` has
+  `Gal(L/K)`-Frobenius the projection `σ` (restriction-compatibility of `frobeniusClass`,
+  the `M/L/K`-tower analogue of `Main.arithFrobAt_restrictScalars_eq`; replicated in
+  `Abelian` because `Main` imports `Abelian`).
+* `density_lift_through_fixedField_repl` (C5) — the Step-1 cyclic density transfer through
+  `F/K`, applied to `M/F` (so `chebotarev_cyclotomic` at `M/F` and `(σ,τ)`, density
+  `1/|Gal(M/F)|` of primes of `F`, lifts to density `1/(|G|·|H|)` of primes of `K`). This is
+  a verbatim replica of `Main.density_lift_through_fixedField` (stated for top field `M`):
+  `Main` is below `Abelian` in the import DAG, so the lemma cannot be imported; the
+  orchestrator should reconcile (move the shared statement to a common ancestor, or have
+  `Main` re-export). `hm4` threads into the `chebotarev_cyclotomic` application; `hcop`
+  threads into C1/C2a. -/
+
+/-- Generic disjointness from a global tag: if every member of `S i` carries the same tag
+`f i` under a single function `t`, and `f` is injective, the family `S` is pairwise disjoint.
+Pure set-theory assembly used to derive `exists_cyclotomicCrossing_fibres` from the tagged
+master leaf `exists_crossing_family_tagged`. -/
+private theorem pairwiseDisjoint_of_tag {α ι κ : Type*} (t : α → κ) (f : ι → κ)
+    (hf : Function.Injective f) (S : ι → Set α) (htag : ∀ i, ∀ a ∈ S i, t a = f i) :
+    (Set.univ : Set ι).PairwiseDisjoint S := by
+  intro i _ j _ hij
+  simp only [Function.onFun, Set.disjoint_left]
+  intro a hi hj
+  exact hij (hf ((htag i a hi).symm.trans (htag j a hj)))
+
+/-- **Cyclotomic-crossing tagged master leaf** (Sharifi 7.2.2 Step 2, p. 144). For admissible
+`m` (`hm4 : m % 4 ≠ 2`, `hcop : (disc L).natAbs.Coprime m`) and `σ ∈ G = Gal(L/K)`, there is a
+single global tag `t : Ideal (𝓞 K) → (ℤ/mℤ)ˣ` — the `H`-component of the prime's
+`Gal(M/K) = G × H`-Frobenius, `M = L(μ_m)` — and a family of prime sets `S_{σ,τ}` indexed by
+`τ ∈ H_n = {τ : |G| ∣ ord τ}` such that:
+* each `S_{σ,τ}` lies in the `σ`-Frobenius fibre of `K` (`frobeniusClass_proj`, C4);
+* every prime of `S_{σ,τ}` has tag exactly `τ` (its `M`-Frobenius `H`-component);
+* each `S_{σ,τ}` has Dirichlet density `1/(|G|·|H|)` (`chebotarev_cyclotomic` at `M/F` with
+  `F = M^⟨(σ,τ)⟩`, C3, lifted through `F/K` by `density_lift_through_fixedField_repl`, C5).
+
+The global tag makes the distinct-`τ` fibres disjoint (`pairwiseDisjoint_of_tag`), which is the
+only extra fact `exists_cyclotomicCrossing_fibres` needs on top of this leaf.
+
+This packages the compositum infrastructure (`gal_compositum_prod_iso` (C1),
+`cyclotomicField_finrank_eq` (C2a)) and the per-`τ` density chain (C3/C4/C5); see the
+decomposition note above. `hm4`/`hcop` are threaded verbatim into those leaves. -/
+private theorem exists_crossing_family_tagged
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (_hm : 1 ≤ m)
+    (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
+    ∃ (t : Ideal (𝓞 K) → (ZMod m)ˣ)
+      (S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K))),
+      (∀ τ, S τ ⊆ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
+          frobeniusClass K L 𝔭 = ConjClasses.mk σ}) ∧
+      (∀ τ, ∀ 𝔭 ∈ S τ, t 𝔭 = (τ : (ZMod m)ˣ)) ∧
+      (∀ τ, HasDirichletDensity (S τ)
+          ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
+  sorry
+
+/-! #### Infrastructure leaves for `exists_crossing_family_tagged` (C1–C5)
+
+The five TRUE, independently-attackable leaves the master leaf composes (Sharifi 7.2.2 Step 2,
+p. 144), stated against the compositum `M = L(μ_m)`. Recommended carrier: `CyclotomicField m L`
+(it carries `[IsCyclotomicExtension {m} L M]`, `[NumberField M]`, `[FiniteDimensional L M]`
+automatically; its `K`-algebra/scalar-tower structure comes from `RingHom.comp` /
+`IsScalarTower.of_algebraMap_eq`). The leaves below abstract `M` as a hypothesis with the
+relevant instance binders so they do not depend on that carrier choice. -/
+
+/-- **C2a — cyclotomic degree over the base** (the deep ramification/Minkowski leaf). Source
+(Sharifi p. 144): "Choose `m` not dividing the discriminant of `L` so that
+`H = Gal(L(μ_m)/L) ≅ (ℤ/mℤ)ˣ` … and `Gal(L(μ_m)/K) ≅ G × H`." The full order `φ(m)`
+of `H = (ℤ/mℤ)ˣ` is exactly `[K(μ_m):K] = φ(m)`, equivalently irreducibility of the `m`-th
+cyclotomic polynomial over `K`; this holds because `m` is coprime to `disc L` (`hcop`): a
+prime ramifying in `K(μ_m)` divides `m`, hence does not divide `disc L`, so `K ∩ L` is
+unramified everywhere over `K` and equals `K` (Minkowski / `NumberField.discr_dvd_discr`),
+giving linear disjointness of `L` and `K(μ_m)`. **This is the isolated deep leaf.** -/
+private theorem cyclotomicField_finrank_eq
+    (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M]
+    (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K M]
+    (_hcop : ((NumberField.discr K).natAbs).Coprime m) :
+    Module.finrank K M = m.totient :=
+  sorry
+
+/-- **C1 — the `G × H` splitting of the compositum** (Sharifi p. 144):
+`Gal(M/K) ≅ G × Gal(M/L)`
+with `G = Gal(L/K)`, where `M = L(μ_m)`. The isomorphism is the restriction-pair
+`α ↦ (α.restrictScalars K on L, α on M/L)`; it is injective because `L` and `K(μ_m)` are
+linearly disjoint over `K` and surjective by the degree count
+`[M:K] = [L:K]·φ(m) = [L:K]·[M:L]` (which uses `cyclotomicField_finrank_eq`, hence `hcop`).
+Here `Gal(M/L) ≅ H = (ℤ/mℤ)ˣ` via the mod-`m` cyclotomic character. -/
+private theorem gal_compositum_prod_iso
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
+    (_hcop : ((NumberField.discr L).natAbs).Coprime m) :
+    Nonempty (Gal(M/K) ≃* (Gal(L/K) × Gal(M/L))) :=
+  sorry
+
+/-- **C3 — the compositum is cyclotomic over the `(σ,τ)`-fixed field** (Sharifi p. 144):
+"… `L(μ_m)` is given by adjoining `μ_m` to `F = K(μ_m)^⟨(σ,τ)⟩`", i.e. `M = F(μ_m)`.
+Stated for `g ∈ Gal(M/K)` whose cyclic span meets `Gal(M/L)` trivially and `F = M^⟨g⟩`:
+then `M/F` is the `m`-th cyclotomic extension. The kernel of `restrictNormalHom L` *is* the
+`{1} × H = Gal(M/L)` copy inside `Gal(M/K) = G × H`, so the meet hypothesis
+`⟨g⟩ ⊓ ker(restrictNormalHom L) = ⊥` is exactly Sharifi's `⟨(σ,τ)⟩ ∩ (G × {1}) = 1`
+(`cyclic_subgroup_meets_G_times_one_trivially`, supplied by the master leaf at `g = (σ,τ)`
+from `|G| ∣ ord τ`); it forces `F ∩ L = K` and hence `M = F(μ_m)`. **Adversarial note:** the
+meet hypothesis is essential — for general `g` (e.g. `g ∈ Gal(M/L)`) the conclusion is false;
+`[IsCyclotomicExtension {m} L M]` guarantees `μ_m ⊆ M` so the adjunction makes sense. -/
+private theorem compositum_isCyclotomic_over_fixedField
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
+    (g : Gal(M/K))
+    (_hmeet : Subgroup.zpowers g ⊓ (AlgEquiv.restrictNormalHom (F := K) (K₁ := M) L).ker = ⊥) :
+    letI := (IntermediateField.fixedField (Subgroup.zpowers g)).isScalarTower_mid'
+    IsCyclotomicExtension {m} ↥(IntermediateField.fixedField (Subgroup.zpowers g)) M :=
+  sorry
+
+/-- **C4 — Frobenius projects along the compositum tower** `M/L/K`. A prime `𝔭` of `K`
+unramified in `M` (hence in `L`) whose `Gal(M/K)`-Frobenius class is `(σ,τ)` — i.e. equal to
+`ConjClasses.mk τM` for `τM` restricting to `σ` over `L` — has `Gal(L/K)`-Frobenius class `σ`.
+This is the restriction-compatibility of `frobeniusClass` along `K ⊆ L ⊆ M`, the tower
+analogue of `Main.arithFrobAt_restrictScalars_eq` (replicated in `Abelian` because `Main`
+imports `Abelian`). It is what makes each crossing fibre `S_{σ,τ}` land inside the
+`σ`-Frobenius fibre `S_σ`. -/
+private theorem frobeniusClass_proj
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+    [IsGalois K L] [IsGalois K M]
+    (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
+    (𝔭 : Ideal (𝓞 K)) (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
+    (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
+    frobeniusClass K L 𝔭 = ConjClasses.mk σ :=
+  sorry
+
+/-- **C5 — density transfer through a fixed field** (Sharifi 7.2.2 Step 2 ⇒ Step 1 reuse,
+p. 143–144). A verbatim replica of `Main.density_lift_through_fixedField`, restated with the
+top field `M` (the compositum), so that the crossing can be assembled inside `Abelian`:
+`Main` is *below* `Abelian` in the import DAG (`Main` imports `Abelian`), so the original
+cannot be imported here. Given `σM ∈ Gal(M/K)`, the fixed field `E = M^⟨σM⟩`, a lift `σE`
+`σM` to `Gal(M/E)`, and the cyclic-case density `1/|Gal(M/E)|` of the `σE`-Frobenius fibre of
+`E`, the transfer yields density `|C|/|Gal(M/K)|` of the `σM`-Frobenius fibre of `K`. In the
+crossing, `σM = (σ,τ)`, `E = F`, and `chebotarev_cyclotomic` (at the cyclotomic `M/F`, valid by
+`hm4`) supplies the `_hab` input; the resulting density is `1/(|G|·|H|)`.
+**Orchestrator note:** this duplicates `Main.density_lift_through_fixedField`; reconcile by
+moving the shared statement to a common ancestor module (or having `Main` re-export it). -/
+private theorem density_lift_through_fixedField_repl
+    (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M] [IsGalois K M]
+    [FiniteDimensional K M] (σM : Gal(M/K)) (E : IntermediateField K M) (σE : Gal(M/E))
+    (_hσE : letI : IsScalarTower K ↥E M := E.isScalarTower_mid'; σE.restrictScalars K = σM)
+    (_hEfix : E = IntermediateField.fixedField (Subgroup.zpowers σM))
+    (_hab : HasDirichletDensity
+        {P : Ideal (𝓞 ↥E) | P.IsPrime ∧ UnramifiedIn ↥E M P ∧
+          frobeniusClass ↥E M P = ConjClasses.mk σE}
+        ((Nat.card Gal(M/E) : ℝ)⁻¹)) :
+    HasDirichletDensity
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+        frobeniusClass K M 𝔭 = ConjClasses.mk σM}
+      ((Nat.card (ConjClasses.mk σM).carrier : ℝ) / Nat.card Gal(M/K)) :=
+  sorry
+
+private theorem exists_cyclotomicCrossing_fibres
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (σ : Gal(L/K)) (m : ℕ) (hm : 1 ≤ m)
     (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) :
     ∃ S : {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ} → Set (Ideal (𝓞 K)),
       (Set.univ : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S ∧
@@ -169,7 +351,9 @@ private theorem exists_cyclotomicCrossing_fibres
           frobeniusClass K L 𝔭 = ConjClasses.mk σ}) ∧
       (∀ τ, HasDirichletDensity (S τ)
           ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹)) := by
-  sorry
+  obtain ⟨t, S, hsub, htag, hd⟩ := exists_crossing_family_tagged K L σ m hm hm4 hcop
+  -- Distinct `τ` give disjoint fibres because the global `M`-Frobenius tag separates them.
+  refine ⟨S, pairwiseDisjoint_of_tag t (Subtype.val) Subtype.val_injective S htag, hsub, hd⟩
 
 /-- Sharifi 7.2.2 Step 2 — partial **lower bound** on `δ_inf(S_σ)`
 coming from one choice of cyclotomic crossing modulus `m`. Source quote
