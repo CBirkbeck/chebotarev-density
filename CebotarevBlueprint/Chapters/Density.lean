@@ -159,7 +159,7 @@ limit.
 ## Density API
 
 The following routine API lemmas are used by the proofs of the
-corollaries in {bpref "ch:main"}[].
+corollaries in the final chapter ({bpref "chebotarev-density"}[]).
 
 :::theorem "has-density-finite" (lean := "Chebotarev.hasDirichletDensity_of_finite")
 
