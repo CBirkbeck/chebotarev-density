@@ -342,88 +342,8 @@ hypothesis restricted to primes of **coprime norm** (`(N𝔭).Coprime m`). The p
 fixed-field zeta comparison, but the `K`-side prime sum runs only over coprime-norm unramified
 primes; the excluded primes (unramified but with `¬(N𝔭).Coprime m`) form a **finite** set (they
 all divide the fixed ideal `(m)`), so the comparison ratio still tends to `1`. The finiteness
-chain (replicated here because `CyclotomicNormResidue.lean` is below `ZetaProduct.lean`) and the
-restricted log-asymptotic feed `finrank_mul_unramified_coprime_le_univ`. -/
-
-section CoprimeRestricted
-
-variable (K : Type*) [Field K] [NumberField K] (m : ℕ)
-
-omit [NumberField K] in
-/-- If the integer cast `(n : 𝓞 K)` lies in a prime ideal `𝔭` and `1 < n`, then some rational
-prime factor `r ∣ n` already casts into `𝔭`. (Replicated from `ZetaProduct.lean`.) -/
-private theorem exists_prime_dvd_natCast_mem'
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (n : ℕ) (hn1 : 1 < n) (hmem : (n : 𝓞 K) ∈ 𝔭) :
-    ∃ r : ℕ, r.Prime ∧ r ∣ n ∧ (r : 𝓞 K) ∈ 𝔭 := by
-  induction n using Nat.strong_induction_on with
-  | _ n ih =>
-    obtain ⟨r, hr, k, rfl⟩ := Nat.exists_prime_and_dvd (by lia : n ≠ 1)
-    have hkpos : 0 < k := Nat.pos_of_mul_pos_left (by lia : 0 < r * k)
-    have hcast : ((r * k : ℕ) : 𝓞 K) = (r : 𝓞 K) * (k : 𝓞 K) := by push_cast; ring
-    rw [hcast] at hmem
-    rcases ‹𝔭.IsPrime›.mem_or_mem hmem with hrm | hkm
-    · exact ⟨r, hr, ⟨k, rfl⟩, hrm⟩
-    · by_cases hk1 : k = 1
-      · subst hk1
-        simp only [Nat.cast_one] at hkm
-        exact absurd (Ideal.eq_top_of_isUnit_mem _ hkm isUnit_one) ‹𝔭.IsPrime›.ne_top
-      · have hklt : k < r * k := lt_mul_left hkpos hr.one_lt
-        obtain ⟨s, hs, hsdvd, hsm⟩ := ih k hklt (by lia) hkm
-        exact ⟨s, hs, hsdvd.trans ⟨r, by ring⟩, hsm⟩
-
-/-- A nonzero prime with norm not coprime to `m` contains `(p : 𝓞 K)` for some `p ∈ m.primeFactors`.
-(Replicated from `ZetaProduct.lean`.) -/
-private theorem exists_primeFactor_natCast_mem_of_not_coprime'
-    [NeZero m] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥)
-    (hncop : ¬ (Ideal.absNorm 𝔭).Coprime m) :
-    ∃ p ∈ m.primeFactors, (p : 𝓞 K) ∈ 𝔭 := by
-  have hN0 : Ideal.absNorm 𝔭 ≠ 0 := fun h ↦ h𝔭 (Ideal.absNorm_eq_zero_iff.mp h)
-  have hN1' : Ideal.absNorm 𝔭 ≠ 1 := fun h ↦ ‹𝔭.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
-  obtain ⟨r, hr, hrdvd, hrm⟩ :=
-    exists_prime_dvd_natCast_mem' K 𝔭 _ (by lia) (Ideal.absNorm_mem 𝔭)
-  have hNdvd : Ideal.absNorm 𝔭 ∣ r ^ Module.finrank ℤ (𝓞 K) := by
-    have hd := Ideal.absNorm_dvd_absNorm_of_le ((Ideal.span_singleton_le_iff_mem _).mpr hrm)
-    rwa [Ideal.absNorm_span_singleton, show ((r : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (r : ℤ) by
-        push_cast; rfl, Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
-  obtain ⟨p, hp, hpdvd⟩ :=
-    Nat.exists_prime_and_dvd (show Nat.gcd (Ideal.absNorm 𝔭) m ≠ 1 from hncop)
-  have hpr : p ∣ r ^ Module.finrank ℤ (𝓞 K) := (hpdvd.trans (Nat.gcd_dvd_left _ _)).trans hNdvd
-  have hpeqr : p = r := (Nat.prime_dvd_prime_iff_eq hp hr).mp (hp.dvd_of_dvd_pow hpr)
-  exact ⟨p, Nat.mem_primeFactors.mpr ⟨hp, hpdvd.trans (Nat.gcd_dvd_right _ _), NeZero.ne m⟩,
-    hpeqr ▸ hrm⟩
-
-/-- The nonzero primes containing a fixed nonzero integer cast `(p : 𝓞 K)` form a finite set.
-(Replicated from `ZetaProduct.lean`.) -/
-private theorem finite_primes_natCast_mem' (p : ℕ) (hp : p ≠ 0) :
-    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ (p : 𝓞 K) ∈ 𝔭}.Finite := by
-  classical
-  have hspan : (Ideal.span {(p : 𝓞 K)}) ≠ 0 := by
-    simp only [Ne, Ideal.zero_eq_bot, Ideal.span_singleton_eq_bot]
-    exact_mod_cast hp
-  have hfin := Ideal.finite_factors (R := 𝓞 K) hspan
-  refine Set.Finite.ofFinset (hfin.toFinset.image fun v ↦ v.asIdeal) fun 𝔭 ↦ ?_
-  simp only [Set.Finite.mem_toFinset, Finset.mem_image, Set.mem_setOf_eq]
-  constructor
-  · rintro ⟨v, hv, rfl⟩
-    exact ⟨v.isPrime, v.ne_bot, (Ideal.dvd_iff_le.mp hv) (Ideal.mem_span_singleton_self _)⟩
-  · rintro ⟨hprime, hne, hmem⟩
-    exact ⟨⟨𝔭, hprime, hne⟩, Ideal.dvd_iff_le.mpr ((Ideal.span_singleton_le_iff_mem _).mpr hmem),
-      rfl⟩
-
-/-- **The bad-prime set is finite** (replicated from `ZetaProduct.lean`). -/
-private theorem finite_badPrimes' [NeZero m] :
-    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (Ideal.absNorm 𝔭).Coprime m}.Finite := by
-  classical
-  refine Set.Finite.subset
-    (Set.Finite.biUnion (s := (↑m.primeFactors : Set ℕ)) (Set.toFinite _) fun p _ ↦
-      finite_primes_natCast_mem' K p ?_) ?_
-  · exact Nat.pos_of_mem_primeFactors (by assumption) |>.ne'
-  · rintro 𝔭 ⟨hprime, hne, hncop⟩
-    haveI := hprime
-    obtain ⟨p, hp, hpmem⟩ := exists_primeFactor_natCast_mem_of_not_coprime' K m 𝔭 hne hncop
-    exact Set.mem_biUnion hp ⟨hprime, hne, hpmem⟩
-
-end CoprimeRestricted
+chain (`finite_badPrimes` etc., hoisted to `Frobenius.lean`) and the restricted log-asymptotic
+feed `finrank_mul_unramified_coprime_le_univ`. -/
 
 section CoprimeRestrictedComparison
 
@@ -433,7 +353,7 @@ variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Alge
 
 /-- The coprime-norm-unramified prime sum is asymptotic to `log(1/(s-1))`: it differs from the
 universal prime sum (`primeIdealZetaSum_univ_tendsto_log`) by the finitely many excluded
-primes — ramified (`finite_ramifiedIn`) or with norm not coprime to `m` (`finite_badPrimes'`) —
+primes — ramified (`finite_ramifiedIn`) or with norm not coprime to `m` (`finite_badPrimes`) —
 whose bounded contribution is negligible against `log → ∞`. -/
 private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
     Filter.Tendsto
@@ -453,7 +373,7 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
     · exact Or.inl ⟨hp, h.1, h.2⟩
     · exact Or.inr ⟨hp, hne, h⟩
   have hDfin : D.Finite := by
-    refine ((finite_ramifiedIn K L).union (finite_badPrimes' K m)).subset ?_
+    refine ((finite_ramifiedIn K L).union (finite_badPrimes K m)).subset ?_
     rintro 𝔭 ⟨hp, hne, hnot⟩
     by_cases hunr : UnramifiedIn K L 𝔭
     · exact Or.inr ⟨hp, hne, fun hcop ↦ hnot ⟨hunr, hcop⟩⟩
