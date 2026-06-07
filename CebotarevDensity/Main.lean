@@ -1,6 +1,5 @@
 module
 
-public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.RingTheory.Ideal.Over
 public import Mathlib.RingTheory.Ideal.NatInt
 public import Mathlib.NumberTheory.Cyclotomic.Basic
@@ -63,33 +62,6 @@ namespace Chebotarev
 variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L]
   [Algebra K L] [IsGalois K L]
 
-/-! ### Sub-lemmas for `chebotarev_density`
-
-Decomposed per Sharifi 7.2.2 Step 1 (p. 143). Source quote (verbatim):
-
-> "Let σ ∈ C and E = L^⟨σ⟩ so that L/E is cyclic of degree f = |⟨σ⟩|.
-> […] Let T_σ be the set of primes P of E unramified in L and over K
-> with Frobenius φ_P at a prime of L over P equal to σ. If P ∈ T_σ,
-> then φ_P = σ fixes E, so P has degree one over K. As P is by
-> definition inert in L, there are exactly |G|/f primes of L over
-> P ∩ K. As the Frobenius elements of such primes are distributed
-> evenly among the elements of the conjugacy class C of σ, exactly
-> |G|/f|C| of these have Frobenius σ. We may then compute the
-> Dirichlet density of S: δ(S) = lim_{s→1+} Σ_𝔭∈S N𝔭^{-s} / Σ_𝔭
-> N𝔭^{-s} = (f|C|/|G|) lim_{s→1+} Σ_P∈T_σ NP^{-s} / Σ_P NP^{-s} =
-> (f|C|/|G|) δ(T_σ), recalling once again that Σ_𝔭 N𝔭^{-s} ~ Σ_P
-> NP^{-s}. Supposing the theorem for K/E, we have δ(T_σ) = 1/f, and
-> we therefore obtain δ(S) = |C|/|G|."
-
-Four sub-lemmas:
-(i) Cyclic subextension: `E = L^⟨σ⟩`, `[L:E] = |⟨σ⟩| = ord(σ)`.
-(ii) Above-counting: for `𝔭 ∈ S`, exactly `|G|/(f|C|)` primes `𝔓` of
-    `𝓞 L` over `𝔭` have `Frob_𝔓 = σ`, each "below" a unique `P ∈ T_σ`.
-(iii) Density relation `δ_K(S) = (f|C|/|G|) · δ_E(T_σ)` (uses
-    `Σ N𝔭^{-s} ~ Σ NP^{-s}` from Density.lean).
-(iv) Apply `chebotarev_abelian` to `L/E` (cyclic): `δ_E(T_σ) = 1/f`.
--/
-
 /-- **Chebotarev's density theorem** (Sharifi 7.2.2; SL Appendix).
 
 For a finite Galois extension `L/K` of number fields with Galois group `G`
@@ -105,13 +77,13 @@ theorem chebotarev_density
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
   let e := IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers σ)
   have : IsMulCommutative Gal(L/(IntermediateField.fixedField (Subgroup.zpowers σ))) :=
-    .of_comm fun a b => by
+    .of_comm fun a b ↦ by
       obtain ⟨x, rfl⟩ := e.surjective a
       obtain ⟨y, rfl⟩ := e.surjective b
       rw [← map_mul e x y, ← map_mul e y x, mul_comm' x y]
   exact density_lift_through_fixedField σ
     (IntermediateField.fixedField (Subgroup.zpowers σ))
-    (e ⟨σ, Subgroup.mem_zpowers σ⟩) (by ext x; rfl) rfl
+    (e ⟨σ, Subgroup.mem_zpowers σ⟩) rfl rfl
     (chebotarev_abelian _ L (e ⟨σ, Subgroup.mem_zpowers σ⟩))
 
 /-- In a commutative finite group every conjugacy class is a singleton,
@@ -137,9 +109,7 @@ theorem chebotarev_density_of_comm
   obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective C
   simpa [ConjClasses_carrier_card_eq_one_of_comm σ] using chebotarev_abelian K L σ
 
-/-- Sub-lemma: a set of prime ideals with positive Dirichlet density is
-infinite. Contrapositive: a finite set has density `0` (by
-`hasDirichletDensity_of_finite` from `Density.lean`). -/
+/-- A set of prime ideals with positive Dirichlet density is infinite. -/
 theorem infinite_of_hasDirichletDensity_pos
     {S : Set (Ideal (𝓞 K))} {δ : ℝ} (h : HasDirichletDensity S δ) (hδ : 0 < δ) :
     S.Infinite :=
