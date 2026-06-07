@@ -198,10 +198,11 @@ the chain is sorry-free *modulo L3*.
   that file's batch): ZetaProduct (Dirichlet-test trio, normLeOne_frontier_lipschitz
   wrapper), ICC (exists_generator_diff_of_coset, exists_card_dvd_principal_residue_real_le),
   Cyclotomic (log_artinLSeries_asymp_character_sum), Abelian (gal_compositum_prod_iso,
-  cyclic_subgroup_meets_G_times_one_trivially, H_n_over_H_tends_to_one — blueprint-linked,
-  re-point chapter first —, chebotarev_abelian_lowerDensity_per_m, inline
-  map_eq_of_isConj_comm), NFEP (insertPiEquiv → mathlib composition; verify
-  tsum_symGeometric).
+  cyclic_subgroup_meets_G_times_one_trivially, chebotarev_abelian_lowerDensity_per_m,
+  inline map_eq_of_isConj_comm; **REVISED 2026-06-07: KEEP H_n_over_H_tends_to_one** —
+  the verso Abelian chapter's "H-n-over-H-formula" entry now links it as its Lean
+  anchor), NFEP (insertPiEquiv → mathlib composition; verify tsum_symGeometric —
+  both DONE in the NFEP batch).
 - **Type**: cleanup. Invoke /cleanup per file (full 10-phase workflow). Expect
   long-line/unused-variable warnings (a few pre-existing), naming-gate renames on
   worker-generated helper names, and structure-gate decomposition flags on the larger
