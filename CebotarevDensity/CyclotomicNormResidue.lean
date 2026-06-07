@@ -321,23 +321,18 @@ private theorem exists_prime_dvd_natCast_mem'
     ∃ r : ℕ, r.Prime ∧ r ∣ n ∧ (r : 𝓞 K) ∈ 𝔭 := by
   induction n using Nat.strong_induction_on with
   | _ n ih =>
-    obtain ⟨r, hr, k, rfl⟩ := Nat.exists_prime_and_dvd (by omega : n ≠ 1)
-    have hkpos : 0 < k := by
-      rcases Nat.eq_zero_or_pos k with h | h
-      · rw [h, Nat.mul_zero] at hn1; omega
-      · exact h
+    obtain ⟨r, hr, k, rfl⟩ := Nat.exists_prime_and_dvd (by lia : n ≠ 1)
+    have hkpos : 0 < k := Nat.pos_of_mul_pos_left (by lia : 0 < r * k)
     have hcast : ((r * k : ℕ) : 𝓞 K) = (r : 𝓞 K) * (k : 𝓞 K) := by push_cast; ring
     rw [hcast] at hmem
     rcases ‹𝔭.IsPrime›.mem_or_mem hmem with hrm | hkm
     · exact ⟨r, hr, ⟨k, rfl⟩, hrm⟩
     · by_cases hk1 : k = 1
-      · subst hk1; simp only [Nat.cast_one] at hkm
+      · subst hk1
+        simp only [Nat.cast_one] at hkm
         exact absurd (Ideal.eq_top_of_isUnit_mem _ hkm isUnit_one) ‹𝔭.IsPrime›.ne_top
-      · have hklt : k < r * k := by
-          have h2 : 2 ≤ r := hr.two_le
-          calc k = 1 * k := (one_mul k).symm
-            _ < r * k := (Nat.mul_lt_mul_right hkpos).2 (by omega)
-        obtain ⟨s, hs, hsdvd, hsm⟩ := ih k hklt (by omega) hkm
+      · have hklt : k < r * k := lt_mul_left hkpos hr.one_lt
+        obtain ⟨s, hs, hsdvd, hsm⟩ := ih k hklt (by lia) hkm
         exact ⟨s, hs, hsdvd.trans ⟨r, by ring⟩, hsm⟩
 
 /-- A nonzero prime with norm not coprime to `m` contains `(p : 𝓞 K)` for some `p ∈ m.primeFactors`.
@@ -349,7 +344,7 @@ private theorem exists_primeFactor_natCast_mem_of_not_coprime'
   have hN0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => h𝔭 (Ideal.absNorm_eq_zero_iff.mp h)
   have hN1' : Ideal.absNorm 𝔭 ≠ 1 := fun h => ‹𝔭.IsPrime›.ne_top (Ideal.absNorm_eq_one_iff.mp h)
   obtain ⟨r, hr, hrdvd, hrm⟩ :=
-    exists_prime_dvd_natCast_mem' K 𝔭 _ (by omega) (Ideal.absNorm_mem 𝔭)
+    exists_prime_dvd_natCast_mem' K 𝔭 _ (by lia) (Ideal.absNorm_mem 𝔭)
   have hNdvd : Ideal.absNorm 𝔭 ∣ r ^ Module.finrank ℤ (𝓞 K) := by
     have hd := Ideal.absNorm_dvd_absNorm_of_le ((Ideal.span_singleton_le_iff_mem _).mpr hrm)
     rwa [Ideal.absNorm_span_singleton, show ((r : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (r : ℤ) by
@@ -370,8 +365,7 @@ private theorem finite_primes_natCast_mem' (p : ℕ) (hp : p ≠ 0) :
     simp only [Ne, Ideal.zero_eq_bot, Ideal.span_singleton_eq_bot]
     exact_mod_cast hp
   have hfin := Ideal.finite_factors (R := 𝓞 K) hspan
-  apply Set.Finite.ofFinset (hfin.toFinset.image fun v => v.asIdeal)
-  intro 𝔭
+  refine Set.Finite.ofFinset (hfin.toFinset.image fun v => v.asIdeal) fun 𝔭 => ?_
   simp only [Set.Finite.mem_toFinset, Finset.mem_image, Set.mem_setOf_eq]
   constructor
   · rintro ⟨v, hv, rfl⟩
@@ -413,17 +407,15 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
           / Real.log (1 / (s - 1)))
       (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
   set Uc : Set (Ideal (𝓞 K)) :=
-    {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} with hUc
+    {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m}
   set D : Set (Ideal (𝓞 K)) :=
-    {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m)} with hD
+    {𝔭 | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ (UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m)}
   have hdisj : Disjoint Uc D :=
     Set.disjoint_left.mpr fun 𝔭 hc hd => hd.2.2 ⟨hc.2.1, hc.2.2⟩
-  -- every nonzero prime is coprime-norm-unramified or excluded.
   have hcover : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → 𝔭 ≠ ⊥ → 𝔭 ∈ Uc ∪ D := fun 𝔭 hp hne => by
     by_cases h : UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m
     · exact Or.inl ⟨hp, h.1, h.2⟩
     · exact Or.inr ⟨hp, hne, h⟩
-  -- `D` is finite: ramified primes ∪ non-coprime-norm primes, both finite.
   have hDfin : D.Finite := by
     refine ((finite_ramifiedIn K L).union (finite_badPrimes' K m)).subset ?_
     rintro 𝔭 ⟨hp, hne, hnot⟩
@@ -441,10 +433,10 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
     refine squeeze_zero_norm' ?_ (Filter.Tendsto.div_atTop tendsto_const_nhds hL (a := CD))
     filter_upwards [hCD, hL.eventually_gt_atTop 0] with s hub hLpos
     have hDnn : 0 ≤ primeIdealZetaSum D s := by
-      rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
+      rw [primeIdealZetaSum_def]
+      exact tsum_nonneg fun _ => Real.rpow_nonneg (by positivity) _
     rw [Real.norm_of_nonneg (div_nonneg hDnn hLpos.le)]
     gcongr
-  -- The universal ratio tends to `1`; subtract the (→0) excluded-prime ratio.
   have hcomb : Filter.Tendsto (fun s : ℝ ↦
       primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s / Real.log (1 / (s - 1))
         - primeIdealZetaSum D s / Real.log (1 / (s - 1))) (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) := by
@@ -452,7 +444,6 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
   refine hcomb.congr' ?_
   filter_upwards [self_mem_nhdsWithin] with s hs
   simp only [Set.mem_Ioi] at hs
-  -- `Σ_{Uc} + Σ_{D} = Σ_{univ}` on the disjoint cover of the nonzero primes.
   have hadd : primeIdealZetaSum Uc s + primeIdealZetaSum D s =
       primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
     rw [← primeIdealZetaSum_union_of_disjoint hdisj hs,
