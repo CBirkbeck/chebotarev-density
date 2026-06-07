@@ -56,6 +56,22 @@ section Sublemmas
 
 variable {ι : Type*} [Fintype ι]
 
+private lemma ceil_natCast_mul_le_ceil_natCast_mul_add (n : ℕ) {a b r : ℝ} (h : a ≤ b + r) :
+    (⌈(n : ℝ) * a⌉ : ℤ) ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ :=
+  calc (⌈(n : ℝ) * a⌉ : ℤ)
+      ≤ ⌈(n : ℝ) * b + (n : ℝ) * r⌉ :=
+        Int.ceil_le_ceil (by nlinarith [Nat.cast_nonneg (α := ℝ) n])
+    _ ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ := Int.ceil_add_le _ _
+
+private lemma abs_sub_le_one_div_of_ceil_natCast_mul_eq {n : ℕ} (hn : 0 < (n : ℝ)) {a b : ℝ}
+    (h : ⌈(n : ℝ) * a⌉ = ⌈(n : ℝ) * b⌉) : |a - b| ≤ 1 / n := by
+  have hr : (⌈(n : ℝ) * a⌉ : ℝ) = ⌈(n : ℝ) * b⌉ := by exact_mod_cast h
+  rw [show a - b = ((n : ℝ) * a - (n : ℝ) * b) / n by field_simp, abs_div, abs_of_pos hn,
+    div_le_div_iff_of_pos_right hn, abs_le]
+  constructor <;>
+    nlinarith [Int.le_ceil ((n : ℝ) * a), Int.le_ceil ((n : ℝ) * b),
+      Int.ceil_lt_add_one ((n : ℝ) * a), Int.ceil_lt_add_one ((n : ℝ) * b), hr]
+
 -- The `Fintype ι` instance is needed for the `sup`-metric on `ι → ℝ`, so the
 -- `unusedFintypeInType` linter (which only inspects the conclusion) is a false positive here.
 set_option linter.unusedFintypeInType false in
@@ -101,21 +117,11 @@ theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → �
       rw [Real.dist_eq] at h1
       exact h1.trans ((Metric.dist_le_diam_of_mem hbdd hx hx₀).trans hdiam)
     rcases abs_le.mp hdx with ⟨hlo, hhi⟩
-    have hn0 : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
-    have hKeq : (⌈(n : ℝ) * r⌉₊ : ℤ) = ⌈(n : ℝ) * r⌉ :=
-      Int.natCast_ceil_eq_ceil (by positivity)
-    have hub : (⌈(n : ℝ) * x i⌉ : ℤ) ≤ ⌈(n : ℝ) * x₀ i⌉ + (K : ℤ) := by
-      calc (⌈(n : ℝ) * x i⌉ : ℤ)
-          ≤ ⌈(n : ℝ) * x₀ i + (n : ℝ) * r⌉ := by
-            apply Int.ceil_le_ceil; nlinarith
-        _ ≤ ⌈(n : ℝ) * x₀ i⌉ + ⌈(n : ℝ) * r⌉ := Int.ceil_add_le _ _
-        _ = ⌈(n : ℝ) * x₀ i⌉ + (K : ℤ) := by rw [hK, hKeq]
-    have hlb : (⌈(n : ℝ) * x₀ i⌉ : ℤ) ≤ ⌈(n : ℝ) * x i⌉ + (K : ℤ) := by
-      calc (⌈(n : ℝ) * x₀ i⌉ : ℤ)
-          ≤ ⌈(n : ℝ) * x i + (n : ℝ) * r⌉ := by
-            apply Int.ceil_le_ceil; nlinarith
-        _ ≤ ⌈(n : ℝ) * x i⌉ + ⌈(n : ℝ) * r⌉ := Int.ceil_add_le _ _
-        _ = ⌈(n : ℝ) * x i⌉ + (K : ℤ) := by rw [hK, hKeq]
+    have hKeq : (K : ℤ) = ⌈(n : ℝ) * r⌉ := hK ▸ Int.natCast_ceil_eq_ceil (by positivity)
+    have hub :=
+      ceil_natCast_mul_le_ceil_natCast_mul_add n (a := x i) (b := x₀ i) (r := r) (by linarith)
+    have hlb :=
+      ceil_natCast_mul_le_ceil_natCast_mul_add n (a := x₀ i) (b := x i) (r := r) (by linarith)
     simp only [index_apply, hc]
     constructor <;> lia
   refine (Set.ncard_le_ncard hsub F.finite_toSet).trans ?_
@@ -126,11 +132,9 @@ theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → �
     lia
   rw [Finset.prod_congr rfl fun i _ ↦ hcard i, Finset.prod_const, Finset.card_univ]
 
-/-- **L1a' — single-chart cell count (the combinatorial heart).** For one `M`-Lipschitz map
-`φ : (Fin (d-1) → ℝ) → (ι → ℝ)`, the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the
-image `φ '' [0,1]ᵈ⁻¹` is at most `(2⌈M⌉₊ + 1)ᵈ · (n+1)ᵈ⁻¹ = O(nᵈ⁻¹)`. Proof: subdivide
-`[0,1]ᵈ⁻¹` into the `(n+1)ᵈ⁻¹` fibres of `y ↦ (⌈n yₖ⌉)ₖ`; each fibre has diameter `≤ 1/n`, so
-its `φ`-image has diameter `≤ M/n` and meets `≤ (2⌈M⌉₊+1)ᵈ` cells by the incidence bound. -/
+/-- **Single-chart cell count.** For one `M`-Lipschitz map `φ : (Fin (d-1) → ℝ) → (ι → ℝ)`,
+the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the image `φ '' [0,1]ᵈ⁻¹` is at most
+`(2⌈M⌉₊ + 1)ᵈ · (n+1)ᵈ⁻¹ = O(nᵈ⁻¹)`. -/
 theorem ncard_index_image_chart_le {M : ℝ≥0} {φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)}
     (hφ : LipschitzWith M φ) {n : ℕ} (hn : 1 ≤ n) :
     (index n '' (φ '' Set.Icc 0 1)).ncard
@@ -143,60 +147,45 @@ theorem ncard_index_image_chart_le {M : ℝ≥0} {φ : (Fin (Fintype.card ι - 1
   set T : Finset (Fin (Fintype.card ι - 1) → ℤ) :=
     Finset.Icc (0 : Fin (Fintype.card ι - 1) → ℤ) (fun _ ↦ (n : ℤ)) with hT
   have hdiam : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
-      Metric.diam (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v}) ≤ 1 / n := by
+      Metric.diam (Set.Icc 0 1 ∩ q ⁻¹' {v}) ≤ 1 / n := by
     intro v
     refine Metric.diam_le_of_forall_dist_le (by positivity) fun y hy y' hy' ↦ ?_
     rw [dist_pi_le_iff (by positivity)]
     intro k
-    have hyv : (⌈(n : ℝ) * y k⌉ : ℤ) = v k := congrFun hy.2 k
-    have hyv' : (⌈(n : ℝ) * y' k⌉ : ℤ) = v k := congrFun hy'.2 k
-    have hce : ⌈(n : ℝ) * y k⌉ = ⌈(n : ℝ) * y' k⌉ := hyv.trans hyv'.symm
-    have h1 : (⌈(n : ℝ) * y k⌉ : ℝ) - 1 < (n : ℝ) * y k ∧ (n : ℝ) * y k ≤ ⌈(n : ℝ) * y k⌉ :=
-      Int.ceil_eq_iff.mp rfl
-    have h2 : (⌈(n : ℝ) * y' k⌉ : ℝ) - 1 < (n : ℝ) * y' k ∧ (n : ℝ) * y' k ≤ ⌈(n : ℝ) * y' k⌉ :=
-      Int.ceil_eq_iff.mp rfl
-    rw [hce] at h1
-    have habs : |(n : ℝ) * y k - (n : ℝ) * y' k| ≤ 1 := by
-      rw [abs_le]
-      constructor <;> nlinarith [h1.1, h1.2, h2.1, h2.2]
-    rw [Real.dist_eq, show y k - y' k = ((n : ℝ) * y k - (n : ℝ) * y' k) / n by
-        field_simp, abs_div, abs_of_pos hn0]
-    rw [div_le_div_iff_of_pos_right hn0]
-    exact habs
+    have hce : ⌈(n : ℝ) * y k⌉ = ⌈(n : ℝ) * y' k⌉ :=
+      (congrFun hy.2 k).trans (congrFun hy'.2 k).symm
+    rw [Real.dist_eq]
+    exact abs_sub_le_one_div_of_ceil_natCast_mul_eq hn0 hce
   have hcover : index n '' (φ '' Set.Icc 0 1) ⊆
-      ⋃ v ∈ T, index n '' (φ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v})) := by
+      ⋃ v ∈ T, index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) := by
     rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
     have hyT : q y ∈ T := by
       rw [hT, Finset.mem_Icc]
       refine ⟨fun k ↦ ?_, fun k ↦ ?_⟩
       · simp only [hq, Pi.zero_apply]
         rw [Int.le_ceil_iff]
-        have h0 : (0 : ℝ) ≤ (n : ℝ) * y k := mul_nonneg hn0.le (hy.1 k)
         push_cast
-        linarith
+        linarith [mul_nonneg hn0.le (hy.1 k)]
       · simp only [hq]
         rw [Int.ceil_le]
-        have hyk : y k ≤ 1 := (hy.2 k)
+        have hyk : y k ≤ 1 := hy.2 k
         push_cast
         nlinarith [hn0]
     exact Set.mem_biUnion hyT ⟨φ y, ⟨y, ⟨hy, rfl⟩, rfl⟩, rfl⟩
   have hpiece : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
-      (index n '' (φ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v}))).ncard
+      (index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v}))).ncard
         ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι := by
     intro v
-    have hbddφ : Bornology.IsBounded
-        (φ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v})) :=
+    have hbddφ : Bornology.IsBounded (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) :=
       hφ.isBounded_image ((Metric.isBounded_Icc 0 1).subset Set.inter_subset_left)
-    have hdimg : Metric.diam
-        (φ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v})) ≤ (M : ℝ) * (1 / n) := by
+    have hdimg : Metric.diam (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) ≤ (M : ℝ) * (1 / n) := by
       refine (hφ.diam_image_le _ ((Metric.isBounded_Icc 0 1).subset
         Set.inter_subset_left)).trans ?_
       exact mul_le_mul_of_nonneg_left (hdiam v) (by positivity)
     refine (ncard_index_image_le_of_diam_le n (by positivity) hdimg hbddφ).trans ?_
-    have hsimp : (n : ℝ) * ((M : ℝ) * (1 / n)) = (M : ℝ) := by field_simp
-    rw [hsimp]
+    rw [show (n : ℝ) * ((M : ℝ) * (1 / n)) = (M : ℝ) by field_simp]
   have hfin : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
-      (index n '' (φ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {v}))).Finite :=
+      (index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v}))).Finite :=
     fun v ↦ setFinite_index_image_of_isBounded n
       (hφ.isBounded_image ((Metric.isBounded_Icc 0 1).subset Set.inter_subset_left))
   refine (Set.ncard_le_ncard hcover (T.finite_toSet.biUnion fun v _ ↦ hfin v)).trans ?_
@@ -205,19 +194,12 @@ theorem ncard_index_image_chart_le {M : ℝ≥0} {φ : (Fin (Fintype.card ι - 1
   rw [Finset.sum_const, nsmul_eq_mul, mul_comm]
   have hcardT : T.card = (n + 1) ^ (Fintype.card ι - 1) := by
     rw [hT, Pi.card_Icc]
-    simp only [Pi.zero_apply]
-    have hk : ∀ k : Fin (Fintype.card ι - 1),
-        (Finset.Icc (0 : ℤ) (n : ℤ)).card = n + 1 := by
-      intro k
-      rw [Int.card_Icc]
-      simp
-    rw [Finset.prod_congr rfl fun k _ ↦ hk k, Finset.prod_const, Finset.card_univ,
-      Fintype.card_fin]
+    simp [Int.card_Icc]
   rw [hcardT, Nat.cast_id]
 
-/-- **L1a — boundary-cell count.** If `∂s` is covered by `m` images `φⱼ '' [0,1]ᵈ⁻¹` of
+/-- **Boundary-cell count.** If `∂s` is covered by `m` images `φⱼ '' [0,1]ᵈ⁻¹` of
 `M`-Lipschitz maps, the number of grid cells meeting `∂s` is `O(nᵈ⁻¹)`, with constant
-`m · (2⌈M⌉₊+1)ᵈ · 2ᵈ⁻¹` (after `(n+1)ᵈ⁻¹ ≤ (2n)ᵈ⁻¹`). -/
+`m · (2⌈M⌉₊+1)ᵈ · 2ᵈ⁻¹`. -/
 theorem ncard_index_image_frontier_le {s : Set (ι → ℝ)} {m : ℕ} {M : ℝ≥0}
     {φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)}
     (hφ : ∀ j, LipschitzWith M (φ j)) (hcov : frontier s ⊆ ⋃ j, φ j '' Set.Icc 0 1)
@@ -240,18 +222,58 @@ theorem ncard_index_image_frontier_le {s : Set (ι → ℝ)} {m : ℕ} {M : ℝ�
   rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   have hpow : (n + 1) ^ (Fintype.card ι - 1) ≤
       2 ^ (Fintype.card ι - 1) * n ^ (Fintype.card ι - 1) := by
-    rw [← mul_pow]; exact Nat.pow_le_pow_left (by lia) _
-  calc (m : ℕ) * ((2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * (n + 1) ^ (Fintype.card ι - 1))
+    rw [← mul_pow]
+    exact Nat.pow_le_pow_left (by lia) _
+  calc
+    (m : ℕ) * ((2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * (n + 1) ^ (Fintype.card ι - 1))
       ≤ m * ((2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι
           * (2 ^ (Fintype.card ι - 1) * n ^ (Fintype.card ι - 1))) := by gcongr
     _ = m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * 2 ^ (Fintype.card ι - 1)
           * n ^ (Fintype.card ι - 1) := by ring
 
-/-- **L1b — count ↔ volume bridge.** The number of points of `n⁻¹ℤ^ι` in a bounded measurable
-`s` differs from `vol(s)·nᵈ` by at most the number of grid cells meeting `∂s`. This is the
-sandwich at the heart of `tendsto_card_div_pow_atTop_volume`, made effective: interior cells
-reproduce `vol(s)·nᵈ` up to the boundary cells, and a cell whose tag lies in `s` is interior
-or boundary. -/
+omit [Fintype ι] in
+private lemma index_mem_image_frontier_of_box_meet_not_subset {n : ℕ} [NeZero n]
+    {s : Set (ι → ℝ)} {ν : ι → ℤ} (hmeet : ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty)
+    (hnsub : ¬ (box n ν : Set (ι → ℝ)) ⊆ s) : ν ∈ index n '' frontier s := by
+  have hconn : IsPreconnected (box n ν : Set (ι → ℝ)) := by
+    rw [BoxIntegral.Box.coe_eq_pi]
+    exact (convex_pi fun _ _ ↦ convex_Ioc _ _).isPreconnected
+  obtain ⟨xc, hxcb, hxcs⟩ : ((box n ν : Set (ι → ℝ)) ∩ sᶜ).Nonempty := by
+    rw [Set.not_subset] at hnsub
+    exact hnsub.imp fun _ ⟨hx, hxs⟩ ↦ ⟨hx, hxs⟩
+  by_contra hcon
+  have hcon' : (box n ν : Set (ι → ℝ)) ∩ frontier s = ∅ := by
+    rw [Set.eq_empty_iff_forall_notMem]
+    rintro x ⟨hxb, hxf⟩
+    exact hcon ⟨x, hxf, mem_box_iff_index.mp hxb⟩
+  have hsplit : (box n ν : Set (ι → ℝ)) ⊆ interior s ∪ (closure s)ᶜ := by
+    intro x hx
+    by_contra hxc
+    rw [Set.mem_union, not_or, Set.notMem_compl_iff] at hxc
+    exact (Set.eq_empty_iff_forall_notMem.mp hcon' x) ⟨hx, hxc.2, hxc.1⟩
+  rcases hconn.subset_or_subset isOpen_interior isClosed_closure.isOpen_compl
+    (disjoint_compl_right_iff_subset.mpr (interior_subset.trans subset_closure)) hsplit
+    with hsub | hsub
+  · exact hxcs (interior_subset (hsub hxcb))
+  · obtain ⟨x, hxb, hxs⟩ := hmeet
+    exact (hsub hxb) (subset_closure hxs)
+
+private lemma measureReal_biUnion_box (n : ℕ) [NeZero n] (t : Finset (ι → ℤ)) :
+    volume.real (⋃ ν ∈ t, (box n ν : Set (ι → ℝ))) = t.card / (n : ℝ) ^ Fintype.card ι := by
+  have hvol_box : ∀ ν : ι → ℤ,
+      volume.real (box n ν : Set (ι → ℝ)) = 1 / (n : ℝ) ^ Fintype.card ι := by
+    intro ν
+    rw [measureReal_def, volume_box]
+    simp
+  rw [measureReal_biUnion_finset (fun ν _ ν' _ h ↦ disjoint.mp h)
+    (fun ν _ ↦ (box n ν).measurableSet_coe) (fun ν _ ↦ (box n ν).isBounded.measure_lt_top.ne)]
+  simp_rw [hvol_box]
+  rw [Finset.sum_const, nsmul_eq_mul]
+  ring
+
+/-- **Count ↔ volume bridge.** The number of points of `n⁻¹ℤ^ι` in a bounded measurable `s`
+differs from `vol(s)·nᵈ` by at most the number of grid cells meeting `∂s`. This is the
+effective form of the sandwich behind `tendsto_card_div_pow_atTop_volume`. -/
 theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     (hbdd : Bornology.IsBounded s) (hmeas : MeasurableSet s) {n : ℕ} (hn : 1 ≤ n) :
     |(Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) : ℝ)
@@ -261,34 +283,6 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
   have hne : NeZero n := ⟨Nat.one_le_iff_ne_zero.mp hn⟩
   have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.pos_of_ne_zero hne.out
   have hvs : volume s ≠ ⊤ := hbdd.measure_lt_top.ne
-  have hconn : ∀ ν : ι → ℤ, IsPreconnected (box n ν : Set (ι → ℝ)) := by
-    intro ν
-    rw [BoxIntegral.Box.coe_eq_pi]
-    exact (convex_pi fun _ _ ↦ convex_Ioc _ _).isPreconnected
-  have hfront : ∀ ν : ι → ℤ, ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty →
-      ¬ (box n ν : Set (ι → ℝ)) ⊆ s → ν ∈ index n '' frontier s := by
-    intro ν hmeet hnsub
-    have hmeetc : ((box n ν : Set (ι → ℝ)) ∩ sᶜ).Nonempty := by
-      rw [Set.not_subset] at hnsub
-      obtain ⟨x, hx, hxs⟩ := hnsub
-      exact ⟨x, hx, hxs⟩
-    by_contra hcon
-    have hcon' : (box n ν : Set (ι → ℝ)) ∩ frontier s = ∅ := by
-      rw [Set.eq_empty_iff_forall_notMem]
-      rintro x ⟨hxb, hxf⟩
-      exact hcon ⟨x, hxf, mem_box_iff_index.mp hxb⟩
-    have hsplit : (box n ν : Set (ι → ℝ)) ⊆ interior s ∪ (closure s)ᶜ := by
-      intro x hx
-      by_contra hxc
-      rw [Set.mem_union, not_or, Set.notMem_compl_iff] at hxc
-      exact (Set.eq_empty_iff_forall_notMem.mp hcon' x) ⟨hx, hxc.2, hxc.1⟩
-    rcases (hconn ν).subset_or_subset isOpen_interior isClosed_closure.isOpen_compl
-      (disjoint_compl_right_iff_subset.mpr (interior_subset.trans subset_closure)) hsplit
-      with hsub | hsub
-    · obtain ⟨x, hxb, hxc⟩ := hmeetc
-      exact hxc (interior_subset (hsub hxb))
-    · obtain ⟨x, hxb, hxs⟩ := hmeet
-      exact (hsub hxb) (subset_closure hxs)
   set Inside : Set (ι → ℤ) := {ν | (box n ν : Set (ι → ℝ)) ⊆ s} with hInside
   set Meet : Set (ι → ℤ) := {ν | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty} with hMeet
   set Bd : Set (ι → ℤ) := index n '' frontier s with hBd
@@ -320,7 +314,7 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     intro ν hν
     by_cases hsub : (box n ν : Set (ι → ℝ)) ⊆ s
     · exact Or.inl hsub
-    · exact Or.inr (hfront ν hν hsub)
+    · exact Or.inr (index_mem_image_frontier_of_box_meet_not_subset hν hsub)
   have hcard_IT : Inside.ncard ≤ Tag.ncard :=
     Set.ncard_le_ncard hIT (hMeetFin.subset hTM)
   have hcard_TM : Tag.ncard ≤ Meet.ncard := Set.ncard_le_ncard hTM hMeetFin
@@ -328,20 +322,6 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     (Set.ncard_le_ncard hMIB (hInsideFin.union hBdFin)).trans (Set.ncard_union_le _ _)
   set V : ℝ := volume.real s * (n : ℝ) ^ Fintype.card ι with hV
   have hnpow : (0 : ℝ) < (n : ℝ) ^ Fintype.card ι := by positivity
-  have hvol_box : ∀ ν : ι → ℤ, volume.real (box n ν : Set (ι → ℝ)) = 1 / (n : ℝ) ^ Fintype.card ι :=
-    by intro ν; rw [measureReal_def, volume_box]; simp
-  have hdisj : ∀ (t : Finset (ι → ℤ)), (↑t : Set (ι → ℤ)).PairwiseDisjoint
-      (fun ν ↦ (box n ν : Set (ι → ℝ))) := fun t ν _ ν' _ h ↦ disjoint.mp h
-  have hms : ∀ ν : ι → ℤ, MeasurableSet (box n ν : Set (ι → ℝ)) := fun ν ↦
-    (box n ν).measurableSet_coe
-  have hvol_union : ∀ t : Finset (ι → ℤ),
-      volume.real (⋃ ν ∈ t, (box n ν : Set (ι → ℝ))) = t.card / (n : ℝ) ^ Fintype.card ι := by
-    intro t
-    rw [measureReal_biUnion_finset (hdisj t) (fun ν _ ↦ hms ν)
-      (fun ν _ ↦ by rw [volume_box]; finiteness)]
-    simp_rw [hvol_box]
-    rw [Finset.sum_const, nsmul_eq_mul]
-    ring
   have hcardI : (hInsideFin.toFinset).card = Inside.ncard :=
     (Set.ncard_eq_toFinset_card _ hInsideFin).symm
   have hcardM : (hMeetFin.toFinset).card = Meet.ncard :=
@@ -350,8 +330,9 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     have hsub : (⋃ ν ∈ hInsideFin.toFinset, (box n ν : Set (ι → ℝ))) ⊆ s :=
       Set.iUnion₂_subset fun ν hν ↦ hInsideFin.mem_toFinset.mp hν
     have hle := measureReal_mono hsub hvs
-    rw [hvol_union hInsideFin.toFinset, hcardI, div_le_iff₀ hnpow] at hle
-    rw [hV]; linarith
+    rw [measureReal_biUnion_box n hInsideFin.toFinset, hcardI, div_le_iff₀ hnpow] at hle
+    rw [hV]
+    linarith
   have hvol_upper : V ≤ (Meet.ncard : ℝ) := by
     have hsub : s ⊆ ⋃ ν ∈ hMeetFin.toFinset, (box n ν : Set (ι → ℝ)) := by
       intro x hxs
@@ -360,10 +341,12 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
       exact ⟨x, mem_box_iff_index.mpr rfl, hxs⟩
     have hfinU : volume (⋃ ν ∈ hMeetFin.toFinset, (box n ν : Set (ι → ℝ))) ≠ ⊤ :=
       (measure_biUnion_finset_le _ _).trans_lt (by
-        simp only [volume_box]; exact ENNReal.sum_lt_top.mpr fun _ _ ↦ by finiteness) |>.ne
+        simp only [volume_box]
+        exact ENNReal.sum_lt_top.mpr fun _ _ ↦ by finiteness) |>.ne
     have hle := measureReal_mono hsub hfinU
-    rw [hvol_union hMeetFin.toFinset, hcardM, le_div_iff₀ hnpow] at hle
-    rw [hV]; linarith
+    rw [measureReal_biUnion_box n hMeetFin.toFinset, hcardM, le_div_iff₀ hnpow] at hle
+    rw [hV]
+    linarith
   have hITr : (Inside.ncard : ℝ) ≤ (Tag.ncard : ℝ) := by exact_mod_cast hcard_IT
   have hMIBr : (Meet.ncard : ℝ) ≤ (Inside.ncard : ℝ) + (Bd.ncard : ℝ) := by
     exact_mod_cast hcard_MIB
