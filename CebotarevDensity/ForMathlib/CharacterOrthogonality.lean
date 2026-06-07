@@ -28,41 +28,26 @@ as candidates for upstreaming to mathlib.
 
 noncomputable section
 
+private theorem sum_eq_zero_of_mulLeft_mul_const_aux {H : Type*} [Group H] [Fintype H] {M₀ : Type*}
+    [Semiring M₀] [IsRightCancelMulZero M₀] (f : H → M₀) (h₀ : H) {c : M₀} (hc : c ≠ 1)
+    (hf : ∀ h, f (h₀ * h) = c * f h) : ∑ h : H, f h = 0 := by
+  refine eq_zero_of_mul_eq_self_left hc ?_
+  rw [Finset.mul_sum]
+  exact Fintype.sum_bijective (h₀ * ·) (Group.mulLeft_bijective h₀) _ _ fun h => (hf h).symm
+
 /-- **Character-column orthogonality** for a finite commutative group `G`: for `g ≠ 1`, the sum
 of `χ g` over all characters `χ : G →* ℂˣ` vanishes. -/
 theorem sum_char_apply_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finite G]
     [Fintype (G →* ℂˣ)] {g : G} (hg : g ≠ 1) : ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
-  classical
-  haveI : NeZero ((Monoid.exponent G : ℕ) : ℂ) := ⟨Nat.cast_ne_zero.mpr (NeZero.ne _)⟩
   obtain ⟨χ₀, hχ₀⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
-  have hshift : ((χ₀ g : ℂˣ) : ℂ) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) =
-      ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) := by
-    rw [Finset.mul_sum]
-    refine Fintype.sum_bijective (χ₀ * ·) (Group.mulLeft_bijective χ₀)
-      (fun χ => ((χ₀ g : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun χ => ((χ g : ℂˣ) : ℂ)) fun χ => ?_
-    rw [MonoidHom.mul_apply, Units.val_mul]
-  have h0 : (((χ₀ g : ℂˣ) : ℂ) - 1) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
-    rw [sub_mul, one_mul, hshift, sub_self]
-  rcases mul_eq_zero.mp h0 with h | h
-  · exact absurd (Units.ext (by simpa using sub_eq_zero.mp h)) hχ₀
-  · exact h
+  exact sum_eq_zero_of_mulLeft_mul_const_aux _ χ₀ (fun h => hχ₀ (Units.ext h))
+    fun χ => by rw [MonoidHom.mul_apply, Units.val_mul]
 
 /-- **Character-row orthogonality** for a finite commutative group `G`: for a nontrivial character
 `χ : G →* ℂˣ`, the sum of `χ g` over all `g : G` vanishes. -/
 theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Fintype G]
     {χ : G →* ℂˣ} (hχ : χ ≠ 1) : ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
-  classical
-  obtain ⟨g₀, hg₀⟩ : ∃ g₀ : G, χ g₀ ≠ 1 := by
-    by_contra h
-    push Not at h
-    exact hχ (MonoidHom.ext fun g => by simpa using h g)
-  have hshift : ((χ g₀ : ℂˣ) : ℂ) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = ∑ g : G, ((χ g : ℂˣ) : ℂ) := by
-    rw [Finset.mul_sum]
-    refine Fintype.sum_bijective (g₀ * ·) (Group.mulLeft_bijective g₀)
-      (fun g => ((χ g₀ : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun g => ((χ g : ℂˣ) : ℂ)) fun g => ?_
-    rw [map_mul, Units.val_mul]
-  have h0 : (((χ g₀ : ℂˣ) : ℂ) - 1) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
-    rw [sub_mul, one_mul, hshift, sub_self]
-  rcases mul_eq_zero.mp h0 with h | h
-  · exact absurd (Units.ext (sub_eq_zero.mp h)) hg₀
-  · exact h
+  obtain ⟨g₀, hg₀⟩ := DFunLike.ne_iff.mp hχ
+  rw [MonoidHom.one_apply] at hg₀
+  exact sum_eq_zero_of_mulLeft_mul_const_aux _ g₀ (fun h => hg₀ (Units.ext h))
+    fun g => by rw [map_mul, Units.val_mul]
