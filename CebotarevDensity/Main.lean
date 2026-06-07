@@ -529,4 +529,3 @@ theorem dirichlet_primes_in_AP (n : ℕ) (hn : 1 ≤ n) (a : ZMod n) (ha : IsUni
   · exact dirichlet_AP_main n hn4 hn a ha
 
 end Chebotarev
-_of_comm
