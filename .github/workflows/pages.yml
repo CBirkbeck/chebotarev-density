@@ -1,0 +1,20 @@
+name: Blueprint Pages
+
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  pages:
+    uses: ./.github/workflows/blueprint-pages.yml
+    secrets: inherit
+    with:
+      # lake exe cache get for mathlib — without it the CI build is infeasible.
+      warm_dependency_cache: true
