@@ -177,29 +177,15 @@ private theorem isArithFrobAt_restrictNormal
     haveI : IsScalarTower K F L := F.isScalarTower_mid'
     IsArithFrobAt (𝓞 K) (σ.restrictNormal F) (𝔓.under (𝓞 F)) := by
   haveI : IsScalarTower K F L := F.isScalarTower_mid'
-  haveI : IsScalarTower (𝓞 K) (𝓞 F) (𝓞 L) := inferInstance
-  have hunder : (𝔓.under (𝓞 F)).under (𝓞 K) = 𝔓.under (𝓞 K) := Ideal.under_under 𝔓
   intro y
-  rw [hunder, Ideal.under, Ideal.mem_comap, map_sub, map_pow]
-  rw [show (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 F) (σ.restrictNormal F)) y
+  rw [Ideal.under_under 𝔓, Ideal.under, Ideal.mem_comap, map_sub, map_pow,
+    show (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 F) (σ.restrictNormal F)) y
         = (σ.restrictNormal F) • y from rfl, ← smul_algebraMap_eq K L F σ y]
   exact hσ (algebraMap (𝓞 F) (𝓞 L) y)
 
-/-- An automorphism of `L` fixing the intermediate field `F` pointwise (i.e. lying in the fixing
-subgroup of `F`) restricts to the identity of `F`. -/
-private theorem restrictNormal_eq_one_of_mem_fixingSubgroup
-    (K L : Type*) [Field K] [Field L] [Algebra K L] [IsGalois K L] [FiniteDimensional K L]
-    (F : IntermediateField K L) [Normal K F] (g : L ≃ₐ[K] L) (hg : g ∈ F.fixingSubgroup) :
-    g.restrictNormal F = 1 := by
-  rw [IntermediateField.mem_fixingSubgroup_iff] at hg
-  ext x
-  have key : ((g.restrictNormal F x : F) : L) = g (x : L) := AlgEquiv.restrictNormal_commutes g F x
-  rw [AlgEquiv.one_apply]
-  exact_mod_cast key.trans (hg (x : L) x.2)
-
 /-- A prime of `𝓞 K` unramified in `L` is unramified in any intermediate field `F` Galois over `K`:
-for a prime `𝔮` of `𝓞 F` over `𝔭`, pick `𝔓` of `𝓞 L` over `𝔮`; then `e(𝔮 ∣ 𝔭)` divides
-`e(𝔓 ∣ 𝔭) = 1` (`Ideal.ramificationIdx_algebra_tower'`). -/
+for a prime `𝔮` of `𝓞 F` over `𝔭`, pick `𝔓` of `𝓞 L` over `𝔮`; unramifiedness of `𝔓` over `𝓞 K`
+descends to `𝔮` via `Algebra.IsUnramifiedAt.of_liesOver`. -/
 private theorem unramifiedIn_intermediateField
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] (F : IntermediateField K L) [IsGalois K F]
@@ -210,21 +196,14 @@ private theorem unramifiedIn_intermediateField
   refine ⟨hunr.1, fun 𝔮 h𝔮max h𝔮lo => ?_⟩
   haveI := h𝔮lo
   haveI := h𝔮max.isPrime
-  have h𝔮bot : 𝔮 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔮
-  rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔮bot]
-  obtain ⟨𝔓, h𝔓prime, h𝔓lo, -⟩ := exists_prime_liesOver (↥F) L 𝔮 h𝔮bot
+  obtain ⟨𝔓, h𝔓prime, h𝔓lo, -⟩ := exists_prime_liesOver (↥F) L 𝔮
+    (Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔮)
   haveI := h𝔓prime
   haveI := h𝔓lo
-  have h𝔮u : 𝔮.under (𝓞 K) = 𝔭 := h𝔮lo.over.symm
-  have h𝔓Fu : 𝔓.under (𝓞 F) = 𝔮 := h𝔓lo.over.symm
-  have h𝔓Ku : 𝔓.under (𝓞 K) = 𝔭 := by rw [← Ideal.under_under (B := 𝓞 F) 𝔓, h𝔓Fu, h𝔮u]
-  haveI : 𝔓.LiesOver 𝔭 := ⟨by rw [h𝔓Ku]⟩
-  have heL : Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 :=
-    UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 inferInstance
-  have htower := Ideal.ramificationIdx_algebra_tower' (𝔓.under (𝓞 K)) (𝔓.under (𝓞 F)) 𝔓
-  rw [heL, h𝔓Fu, h𝔓Ku] at htower
-  rw [h𝔮u]
-  exact Nat.eq_one_of_mul_eq_one_right htower.symm
+  haveI : 𝔓.LiesOver 𝔭 := ⟨by rw [← Ideal.under_under (B := 𝓞 F) 𝔓, h𝔓lo.over.symm, h𝔮lo.over.symm]⟩
+  haveI : Algebra.IsUnramifiedAt (𝓞 K) 𝔓 :=
+    hunr.2 𝔓 (h𝔓prime.isMaximal (Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔓)) inferInstance
+  exact Algebra.IsUnramifiedAt.of_liesOver (𝓞 K) 𝔮 𝔓
 
 /-- **Step (A): a Frobenius-trivial prime splits completely.** For `F = fixedField H` with `H`
 abelian (hence normal) and a nonzero prime `𝔭` of `𝓞 K` unramified in `L` whose Frobenius
@@ -232,7 +211,7 @@ representative lies in `H`, the `F`-Frobenius class of `𝔭` is trivial: `frobe
 
 In the abelian group `Gal(L/K)`, conjugate elements are equal, so a genuine Frobenius
 `σ = arithFrobAt 𝔓` (`𝔓 ∣ 𝔭`) equals `(frobeniusClass 𝔭).out ∈ H = fixingSubgroup F`; its normal
-restriction to `F` is the identity (`restrictNormal_eq_one_of_mem_fixingSubgroup`), and by the
+restriction to `F` is the identity (`IntermediateField.restrictNormalHom_ker`), and by the
 downward restriction `isArithFrobAt_restrictNormal` it is the `F`-Frobenius at `𝔮 = 𝔓 ∩ 𝓞 F`. -/
 private theorem frobeniusClass_fixedField_eq_one
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
@@ -251,11 +230,10 @@ private theorem frobeniusClass_fixedField_eq_one
   haveI := h𝔓lo
   haveI : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 h𝔓lo))
-  set σ : L ≃ₐ[K] L := arithFrobAt (𝓞 K) Gal(L/K) 𝔓 with hσdef
+  set σ : L ≃ₐ[K] L := arithFrobAt (𝓞 K) Gal(L/K) 𝔓
   have hclass : frobeniusClass K L 𝔭 = ConjClasses.mk σ :=
     frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 hunr σ 𝔓
       (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓) h𝔓lo
-  -- In the abelian group, `σ` and `(frobeniusClass 𝔭).out` are conjugate, hence equal.
   have hconj : IsConj σ ((frobeniusClass K L 𝔭).out) := by
     rw [← ConjClasses.mk_eq_mk_iff_isConj, hclass.symm, ConjClasses.mk, Quotient.out_eq]
   have hσeq : σ = (frobeniusClass K L 𝔭).out := by
@@ -263,8 +241,10 @@ private theorem frobeniusClass_fixedField_eq_one
     rw [SemiconjBy, mul_comm' (c : Gal(L/K)) σ] at hc
     exact mul_right_cancel hc
   have hσfix : σ ∈ F.fixingSubgroup := by
-    rw [hF, IntermediateField.fixingSubgroup_fixedField]; exact hσeq ▸ hmem
-  have hrestr : σ.restrictNormal F = 1 := restrictNormal_eq_one_of_mem_fixingSubgroup K L F σ hσfix
+    rw [hF, IntermediateField.fixingSubgroup_fixedField]
+    exact hσeq ▸ hmem
+  have hrestr : σ.restrictNormal F = 1 :=
+    MonoidHom.mem_ker.mp <| (IntermediateField.restrictNormalHom_ker F).ge hσfix
   have h𝔮lo : (𝔓.under (𝓞 F)).LiesOver 𝔭 :=
     ⟨by rw [← Ideal.under_under (B := 𝓞 F) 𝔓]; exact h𝔓lo.over⟩
   haveI := h𝔮lo
@@ -288,7 +268,7 @@ private theorem splitsCompletely_fixedField
           𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭 ∧ 𝔮 ≠ ⊥} = Module.finrank K ↥(IntermediateField.fixedField H)
       ∧ ∀ 𝔮 : Ideal (𝓞 ↥(IntermediateField.fixedField H)), 𝔮.IsPrime → 𝔮.LiesOver 𝔭 →
           Ideal.absNorm 𝔮 = Ideal.absNorm 𝔭 := by
-  set F := IntermediateField.fixedField H with hF
+  set F := IntermediateField.fixedField H
   haveI : IsScalarTower K F L := F.isScalarTower_mid'
   haveI : IsGalois K F := IsGalois.of_fixedField_normal_subgroup H
   haveI : NumberField F := NumberField.of_intermediateField F
@@ -296,7 +276,6 @@ private theorem splitsCompletely_fixedField
   have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L hunr
   have hfc : frobeniusClass K (↥F) 𝔭 = ConjClasses.mk (1 : Gal(↥F/K)) :=
     frobeniusClass_fixedField_eq_one K L H 𝔭 hunr hmem
-  -- residue degree of any prime `𝔮 ∣ 𝔭` is `ord (1) = 1`.
   have hresdeg : ∀ 𝔮 : Ideal (𝓞 F), 𝔮.IsPrime → 𝔮.LiesOver 𝔭 →
       Module.finrank (𝓞 K ⧸ 𝔮.under (𝓞 K)) (𝓞 F ⧸ 𝔮) = 1 := fun 𝔮 h𝔮p h𝔮lo => by
     haveI := h𝔮p
@@ -304,18 +283,17 @@ private theorem splitsCompletely_fixedField
     rw [finrank_residue_eq_orderOf K (↥F) (1 : Gal(↥F/K)) (ConjClasses.mk 1) rfl 𝔭 hunrF hfc 𝔮
       h𝔮lo, orderOf_one]
   refine ⟨?_, fun 𝔮 h𝔮p h𝔮lo => ?_⟩
-  · -- count: pick a prime above `𝔭`, apply `card_primesAbove_mul_finrank_eq`.
-    obtain ⟨𝔮₀, h𝔮₀p, h𝔮₀lo, -⟩ := exists_prime_liesOver K (↥F) 𝔭 hpbot
+  · obtain ⟨𝔮₀, h𝔮₀p, h𝔮₀lo, -⟩ := exists_prime_liesOver K (↥F) 𝔭 hpbot
     haveI := h𝔮₀p
     haveI := h𝔮₀lo
     have hcard := card_primesAbove_mul_finrank_eq K (↥F) 𝔭 hunrF 𝔮₀ h𝔮₀lo
     rw [hresdeg 𝔮₀ h𝔮₀p h𝔮₀lo, mul_one] at hcard
     rw [hcard, IsGalois.card_aut_eq_finrank K (↥F)]
-  · -- norm: `N𝔮 = N(𝔮 ∩ 𝓞 K)^{f(𝔮∣𝔭)} = N𝔭^1`.
-    haveI := h𝔮p
+  · haveI := h𝔮p
     haveI := h𝔮lo
     have hinert : (𝔮.under (𝓞 K)).inertiaDeg 𝔮 = 1 := by
-      rw [Ideal.inertiaDeg_algebraMap]; exact hresdeg 𝔮 h𝔮p h𝔮lo
+      rw [Ideal.inertiaDeg_algebraMap]
+      exact hresdeg 𝔮 h𝔮p h𝔮lo
     have hunder : 𝔮.under (𝓞 K) = 𝔭 := h𝔮lo.over.symm
     rw [Ideal.absNorm_eq_pow_inertiaDeg_of_liesOver 𝔮 (𝔮.under (𝓞 K)) inferInstance
       (hunder ▸ hpbot), hinert, pow_one, hunder]
