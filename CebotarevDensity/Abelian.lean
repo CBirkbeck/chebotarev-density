@@ -3,6 +3,7 @@ module
 public import CebotarevDensity.Cyclotomic
 public import Mathlib.NumberTheory.ArithmeticFunction.Carmichael
 public import Mathlib.NumberTheory.LSeries.PrimesInAP
+public import Mathlib.NumberTheory.NumberField.Cyclotomic.Ideal
 public import Mathlib.RingTheory.ZMod.UnitsCyclic
 public import Mathlib.Topology.Algebra.Order.LiminfLimsup
 
@@ -251,6 +252,44 @@ automatically; its `K`-algebra/scalar-tower structure comes from `RingHom.comp` 
 `IsScalarTower.of_algebraMap_eq`). The leaves below abstract `M` as a hypothesis with the
 relevant instance binders so they do not depend on that carrier choice. -/
 
+/-- **C2a-ramif — primes ramifying in a rational cyclotomic field divide `m`.** A prime `p`
+dividing the discriminant of an `{m}`-cyclotomic extension `E/ℚ` necessarily divides `m`: for
+`p ∤ m` every prime `P` of `𝓞 E` over `p` is unramified
+(`IsCyclotomicExtension.Rat.ramificationIdx_eq_of_not_dvd` gives `e = 1`, lifted to
+`Algebra.IsUnramifiedAt` via `isUnramifiedAt_iff_of_isDedekindDomain`), so by
+`not_dvd_discr_iff_forall_mem` we get `p ∤ discr E`. -/
+private theorem prime_dvd_natAbs_discr_cyclotomic_dvd
+    (E : Type*) [Field E] [NumberField E] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} ℚ E]
+    {p : ℕ} (hp : p.Prime) (hpd : p ∣ (NumberField.discr E).natAbs) : p ∣ m := by
+  by_contra hpm
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hpprime : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
+  have hpd' : (p : ℤ) ∣ NumberField.discr E := Int.ofNat_dvd_left.mpr hpd
+  refine absurd hpd' ?_
+  rw [NumberField.not_dvd_discr_iff_forall_mem E (𝓞 E) hpprime]
+  intro P hP hmem
+  haveI hPp : P.IsPrime := hP
+  -- `P` lies over the rational prime `p`: its contraction to `ℤ` is `span {p}`.
+  have hunder : Ideal.under ℤ P = Ideal.span {(p : ℤ)} := by
+    haveI hUP : (Ideal.under ℤ P).IsPrime := inferInstance
+    have hmem' : (p : ℤ) ∈ Ideal.under ℤ P := by rw [Ideal.mem_under]; simpa using hmem
+    have hspan_le : Ideal.span {(p : ℤ)} ≤ Ideal.under ℤ P := by
+      rw [Ideal.span_le]; simpa using hmem'
+    have hmax : (Ideal.span {(p : ℤ)}).IsMaximal :=
+      PrincipalIdealRing.isMaximal_of_irreducible (Nat.prime_iff_prime_int.mp hp).irreducible
+    exact (hmax.eq_of_le hUP.ne_top hspan_le).symm
+  have hPbot : P ≠ ⊥ := by
+    rintro rfl
+    rw [Ideal.mem_bot] at hmem
+    have hne : ((p : ℤ) : 𝓞 E) ≠ 0 := by
+      simp only [ne_eq, Int.cast_natCast, Nat.cast_eq_zero]; exact hp.pos.ne'
+    exact hne hmem
+  -- Unramifiedness reduces to ramification index `1`, which the cyclotomic
+  -- theory supplies for any prime not dividing `m`.
+  rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := ℤ) (S := 𝓞 E) hPbot, hunder]
+  haveI : P.LiesOver (Ideal.span {(p : ℤ)}) := ⟨by rw [← hunder]⟩
+  exact IsCyclotomicExtension.Rat.ramificationIdx_eq_of_not_dvd p E P hpm
+
 /-- **C2a — cyclotomic degree over the base** (the deep ramification/Minkowski leaf). Source
 (Sharifi p. 144): "Choose `m` not dividing the discriminant of `L` so that
 `H = Gal(L(μ_m)/L) ≅ (ℤ/mℤ)ˣ` … and `Gal(L(μ_m)/K) ≅ G × H`." The full order `φ(m)`
@@ -262,9 +301,63 @@ giving linear disjointness of `L` and `K(μ_m)`. **This is the isolated deep lea
 private theorem cyclotomicField_finrank_eq
     (K M : Type*) [Field K] [NumberField K] [Field M] [NumberField M] [Algebra K M]
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K M]
-    (_hcop : ((NumberField.discr K).natAbs).Coprime m) :
-    Module.finrank K M = m.totient :=
-  sorry
+    (hcop : ((NumberField.discr K).natAbs).Coprime m) :
+    Module.finrank K M = m.totient := by
+  -- A primitive `m`-th root of unity in `M`.
+  obtain ⟨ζ, hζ⟩ := IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) K M
+    (Set.mem_singleton m) (NeZero.ne m)
+  -- The cyclotomic copy `K₁ = ℚ(ζ)` and the base copy `K₂ = image of K`, as intermediate
+  -- fields of `M` over `ℚ`.
+  set K₁ : IntermediateField ℚ M := IntermediateField.adjoin ℚ {ζ} with hK₁def
+  set K₂ : IntermediateField ℚ M := (IsScalarTower.toAlgHom ℚ K M).fieldRange with hK₂def
+  haveI hK₁cyc : IsCyclotomicExtension {m} ℚ K₁ :=
+    hζ.intermediateField_adjoin_isCyclotomicExtension (K := ℚ)
+  haveI : IsGalois ℚ K₁ := IsCyclotomicExtension.isGalois (S := {m}) (K := ℚ) (L := K₁)
+  have hfinK₁ : Module.finrank ℚ K₁ = m.totient :=
+    IsCyclotomicExtension.finrank K₁ (Polynomial.cyclotomic.irreducible_rat (NeZero.pos m))
+  -- `K₁ ⊔ K₂ = ⊤`: the compositum is generated over `ℚ` by `ζ` and the image of `K`,
+  -- and `M = K(ζ)` is generated over `K` by `ζ` alone.
+  have hsup : K₁ ⊔ K₂ = ⊤ := by
+    have hζalg : IsAlgebraic ℚ ζ := Algebra.IsAlgebraic.isAlgebraic ζ
+    have hsubalg : (IsScalarTower.toAlgHom ℚ K M).range ⊔ Algebra.adjoin ℚ {ζ}
+        = (⊤ : Subalgebra ℚ M) := by
+      have htop : (Algebra.adjoin K {ζ} : Subalgebra K M) = ⊤ :=
+        IsCyclotomicExtension.adjoin_primitive_root_eq_top (n := m) hζ
+      rw [← Algebra.Subalgebra.restrictScalars_adjoin (R := ℚ) (S := K) (s := {ζ}), htop,
+        Subalgebra.restrictScalars_top]
+    apply IntermediateField.toSubalgebra_injective
+    rw [hK₁def, hK₂def, IntermediateField.sup_toSubalgebra_of_isAlgebraic_left,
+      IntermediateField.adjoin_simple_toSubalgebra_of_isAlgebraic hζalg,
+      AlgHom.fieldRange_toSubalgebra, IntermediateField.top_toSubalgebra, sup_comm]
+    exact hsubalg
+  -- The ring isomorphism `K ≃+* K₂` restricting `algebraMap K M` to its field range.
+  let eK₂ : K ≃+* K₂ := ((IsScalarTower.toAlgHom ℚ K M : K →+* M)).rangeRestrictFieldEquiv
+  -- `discr K₂ = discr K` since `K ≃+* K₂`.
+  have hdiscrK₂ : NumberField.discr K₂ = NumberField.discr K :=
+    (NumberField.discr_eq_discr_of_ringEquiv (f := eK₂)).symm
+  -- The deep input: `discr K₁` (ramified only at primes dividing `m`) is coprime to `discr K`.
+  have hcoprime : IsCoprime (NumberField.discr K₁) (NumberField.discr K₂) := by
+    rw [hdiscrK₂, Int.isCoprime_iff_gcd_eq_one, Int.gcd]
+    by_contra hne
+    obtain ⟨p, hp, hpdvd⟩ := Nat.exists_prime_and_dvd hne
+    rw [Nat.dvd_gcd_iff] at hpdvd
+    obtain ⟨hpa, hpb⟩ := hpdvd
+    have hpm : p ∣ m := prime_dvd_natAbs_discr_cyclotomic_dvd K₁ m hp hpa
+    have hpgcd : p ∣ Nat.gcd (NumberField.discr K).natAbs m := Nat.dvd_gcd hpb hpm
+    rw [hcop] at hpgcd
+    exact hp.one_lt.ne' (Nat.dvd_one.mp hpgcd)
+  -- Linear disjointness of the cyclotomic copy and the base copy over `ℚ`.
+  have hld : K₁.LinearDisjoint K₂ :=
+    NumberField.linearDisjoint_of_isGalois_isCoprime_discr (L := M) K₁ K₂ hcoprime
+  have hfr : Module.finrank K₂ M = Module.finrank ℚ K₁ :=
+    hld.finrank_right_eq_finrank hsup
+  -- Relabel `finrank K M = finrank K₂ M` along `K ≃+* K₂`.
+  have hrelabel : Module.finrank K M = Module.finrank K₂ M := by
+    refine Algebra.finrank_eq_of_equiv_equiv eK₂ (RingEquiv.refl M) ?_
+    ext x
+    change ((eK₂ x : M)) = (IsScalarTower.toAlgHom ℚ K M : K →+* M) x
+    rfl
+  rw [hrelabel, hfr, hfinK₁]
 
 /-- **C1 — the `G × H` splitting of the compositum** (Sharifi p. 144):
 `Gal(M/K) ≅ G × Gal(M/L)`
