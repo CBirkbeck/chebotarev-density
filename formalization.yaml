@@ -1,0 +1,94 @@
+# formalization.yaml (v0.1): repo-root metadata for formalization projects.
+# [required] fields should be filled; everything else is optional.
+
+# project - the formalization itself (not the source).
+project:
+  name: "chebotarev-density"
+  authors:
+    - "Chris Birkbeck"
+  license: "Apache-2.0"
+
+# sources - what was formalized. List of papers/textbooks/blueprints.
+# title+authors required, others optional.
+sources:
+  - title: "Algebraic Number Theory (course notes), sections 7.1-7.2"
+    authors:
+      - "Romyar Sharifi"
+    id: "local file docs/algnum.pdf; primary substrate, pp. 138-144"
+    type: "lecture notes"
+  - title: "Chebotarev and his density theorem"
+    authors:
+      - "Peter Stevenhagen"
+      - "Hendrik W. Lenstra, Jr."
+    id: "Math. Intelligencer 18 (1996), no. 2, 26-37; local file docs/cheb.pdf (appendix proof)"
+    type: "paper"
+  - title: "Counting ideals in ray classes"
+    authors:
+      - "Sanoli Gun"
+      - "Olivier Ramaré"
+      - "Jyothsnaa Sivaraman"
+    id: "J. Number Theory 243 (2023); Theorems 1 and 3 guided the effective ideal-count engine (ForMathlib/IdealCongruenceCount.lean, ForMathlib/LatticePointCount.lean)"
+    type: "paper"
+  - title: "Algebraic Number Theory"
+    authors:
+      - "Serge Lang"
+    id: "GTM 110, Springer; VI section 3 Theorem 3 guided the norm-residue density transfer"
+    type: "textbook"
+
+# how it was produced
+automation:
+  method: "agent"
+  models:
+    - "claude-opus-4.8"
+  framework: "Claude Code with Lean LSP tooling (mathlib-quality plugin: /develop decomposition, /beastmode execution, /cleanup, /overview)"
+  cost:
+    wall_time: "ten days (repo spun out of flt-regular-bernoulli 2026-05-28; main theorem completed 2026-06-07)"
+    hardware: "author's laptop"
+  notes: >
+    The Lean formalization was carried out by agents with human guidance on the
+    mathematical strategy (CFT-free route: cyclotomic case via Dirichlet's
+    argument, abelian case via Chebotarev's compositum crossing, general case
+    via fixed-field reduction; no Artin reciprocity). Every delegated proof was
+    re-verified by cache-bypassing elaboration and #print axioms. The four
+    headline theorems (chebotarev_density, chebotarev_density_of_comm,
+    density_split_completely, dirichlet_primes_in_AP) are additionally
+    certified by leanprover/comparator (statement-identity against independent
+    restatements, axiom budget, kernel replay): see certification/ and
+    scripts/certify.sh.
+
+# project status
+status:
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms:
+    - "propext"
+    - "Classical.choice"
+    - "Quot.sound"
+
+# human review status
+review:
+  status: "self-assessed"    # [required] unchecked | self-assessed | peer-reviewed | author-verified
+  reviewers:
+    - "Chris Birkbeck"
+  notes: >
+    The statement layer is under active peer review by Riccardo Brasca and
+    Xavier Roblot (slice PRs #4 onward against the shared master skeleton);
+    review feedback (no axioms, definition shapes, argument conventions) is
+    incorporated. The full proof development has machine verification
+    (comparator kernel certification) but has not yet been human-reviewed
+    end to end.
+
+# alignment - freeform yaml: how source statements map to formal declarations.
+# e.g. a blueprint link, or a per-statement table.
+alignment:
+  blueprint: "https://cbirkbeck.github.io/chebotarev-density/"
+  blueprint_source: "CebotarevBlueprint/ (verso-blueprint; every entry links its Lean declaration via (lean := ...))"
+  statements:
+    - source: "Chebotarev density theorem, conjugacy-class form (Sharifi Thm 7.2.2; Stevenhagen-Lenstra appendix)"
+      decl: "Chebotarev.chebotarev_density"
+    - source: "abelian case (Sharifi 7.2.2 Step 2)"
+      decl: "Chebotarev.chebotarev_density_of_comm"
+    - source: "split-completely density 1/[L:K] (corollary of the main theorem)"
+      decl: "Chebotarev.density_split_completely"
+    - source: "Dirichlet primes in arithmetic progressions, Dirichlet-density form (Sharifi 7.2.3: Chebotarev at K = Q, L = Q(mu_n))"
+      decl: "Chebotarev.dirichlet_primes_in_AP"
