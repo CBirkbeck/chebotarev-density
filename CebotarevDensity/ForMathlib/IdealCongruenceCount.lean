@@ -50,12 +50,17 @@ frontier input `normLeOne_frontier_lipschitz_cover` (Gap A).
   which on the lattice side is a union of cosets of `(c·N(J)) • Λ_J` per sign-orthant; count
   each coset by the workhorse with the Gap-A frontier cover.
 
-* `card_norm_le_norm_residue_kappa_mul_eq` — the κ-transfer: multiplication by a fixed
-  nonzero ideal `𝔟` with `N(𝔟)` coprime to `c` is an injection
-  `{N(I) ≤ N, N(I) ≡ a} ↪ {N(I) ≤ N·N(𝔟), N(I) ≡ a·N(𝔟)}` (with controlled complement),
-  so the leading densities satisfy `κ_a = κ_{a·N(𝔟) mod c}`. This is a statement about the
-  limits only — no error rate is needed for the transfer — and provides the
-  `g`-independence of the Frobenius-fibre density over the image subgroup of ideal norms.
+* `tendsto_sum_char_mul_cardNormLeResidue_div_of_realized` — the κ-transfer in Fourier form:
+  over a subgroup `S ≤ (ℤ/c)ˣ` all of whose residues are *realized* as ideal norms, the leading
+  density `κ_a` is constant in `a ∈ S` (Lang VI §3 Thm 3, via the per-class densities), so for
+  every nontrivial character `χ : S →* ℂˣ` the twisted average `∑_{s ∈ S} χ(s)·#{N(I) ≤ N,
+  N(I) ≡ s}/N` tends to `0` (row orthogonality). This is the `g`-independence of the
+  Frobenius-fibre density over the image subgroup of ideal norms.
+
+* `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform` — the uniform refinement of the
+  per-residue count: given the Fourier-decay hypothesis produced by the previous theorem, a
+  **single** leading constant `κ` and error constant `C'` serve for every `a ∈ S` simultaneously,
+  `#{N(I) ≤ N, N(I) ≡ a} = κ N + O(N^{1-1/d})` uniformly over the realized subgroup.
 -/
 
 @[expose] public section
@@ -109,13 +114,10 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
       · rintro ⟨w, ⟨u, ⟨y, hy, rfl⟩, rfl⟩, rfl⟩; exact ⟨y, hy, rfl⟩
     rw [heq]
     exact (hb.smul₀ c).vadd v
-  -- The "domain grid" map: which subcube of side `1/N` of `[0,1]ᵈ⁻¹` a point lies in.
   set q : (Fin (Fintype.card ι - 1) → ℝ) → (Fin (Fintype.card ι - 1) → ℤ) :=
     fun y k ↦ ⌈(N : ℝ) * y k⌉ with hq
-  -- The finite index set of admissible subcubes: `[0,N]ᵈ⁻¹ ∩ ℤᵈ⁻¹`.
   set T : Finset (Fin (Fintype.card ι - 1) → ℤ) :=
     Finset.Icc (0 : Fin (Fintype.card ι - 1) → ℤ) (fun _ ↦ (N : ℤ)) with hT
-  -- Each fibre of `q` inside `[0,1]ᵈ⁻¹` has diameter `≤ 1/N`.
   have hdiam : ∀ w : Fin (Fintype.card ι - 1) → ℤ,
       Metric.diam (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w}) ≤ 1 / N := by
     intro w
@@ -137,7 +139,6 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
         field_simp, abs_div, abs_of_pos hN0]
     rw [div_le_div_iff_of_pos_right hN0]
     exact habs
-  -- The chart image is covered by the `index 1`-images of the `ψ`-images of the fibres.
   have hcover : index 1 '' (ψ '' Set.Icc 0 1) ⊆
       ⋃ w ∈ T, index 1 '' (ψ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w})) := by
     rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
@@ -155,7 +156,6 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
         push_cast
         nlinarith [hN0]
     exact Set.mem_biUnion hyT ⟨ψ y, ⟨y, ⟨hy, rfl⟩, rfl⟩, rfl⟩
-  -- Each piece has at most `(2⌈M⌉₊+1)ᵈ` points by the incidence bound at unit scale.
   have hpiece : ∀ w : Fin (Fintype.card ι - 1) → ℤ,
       (index 1 '' (ψ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w}))).ncard
         ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι := by
@@ -165,7 +165,6 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
     have hSbdd : Bornology.IsBounded S :=
       (Metric.isBounded_Icc 0 1).subset Set.inter_subset_left
     have hbddφ : Bornology.IsBounded (ψ '' S) := hψbdd S hSbdd
-    -- Diameter of the scaled-translated image: `≤ |c|·M/N ≤ M`, via `dist_smul₀`.
     have hdimg : Metric.diam (ψ '' S) ≤ (M : ℝ) := by
       refine Metric.diam_le_of_forall_dist_le M.coe_nonneg ?_
       rintro _ ⟨y, hy, rfl⟩ _ ⟨y', hy', rfl⟩
@@ -183,7 +182,6 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
     refine (ncard_index_image_le_of_diam_le 1 M.coe_nonneg ?_ hbddφ).trans ?_
     · simpa using hdimg
     · simp
-  -- Assemble.
   have hfin : ∀ w : Fin (Fintype.card ι - 1) → ℤ,
       (index 1 '' (ψ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w}))).Finite :=
     fun w ↦ setFinite_index_image_of_isBounded 1
@@ -224,17 +222,13 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
   classical
   have hcpos : (0 : ℝ) < c := lt_of_lt_of_le one_pos hc
   have hc0 : c ≠ 0 := hcpos.ne'
-  -- The region `R = -w +ᵥ c•s`.
   set R : Set (ι → ℝ) := (-w) +ᵥ (c • s) with hR
-  -- Count identity: `#(s ∩ c⁻¹•(w +ᵥ Λ)) = #(R ∩ Λ)`.
   have hcount : Nat.card ↑(s ∩ c⁻¹ • (w +ᵥ (Λ : Set (ι → ℝ)))) = Nat.card ↑(R ∩ Λ) := by
-    -- bijection 1: scaling `x ↦ c•x` on the general set `L := w +ᵥ Λ`.
     have hbij1 : ↑(s ∩ c⁻¹ • (w +ᵥ (Λ : Set (ι → ℝ)))) ≃ ↑(c • s ∩ (w +ᵥ (Λ : Set (ι → ℝ)))) :=
       Equiv.subtypeEquiv (Equiv.smulRight hc0) (fun x ↦ by
         simp_rw [Set.mem_inter_iff, Equiv.smulRight_apply, Set.smul_mem_smul_set_iff₀ hc0,
           ← Set.mem_inv_smul_set_iff₀ hc0])
     rw [Nat.card_congr hbij1]
-    -- bijection 2: translation `x ↦ -w +ᵥ x`.
     have heq : (-w) +ᵥ ((c • s) ∩ (w +ᵥ (Λ : Set (ι → ℝ)))) = R ∩ Λ := by
       rw [Set.vadd_set_inter, hR]
       congr 1
@@ -243,12 +237,10 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
     rw [← heq]
     exact (Nat.card_image_of_injective (fun a b h ↦ by simpa using h) _).symm
   rw [hcount]
-  -- Apply the natural-scale unit-grid bridge to `R` at `n = 1`.
   have hRbdd : Bornology.IsBounded R := (hbdd.smul₀ c).vadd (-w)
   have hRmeas : MeasurableSet R := (hmeas.const_smul_of_ne_zero hc0).const_vadd (-w)
   have hbridge := abs_card_inter_sub_volume_mul_pow_le hRbdd hRmeas (n := 1) le_rfl
   rw [Nat.cast_one, inv_one, one_smul, one_pow, mul_one] at hbridge
-  -- Volume: `vol.real R = cᵈ · vol.real s`.
   have hvolR : volume.real R = c ^ Fintype.card ι * volume.real s := by
     rw [hR, Measure.real, measure_vadd, ← Measure.real,
       show volume.real (c • s) = |c| ^ (Fintype.card ι) * volume.real s by
@@ -256,7 +248,6 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
           ENNReal.toReal_mul, ENNReal.toReal_ofReal (by positivity), abs_pow, Module.finrank_pi],
       abs_of_pos hcpos]
   rw [hvolR] at hbridge
-  -- Boundary cover of `R`: each chart becomes `y ↦ -w + c • φⱼ y`.
   have hchart_eq : ∀ j, (-w) +ᵥ (c • (φ j '' Set.Icc 0 1))
       = (fun y ↦ (-w) + c • φ j y) '' Set.Icc 0 1 := by
     intro j
@@ -279,7 +270,6 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
     refine (Set.vadd_set_mono (Set.smul_set_mono hcov)).trans ?_
     rw [Set.smul_set_iUnion, Set.vadd_set_iUnion]
     exact Set.iUnion_mono fun j ↦ (hchart_eq j).le
-  -- Boundary-cell count: cover `index 1 '' frontier R` by the chart images and apply Helper 1.
   have hbdcell : (index 1 '' frontier R).ncard ≤
       (m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι) * (⌈c⌉₊ + 1) ^ (Fintype.card ι - 1) := by
     have hfin : ∀ j : Fin m, (index 1 '' ((fun y ↦ (-w) + c • φ j y) '' Set.Icc 0 1)).Finite := by
@@ -299,7 +289,6 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
     rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     ring_nf
     rfl
-  -- Combine: bridge + boundary bound, then convert `⌈c⌉₊ + 1 ≤ 3c` to land on `cᵈ⁻¹`.
   rw [mul_comm (c ^ Fintype.card ι) (volume.real s)] at hbridge
   refine hbridge.trans ((Nat.cast_le.mpr hbdcell).trans ?_)
   push_cast
@@ -317,8 +306,6 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
           * c ^ (Fintype.card ι - 1) := by ring
 
 end RealScale
-
-/-! ### The workhorse: coset lattice points in real dilations of a Lipschitz-bounded region -/
 
 /-- **Effective coset lattice-point count** (Widmer / GRS Theorem 3 as used; the
 translate-and-transport closure of L1). For a full lattice `T '' ℤ^ι` (`T` a linear
@@ -339,17 +326,14 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
         ≤ C * t ^ (Fintype.card ι - 1 : ℕ) := by
   classical
   obtain ⟨m, M, φ, hφ, hcov⟩ := hlip
-  -- Transport the data through `T.symm`: `D' = T.symm '' D` is bounded, measurable, and its
-  -- frontier inherits a Lipschitz cover (compose the charts with the continuous-linear `T.symm`).
   set D' : Set (ι → ℝ) := T.symm '' D with hD'
   set Ts : (ι → ℝ) →L[ℝ] (ι → ℝ) := (T.symm.toContinuousLinearEquiv : (ι → ℝ) →L[ℝ] (ι → ℝ))
     with hTs
   have hTslip : LipschitzWith ‖Ts‖₊ (T.symm : (ι → ℝ) → (ι → ℝ)) := by
-    have := Ts.lipschitz; simpa [hTs] using this
+    simpa [hTs] using Ts.lipschitz
   have hD'bdd : Bornology.IsBounded D' := hTslip.isBounded_image hbdd
   have hD'meas : MeasurableSet D' :=
     (T.symm.toContinuousLinearEquiv.toHomeomorph.toMeasurableEquiv).measurableSet_image.mpr hmeas
-  -- Transported Lipschitz cover of `frontier D'`.
   set M' : ℝ≥0 := ‖Ts‖₊ * M with hM'
   set φ' : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) := fun j ↦ T.symm ∘ φ j with hφ'
   have hφ'lip : ∀ j, LipschitzWith M' (φ' j) := fun j ↦ hTslip.comp (hφ j)
@@ -363,7 +347,6 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
     refine Set.iUnion_mono fun j ↦ ?_
     rw [Set.image_image]
     exact le_of_eq rfl
-  -- The volume `vol.real D' = vol.real D / |det T|`.
   have hvolD' : MeasureTheory.volume.real D' =
       MeasureTheory.volume.real D / |LinearMap.det (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ))| := by
     have hcoe : (⇑T.symm : (ι → ℝ) → (ι → ℝ)) = ⇑(T.symm : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)) := rfl
@@ -376,11 +359,9 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
       simp [Units.val_inv_eq_inv_val]
     rw [hdet, abs_inv, div_eq_mul_inv]
     ring
-  -- The uniform constant from the translate-real-scale bridge applied to `D'`.
   refine ⟨(m * (2 * ⌈(M' : ℝ)⌉₊ + 1) ^ Fintype.card ι * 3 ^ (Fintype.card ι - 1) : ℕ), ?_⟩
   intro ξ t ht
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
-  -- Count identity: linear transport + scaling reduces to the translated-lattice count of `D'`.
   have hcount : Nat.card ↑((ξ +ᵥ (T '' (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ))))
         ∩ t • D)
       = Nat.card ↑(D' ∩ t⁻¹ • ((T.symm ξ) +ᵥ
@@ -416,8 +397,6 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
   rw [hcount, ← hvolD']
   exact abs_cardR_translate_sub_volume_le hD'bdd hD'meas hφ'lip hcov' (T.symm ξ) ht
 
-/-! ### Arithmetic input: the integer norm is constant modulo `M` on cosets of `M · 𝓞_K` -/
-
 /-- **Norm is coset-constant modulo `M`.** For `x y : 𝓞 K` and `M : ℕ`, the algebraic norm
 satisfies `Algebra.norm ℤ (x + M·y) ≡ Algebra.norm ℤ x (mod M)`. Proof: the norm is the
 determinant of the left-multiplication matrix in a fixed `ℤ`-basis; reducing the matrix entries
@@ -446,8 +425,6 @@ private theorem natCast_algebraNorm_add_nsmul_mul {K : Type*} [Field K] [NumberF
   rw [show (((M • (Algebra.leftMulMatrix b) y i j) : ℤ) : ZMod M) = 0 by
     rw [nsmul_eq_mul, Int.cast_mul, Int.cast_natCast, ZMod.natCast_self, zero_mul]]
   rw [add_zero]
-
-/-! ### Sign of the algebraic norm via the real embeddings -/
 
 open Classical NumberField.InfinitePlace in
 /-- **Signed product formula for the rational norm.** For `y : K`,
@@ -532,7 +509,6 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
   have hcpx : 0 ≤
       (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) (y : K)‖ ^ 2) :=
     Finset.prod_nonneg (fun w _ => sq_nonneg _)
-  -- The sign hypotheses, phrased on the real embeddings (which equal the mixed coordinates).
   have hmix : ∀ w : {w : InfinitePlace K // IsReal w},
       embedding_of_isReal w.2 (y : K) = (mixedEmbedding K (y : K)).1 w := fun w => by
     rw [mixedEmbedding_apply_isReal]
@@ -543,18 +519,15 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
   have hsign := prod_eq_neg_one_pow_card_mul_prod_abs s
     (fun w : {w : InfinitePlace K // IsReal w} => embedding_of_isReal w.2 (y : K)) hpos' hneg'
   have hnf := norm_eq_prod_real_emb_mul_prod_complex (K := K) (y : K)
-  -- `|↑norm| = (∏|real emb|)·(∏complex)`, since the complex factor is nonnegative.
   have habs : |((Algebra.norm ℚ (y : K) : ℝ))|
       = (∏ w : {w : InfinitePlace K // IsReal w}, |embedding_of_isReal w.2 (y : K)|) *
         (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) (y : K)‖ ^ 2) := by
     rw [hnf, abs_mul, abs_of_nonneg hcpx, Finset.abs_prod]
-  -- Real-number identity: `(↑norm : ℝ) = (-1)^#s · |↑norm|`.
   have hkeyR : ((Algebra.norm ℚ (y : K) : ℝ))
       = (-1) ^ (s.card) * |((Algebra.norm ℚ (y : K) : ℝ))| := by
     rw [habs]
     conv_lhs => rw [hnf, hsign]
     ring
-  -- Transfer to `ℤ` via the cast: `norm = (-1)^#s · natAbs`.
   have hZ' : (Algebra.norm ℤ y : ℤ) = (-1) ^ (s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) := by
     have hZ : ((Algebra.norm ℤ y : ℤ) : ℝ)
         = ((-1) ^ (s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) : ℤ) := by
@@ -562,7 +535,6 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
       rw [hcoe]
       exact hkeyR
     exact_mod_cast hZ
-  -- Invert using `((-1)^#s)² = 1`.
   have hsq : ((-1 : ℤ)) ^ s.card * (-1) ^ s.card = 1 := by
     rw [← pow_add, ← two_mul, pow_mul]; simp
   calc ((Algebra.norm ℤ y).natAbs : ℤ)
@@ -570,8 +542,6 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
     _ = ((-1) ^ s.card * (-1) ^ s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) := by rw [hsq]
     _ = (-1) ^ s.card * ((-1) ^ s.card * ((Algebra.norm ℤ y).natAbs : ℤ)) := by ring
     _ = (-1) ^ s.card * (Algebra.norm ℤ y : ℤ) := by rw [← hZ']
-
-/-! ### Splitting the count by ideal class -/
 
 open Ideal in
 /-- **Class split of the residue count.** The number of nonzero integral ideals of norm `≤ N`
@@ -618,8 +588,6 @@ private theorem card_norm_le_residue_eq_sum_class {K : Type*} [Field K] [NumberF
     invFun := fun I => ⟨⟨I.1, I.2.1⟩, I.2.2⟩
     left_inv := fun _ => rfl
     right_inv := fun _ => rfl }
-
-/-! ### Principalization: reducing a class to `J`-divisible principal ideals -/
 
 /-- **Modular cancellation.** `m ≡ a (mod c)` iff `m·NJ ≡ a·NJ (mod c·NJ)` (for `NJ > 0`).
 This transports the norm residue through the principalization map `I ↦ J · I`, under which the
@@ -699,15 +667,6 @@ private theorem card_principalize {K : Type*} [Field K] [NumberField K] (c : ℕ
   exact Nat.card_congr
     (((Equiv.dvd J).subtypeEquiv (fun I => principalize_iff c a N C J I hJ hNJ)).trans
       (Equiv.subtypeSubtypeEquivSubtypeInter (fun I : (Ideal (𝓞 K))⁰ ↦ J ∣ I) _))
-
-/-! ### Geometric infrastructure: linear-equiv transport and the residue-decorated torsion bridge
-
-The geometric core transports the cone-point count to the standard coordinate space `index K → ℝ`
-(the ambient of the workhorse `exists_card_coset_inter_smul_sub_volume_mul_rpow_le`) via the chart
-`Φ = (stdBasis K).equivFunL`. `map_span_int_linearEquiv` carries `ℤ`-spans through `Φ` (so the
-ideal lattice becomes `T '' ℤ^ι`); `card_isPrincipal_dvd_norm_le_residue` is mathlib's
-`card_isPrincipal_dvd_norm_le` refined by a norm-residue condition (carried along the per-norm
-fibre equivalence `idealSetEquivNorm`). -/
 
 /-- **`ℤ`-span transport along an `ℝ`-linear equivalence.** For an `ℝ`-linear equivalence `f` and a
 set `S`, the image of the `ℤ`-span of `S` is the `ℤ`-span of the image (as sets). -/
@@ -811,9 +770,9 @@ private theorem exists_lipschitz_cube_cover_hyperplane_slab {ι : Type*} [Fintyp
     by_cases hij : i = j
     · simp only [hφ, dif_pos hij, dist_self]; positivity
     · simp only [hφ, dif_neg hij]
-      rw [Real.dist_eq, show (2 * R) * c (σ.symm ⟨i, hij⟩) - R - ((2 * R) * c' (σ.symm ⟨i, hij⟩) - R)
-            = (2 * R) * (c (σ.symm ⟨i, hij⟩) - c' (σ.symm ⟨i, hij⟩)) by ring,
-        abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 2 * R),
+      have hreorg : (2 * R) * c (σ.symm ⟨i, hij⟩) - R - ((2 * R) * c' (σ.symm ⟨i, hij⟩) - R)
+          = (2 * R) * (c (σ.symm ⟨i, hij⟩) - c' (σ.symm ⟨i, hij⟩)) := by ring
+      rw [Real.dist_eq, hreorg, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 2 * R),
         Real.coe_toNNReal _ (by positivity)]
       gcongr
       rw [← Real.dist_eq]
@@ -836,44 +795,6 @@ private theorem exists_lipschitz_cube_cover_hyperplane_slab {ι : Type*} [Fintyp
         by_cases hij : i = j
         · rw [hφ]; simp only; rw [dif_pos hij, hij]; exact hxj.symm
         · rw [hφ]; simp only [dif_neg hij, Equiv.apply_symm_apply]; field_simp; ring
-
-open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
-/-- **Coset translate of cone points translates the generator by `m · J`.** If two cone points
-`a₁, a₂ ∈ idealSet K J` differ by a vector of `m • (idealLattice K (mk0 K J))` (the `m`-sublattice),
-then their generators differ by `m · w` for some `w ∈ J`: a lattice vector is `mixedEmbedding K y`
-with `y ∈ J` (integral, as `mk0 K J = ↑J`), and `mixedEmbedding` is injective, so the integral
-preimages satisfy `gen₁ = gen₂ + m·w`. This is the `ℤ`-linearity that makes the norm residue
-coset-constant (via `natCast_algebraNorm_add_nsmul_mul`). -/
-private theorem exists_generator_diff_of_coset {K : Type*} [Field K] [NumberField K] (m : ℕ)
-    (J : (Ideal (𝓞 K))⁰) (a₁ a₂ : idealSet K J)
-    (hcoset : (a₁ : mixedSpace K) - (a₂ : mixedSpace K) ∈
-      (m : ℝ) • (mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J) : Set (mixedSpace K))) :
-    ∃ w : 𝓞 K, (w : 𝓞 K) ∈ (J : Set (𝓞 K)) ∧
-      (preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K) =
-        (preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) + (m : 𝓞 K) * w := by
-  obtain ⟨v, hv, hveq⟩ := hcoset
-  simp only at hveq
-  rw [SetLike.mem_coe, mem_idealLattice] at hv
-  obtain ⟨y, hy, hyeq⟩ := hv
-  simp only [FractionalIdeal.coe_mk0, FractionalIdeal.mem_coeIdeal] at hy
-  obtain ⟨w, hwJ, hweq⟩ := hy
-  rw [Algebra.linearMap_apply] at hweq
-  refine ⟨w, hwJ, ?_⟩
-  have hg1 : mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K) : K)
-      = (a₁ : mixedSpace K) := by rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
-  have hg2 : mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) : K)
-      = (a₂ : mixedSpace K) := by rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
-  have hkey : mixedEmbedding K (((preimageOfMemIntegerSet (idealSetMap K J a₁) : 𝓞 K)
-      - (preimageOfMemIntegerSet (idealSetMap K J a₂) : 𝓞 K) : 𝓞 K) : K)
-      = mixedEmbedding K ((m : 𝓞 K) * w : 𝓞 K) := by
-    push_cast
-    rw [map_sub, hg1, hg2, ← hveq, ← hyeq, ← hweq, Nat.cast_smul_eq_nsmul, ← map_nsmul]
-    congr 1
-    rw [nsmul_eq_mul]
-  have heq := RingOfIntegers.coe_injective (K := K) ((mixedEmbedding_injective K) hkey)
-  linear_combination heq
-
-/-! ### Lipschitz-cover combinators and orthant boundary for the per-piece workhorse -/
 
 /-- **Union of two Lipschitz cube covers.** If `A` and `B` are each covered by finitely many
 `Lipschitz`-images of `[0,1]^(card ι - 1)`, so is `A ∪ B` (concatenate the families, take the max
@@ -904,13 +825,14 @@ private theorem exists_lipschitz_cover_union {ι : Type*} [Fintype ι] (A B : Se
 /-- **Finite union of Lipschitz cube covers.** A `Fintype`-indexed union of sets, each Lipschitz
 cube-covered, is itself Lipschitz cube-covered (concatenate over `Σ g, Fin (mf g)`, take the
 `Finset.sup` of the constants). -/
-private theorem exists_lipschitz_cover_iUnion {ι : Type*} [Fintype ι] {γ : Type*} [Fintype γ]
+private theorem exists_lipschitz_cover_iUnion {ι : Type*} [Fintype ι] {γ : Type*} [Finite γ]
     (A : γ → Set (ι → ℝ))
     (h : ∀ g, ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
       (∀ j, LipschitzWith M (φ j)) ∧ A g ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
     ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
       (∀ j, LipschitzWith M (φ j)) ∧ (⋃ g, A g) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
   classical
+  have : Fintype γ := Fintype.ofFinite γ
   choose mf Mf φf hLf hcf using h
   set e := Fintype.equivFin (Σ g, Fin (mf g)) with he
   set Ψ : (Σ g, Fin (mf g)) → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) :=
@@ -926,11 +848,11 @@ private theorem exists_lipschitz_cover_iUnion {ι : Type*} [Fintype ι] {γ : Ty
 `g k` (`k ∈ s` forces `≤ 0`, `k ∉ s` forces `≥ 0`) has frontier inside the union of the coordinate
 hyperplanes `{y (g k) = 0}`. Proof: the orthant is closed, its strict version is open and contained
 in it, so a boundary point lies in the orthant but not its interior, forcing some `y (g k) = 0`. -/
-private theorem frontier_signOrthant_subset {ι κ : Type*} [Fintype ι] [Fintype κ] (g : κ → ι)
-    (s : Finset κ) :
+private theorem frontier_signOrthant_subset {ι κ : Type*} [Finite κ] (g : κ → ι) (s : Finset κ) :
     frontier ({y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))})
       ⊆ ⋃ k : κ, {y : ι → ℝ | y (g k) = 0} := by
   classical
+  have : Fintype κ := Fintype.ofFinite κ
   set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hO
   set Os : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) < 0) ∧ (∀ k ∉ s, 0 < y (g k))} with hOs
   have hOclosed : IsClosed O := by
@@ -974,7 +896,7 @@ Lipschitz cube-covered frontier: `frontier (D₀ ∩ O) ⊆ frontier D₀ ∪ (c
 (`frontier_inter_subset`), the orthant boundary lands in finitely many coordinate hyperplanes
 (`frontier_signOrthant_subset`), and each bounded hyperplane slice is cube-covered
 (`exists_lipschitz_cube_cover_hyperplane_slab`); combine via the cover combinators. -/
-private theorem exists_frontier_cover_inter_orthant {ι : Type*} [Fintype ι] {κ : Type*} [Fintype κ]
+private theorem exists_frontier_cover_inter_orthant {ι : Type*} [Fintype ι] {κ : Type*} [Finite κ]
     (g : κ → ι) (s : Finset κ) (D₀ : Set (ι → ℝ)) (hbdd : Bornology.IsBounded D₀)
     (hcov : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
       (∀ j, LipschitzWith M (φ j)) ∧ frontier D₀ ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
@@ -1007,9 +929,10 @@ private theorem exists_frontier_cover_inter_orthant {ι : Type*} [Fintype ι] {�
 
 /-- **Membership in the standard integer lattice ⟺ integer coordinates.** A point of `ι → ℝ` lies in
 `span ℤ (range (Pi.basisFun ℝ ι))` iff every coordinate is an integer. -/
-private theorem mem_span_int_basisFun_iff {ι : Type*} [Fintype ι] (v : ι → ℝ) :
+private theorem mem_span_int_basisFun_iff {ι : Type*} [Finite ι] (v : ι → ℝ) :
     v ∈ span ℤ (Set.range (Pi.basisFun ℝ ι)) ↔ ∀ i, ∃ n : ℤ, v i = (n : ℝ) := by
   classical
+  have : Fintype ι := Fintype.ofFinite ι
   constructor
   · intro hv i
     induction hv using Submodule.span_induction with
