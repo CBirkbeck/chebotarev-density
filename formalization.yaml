@@ -36,6 +36,12 @@ sources:
       - "Serge Lang"
     id: "GTM 110, Springer; VI section 3 Theorem 3 guided the norm-residue density transfer"
     type: "textbook"
+  - title: "flt-regular-bernoulli (parent formalization)"
+    authors:
+      - "Chris Birkbeck"
+      - "Riccardo Brasca"
+    id: "https://github.com/CBirkbeck/flt-regular-bernoulli; this project was spun out of its BernoulliRegular/Chebotarev/ development on 2026-05-28, and the generic Euler-product engine (CebotarevDensity/NumberFieldEulerProduct.lean) originated as its BernoulliRegular.ZetaFactorisation.EulerProduct module"
+    type: "formalization"
 
 # how it was produced
 automation:
