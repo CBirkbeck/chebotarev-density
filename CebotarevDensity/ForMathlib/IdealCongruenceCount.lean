@@ -2487,6 +2487,299 @@ private theorem absNorm_coprime_of_isCoprime_span {K : Type*} [Field K] [NumberF
   rw [hcop, top_le_iff] at hsupP
   exact hPmax.ne_top hsupP
 
+/-! ### Geometry-of-numbers core for the `𝔟`-divisible density (Lang VI §3 / GRS Thm 1)
+
+The single irreducible geometric fact (`cardNormLeResidueClassDvd_div_density`) is the covolume /
+CRT equidistribution: principalizing the class-`D` count at a coprime representative `J` of `D⁻¹`
+sends the full count to the `J`-lattice cone-point count and the `𝔟`-divisible count to the
+*sublattice* `Λ_{𝔟J} ⊆ Λ_J` cone-point count (index `N(𝔟)`, `gcd(N(𝔟), c·N(J)) = 1`). The leading
+constants then differ by exactly `N(𝔟)` (the covolume ratio), the qualifying `m`-cosets being
+matched by the norm-residue-preserving bijection `Λ_{𝔟J}/m·Λ_{𝔟J} ≅ Λ_J/m·Λ_J`. The lemmas below
+assemble this. -/
+
+open Submodule in
+/-- The `ℤ`-span of `T` applied to the standard integer lattice, rewritten as the span of the
+mapped basis (so the `IsZLattice`/covolume API of `instIsZLatticeRealSpan` applies). -/
+private theorem span_image_basisFun_eq {ι : Type*} [Finite ι] (T : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ)) :
+    (span ℤ (⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ ι)))) : Submodule ℤ (ι → ℝ))
+      = span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) := by
+  have h1 : (⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ ι))) : Set (ι → ℝ))
+      = ↑(span ℤ (⇑T '' Set.range (Pi.basisFun ℝ ι)) : Submodule ℤ (ι → ℝ)) :=
+    map_span_int_linearEquiv T (Set.range (Pi.basisFun ℝ ι))
+  rw [h1, span_coe_eq_restrictScalars, Submodule.restrictScalars_self]
+  congr 1
+  rw [show ⇑((Pi.basisFun ℝ ι).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ ι) from by
+    funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]
+
+open Submodule in
+/-- **Covolume of the image lattice is `|det T|`.** For a linear automorphism `T` of `ι → ℝ`, the
+covolume of `T '' ℤ^ι` (computed for the standard volume) is `|det T|`: take the `ℤ`-basis
+`(Pi.basisFun ℝ ι).map T`, whose change-of-basis matrix is the transpose of the standard matrix of
+`T`, and apply `ZLattice.covolume_eq_det`. -/
+private theorem covolume_image_basisFun_eq_abs_det {ι : Type*} [Fintype ι]
+    (T : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ)) :
+    ZLattice.covolume (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Submodule ℤ (ι → ℝ))
+      = |LinearMap.det (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ))| := by
+  classical
+  have hli : LinearIndependent ℤ ⇑((Pi.basisFun ℝ ι).map T) :=
+    ((Pi.basisFun ℝ ι).map T).linearIndependent.restrict_scalars (by
+      simpa using (algebraMap ℤ ℝ).injective_int)
+  set b : Module.Basis ι ℤ (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Submodule ℤ (ι → ℝ)) :=
+    Module.Basis.span hli with hbdef
+  rw [ZLattice.covolume_eq_det _ b]
+  have hcol : ((↑) ∘ b) = ⇑((Pi.basisFun ℝ ι).map T) := by
+    funext i; rw [Function.comp_apply, hbdef, Module.Basis.coe_span_apply]
+  rw [hcol]
+  congr 1
+  rw [← LinearMap.det_toMatrix (Pi.basisFun ℝ ι) (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)),
+      ← Matrix.det_transpose (LinearMap.toMatrix (Pi.basisFun ℝ ι) (Pi.basisFun ℝ ι)
+        (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)))]
+  congr 1
+
+open Ideal NumberField in
+/-- **The relative index of `𝔟J` in `J` (as additive subgroups of `𝓞 K`) is `N(𝔟)`.** From
+`relIndex·index = index` (`AddSubgroup.relIndex_mul_index`) with `index = absNorm` (the additive
+index of an ideal is its absolute norm, `cardQuot`) and `N(𝔟J) = N(𝔟)·N(J)`. -/
+private theorem relIndex_mul_ideal_eq_absNorm {K : Type*} [Field K] [NumberField K]
+    (J 𝔟 : (Ideal (𝓞 K))⁰) :
+    ((𝔟 * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup.relIndex
+        ((J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup
+      = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := by
+  classical
+  have hindex : ∀ I : Ideal (𝓞 K), I.toAddSubgroup.index = Ideal.absNorm I := by
+    intro I
+    rw [Ideal.absNorm_apply, Submodule.cardQuot_apply, AddSubgroup.index]
+    rfl
+  have hle : ((𝔟 * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup
+      ≤ ((J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup := by
+    rw [Submodule.toAddSubgroup_le]; push_cast; exact Ideal.mul_le_left
+  have key := AddSubgroup.relIndex_mul_index hle
+  rw [hindex, hindex] at key
+  have hNbJ : Ideal.absNorm ((𝔟 * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
+      = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) * Ideal.absNorm (J : Ideal (𝓞 K)) := by
+    rw [Submonoid.coe_mul, map_mul]
+  rw [hNbJ] at key
+  have hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K)) := by
+    have : (J : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero J
+    exact Nat.pos_of_ne_zero (fun h => this (Ideal.absNorm_eq_zero_iff.mp h))
+  exact Nat.eq_of_mul_eq_mul_right hNJ key
+
+open Ideal NumberField in
+/-- **Cone-point inclusion for a divisor multiple.** Since `(𝔟J : Ideal) ⊆ (J : Ideal)`, the ideal
+lattice `Λ_{𝔟J}` is contained in `Λ_J`, hence `idealSet K (𝔟J) ⊆ idealSet K J`. -/
+private theorem idealLattice_mul_le {K : Type*} [Field K] [NumberField K]
+    (J 𝔟 : (Ideal (𝓞 K))⁰) :
+    NumberField.mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K (𝔟 * J))
+      ≤ NumberField.mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J) := by
+  intro x hx
+  rw [NumberField.mixedEmbedding.mem_idealLattice] at hx ⊢
+  obtain ⟨y, hy, rfl⟩ := hx
+  refine ⟨y, ?_, rfl⟩
+  have hsub : (FractionalIdeal.mk0 K (𝔟 * J) : FractionalIdeal (𝓞 K)⁰ K)
+      ≤ (FractionalIdeal.mk0 K J : FractionalIdeal (𝓞 K)⁰ K) := by
+    simp only [FractionalIdeal.coe_mk0]
+    rw [FractionalIdeal.coeIdeal_le_coeIdeal]
+    exact Ideal.mul_le_left
+  exact hsub hy
+
+open Ideal NumberField in
+/-- **The ideal lattice as an additive subgroup is the image of the ideal under
+`mixedEmbedding ∘ algebraMap`.** For an integral ideal `J`, `Λ_J = mixedEmbedding '' (J : Set 𝓞K)`
+additively. -/
+private theorem idealLattice_toAddSubgroup_eq {K : Type*} [Field K] [NumberField K]
+    (J : (Ideal (𝓞 K))⁰) :
+    (NumberField.mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)).toAddSubgroup
+      = ((J : Ideal (𝓞 K)).toAddSubgroup).map
+          (((NumberField.mixedEmbedding K).toAddMonoidHom).comp
+            (algebraMap (𝓞 K) K).toAddMonoidHom) := by
+  ext x
+  simp only [Submodule.mem_toAddSubgroup, NumberField.mixedEmbedding.mem_idealLattice,
+    AddSubgroup.mem_map, AddMonoidHom.coe_comp, Function.comp_apply,
+    RingHom.toAddMonoidHom_eq_coe, AddMonoidHom.coe_coe]
+  constructor
+  · rintro ⟨y, hy, rfl⟩
+    simp only [FractionalIdeal.coe_mk0] at hy
+    obtain ⟨z, hz, rfl⟩ := hy
+    exact ⟨z, hz, rfl⟩
+  · rintro ⟨z, hz, rfl⟩
+    refine ⟨algebraMap (𝓞 K) K z, ?_, rfl⟩
+    simp only [FractionalIdeal.coe_mk0]
+    exact ⟨z, hz, rfl⟩
+
+open Ideal NumberField in
+/-- **The relative index of the sublattice `Λ_{𝔟J} ⊆ Λ_J` is `N(𝔟)`.** Transport the ideal index
+`relIndex(𝔟J, J) = N(𝔟)` (`relIndex_mul_ideal_eq_absNorm`) along the injective additive map
+`mixedEmbedding ∘ algebraMap` (`relIndex_map_map_of_injective`). -/
+private theorem relIndex_idealLattice_eq_absNorm {K : Type*} [Field K] [NumberField K]
+    (J 𝔟 : (Ideal (𝓞 K))⁰) :
+    (NumberField.mixedEmbedding.idealLattice K
+        (FractionalIdeal.mk0 K (𝔟 * J))).toAddSubgroup.relIndex
+        (NumberField.mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)).toAddSubgroup
+      = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := by
+  have hinj : Function.Injective
+      (((NumberField.mixedEmbedding K).toAddMonoidHom).comp
+        (algebraMap (𝓞 K) K).toAddMonoidHom) := by
+    rw [AddMonoidHom.coe_comp]
+    exact (NumberField.mixedEmbedding_injective K).comp (IsFractionRing.injective (𝓞 K) K)
+  rw [idealLattice_toAddSubgroup_eq, idealLattice_toAddSubgroup_eq,
+    AddSubgroup.relIndex_map_map_of_injective _ _ hinj, relIndex_mul_ideal_eq_absNorm]
+
+open Ideal NumberField NumberField.mixedEmbedding Submodule in
+/-- The chart lattice `L' = T' '' ℤ^ι` (`= Φ '' Λ_{𝔟J}`) equals `Λ_{𝔟J}.map Φ` as a submodule of
+`index K → ℝ`. -/
+private theorem chart_lattice_eq_map {K : Type*} [Field K] [NumberField K] (J : (Ideal (𝓞 K))⁰)
+    (T : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ))
+    (hT : ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ))) :
+    (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T)) : Submodule ℤ (index K → ℝ))
+      = (mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)).map
+          (((mixedEmbedding.stdBasis K).equivFunL :
+            mixedSpace K ≃ₗ[ℝ] (index K → ℝ)).restrictScalars ℤ).toLinearMap := by
+  rw [← span_image_basisFun_eq, hT]
+  have : ((mixedEmbedding.stdBasis K).equivFunL ''
+        ((mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)) : Set (mixedSpace K))
+        : Set (index K → ℝ))
+      = ↑((mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)).map
+          (((mixedEmbedding.stdBasis K).equivFunL :
+            mixedSpace K ≃ₗ[ℝ] (index K → ℝ)).restrictScalars ℤ).toLinearMap) := by
+    rw [Submodule.map_coe]; rfl
+  rw [this, span_coe_eq_restrictScalars, Submodule.restrictScalars_self]
+
+open Ideal NumberField NumberField.mixedEmbedding Submodule in
+/-- The chart sublattice `L' = T' '' ℤ^ι ⊆ L = T '' ℤ^ι` (image of `Λ_{𝔟J} ⊆ Λ_J`). -/
+private theorem chart_sublattice_le {K : Type*} [Field K] [NumberField K] (J 𝔟 : (Ideal (𝓞 K))⁰)
+    (T T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ))
+    (hT : ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)))
+    (hT' : ⇑T' '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ))) :
+    (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T')) : Submodule ℤ (index K → ℝ))
+      ≤ span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T)) := by
+  rw [chart_lattice_eq_map J T hT, chart_lattice_eq_map (𝔟 * J) T' hT']
+  exact Submodule.map_mono (idealLattice_mul_le J 𝔟)
+
+open Ideal NumberField NumberField.mixedEmbedding Submodule in
+/-- The relative index of the chart sublattice `T' '' ℤ^ι ⊆ T '' ℤ^ι` is `N(𝔟)` (transport of
+`relIndex_idealLattice_eq_absNorm` along the chart `Φ`). -/
+private theorem relIndex_chart_eq_absNorm {K : Type*} [Field K] [NumberField K]
+    (J 𝔟 : (Ideal (𝓞 K))⁰)
+    (T T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ))
+    (hT : ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)))
+    (hT' : ⇑T' '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ))) :
+    (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))).toAddSubgroup.relIndex
+        (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T))).toAddSubgroup
+      = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := by
+  have hΦinj : Function.Injective
+      (((mixedEmbedding.stdBasis K).equivFunL :
+        mixedSpace K ≃ₗ[ℝ] (index K → ℝ)).restrictScalars ℤ).toLinearMap :=
+    ((mixedEmbedding.stdBasis K).equivFunL : mixedSpace K ≃ₗ[ℝ] (index K → ℝ)).injective
+  rw [chart_lattice_eq_map J T hT, chart_lattice_eq_map (𝔟 * J) T' hT',
+    Submodule.map_toAddSubgroup, Submodule.map_toAddSubgroup,
+    AddSubgroup.relIndex_map_map_of_injective _ _ hΦinj]
+  exact relIndex_idealLattice_eq_absNorm J 𝔟
+
+open Ideal NumberField NumberField.mixedEmbedding in
+/-- **The covolume / `|det|` scaling of the sublattice chart.** If `T` and `T'` are the lattice
+charts of `Λ_J` and `Λ_{𝔟J}` respectively (`exists_latticeEquiv_image_idealLattice`), then
+`|det T'| = N(𝔟)·|det T|`: pushing `Λ_{𝔟J} ⊆ Λ_J` through the chart `Φ`,
+`covol(T' '' ℤ^ι) / covol(T '' ℤ^ι) = relIndex(Λ_{𝔟J}, Λ_J) = N(𝔟)`
+(`covolume_div_covolume_eq_relIndex`, `relIndex_idealLattice_eq_absNorm`,
+`covolume_image_basisFun_eq_abs_det`). -/
+private theorem abs_det_latticeEquiv_mul {K : Type*} [Field K] [NumberField K]
+    (J 𝔟 : (Ideal (𝓞 K))⁰)
+    (T T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ))
+    (hT : ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)))
+    (hT' : ⇑T' '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K))))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ))) :
+    |LinearMap.det (T' : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))|
+      = (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ)
+        * |LinearMap.det (T : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| := by
+  classical
+  set L : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T))
+    with hLdef
+  set L' : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
+    with hL'def
+  have hcov := ZLattice.covolume_div_covolume_eq_relIndex L' L
+    (chart_sublattice_le J 𝔟 T T' hT hT')
+  rw [relIndex_chart_eq_absNorm J 𝔟 T T' hT hT',
+    covolume_image_basisFun_eq_abs_det, covolume_image_basisFun_eq_abs_det] at hcov
+  have hdetJ : (0:ℝ) < |LinearMap.det (T : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| :=
+    abs_pos.mpr (LinearEquiv.isUnit_det' T).ne_zero
+  field_simp at hcov
+  linarith [hcov]
+
+open Submodule Pointwise in
+/-- **CRT single-coset fact.** For lattices `L' ⊆ L` in `ι → ℝ` whose relative index is coprime to
+`m`, and any `m`-coset `ξ +ᵥ m·L` of `L` with `ξ ∈ L`, the points of the coset lying in the
+sublattice `L'` form a *single* `m·L'`-coset `ξ' +ᵥ m·L'`. Proof: multiplication by `m` is bijective
+on the finite quotient `L/L'` (`Nat.Coprime.nsmul_right_bijective`), giving both `ξ ∈ L' + m·L`
+(surjectivity, the representative `ξ'`) and `(a ∈ L ∧ m·a ∈ L') → a ∈ L'` (injectivity, the
+single-coset collapse). -/
+private theorem crt_single_coset {ι : Type*} [Finite ι] (L L' : Submodule ℤ (ι → ℝ))
+    (hle : L' ≤ L)
+    [Finite (L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)]
+    (m : ℕ)
+    (hcop : (Nat.card (L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)).Coprime m)
+    {ξ : ι → ℝ} (hξ : ξ ∈ L) :
+    ∃ ξ' : ι → ℝ, ξ' ∈ L' ∧
+      {a : ι → ℝ | a ∈ L' ∧ a ∈ ξ +ᵥ ((m : ℝ) • (L : Set (ι → ℝ)))}
+        = (ξ' +ᵥ ((m : ℝ) • (L' : Set (ι → ℝ)))) := by
+  have hmsmul : ∀ (M : Submodule ℤ (ι → ℝ)), ((m : ℝ) • (M : Set (ι → ℝ)))
+      = {z | ∃ x ∈ M, z = m • x} := by
+    intro M; ext z
+    simp only [Set.mem_smul_set, SetLike.mem_coe, Set.mem_setOf_eq]
+    exact ⟨fun ⟨x, hx, h⟩ => ⟨x, hx, by rw [← h, Nat.cast_smul_eq_nsmul]⟩,
+      fun ⟨x, hx, h⟩ => ⟨x, hx, by rw [h, Nat.cast_smul_eq_nsmul]⟩⟩
+  have hsurj : ∃ a' ∈ L'.toAddSubgroup, ∃ a ∈ L.toAddSubgroup, ξ = a' + m • a := by
+    have hbij := hcop.nsmul_right_bijective
+      (G := L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
+    obtain ⟨q, hq⟩ := hbij.2 (QuotientAddGroup.mk (⟨ξ, hξ⟩ : L.toAddSubgroup))
+    obtain ⟨a, rfl⟩ := QuotientAddGroup.mk_surjective q
+    simp only at hq
+    rw [← QuotientAddGroup.mk_nsmul, QuotientAddGroup.eq, AddSubgroup.mem_addSubgroupOf] at hq
+    exact ⟨(-(m • (a : ι → ℝ)) + ξ), by simpa using hq, (a : ι → ℝ), a.2, by abel⟩
+  obtain ⟨ξ', hξ'L', a₀, ha₀L, hξeq⟩ := hsurj
+  refine ⟨ξ', hξ'L', ?_⟩
+  have hinj2 : ∀ a : ι → ℝ, a ∈ L → m • a ∈ L' → a ∈ L' := by
+    intro a ha hma
+    have hbij := hcop.nsmul_right_bijective
+      (G := L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
+    have hzero : m • (QuotientAddGroup.mk (⟨a, ha⟩ : L.toAddSubgroup)
+        : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
+        = (0 : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) := by
+      rw [← QuotientAddGroup.mk_nsmul, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
+      simpa using hma
+    have hq0 : (QuotientAddGroup.mk (⟨a, ha⟩ : L.toAddSubgroup)
+        : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) = 0 := by
+      apply hbij.1
+      change m • _ = m • (0 : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
+      rw [hzero, smul_zero]
+    rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf] at hq0
+    simpa using hq0
+  ext a
+  simp only [Set.mem_setOf_eq, hmsmul, Set.mem_vadd_set, Set.mem_setOf_eq, vadd_eq_add]
+  constructor
+  · rintro ⟨haL', w, ⟨x, hxL, rfl⟩, hweq⟩
+    have hmem : m • (a₀ + x) = a - ξ' := by
+      rw [smul_add]; rw [hξeq] at hweq; rw [← hweq]; abel
+    refine ⟨a - ξ', ⟨a₀ + x, ?_, ?_⟩, by abel⟩
+    · exact hinj2 _ (L.add_mem ha₀L hxL) (by rw [hmem]; exact L'.sub_mem haL' hξ'L')
+    · rw [hmem]
+  · rintro ⟨w, ⟨y, hyL', rfl⟩, rfl⟩
+    refine ⟨L'.add_mem hξ'L' (L'.nsmul_mem hyL' m), m • (y - a₀),
+      ⟨y - a₀, L.sub_mem (hle hyL') ha₀L, rfl⟩, ?_⟩
+    rw [hξeq, smul_sub]; abel
+
 open Ideal in
 /-- **(L1) Coprime class representative.** Every ideal class `D` has an integral representative `J`
 whose absolute norm is coprime to a prescribed positive integer `n`. (Standard avoidance: from any
@@ -2570,6 +2863,228 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
       rw [Ideal.isCoprime_iff_sup_eq, sup_comm]; exact hcop
     exact absNorm_coprime_of_isCoprime_span J₁' n (by
       simpa only [hJ₁'] using hcopI)
+
+open Submodule Pointwise in
+/-- The `m`-sublattice of the chart lattice, in workhorse form: the image of `ℤ^ι` under
+`(m·) ∘ T` equals `m · (T '' ℤ^ι)`. -/
+private theorem smul_chart_lattice_eq {ι : Type*} [Finite ι] (T : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ))
+    (m : ℕ) (hm : (m : ℝ) ≠ 0) :
+    (((LinearEquiv.smulOfNeZero ℝ (ι → ℝ) (m : ℝ) hm).trans T) ''
+      (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)))
+      = ((m : ℝ) • (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Set (ι → ℝ))) := by
+  have hLeq : (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Set (ι → ℝ))
+      = ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ ι))) := by
+    rw [map_span_int_linearEquiv,
+      show (⇑T '' Set.range (Pi.basisFun ℝ ι)) = Set.range ((Pi.basisFun ℝ ι).map T) from by
+        rw [show ⇑((Pi.basisFun ℝ ι).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ ι) from by
+          funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]]
+  ext z
+  simp only [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, Set.mem_image,
+    Set.mem_smul_set, SetLike.mem_coe, hLeq]
+  constructor
+  · rintro ⟨v, hv, rfl⟩; exact ⟨T v, ⟨v, hv, rfl⟩, by rw [map_smul]⟩
+  · rintro ⟨w, ⟨v, hv, rfl⟩, rfl⟩; exact ⟨v, hv, by rw [map_smul]⟩
+
+open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
+  NumberField.InfinitePlace Submodule Pointwise Classical in
+/-- **Sublattice cell count.** Partition the `𝔟J`-cone points by the *`J`*-lattice chart `T`
+(legitimate since `idealSet K (𝔟J) ⊆ idealSet K J`, `idealLattice_mul_le`): for `gcd(N(𝔟), m) = 1`,
+the `𝔟J`-cone points of norm `≤ t^d`, sign-orthant `s`, `J`-coset `k`, biject (via `Φ`) with a
+single `m·Λ_{𝔟J}`-coset `ξ' +ᵥ m·(T' '' ℤ^ι)` inside `t·(D₀ ∩ orthant_s)`. This is
+`card_fibre_eq_card_cell` for `T` intersected with sublattice membership, by `crt_single_coset`. -/
+private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [NumberField K]
+    (m : ℕ) [NeZero m] (hm : (m : ℝ) ≠ 0) (J 𝔟 : (Ideal (𝓞 K))⁰)
+    (hcop : (Ideal.absNorm (𝔟 : Ideal (𝓞 K))).Coprime m)
+    (T T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ))
+    (hT : T '' (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)))
+    (hT' : T' '' (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))
+        = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)))
+    (s : Finset {w : InfinitePlace K // IsReal w}) (k : index K → ZMod m)
+    {t : ℝ} (ht : 1 ≤ t) :
+    ∃ ξ' : index K → ℝ, Nat.card {a : idealSet K (𝔟 * J) //
+        mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (a : mixedSpace K).1 w < 0) = s) ∧
+        (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+          (a : mixedSpace K))) i) : ZMod m)) = k}
+      = Nat.card ↑((ξ' +ᵥ ((m : ℝ) • (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
+          : Set (index K → ℝ)))) ∩
+        t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩
+          {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))})) := by
+  classical
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
+  set d := Module.finrank ℚ K with hd
+  set Os : Set (index K → ℝ) :=
+    {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))} with hOs
+  set L : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T))
+    with hLdef
+  set L' : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
+    with hL'def
+  -- finiteness instance from `relIndex(L', L) = N(𝔟) ≠ 0`.
+  have hrel : L'.toAddSubgroup.relIndex L.toAddSubgroup = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) :=
+    relIndex_chart_eq_absNorm J 𝔟 T T' hT hT'
+  have hNB : 0 < Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := absNorm_pos_of_nonZeroDivisors 𝔟
+  haveI hfin : Finite (L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) := by
+    rw [← AddSubgroup.index_ne_zero_iff_finite]
+    rw [show (L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup).index
+        = L'.toAddSubgroup.relIndex L.toAddSubgroup from rfl, hrel]
+    exact hNB.ne'
+  have hcopC : (Nat.card (L.toAddSubgroup ⧸
+      L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)).Coprime m := by
+    rw [show Nat.card (L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
+        = L'.toAddSubgroup.relIndex L.toAddSubgroup from rfl, hrel]
+    exact hcop
+  have hLL' : L' ≤ L := chart_sublattice_le J 𝔟 T T' hT hT'
+  -- coset `ξ_k = T (k.val)` lies in `L` (it is the rep of `J`-coset `k`).
+  have hξkL : (T (fun i => ((k i).val : ℝ)) : index K → ℝ) ∈ L := by
+    have hv : (fun i => ((k i).val : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) := by
+      rw [mem_span_int_basisFun_iff]
+      exact fun i => ⟨((k i).val : ℤ), by push_cast; rfl⟩
+    have hmem : (T (fun i => ((k i).val : ℝ)) : index K → ℝ)
+        ∈ ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K)))) := ⟨_, hv, rfl⟩
+    rw [map_span_int_linearEquiv] at hmem
+    rw [hLdef]
+    rwa [show (⇑T '' Set.range (Pi.basisFun ℝ (index K)))
+        = Set.range ((Pi.basisFun ℝ (index K)).map T) from by
+      rw [show ⇑((Pi.basisFun ℝ (index K)).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ (index K)) from by
+        funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]] at hmem
+  obtain ⟨ξ', hξ'L', hcoset⟩ := crt_single_coset L L' hLL' m hcopC hξkL
+  refine ⟨ξ', ?_⟩
+  -- `Φ '' Λ_{𝔟J} = ↑L'` (as sets).
+  have hΦΛ' : ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+      (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) = ↑L' := by
+    rw [hL'def, ← hT', map_span_int_linearEquiv,
+      show (⇑T' '' Set.range (Pi.basisFun ℝ (index K)))
+        = Set.range ((Pi.basisFun ℝ (index K)).map T') from by
+      rw [show ⇑((Pi.basisFun ℝ (index K)).map T') = ⇑T' ∘ ⇑(Pi.basisFun ℝ (index K)) from by
+        funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]]
+  -- `idealSet K (𝔟J) ⊆ idealSet K J`.
+  have hincl : idealSet K (𝔟 * J) ⊆ idealSet K J := by
+    intro x hx
+    exact ⟨hx.1, idealLattice_mul_le J 𝔟 hx.2⟩
+  -- real coordinates of `Φ x` are the real coordinates of `x`; cone homogeneity.
+  have hΦreal : ∀ (x : mixedSpace K) (w : {w : InfinitePlace K // IsReal w}),
+      Φ x (Sum.inl w) = x.1 w := fun x w => by
+    rw [hΦ, Module.Basis.equivFunL_apply, mixedEmbedding.stdBasis_apply_isReal]
+  have hcone : {x : mixedSpace K | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d}
+      = t • normLeOne K := cone_normLe_eq_smul_normLeOne ht
+  have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
+  have htinv : (0 : ℝ) < t⁻¹ := inv_pos.mpr (lt_of_lt_of_le one_pos ht)
+  have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
+    Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
+  have hnz : ∀ x ∈ t • normLeOne K, ∀ w : {w : InfinitePlace K // IsReal w}, x.1 w ≠ 0 := by
+    rintro _ ⟨z, hz, rfl⟩ w
+    have hcx : t • z ∈ fundamentalCone K := smul_mem_of_mem hz.1 ht0
+    have hp := fundamentalCone.normAtPlace_pos_of_mem hcx w.1
+    rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
+    exact fun h => by simp [h] at hp
+  -- region membership equivalence (copied from `card_fibre_eq_card_cell`, ideal `J`).
+  have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
+      (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
+        (mixedEmbedding.norm x ≤ t ^ d ∧
+          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) := by
+    intro x hx
+    rw [Set.smul_set_inter₀ ht0, Set.mem_inter_iff, ← hΦ, ← himg]
+    constructor
+    · rintro ⟨hmem, horth⟩
+      rw [Set.mem_image] at hmem
+      obtain ⟨z, hz, hzeq⟩ := hmem
+      have hxcone : x ∈ t • normLeOne K := by rwa [Φ.injective hzeq] at hz
+      have hnorm : x ∈ {x | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d} := by
+        rw [hcone]; exact hxcone
+      refine ⟨hnorm.2, ?_⟩
+      ext w
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0] at horth
+      obtain ⟨hneg, hpos⟩ := horth
+      refine ⟨fun hlt => ?_, fun hw => ?_⟩
+      · by_contra hws
+        have h2 := hpos w hws
+        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
+        nlinarith [h2, htinv, hlt]
+      · have h2 := hneg w hw
+        rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
+        rcases lt_or_gt_of_ne (hnz x hxcone w) with h | h
+        · exact h
+        · nlinarith [h2, htinv, h]
+    · rintro ⟨hnorm, horth⟩
+      have hxcone : x ∈ t • normLeOne K := by rw [← hcone]; exact ⟨hx.1, hnorm⟩
+      refine ⟨⟨x, hxcone, rfl⟩, ?_⟩
+      rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0]
+      refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
+        have hlt : x.1 w < 0 := by
+          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := horth ▸ hw
+          simpa using this
+        nlinarith [hlt, htinv]
+      · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
+        have hxw : ¬ x.1 w < 0 := fun hlt => hw (by
+          have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := by simpa using hlt
+          rwa [horth] at this)
+        nlinarith [not_lt.mp hxw, htinv]
+  -- the counting bijection `f a = Φ a`.
+  set f : {a : idealSet K (𝔟 * J) //
+      mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (a : mixedSpace K).1 w < 0) = s) ∧
+      (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} → (index K → ℝ) :=
+    fun a => Φ (a.1 : mixedSpace K) with hf
+  have hfinj : Function.Injective f := fun a₁ a₂ h => by
+    apply Subtype.ext; apply Subtype.ext; exact Φ.injective h
+  have hset : Set.range f =
+      ((ξ' +ᵥ ((m : ℝ) • (L' : Set (index K → ℝ)))) ∩
+        t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os)) := by
+    ext y
+    simp only [hf, Set.mem_range, Subtype.exists, Set.mem_inter_iff]
+    constructor
+    · rintro ⟨a, ha, hP, rfl⟩
+      have haJ : a ∈ idealSet K J := hincl ha
+      have haL' : Φ a ∈ L' := by
+        have hmm : Φ a ∈ ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+            (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) := ⟨a, ha.2, rfl⟩
+        rwa [hΦΛ'] at hmm
+      have hcosetmem : Φ a ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+          (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
+            (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))) :=
+        (mem_coset_iff_cos_eq m hm J T hT k haJ.2).mpr (fun i => congrFun hP.2.2 i)
+      have hΦacoset : Φ a ∈ ξ' +ᵥ ((m : ℝ) • (L' : Set (index K → ℝ))) := by
+        have hmemL : Φ a ∈ {b | b ∈ L' ∧ b ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+            ((m : ℝ) • (L : Set (index K → ℝ)))} := by
+          refine ⟨haL', ?_⟩
+          rw [hLdef, ← smul_chart_lattice_eq T m hm]
+          exact hcosetmem
+        rwa [hcoset] at hmemL
+      exact ⟨hΦacoset, (hreg a haJ).mpr ⟨hP.1, hP.2.1⟩⟩
+    · rintro ⟨hcosetmem, hregion⟩
+      have hyL' : y ∈ L' := by rw [hcoset.symm] at hcosetmem; exact hcosetmem.1
+      have hyΛ' : y ∈ ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
+          (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) := by rw [hΦΛ']; exact hyL'
+      obtain ⟨z, hzlat, hzeq⟩ := hyΛ'
+      have hzcone : z ∈ idealSet K (𝔟 * J) := by
+        obtain ⟨hmem, _⟩ := (by rwa [Set.smul_set_inter₀ ht0, Set.mem_inter_iff] at hregion :
+          y ∈ t • (Φ '' normLeOne K) ∧ y ∈ t • Os)
+        rw [← himg, Set.mem_image] at hmem
+        obtain ⟨z', hz', hz'eq⟩ := hmem
+        have hzn : z ∈ t • normLeOne K := by
+          rw [show z = z' from Φ.injective (by rw [hz'eq, hzeq])]; exact hz'
+        exact ⟨(by obtain ⟨z'', hz'', rfl⟩ := hzn; exact smul_mem_of_mem hz''.1 ht0), hzlat⟩
+      have hzJ : z ∈ idealSet K J := hincl hzcone
+      have hcosetz : Φ z ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+          (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
+            (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))) := by
+        have hymem : y ∈ {a | a ∈ L' ∧ a ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+            ((m : ℝ) • (L : Set (index K → ℝ)))} := by rw [hcoset]; exact hcosetmem
+        rw [smul_chart_lattice_eq T m hm, ← hLdef, show (Φ z : index K → ℝ) = y from hzeq]
+        exact hymem.2
+      refine ⟨z, hzcone, ⟨?_, ?_, ?_⟩, hzeq⟩
+      · exact ((hreg z hzJ).mp (by rw [hzeq]; exact hregion)).1
+      · exact ((hreg z hzJ).mp (by rw [hzeq]; exact hregion)).2
+      · funext i
+        exact (mem_coset_iff_cos_eq m hm J T hT k hzJ.2).mp hcosetz i
+  rw [← Nat.card_range_of_injective hfinj, hset]
 
 open Ideal in
 /-- **(L2) The dvd-density is the full density divided by `N(𝔟)` (Lang VI §3 Thm 3; GRS Thm 1).**
