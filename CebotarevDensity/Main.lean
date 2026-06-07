@@ -2,6 +2,10 @@ module
 
 public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.RingTheory.Ideal.Over
+public import Mathlib.RingTheory.Ideal.NatInt
+public import Mathlib.NumberTheory.Cyclotomic.Basic
+public import Mathlib.NumberTheory.Cyclotomic.Gal
+public import Mathlib.NumberTheory.Cyclotomic.CyclotomicCharacter
 
 public import CebotarevDensity.Abelian
 
@@ -1361,6 +1365,307 @@ theorem density_split_completely :
   rw [ConjClasses_mk_one_carrier_card_eq_one Gal(L/K), IsGalois.card_aut_eq_finrank K L] at h
   simpa using h
 
+/-! ### Sub-lemmas for `dirichlet_primes_in_AP`
+
+The `K = ℚ`, `L = ℚ(μ_n)` specialisation of Chebotarev (Sharifi 7.2.3). The target image-set
+of rational primes `p ≡ a [n]` is identified — up to a *finite* set of bad primes — with the
+cyclotomic Frobenius-fibre of a Galois element `σ` chosen so that the cyclotomic character
+sends `σ` to the unit `a`. Two ingredients beyond `chebotarev_cyclotomic`:
+
+* density is insensitive to finite symmetric differences
+  (`hasDirichletDensity_of_finite_symmDiff`), letting us discard the finitely many primes
+  dividing `n` (or the single prime `2` in the degenerate `n ≡ 2 [4]` corner);
+* the `𝓞 ℚ ≃+* ℤ` dictionary (`Rat.ringOfIntegersEquiv`): every nonzero prime of `𝓞 ℚ` is
+  `span {(p)}` for a unique rational prime `p` with `N(span {(p)}) = p`. -/
+
+section DirichletAP
+
+variable {K : Type*} [Field K] [NumberField K]
+
+/-- The partial Dirichlet series satisfies `Σ_T = Σ_S + Σ_{T∖S} − Σ_{S∖T}` (for `1 < s`),
+from two disjoint-union splittings `T = (T∩S) ⊔ (T∖S)` and `S = (T∩S) ⊔ (S∖T)`. -/
+private theorem primeIdealZetaSum_eq_add_sub_sdiff {S T : Set (Ideal (𝓞 K))} {s : ℝ}
+    (hs : 1 < s) :
+    primeIdealZetaSum T s
+      = primeIdealZetaSum S s + primeIdealZetaSum (T \ S) s - primeIdealZetaSum (S \ T) s := by
+  have hdisj : ∀ A B : Set (Ideal (𝓞 K)), Disjoint (A ∩ B) (A \ B) :=
+    fun A B => disjoint_of_subset_left inter_subset_right disjoint_sdiff_right
+  have hT : primeIdealZetaSum T s
+      = primeIdealZetaSum (T ∩ S) s + primeIdealZetaSum (T \ S) s := by
+    conv_lhs => rw [← inter_union_diff T S]
+    rw [primeIdealZetaSum_union_of_disjoint (hdisj T S) hs]
+  have hS : primeIdealZetaSum S s
+      = primeIdealZetaSum (T ∩ S) s + primeIdealZetaSum (S \ T) s := by
+    conv_lhs => rw [← inter_union_diff S T]
+    rw [primeIdealZetaSum_union_of_disjoint (hdisj S T) hs, inter_comm]
+  rw [hT, hS]; ring
+
+/-- **Density is insensitive to finite symmetric differences.** If `S ∖ T` and `T ∖ S` are
+both finite and `S` has Dirichlet density `δ`, then so does `T`: the two ratios differ by
+`(Σ_{T∖S} − Σ_{S∖T}) / Σ_univ`, whose numerator is bounded while the denominator `→ ∞`. -/
+private theorem hasDirichletDensity_of_finite_symmDiff {S T : Set (Ideal (𝓞 K))} {δ : ℝ}
+    (hST : (S \ T).Finite) (hTS : (T \ S).Finite) (hS : HasDirichletDensity S δ) :
+    HasDirichletDensity T δ := by
+  have hTSden : HasDirichletDensity (T \ S) 0 := hasDirichletDensity_of_finite K hTS
+  have hSTden : HasDirichletDensity (S \ T) 0 := hasDirichletDensity_of_finite K hST
+  rw [HasDirichletDensity] at hS hTSden hSTden ⊢
+  have h := (hS.add hTSden).sub hSTden
+  refine (show (δ + 0 - 0 : ℝ) = δ by ring) ▸ h.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  simp only [mem_Ioi] at hs
+  rw [primeIdealZetaSum_eq_add_sub_sdiff (S := S) (T := T) hs]; ring
+
+/-- **Chinese remainder injectivity.** Two elements of `ZMod (m * k)` (with `m`, `k` coprime)
+that agree under both coordinate `castHom`s are equal — `ZMod.chineseRemainder` is injective. -/
+private theorem zmod_eq_of_castHom_eq {m k : ℕ} (hcop : Nat.Coprime m k) (x y : ZMod (m * k))
+    (h1 : (ZMod.castHom (dvd_mul_right m k) (ZMod m)) x
+        = (ZMod.castHom (dvd_mul_right m k) (ZMod m)) y)
+    (h2 : (ZMod.castHom (dvd_mul_left k m) (ZMod k)) x
+        = (ZMod.castHom (dvd_mul_left k m) (ZMod k)) y) : x = y := by
+  apply (ZMod.chineseRemainder hcop).injective
+  have e1 : ∀ z : ZMod (m * k), ((ZMod.chineseRemainder hcop) z).1
+      = (ZMod.castHom (dvd_mul_right m k) (ZMod m)) z := fun z => by
+    simp only [ZMod.chineseRemainder, RingEquiv.coe_mk, Equiv.coe_fn_mk, ZMod.castHom_apply,
+      Prod.fst_zmod_cast]
+  have e2 : ∀ z : ZMod (m * k), ((ZMod.chineseRemainder hcop) z).2
+      = (ZMod.castHom (dvd_mul_left k m) (ZMod k)) z := fun z => by
+    simp only [ZMod.chineseRemainder, RingEquiv.coe_mk, Equiv.coe_fn_mk, ZMod.castHom_apply,
+      Prod.snd_zmod_cast]
+  exact Prod.ext (by rw [e1, e1, h1]) (by rw [e2, e2, h2])
+
+end DirichletAP
+
+/-- The absolute norm of `span {(p : 𝓞 ℚ)}` is `p`: through `𝓞 ℚ ≃+* ℤ` the norm of `(p)` is
+`(p : ℤ)`, since `rank ℤ (𝓞 ℚ) = 1`. -/
+private theorem absNorm_span_nat (p : ℕ) : Ideal.absNorm (Ideal.span {(p : 𝓞 ℚ)}) = p := by
+  rw [Ideal.absNorm_span_singleton]
+  have h1 : (Algebra.norm ℤ) ((p : ℕ) : 𝓞 ℚ) = (p : ℤ) := by
+    rw [show ((p : ℕ) : 𝓞 ℚ) = algebraMap ℤ (𝓞 ℚ) (p : ℤ) by push_cast; rfl,
+      Algebra.norm_algebraMap]
+    simp [NumberField.RingOfIntegers.rank]
+  rw [h1]; simp
+
+/-- **Every nonzero prime of `𝓞 ℚ` is `span {(p)}` for a rational prime `p`.** Transport the
+prime `𝔭` through `Rat.ringOfIntegersEquiv : 𝓞 ℚ ≃+* ℤ`: its image is a nonzero prime of `ℤ`,
+hence `span {(p : ℤ)}` for a prime `p` (`Ideal.isPrime_int_iff`); pull back. -/
+private theorem ratPrime_eq_span (𝔭 : Ideal (𝓞 ℚ)) (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+    ∃ p : ℕ, p.Prime ∧ 𝔭 = Ideal.span {(p : 𝓞 ℚ)} := by
+  set e := Rat.ringOfIntegersEquiv with he
+  have hbij : Function.Bijective e := e.bijective
+  have hJp : (Ideal.map e 𝔭).IsPrime := Ideal.map_isPrime_of_equiv e
+  have hcomap : Ideal.comap e (Ideal.map e 𝔭) = 𝔭 := Ideal.comap_map_of_bijective e hbij
+  have hJne : Ideal.map e 𝔭 ≠ ⊥ := by
+    intro h; apply hne; rw [← hcomap, h, Ideal.comap_bot_of_injective e hbij.injective]
+  rcases (Ideal.isPrime_int_iff.mp hJp) with h | ⟨p, hpp, hpJ⟩
+  · exact absurd h hJne
+  · refine ⟨p, hpp, ?_⟩
+    rw [← hcomap, hpJ, ← Ideal.map_symm e, Ideal.map_span, Set.image_singleton]
+    congr 2; simp [map_natCast]
+
+/-- The converse classification ingredient: `span {(p : 𝓞 ℚ)}` is prime for a rational prime
+`p`, via the same `𝓞 ℚ ≃+* ℤ` transport (`comap` of the prime `span {(p : ℤ)}`). -/
+private theorem span_nat_isPrime {p : ℕ} (hpp : p.Prime) :
+    (Ideal.span {(p : 𝓞 ℚ)}).IsPrime := by
+  have hz : Prime ((p : ℤ)) := Nat.prime_iff_prime_int.mp hpp
+  haveI : (Ideal.span {(p : ℤ)}).IsPrime :=
+    (Ideal.span_singleton_prime (by exact_mod_cast hpp.ne_zero)).mpr hz
+  have heq : Ideal.span {(p : 𝓞 ℚ)}
+      = Ideal.comap Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)}) := by
+    rw [← Ideal.map_symm Rat.ringOfIntegersEquiv, Ideal.map_span, Set.image_singleton]
+    congr 2; simp [map_natCast]
+  rw [heq]; exact Ideal.comap_isPrime Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)})
+
+/-- **A coprime-norm prime is unramified in the cyclotomic extension** `L = K(μ_m)`. A
+ramified prime divides the different, which divides `(f'(ζ))` (conductor formula); since
+`minpoly ∣ X^m − 1`, that value divides `m·ζ^{m−1}`, forcing `m ∈ 𝔓`, hence `N𝔭 ∣ m^d`,
+contradicting coprimality. (Replica of the private `unramifiedIn_of_coprime_absNorm` in
+`ZetaProduct.lean`, which is not importable here.) -/
+private theorem unramifiedIn_cyclotomic_of_coprime {K : Type*} [Field K] [NumberField K]
+    (L : Type*) [Field L] [NumberField L] [Algebra K L]
+    [IsGalois K L] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
+    UnramifiedIn K L 𝔭 := by
+  classical
+  refine ⟨h𝔭, fun 𝔓 h𝔓max h𝔓lo => ?_⟩
+  haveI := h𝔓lo
+  haveI : 𝔓.IsPrime := h𝔓max.isPrime
+  rw [← not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
+  intro hdvd
+  obtain ⟨ζ, hζ⟩ := IsCyclotomicExtension.exists_isPrimitiveRoot K L
+    (Set.mem_singleton m) (NeZero.ne m)
+  set ζ𝓞 : 𝓞 L := hζ.toInteger with hζ𝓞
+  have hpow : ζ𝓞 ^ m = 1 := hζ.toInteger_isPrimitiveRoot.pow_eq_one
+  have hdvd_pol : minpoly (𝓞 K) ζ𝓞 ∣ Polynomial.X ^ m - 1 := by
+    refine minpoly.isIntegrallyClosed_dvd (Algebra.IsIntegral.isIntegral ζ𝓞) ?_
+    simp [hpow]
+  obtain ⟨g, hg⟩ := hdvd_pol
+  have hkey : (m : 𝓞 L) * ζ𝓞 ^ (m - 1)
+      = Polynomial.aeval ζ𝓞 (Polynomial.derivative (minpoly (𝓞 K) ζ𝓞))
+        * Polynomial.aeval ζ𝓞 g := by
+    have hder := congrArg (Polynomial.aeval ζ𝓞 ∘ Polynomial.derivative) hg
+    simp only [Function.comp_apply, Polynomial.derivative_one,
+      Polynomial.derivative_X_pow, Polynomial.derivative_mul, map_sub, map_mul, map_add,
+      map_pow, Polynomial.aeval_X, minpoly.aeval, zero_mul, add_zero,
+      sub_zero, Polynomial.aeval_C] at hder
+    simpa using hder
+  have hadj : Algebra.adjoin K {algebraMap (𝓞 L) L ζ𝓞} = ⊤ := by
+    have : algebraMap (𝓞 L) L ζ𝓞 = ζ := hζ.coe_toInteger
+    rw [this]; exact IsCyclotomicExtension.adjoin_primitive_root_eq_top hζ
+  have hdiff_dvd : differentIdeal (𝓞 K) (𝓞 L)
+      ∣ Ideal.span {Polynomial.aeval ζ𝓞 (Polynomial.derivative (minpoly (𝓞 K) ζ𝓞))} :=
+    ⟨conductor (𝓞 K) ζ𝓞, by
+      rw [← conductor_mul_differentIdeal (𝓞 K) K L ζ𝓞 hadj]; ring⟩
+  have hmem : (m : 𝓞 L) * ζ𝓞 ^ (m - 1) ∈ 𝔓 := by
+    rw [hkey]
+    exact Ideal.mul_mem_right _ _
+      ((Ideal.dvd_iff_le.mp (dvd_trans hdvd hdiff_dvd)) (Ideal.mem_span_singleton_self _))
+  have hm𝔓 : ((m : ℕ) : 𝓞 L) ∈ 𝔓 := by
+    rcases ‹𝔓.IsPrime›.mem_or_mem hmem with h | h
+    · exact h
+    · exact absurd (Ideal.eq_top_of_isUnit_mem _ h
+        ((IsUnit.of_pow_eq_one hpow (NeZero.ne m)).pow _)) ‹𝔓.IsPrime›.ne_top
+  have hm𝔭 : ((m : ℕ) : 𝓞 K) ∈ 𝔭 := by
+    have hmap : algebraMap (𝓞 K) (𝓞 L) ((m : ℕ) : 𝓞 K) ∈ 𝔓 := by rwa [map_natCast]
+    rw [h𝔓lo.over]; exact Ideal.mem_comap.mpr hmap
+  have hdvd_norm : Ideal.absNorm 𝔭 ∣ m ^ Module.finrank ℤ (𝓞 K) := by
+    have hle : Ideal.span {((m : ℕ) : 𝓞 K)} ≤ 𝔭 :=
+      (Ideal.span_singleton_le_iff_mem _).mpr hm𝔭
+    have hd := Ideal.absNorm_dvd_absNorm_of_le hle
+    rwa [Ideal.absNorm_span_singleton, show ((m : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (m : ℤ) by
+        push_cast; rfl,
+      Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
+  exact absurd (Ideal.absNorm_eq_one_iff.mp
+      (Nat.eq_one_of_dvd_coprimes (hcop.pow_right _) dvd_rfl hdvd_norm))
+    ‹𝔭.IsPrime›.ne_top
+
+/-- **Frobenius ↔ residue dictionary** for `L = ℚ(μ_n)` with `σ` chosen so the cyclotomic
+character `autToPow` sends `σ` to the unit `a`. For a coprime-norm unramified prime `𝔭`, the
+Frobenius class is `mk σ` iff `N𝔭 ≡ a [n]`: `autToPow_frobeniusClass_out` realises the
+Frobenius as `N𝔭 mod n`, and `autToPow` is injective (and the group is abelian, so `mk` is). -/
+private theorem frobeniusClass_eq_iff_residue
+    (n : ℕ) [NeZero n] (L : Type*) [Field L] [NumberField L] [Algebra ℚ L] [IsGalois ℚ L]
+    [IsCyclotomicExtension {n} ℚ L] [FiniteDimensional ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
+    {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
+    (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit)
+    (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] (hunr : UnramifiedIn ℚ L 𝔭)
+    (hcop : (Ideal.absNorm 𝔭).Coprime n) :
+    frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ ↔ (Ideal.absNorm 𝔭 : ZMod n) = a := by
+  letI : CommMonoid (L ≃ₐ[ℚ] L) := IsMulCommutative.instCommMonoid
+  have hdict := autToPow_frobeniusClass_out ℚ L n hζ 𝔭 hunr hcop
+  rw [show frobeniusClass ℚ L 𝔭 = ConjClasses.mk (frobeniusClass ℚ L 𝔭).out from
+    (Quotient.out_eq _).symm, ConjClasses.mk_eq_mk_iff_isConj, isConj_iff_eq]
+  constructor
+  · intro h
+    have he : hζ.autToPow ℚ (frobeniusClass ℚ L 𝔭).out = hζ.autToPow ℚ σ := by rw [h]
+    rw [hdict, hσ] at he
+    have hc := congrArg (Units.val) he
+    rwa [ZMod.coe_unitOfCoprime, IsUnit.unit_spec] at hc
+  · intro h
+    apply hζ.autToPow_injective ℚ
+    rw [hdict, hσ]
+    apply Units.ext
+    rw [ZMod.coe_unitOfCoprime, IsUnit.unit_spec]; exact h
+
+/-- For `n = 2·n'` with `n'` odd and an **odd** prime `p`, the residue condition mod `n`
+matches the one mod `n'` (with `a' = a mod n'`): forward by `castHom`; backward by CRT, since
+the `mod 2` coordinates agree — `(p : ZMod 2) = 1` and a unit of `ZMod n` is `1` mod `2`. -/
+private theorem residue_iff_half (n' : ℕ) (hcop : Nat.Coprime 2 n')
+    (a : ZMod (2 * n')) (ha : IsUnit a) (p : ℕ) (hpp : p.Prime) (hodd : p ≠ 2) :
+    ((p : ZMod (2 * n')) = a ↔
+      (p : ZMod n') = (ZMod.castHom (dvd_mul_left n' 2) (ZMod n')) a) := by
+  constructor
+  · intro h
+    have hc := congrArg (ZMod.castHom (dvd_mul_left n' 2) (ZMod n')) h
+    rwa [map_natCast] at hc
+  · intro h
+    apply zmod_eq_of_castHom_eq hcop
+    · rw [map_natCast]
+      have hp2 : (p : ZMod 2) = 1 := by
+        have h2 : p % 2 = 1 := (Nat.Prime.eq_two_or_odd hpp).resolve_left hodd
+        rw [← ZMod.natCast_mod p 2, h2]; norm_num
+      rw [hp2]
+      have hu : IsUnit ((ZMod.castHom (dvd_mul_right 2 n') (ZMod 2)) a) := ha.map _
+      revert hu; generalize (ZMod.castHom (dvd_mul_right 2 n') (ZMod 2)) a = z
+      revert z; decide
+    · rw [map_natCast]; exact h
+
+/-- The main case of Dirichlet's AP theorem (`n ≢ 2 [4]`, so `chebotarev_cyclotomic` applies):
+instantiate `L = ℚ(μ_n)`, pick `σ` with `autToPow σ = a`, and identify the target image-set
+with the cyclotomic Frobenius-fibre up to the finite `Bad` set of primes dividing `n`. -/
+private theorem dirichlet_AP_main (n : ℕ) (hn4 : n % 4 ≠ 2) (hn : 1 ≤ n)
+    (a : ZMod n) (ha : IsUnit a) :
+    HasDirichletDensity
+      ((fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) '' {p : ℕ | p.Prime ∧ (p : ZMod n) = a})
+      ((Nat.totient n : ℝ)⁻¹) := by
+  have : NeZero n := ⟨by omega⟩
+  -- The `CyclotomicField n ℚ` instances need `NeZero (n : ℚ)`, and the module system does not
+  -- fire them by automatic synthesis here, so they are supplied explicitly.
+  haveI : NeZero ((n : ℕ) : ℚ) := ⟨by exact_mod_cast (show n ≠ 0 by omega)⟩
+  set L := CyclotomicField n ℚ with hLdef
+  haveI : IsCyclotomicExtension {n} ℚ L := CyclotomicField.isCyclotomicExtension n ℚ
+  haveI : IsGalois ℚ L := IsCyclotomicExtension.isGalois {n} ℚ L
+  haveI : IsMulCommutative (L ≃ₐ[ℚ] L) :=
+    IsCyclotomicExtension.isMulCommutative (S := {n}) ℚ L
+  have hirr : Irreducible (Polynomial.cyclotomic n ℚ) :=
+    Polynomial.cyclotomic.irreducible_rat (by omega)
+  obtain ⟨ζ, hζ⟩ := IsCyclotomicExtension.exists_isPrimitiveRoot ℚ L
+    (Set.mem_singleton n) (NeZero.ne n)
+  set E := IsCyclotomicExtension.autEquivPow L hirr with hE
+  set σ : L ≃ₐ[ℚ] L := E.symm ha.unit with hσdef
+  have hσ : hζ.autToPow ℚ σ = ha.unit := by
+    have h1 : (E σ : (ZMod n)ˣ) = hζ.autToPow ℚ σ := by
+      rw [hE, IsCyclotomicExtension.autEquivPow_apply]
+      simp only [MonoidHom.toFun_eq_coe]
+      rw [IsPrimitiveRoot.autToPow_eq_modularCyclotomicCharacter,
+        IsPrimitiveRoot.autToPow_eq_modularCyclotomicCharacter]
+    rw [← h1, hσdef, E.apply_symm_apply]
+  have hfib := chebotarev_cyclotomic ℚ L n hn4 σ
+  have hcard : (Nat.card (L ≃ₐ[ℚ] L) : ℝ)⁻¹ = (Nat.totient n : ℝ)⁻¹ := by
+    congr 1
+    rw [Nat.card_congr E.toEquiv, Nat.card_eq_fintype_card, ZMod.card_units_eq_totient]
+  rw [hcard] at hfib
+  set F := {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
+    frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} with hFdef
+  set I := (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
+    {p : ℕ | p.Prime ∧ (p : ZMod n) = a} with hIdef
+  set Bad := (fun q : ℕ ↦ Ideal.span {(q : 𝓞 ℚ)}) '' {q : ℕ | q.Prime ∧ q ∣ n} with hBad
+  have hBadfin : Bad.Finite := by
+    apply Set.Finite.image
+    apply Set.Finite.subset (Set.finite_Icc 0 n)
+    intro q hq; simp only [Set.mem_Icc]
+    exact ⟨Nat.zero_le _, Nat.le_of_dvd (by omega) hq.2⟩
+  have hFI : F \ I ⊆ Bad := by
+    rintro 𝔭 ⟨⟨hpr, hunr, hfrob⟩, hnotI⟩
+    haveI := hpr
+    obtain ⟨q, hqp, hqeq⟩ := ratPrime_eq_span 𝔭 hpr (UnramifiedIn.ne_bot ℚ L hunr)
+    have hnorm : Ideal.absNorm 𝔭 = q := by rw [hqeq, absNorm_span_nat]
+    by_cases hcop : (Ideal.absNorm 𝔭).Coprime n
+    · exfalso; apply hnotI
+      refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
+      have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hcop).mp hfrob
+      rwa [hnorm] at hr
+    · refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
+      rw [hnorm, hqp.coprime_iff_not_dvd, not_not] at hcop; exact hcop
+  have hIF : I \ F ⊆ Bad := by
+    rintro 𝔭 ⟨⟨p, ⟨hpp, hpa⟩, rfl⟩, hnotF⟩
+    have hprime : (Ideal.span {(p : 𝓞 ℚ)}).IsPrime := span_nat_isPrime hpp
+    haveI := hprime
+    have hp0 : (p : 𝓞 ℚ) ≠ 0 := by
+      have h2 : (2 : ℕ) ≤ p := hpp.two_le
+      simp only [ne_eq, Nat.cast_eq_zero]; intro h; rw [h] at h2; omega
+    by_cases hdvd : p ∣ n
+    · exact ⟨p, ⟨hpp, hdvd⟩, rfl⟩
+    · exfalso; apply hnotF
+      have hcop : (Ideal.absNorm (Ideal.span {(p : 𝓞 ℚ)})).Coprime n := by
+        rw [absNorm_span_nat]; exact (hpp.coprime_iff_not_dvd).mpr hdvd
+      have hne : Ideal.span {(p : 𝓞 ℚ)} ≠ ⊥ := by
+        rw [Ne, Ideal.span_singleton_eq_bot]; exact hp0
+      have hunr := unramifiedIn_cyclotomic_of_coprime L n _ hne hcop
+      refine ⟨hprime, hunr, ?_⟩
+      rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hcop, absNorm_span_nat]
+      exact hpa
+  exact hasDirichletDensity_of_finite_symmDiff (hBadfin.subset hFI) (hBadfin.subset hIF) hfib
+
 /-- **Dirichlet's theorem on primes in arithmetic progressions**, as a
 density refinement of `Nat.infinite_setOf_prime_and_eq_mod`.
 
@@ -1372,6 +1677,33 @@ theorem dirichlet_primes_in_AP (n : ℕ) (hn : 1 ≤ n) (a : ZMod n) (ha : IsUni
       ((fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
         {p : ℕ | p.Prime ∧ (p : ZMod n) = a})
       ((Nat.totient n : ℝ)⁻¹) := by
-  sorry
+  by_cases hn4 : n % 4 = 2
+  · -- Degenerate corner `n ≡ 2 [4]`: reduce to the odd `n' = n/2`, differing by the prime `2`.
+    obtain ⟨n', rfl⟩ : ∃ n', n = 2 * n' := ⟨n / 2, by omega⟩
+    have hn'1 : 1 ≤ n' := by omega
+    have hcop : Nat.Coprime 2 n' := by rw [Nat.prime_two.coprime_iff_not_dvd]; omega
+    set a' : ZMod n' := (ZMod.castHom (dvd_mul_left n' 2) (ZMod n')) a with ha'def
+    have ha' : IsUnit a' := ha.map _
+    have hmain := dirichlet_AP_main n' (by omega) hn'1 a' ha'
+    have htot : (Nat.totient (2 * n') : ℝ)⁻¹ = (Nat.totient n' : ℝ)⁻¹ := by
+      congr 1; rw [Nat.totient_mul hcop, Nat.totient_two, one_mul]
+    rw [htot]
+    set I2 := (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
+      {p : ℕ | p.Prime ∧ (p : ZMod (2 * n')) = a} with hI2
+    set I' := (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
+      {p : ℕ | p.Prime ∧ (p : ZMod n') = a'} with hI'
+    have hsub2 : I2 \ I' ⊆ {Ideal.span {(2 : 𝓞 ℚ)}} := by
+      rintro 𝔭 ⟨⟨p, ⟨hpp, hpa⟩, rfl⟩, hnot⟩
+      by_cases hp2 : p = 2
+      · subst hp2; rfl
+      · exact absurd ⟨p, ⟨hpp, (residue_iff_half n' hcop a ha p hpp hp2).mp hpa⟩, rfl⟩ hnot
+    have hsub' : I' \ I2 ⊆ {Ideal.span {(2 : 𝓞 ℚ)}} := by
+      rintro 𝔭 ⟨⟨p, ⟨hpp, hpa⟩, rfl⟩, hnot⟩
+      by_cases hp2 : p = 2
+      · subst hp2; rfl
+      · exact absurd ⟨p, ⟨hpp, (residue_iff_half n' hcop a ha p hpp hp2).mpr hpa⟩, rfl⟩ hnot
+    exact hasDirichletDensity_of_finite_symmDiff
+      ((Set.finite_singleton _).subset hsub') ((Set.finite_singleton _).subset hsub2) hmain
+  · exact dirichlet_AP_main n hn4 hn a ha
 
 end Chebotarev
