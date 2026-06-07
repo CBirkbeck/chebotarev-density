@@ -192,77 +192,48 @@ a fresh downward Frobenius-restriction lemma + the fibred zeta comparison).
   `development`; no backticks/apostrophes in `git commit -m`; footer
   `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 
-## 7. PICKUP PROTOCOL (written 2026-06-07 late, in case of rate-limit cutoff)
+## 7. PICKUP PROTOCOL (final update 2026-06-07 ~17:00 — ALL queued work DONE)
 
-**State at write time.** THE THEOREM IS COMPLETE and kernel-certified (comparator PASS —
-`./scripts/certify.sh`). CL1 cleanup: 13/13 files done (~45 commits today). /generalise
-campaign: done (59 FiniteDimensional drops + ConjClasses trio to Monoid + ZP char pair to
-CommGroup + the ForMathlib sweep). Blueprint: verso, LIVE at
-https://cbirkbeck.github.io/chebotarev-density/ (Pages deploys from `development` via
-.github/workflows/pages.yml; environment allows development+master). PR #4 MERGEABLE, all
-review comments addressed+replied. formalization.yaml filled (authors Birkbeck/Brasca/
-Roblot; Claude Max subscription note; ChatGPT Pro expert reviews; flt-regular-bernoulli
-parent source). Chris authorized pushes 2026-06-07 ("you can push") — re-confirm in a NEW
-session before pushing.
+**Everything in the earlier version of this section is COMPLETE and pushed** (origin/development
+= local, through `096cb5f`+). Final state:
+- CL1 13/13 files; CL2 done: **zero `set_option maxHeartbeats` project-wide** (the two ZP
+  holdouts decomposed — root cause was HOU `?f ∘ Subtype.val` in `HasProd.mul_compl`, fixed
+  with explicit `(f :=)`/`(s :=)` + extracted ascribed flattener Equivs); simp tags in;
+  duplication clusters A–G ALL closed (G: the bad-primes chain lives once in Frobenius.lean;
+  D: `ForMathlib/CharacterOrthogonality.lean` is the single shared home; E: the unweighted
+  Euler product is the `w ≡ 1` specialisation).
+- /generalise campaign done: 59 redundant `[FiniteDimensional]` drops (mathlib's NumberField
+  instance derives it), ConjClasses trio at `Monoid`, ZP char pair at `CommGroup`, the
+  ForMathlib sweep (3 weakenings incl. the new filter-general
+  `tendsto_ratio_one_of_div_atTop_pm_bounded`; ~24 verified n/a's).
+- Blueprint: **FULL dep-graph closure** (every summary bucket `deps incomplete: 0; sorries: 0;
+  no proof: 0`), bibliography with 22 live citations, Engine chapter, completion banner —
+  DEPLOYED (Pages run green) at https://cbirkbeck.github.io/chebotarev-density/.
+- Board: CL1/CL2/BP1/GB/GA/AB1/M1 all done. **Live tail = UP1 only** (mathlib upstreaming,
+  dependency order in the ticket + PROJECT_OVERVIEW.md Part 5).
 
-**In-flight workers at write time** (check `git status` — their files are mid-edit; if the
-tree is clean they finished and someone committed; if dirty, check each file builds, then
-commit scoped with the gate):
-- Cluster G hoist (4 finiteness helpers ZetaProduct→Frobenius; CNR `'`-replicas deleted;
-  call sites repointed). Files: Frobenius, ZetaProduct, CyclotomicNormResidue.
-- Cluster E w≡1 (NFEP: `dedekindZeta_eq_tprod_primeIdeal` proof becomes the
-  `weighted_eulerProduct_eq_tsum (w := 1)` specialisation, ≈ −45 lines; statement frozen).
-- Cluster D phase 2 (Cyclotomic orthogonality lemmas delegate to
-  `ForMathlib/CharacterOrthogonality.lean`; + one Engine-chapter entry
-  "character-orthogonality-shared").
+**PR-poll cron: HANDED OFF.** This session's cron was cancelled 2026-06-07 — **another worker
+now owns PR polling**. Do NOT recreate it unless that worker's session is gone. The shared
+state file is `/Users/mcu22seu/.claude3/projects/-Users-mcu22seu-Documents-GitHub-chebotarev-density/pr4-last-seen.txt`
+(current: PR4 review 3358378028 / issue 4630264902; PR2 review 3325972136 / issue 0). The full
+poll-prompt spec + the comment-ANSWERING workflow (implement on development, reply on-thread
+via gh, push only the PR branch `chebotarev-statement`; worktree `/tmp/cheb-stmt`) are in this
+file's git history (2026-06-07 pickup-protocol version) and the PR-#4 thread itself models the
+reply style. PR #4: MERGEABLE, review-current; PR #2: frozen snapshot.
 
-**CL2 queue after those land** (the board ticket `.mathlib-quality/tickets.md` §CL2 has
-full specs):
-1. **Zero maxHeartbeats (HARD, Chris directive)**: exactly 2 left, ZetaProduct ~2849
-   (`tprod_unramified_eq_prod_artinDirichletSeries`, 1600000) and ~2939
-   (`dedekindZeta_eq_prod_artinDirichletSeries`, 800000). Both whnf-timeout at default —
-   /decompose-proof them: extract the nested `Ideal (𝓞 L)` prime-subtype regrouping
-   (the `set F`/`set G` Equiv steps) into private ascribed helpers
-   (`(Finset.univ : Finset {…})` medicine; `Summable.subtype` not `Multipliable.subtype`)
-   until everything elaborates at 200000.
-2. **Simp tags** (ZetaProduct free after #1): `@[simp]` on `galoisCharacterOnIdeal_one`,
-   `frobeniusIdeal_one`, `frobeniusIdeal_apply_prime`, `galoisCharacterCoeff_zero`; audit
-   for simp loops; full lib green.
-3. **THE WRAP**: (a) `lake build CebotarevBlueprint` then
-   `lake env lean --run CebotarevBlueprintMain.lean --output _out/site`; check
-   Blueprint-Summary for closure (deps-incomplete should be ~0 — the factorisation entry
-   is now linked); (b) reconcile tickets (CL1/CL2→done) + PROJECT_OVERVIEW banner;
-   (c) commit + push → CI redeploys the site. Held item (Chris-visible): nonzero-ideal
-   encoding unification (public NFEP signatures, slice-PR coordination); NFEP ℂ→CommMonoid/
-   RCLike big-changes (flagged, need approval).
+**Gates (permanent)**: `./scripts/verify-axioms.sh` after every commit (must end
+`AXIOM GATE: PASS (4/4 …)`). Headline-4 statements byte-frozen ↔ `certification/Challenge.lean`
+must keep matching; deliberate changes require updating the Challenge + re-running
+`./scripts/certify.sh` (comparator; prereqs documented in the script). Operational invariants:
+Edit tool only on .lean (no perl/sed); scoped `git add` only; never re-run
+`lake update VersoBlueprint` without re-checking the proofwidgets/plausible pins; the
+VersoBlueprint package patch is at `scripts/patches/` (ci-pages.sh applies it); verso syntax
+gotchas in memory `verso-blueprint-build-gotchas`.
 
-**Gates (run after EVERY commit)**: `./scripts/verify-axioms.sh` must end
-`AXIOM GATE: PASS (4/4 …)`. The four headline theorems are BYTE-FROZEN (comparator
-Challenge at `certification/Challenge.lean` must keep matching — if a headline signature
-ever changes deliberately, update the Challenge AND re-run `./scripts/certify.sh`).
-Statements of everything else: cleanup=byte-protected, generalise=weakenings-only.
-
-**PR-poll cron + comment protocol**: the cron is SESSION-ONLY — recreate at every session
-start: `CronCreate` schedule `23 */2 * * *`, recurring, with the poll prompt (full text =
-the user-message form seen throughout this session; spec: state file
-`/Users/mcu22seu/.claude3/projects/-Users-mcu22seu-Documents-GitHub-chebotarev-density/pr4-last-seen.txt`,
-per-PR JSON `{"4": {"review": <id>, "issue": <id>}, "2": …}`; review and issue comment id
-ranges are SEPARATE; flag only non-CBirkbeck comments with id > stored; seed-on-first-sight
-for new PRs; on no-news print exactly "PRs: no new comments."; on news print bodies, update
-state to the max ids including CBirkbeck replies, send ONE proactive PushNotification; never
-edit code from the poll). When ANSWERING review comments (separate from polling): implement
-on `development`, reply on the thread via `gh pr comment`/review-thread reply as done
-throughout PR #4, push the PR branch (`chebotarev-statement`) only — see the PR-#4 thread
-for the established reply style. Worktree for PR-branch work: `/tmp/cheb-stmt` (exists;
-`git worktree list`).
-
-**Operational invariants** (memories exist for all): Edit tool only on .lean (NEVER
-perl/sed — UTF-8 corruption history; recover via `git show HEAD:path > path`); workers must
-NEVER `git add -A` (scoped adds only — a concurrent-worker file was nearly swept once);
-lake update VersoBlueprint rewrites foreign pins (restore by hand); the VersoBlueprint
-package needs `scripts/patches/verso-blueprint-v4.30-on-v4.31-toolchain.patch` (ci-pages.sh
-applies it; the .lake copy is volatile); verso syntax gotchas in memory
-`verso-blueprint-build-gotchas`.
+**Held for Chris** (unchanged): nonzero-ideal encoding unification (public NFEP signatures —
+slice-PR coordination); NFEP `ℂ→RCLike/CommMonoid` restatements (flagged, need approval);
+dropping the now-redundant headline `[FiniteDimensional]`s (Challenge update + recertify);
+deleting the legacy `blueprint/` LaTeX tree.
 
 ## 8. One-paragraph status for a cold reader
 
