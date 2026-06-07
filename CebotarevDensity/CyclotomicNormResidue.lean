@@ -450,6 +450,24 @@ private theorem primeIdealZetaSum_unramified_coprime_div_log_tendsto_one :
       primeIdealZetaSum_eq_univ_of_forall_prime_mem hcover s]
   rw [← sub_div, ← hadd, add_sub_cancel_right]
 
+omit [IsGalois K L] [FiniteDimensional K L] [NeZero m] in
+/-- The nonzero primes of `𝓞 F` lying over a fixed maximal prime `𝔭` of `𝓞 K` form a finite type,
+for `F` an intermediate field Galois over `K`: they inject into the finite `𝔭.primesOver (𝓞 F)`. -/
+private theorem finite_primesLiesOver_ne_bot (F : IntermediateField K L) [IsGalois K F]
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal] :
+    haveI : NumberField F := NumberField.of_intermediateField F
+    Finite {𝔮 : Ideal (𝓞 ↥F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭 ∧ 𝔮 ≠ ⊥} := by
+  haveI : IsScalarTower K F L := F.isScalarTower_mid'
+  haveI : NumberField F := NumberField.of_intermediateField F
+  haveI : Finite (𝔭.primesOver (𝓞 ↥F)) :=
+    (IsDedekindDomain.primesOver_finite 𝔭 (𝓞 ↥F)).to_subtype
+  refine Finite.of_injective (β := 𝔭.primesOver (𝓞 ↥F))
+    (fun y => ⟨y.1, y.2.1, y.2.2.1⟩) (fun a b hab => ?_)
+  apply Subtype.ext
+  have : (⟨a.1, a.2.1, a.2.2.1⟩ : 𝔭.primesOver (𝓞 ↥F)).1
+      = (⟨b.1, b.2.1, b.2.2.1⟩ : 𝔭.primesOver (𝓞 ↥F)).1 := congrArg Subtype.val hab
+  exact this
+
 omit [NeZero m] in
 /-- **Coprime-restricted fibred zeta comparison.** The coprime-restricted analog of
 `finrank_mul_unramified_le_univ`: with the Frobenius-membership hypothesis required only on
@@ -466,36 +484,25 @@ private theorem finrank_mul_unramified_coprime_le_univ
         primeIdealZetaSum
           {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} s
       ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 ↥(IntermediateField.fixedField H)))) s := by
-  set F := IntermediateField.fixedField H with hF
+  set F := IntermediateField.fixedField H
   haveI : IsScalarTower K F L := F.isScalarTower_mid'
   haveI : IsGalois K F := IsGalois.of_fixedField_normal_subgroup H
   haveI : NumberField F := NumberField.of_intermediateField F
   set U : Set (Ideal (𝓞 K)) :=
-    {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} with hU
+    {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m}
   set V : Set (Ideal (𝓞 F)) :=
     {𝔮 | 𝔮.IsPrime ∧ UnramifiedIn K L (𝔮.under (𝓞 K)) ∧ (Ideal.absNorm (𝔮.under (𝓞 K))).Coprime m}
-    with hV
-  -- packaged splitting data (count + norm) for a coprime-norm unramified base prime
-  have hcount : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → UnramifiedIn K L 𝔭 → (Ideal.absNorm 𝔭).Coprime m →
-      Nat.card {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭 ∧ 𝔮 ≠ ⊥}
-        = Module.finrank K ↥F := fun 𝔭 h𝔭p h𝔭unr h𝔭cop => by
-    haveI := h𝔭p
-    exact (splitsCompletely_fixedField K L H 𝔭 h𝔭unr
-      (hH 𝔭 h𝔭p (UnramifiedIn.ne_bot K L h𝔭unr) h𝔭unr h𝔭cop)).1
-  have hnorm : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → UnramifiedIn K L 𝔭 → (Ideal.absNorm 𝔭).Coprime m →
-      ∀ 𝔮 : Ideal (𝓞 F), 𝔮.IsPrime → 𝔮.LiesOver 𝔭 →
-        Ideal.absNorm 𝔮 = Ideal.absNorm 𝔭 := fun 𝔭 h𝔭p h𝔭unr h𝔭cop 𝔮 h𝔮p h𝔮lo => by
-    haveI := h𝔭p
-    exact (splitsCompletely_fixedField K L H 𝔭 h𝔭unr
-      (hH 𝔭 h𝔭p (UnramifiedIn.ne_bot K L h𝔭unr) h𝔭unr h𝔭cop)).2 𝔮 h𝔮p h𝔮lo
-  -- V ⊆ univ, so its sum is `≤` the universal `F`-prime sum.
+  have hsplit : ∀ 𝔭 : Ideal (𝓞 K), 𝔭.IsPrime → UnramifiedIn K L 𝔭 → (Ideal.absNorm 𝔭).Coprime m →
+      Nat.card {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭 ∧ 𝔮 ≠ ⊥} = Module.finrank K ↥F
+        ∧ ∀ 𝔮 : Ideal (𝓞 F), 𝔮.IsPrime → 𝔮.LiesOver 𝔭 → Ideal.absNorm 𝔮 = Ideal.absNorm 𝔭 :=
+    fun 𝔭 h𝔭p h𝔭unr h𝔭cop => splitsCompletely_fixedField K L H 𝔭 h𝔭unr
+      (hH 𝔭 h𝔭p (UnramifiedIn.ne_bot K L h𝔭unr) h𝔭unr h𝔭cop)
   have hVle : primeIdealZetaSum V s ≤
       primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 F))) s :=
     primeIdealZetaSum_le_of_subset (Set.subset_univ V) hs
   rw [show primeIdealZetaSum V s = (Module.finrank K ↥F : ℝ) * primeIdealZetaSum U s
       from ?_] at hVle
   · exact hVle
-  -- the regrouping equality
   set IU := {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ U ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}
   set IV := {𝔮 : Ideal (𝓞 F) // 𝔮 ∈ V ∧ 𝔮.IsPrime ∧ 𝔮 ≠ ⊥}
   have hφ_mem : ∀ 𝔮 : IV, (𝔮.1.under (𝓞 K)) ∈ U ∧ (𝔮.1.under (𝓞 K)).IsPrime
@@ -503,7 +510,7 @@ private theorem finrank_mul_unramified_coprime_le_univ
     haveI := 𝔮.2.2.1
     exact ⟨⟨inferInstance, 𝔮.2.1.2.1, 𝔮.2.1.2.2⟩, inferInstance,
       Ideal.IsIntegral.comap_ne_bot (𝓞 K) 𝔮.2.2.2⟩
-  set φ : IV → IU := fun 𝔮 => ⟨𝔮.1.under (𝓞 K), hφ_mem 𝔮⟩ with hφdef
+  set φ : IV → IU := fun 𝔮 => ⟨𝔮.1.under (𝓞 K), hφ_mem 𝔮⟩
   have hsummV : Summable (fun 𝔮 : IV => (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s)) :=
     summable_prime_absNorm_rpow V hs
   set e := Equiv.sigmaFiberEquiv φ
@@ -518,7 +525,8 @@ private theorem finrank_mul_unramified_coprime_le_univ
       {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭.1 ∧ 𝔮 ≠ ⊥} :=
     { toFun := fun x => ⟨x.1.1, x.1.2.2.1, ⟨(Subtype.ext_iff.mp x.2).symm⟩, x.1.2.2.2⟩
       invFun := fun y => ⟨⟨y.1, ⟨y.2.1, by
-          haveI := y.2.1; haveI := y.2.2.1
+          haveI := y.2.1
+          haveI := y.2.2.1
           exact (y.2.2.1.over ▸ 𝔭.2.1.2 : UnramifiedIn K L (y.1.under (𝓞 K)) ∧
             (Ideal.absNorm (y.1.under (𝓞 K))).Coprime m)⟩, y.2.1, y.2.2.2⟩,
         Subtype.ext (haveI := y.2.2.1; y.2.2.1.over.symm)⟩
@@ -527,21 +535,13 @@ private theorem finrank_mul_unramified_coprime_le_univ
   have hconst : ∀ x : {𝔮 : IV // φ 𝔮 = 𝔭}, (Ideal.absNorm (e ⟨𝔭, x⟩).1 : ℝ) ^ (-s)
       = (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun x => by
     change (Ideal.absNorm x.1.1 : ℝ) ^ (-s) = (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)
-    rw [hnorm 𝔭.1 𝔭.2.2.1 𝔭.2.1.2.1 𝔭.2.1.2.2 x.1.1 x.1.2.2.1 ⟨(Subtype.ext_iff.mp x.2).symm⟩]
-  -- the target prime set is finite, and `hfibeq` transports finiteness to the fibre
+    rw [(hsplit 𝔭.1 𝔭.2.2.1 𝔭.2.1.2.1 𝔭.2.1.2.2).2 x.1.1 x.1.2.2.1 ⟨(Subtype.ext_iff.mp x.2).symm⟩]
   haveI : 𝔭.1.IsMaximal := 𝔭.2.2.1.isMaximal 𝔭.2.2.2
-  haveI : Finite (𝔭.1.primesOver (𝓞 F)) :=
-    (IsDedekindDomain.primesOver_finite 𝔭.1 (𝓞 F)).to_subtype
-  haveI hfinHC : Finite {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭.1 ∧ 𝔮 ≠ ⊥} := by
-    refine Finite.of_injective (β := 𝔭.1.primesOver (𝓞 F))
-      (fun y => ⟨y.1, y.2.1, y.2.2.1⟩) (fun a b hab => ?_)
-    apply Subtype.ext
-    have : (⟨a.1, a.2.1, a.2.2.1⟩ : 𝔭.1.primesOver (𝓞 F)).1
-        = (⟨b.1, b.2.1, b.2.2.1⟩ : 𝔭.1.primesOver (𝓞 F)).1 := congrArg Subtype.val hab
-    exact this
+  haveI hfinHC : Finite {𝔮 : Ideal (𝓞 F) // 𝔮.IsPrime ∧ 𝔮.LiesOver 𝔭.1 ∧ 𝔮 ≠ ⊥} :=
+    finite_primesLiesOver_ne_bot K L F 𝔭.1
   haveI : Finite {𝔮 : IV // φ 𝔮 = 𝔭} := Finite.of_equiv _ hfibeq.symm
   rw [tsum_congr hconst, tsum_const, Nat.card_congr hfibeq,
-    hcount 𝔭.1 𝔭.2.2.1 𝔭.2.1.2.1 𝔭.2.1.2.2, nsmul_eq_mul, mul_comm]
+    (hsplit 𝔭.1 𝔭.2.2.1 𝔭.2.1.2.1 𝔭.2.1.2.2).1, nsmul_eq_mul, mul_comm]
 
 /-- **Coprime-restricted bound on the fixed-field degree.** The coprime-norm analog of
 `finrank_fixedField_le_one_of_forall_frobenius_mem`: with the Frobenius hypothesis required only
@@ -553,15 +553,15 @@ private theorem finrank_fixedField_le_one_of_forall_frobenius_mem_of_coprime
     (hH : ∀ 𝔭 : Ideal (𝓞 K), ∀ _ : 𝔭.IsPrime, 𝔭 ≠ ⊥ → UnramifiedIn K L 𝔭 →
       (Ideal.absNorm 𝔭).Coprime m → ((frobeniusClass K L 𝔭).out : L ≃ₐ[K] L) ∈ H) :
     Module.finrank K (IntermediateField.fixedField H) ≤ 1 := by
-  set F := IntermediateField.fixedField H with hF
+  set F := IntermediateField.fixedField H
   haveI : IsGalois K F := IsGalois.of_fixedField_normal_subgroup H
   haveI : NumberField F := NumberField.of_intermediateField F
-  set d : ℕ := Module.finrank K ↥F with hd
+  set d : ℕ := Module.finrank K ↥F
   rw [← Nat.cast_le (α := ℝ), Nat.cast_one]
   set A : ℝ → ℝ := fun s ↦ primeIdealZetaSum
-    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} s with hA
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ (Ideal.absNorm 𝔭).Coprime m} s
   set B : ℝ → ℝ := fun s ↦
-    primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 ↥F))) s with hB
+    primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 ↥F))) s
   have hAtend : Filter.Tendsto (fun s ↦ A s / Real.log (1 / (s - 1)))
       (nhdsWithin 1 (Set.Ioi 1)) (nhds 1) :=
     primeIdealZetaSum_unramified_coprime_div_log_tendsto_one K L m
@@ -598,8 +598,8 @@ theorem subgroup_eq_top_of_forall_frobenius_mem_of_coprime
     H = ⊤ := by
   have hfk1 := finrank_fixedField_le_one_of_forall_frobenius_mem_of_coprime K L m H hH
   rw [← Subgroup.card_eq_iff_eq_top]
-  have hpos : 1 ≤ Module.finrank K (IntermediateField.fixedField H) := Module.finrank_pos
-  have hfk : Module.finrank K (IntermediateField.fixedField H) = 1 := le_antisymm hfk1 hpos
+  have hfk : Module.finrank K (IntermediateField.fixedField H) = 1 :=
+    le_antisymm hfk1 Module.finrank_pos
   have htower := Module.finrank_mul_finrank K (IntermediateField.fixedField H) L
   rw [hfk, one_mul] at htower
   rw [IsGalois.card_aut_eq_finrank K L, ← htower, IntermediateField.finrank_fixedField_eq_card H]
