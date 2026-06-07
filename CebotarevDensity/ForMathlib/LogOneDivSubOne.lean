@@ -6,16 +6,31 @@ public import Mathlib.Topology.Algebra.Order.Field
 /-!
 # Limit lemmas for `log (1 / (s - 1))` near `s = 1`
 
-Two purely analytic limit facts about the function `s ↦ log (1 / (s - 1))`
-on a right neighbourhood of `1`:
+Purely analytic limit facts about the function `s ↦ log (1 / (s - 1))` on a
+right neighbourhood of `1`, together with the divergent-denominator squeeze
+that drives them.
 
-* `tendsto_log_one_div_sub_one_atTop` — it diverges to `+∞` as `s ↓ 1`.
-* `tendsto_ratio_one_of_log_pm_bounded` — a generic squeeze: any `f` that
-  agrees with `log (1 / (s - 1))` up to an additive bounded term has
-  `f s / log (1 / (s - 1)) → 1`.
+## Main results
 
-Neither lemma mentions number fields or Dirichlet density; they are kept
-in the root namespace as candidates for upstreaming to mathlib.
+* `tendsto_log_one_div_sub_one_atTop` — `log (1 / (s - 1))` diverges to `+∞`
+  as `s ↓ 1`.
+* `tendsto_ratio_one_of_div_atTop_pm_bounded` — a generic squeeze: if `g → +∞`
+  and `f` agrees with `g` up to a two-sided additive bounded error, then
+  `f s / g s → 1`.
+* `tendsto_ratio_one_of_log_pm_bounded` — the `g = log (1 / (s - 1))`, `s ↓ 1`
+  specialisation of the squeeze.
+
+None of these mention number fields or Dirichlet density; they live in the
+root namespace as candidates for upstreaming to mathlib.
+
+## Implementation notes
+
+The squeeze is stated in the elementary `∃ C, ∀ᶠ _ ≤ _` form rather than via
+`Asymptotics.IsEquivalent`; it builds directly on
+`tendsto_bdd_div_atTop_nhds_zero`. The same fact can be assembled from the
+`IsEquivalent` API (`isLittleO_one_left_iff`, `IsLittleO.isEquivalent`,
+`isEquivalent_iff_tendsto_one`); the elementary route keeps the hypotheses in
+the shape Dirichlet-density callers already produce.
 -/
 
 @[expose] public section
@@ -61,8 +76,7 @@ neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
 analytic content is just that `log(1/(s-1)) → ∞`, so the additive
 bounded term washes out under division. The log-free statement is
 `tendsto_ratio_one_of_div_atTop_pm_bounded`. -/
-theorem tendsto_ratio_one_of_log_pm_bounded
-    (f : ℝ → ℝ)
+theorem tendsto_ratio_one_of_log_pm_bounded (f : ℝ → ℝ)
     (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
     (h_lower : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), Real.log (1 / (s - 1)) - C ≤ f s) :
     Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) :=
