@@ -231,6 +231,31 @@ the chain is sorry-free *modulo L3*.
   re-link if made public); item (i)–(iv) content enrichment (hm-hypotheses prose, GB
   narrative chapter) can be incremental on the verso side.
 
+### [CL2] finish-line cleanup (Chris directive 2026-06-07) — Status: in progress
+- **Zero maxHeartbeats project-wide (HARD)**: exactly 2 remain, both ZetaProduct
+  (tprod_unramified_eq_prod_artinDirichletSeries 1600000 @2849;
+  dedekindZeta_eq_prod_artinDirichletSeries 800000 @2939). Both verified to whnf-timeout
+  at default — so /decompose-proof them: extract the nested `Ideal (𝓞 L)` prime-subtype
+  regrouping Equivs/HasProd steps into private helpers with explicit type ascriptions
+  (the Pi-subtype `(Finset.univ : Finset {…})` medicine + the Summable.subtype route)
+  until every piece elaborates at 200000.
+- **Cluster G hoist**: move `exists_prime_dvd_natCast_mem`,
+  `exists_primeFactor_natCast_mem_of_not_coprime`, `finite_primes_natCast_mem`,
+  `finite_badPrimes` from ZetaProduct (~904–971) into Frobenius.lean; drop ZP copies AND
+  CNR's `'`-replicas (355–456); both consumers import Frobenius (chain verified).
+- **Cluster D**: consolidate the 3 character-orthogonality implementations (ICC row+column
+  pair, Cyclotomic's `sum_galoisCharacter_eq_card_or_zero`/`character_orthogonality_*`)
+  onto one shared pair (new ForMathlib/CharacterOrthogonality.lean — UP1-ready home).
+- **Cluster E residual**: derive `dedekindZeta_eq_tprod_primeIdeal` from
+  `weighted_eulerProduct_eq_tsum` at `w ≡ 1` (assessed plan in the NFEP report, ≈ −48).
+- **Part 6.3 simp tags**: `@[simp]` on `galoisCharacterOnIdeal_one`, `frobeniusIdeal_one`,
+  `frobeniusIdeal_apply_prime`, `galoisCharacterCoeff_zero` (+ audit for loops).
+- **Held (deliberate)**: nonzero-ideal encoding unification (touches public NFEP
+  signatures — coordinate with slice-PR plan).
+- Sequencing: all items wait on the in-flight GEN-final + Cluster-A workers (file
+  ownership), then waves: (A) maxHeartbeats decompose + Cluster G; (B) D + E + simp tags.
+- Gate: scripts/verify-axioms.sh after every commit; headline-4 byte-frozen.
+
 ### [UP1] mathlib-upstream candidates — Status: open
 - Strongest candidates surfaced this session: sum_nthRootsFinset_eq_zero;
   normLeOne_frontier_lipschitz_cover (+ the mixedSpace lift); the ξ-uniform coset
