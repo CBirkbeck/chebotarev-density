@@ -2,6 +2,7 @@ module
 
 public import CebotarevDensity.Density
 public import CebotarevDensity.CyclotomicNormResidue
+public import CebotarevDensity.ForMathlib.CharacterOrthogonality
 public import CebotarevDensity.ForMathlib.IdealCongruenceCount
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.LogOneDivSubOne

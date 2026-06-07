@@ -1,12 +1,10 @@
 module
 
+public import CebotarevDensity.ForMathlib.CharacterOrthogonality
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
 public import Mathlib.RingTheory.DedekindDomain.Factorization
-public import Mathlib.GroupTheory.FiniteAbelian.Duality
-public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
-public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 /-!
 # Effective counting of ideals by class and norm residue
@@ -2007,28 +2005,6 @@ private theorem exists_tendsto_cardNormLeResidue_div (K : Type*) [Field K] [Numb
   exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos
     (fun N hN => hκ N hN)⟩
 
-/-- **Character-column orthogonality** for a finite commutative group `G`: for `g ≠ 1`, the sum
-of `χ g` over all characters `χ : G →* ℂˣ` vanishes. A separating character `χ₀` with
-`χ₀ g ≠ 1` exists (`CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity`, with
-`HasEnoughRootsOfUnity ℂ` from algebraic closedness), and reindexing the sum by translation
-with `χ₀` scales it by `χ₀ g`, forcing it to vanish. -/
-private theorem sum_char_apply_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Finite G]
-    [Fintype (G →* ℂˣ)] {g : G} (hg : g ≠ 1) : ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
-  classical
-  haveI : NeZero ((Monoid.exponent G : ℕ) : ℂ) := ⟨Nat.cast_ne_zero.mpr (NeZero.ne _)⟩
-  obtain ⟨χ₀, hχ₀⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G ℂ hg
-  have hshift : ((χ₀ g : ℂˣ) : ℂ) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) =
-      ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) := by
-    rw [Finset.mul_sum]
-    refine Fintype.sum_bijective (χ₀ * ·) (Group.mulLeft_bijective χ₀)
-      (fun χ => ((χ₀ g : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun χ => ((χ g : ℂˣ) : ℂ)) fun χ => ?_
-    rw [MonoidHom.mul_apply, Units.val_mul]
-  have h0 : (((χ₀ g : ℂˣ) : ℂ) - 1) * ∑ χ : G →* ℂˣ, ((χ g : ℂˣ) : ℂ) = 0 := by
-    rw [sub_mul, one_mul, hshift, sub_self]
-  rcases mul_eq_zero.mp h0 with h | h
-  · exact absurd (Units.ext (by simpa using sub_eq_zero.mp h)) hχ₀
-  · exact h
-
 open scoped Classical in
 /-- **κ-uniformity over the realized-residue subgroup.** Under Fourier-decay `hF` (all nontrivial
 `S`-character twists of the residue counts have vanishing density), the residue-count densities
@@ -2142,29 +2118,6 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
     (f := fun b => |C'f b|) (fun b _ => abs_nonneg _) (Finset.mem_univ _))
 
 /-! ### Realizer-driven Fourier decay (the `hF` producer) -/
-
-/-- **Row orthogonality** for a finite commutative group `G`: for a nontrivial character
-`χ : G →* ℂˣ`, the sum of `χ g` over all `g : G` vanishes. A separating element `g₀` with
-`χ g₀ ≠ 1` exists (else `χ = 1`); reindexing the sum by left translation with `g₀` scales it by
-`χ g₀`, forcing it to vanish. This is the companion of the column orthogonality
-`sum_char_apply_eq_zero_of_ne_one`. -/
-private theorem sum_char_self_eq_zero_of_ne_one {G : Type*} [CommGroup G] [Fintype G]
-    {χ : G →* ℂˣ} (hχ : χ ≠ 1) : ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
-  classical
-  obtain ⟨g₀, hg₀⟩ : ∃ g₀ : G, χ g₀ ≠ 1 := by
-    by_contra h
-    push Not at h
-    exact hχ (MonoidHom.ext fun g => by simpa using h g)
-  have hshift : ((χ g₀ : ℂˣ) : ℂ) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = ∑ g : G, ((χ g : ℂˣ) : ℂ) := by
-    rw [Finset.mul_sum]
-    refine Fintype.sum_bijective (g₀ * ·) (Group.mulLeft_bijective g₀)
-      (fun g => ((χ g₀ : ℂˣ) : ℂ) * ((χ g : ℂˣ) : ℂ)) (fun g => ((χ g : ℂˣ) : ℂ)) fun g => ?_
-    rw [map_mul, Units.val_mul]
-  have h0 : (((χ g₀ : ℂˣ) : ℂ) - 1) * ∑ g : G, ((χ g : ℂˣ) : ℂ) = 0 := by
-    rw [sub_mul, one_mul, hshift, sub_self]
-  rcases mul_eq_zero.mp h0 with h | h
-  · exact absurd (Units.ext (sub_eq_zero.mp h)) hg₀
-  · exact h
 
 /-! ### Per-class densities and the realizer transfer (Lang VI §3 Thm 3)
 
