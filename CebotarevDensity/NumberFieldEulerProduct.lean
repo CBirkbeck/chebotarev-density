@@ -60,6 +60,80 @@ lemma idealNormMultiplicity_one : idealNormMultiplicity L 1 = 1 := by
         Subtype.ext (Subtype.ext (Ideal.absNorm_eq_one_iff.mp hnorm)) }
   exact Nat.card_unique
 
+private lemma absNorm_span_singleton_natCast (r : ℕ) :
+    Ideal.absNorm (Ideal.span {(r : 𝓞 L)}) = r ^ Module.finrank ℤ (𝓞 L) := by
+  rw [Ideal.absNorm_span_singleton,
+    show ((r : 𝓞 L)) = algebraMap ℤ (𝓞 L) (r : ℤ) by push_cast; rfl,
+    Algebra.norm_algebraMap_of_basis (Module.finBasis ℤ (𝓞 L))]
+  simp
+
+omit [NumberField L] in
+private lemma span_natCast_sup_span_natCast {m n : ℕ} (hcop : Nat.Coprime m n) :
+    Ideal.span {(m : 𝓞 L)} ⊔ Ideal.span {(n : 𝓞 L)} = ⊤ := by
+  rw [← Ideal.isCoprime_iff_sup_eq, Ideal.isCoprime_span_singleton_iff]
+  simpa using (Nat.Coprime.isCoprime hcop).map (algebraMap ℤ (𝓞 L))
+
+omit [NumberField L] in
+private lemma sup_span_mul_sup_span {m n : ℕ} (hcop : Nat.Coprime m n) (I : Ideal (𝓞 L)) :
+    (I ⊔ Ideal.span {(m : 𝓞 L)}) * (I ⊔ Ideal.span {(n : 𝓞 L)}) =
+      I ⊔ Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)} := by
+  rw [Ideal.sup_mul, Ideal.mul_sup, Ideal.mul_sup,
+    mul_comm (Ideal.span {(m : 𝓞 L)}) I,
+    Ideal.span_singleton_mul_span_singleton,
+    show I * I ⊔ I * Ideal.span {(n : 𝓞 L)} ⊔
+        (I * Ideal.span {(m : 𝓞 L)} ⊔ Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)}) =
+        (I * I ⊔ I * Ideal.span {(n : 𝓞 L)} ⊔ I * Ideal.span {(m : 𝓞 L)}) ⊔
+          Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)} by ac_rfl,
+    ← Ideal.mul_sup, ← Ideal.mul_sup,
+    show I ⊔ Ideal.span {(n : 𝓞 L)} ⊔ Ideal.span {(m : 𝓞 L)} = ⊤ by
+      rw [sup_assoc, sup_comm (Ideal.span {(n : 𝓞 L)}) _,
+        span_natCast_sup_span_natCast L hcop, sup_top_eq],
+    Ideal.mul_top]
+
+private lemma absNorm_sup_span_natCast {m n : ℕ} (hcop : Nat.Coprime m n) (hm : 0 < m)
+    (hn : 0 < n) (I : Ideal (𝓞 L)) (hI : Ideal.absNorm I = m * n) :
+    Ideal.absNorm (I ⊔ Ideal.span {(m : 𝓞 L)}) = m ∧
+      Ideal.absNorm (I ⊔ Ideal.span {(n : 𝓞 L)}) = n := by
+  set a := Ideal.absNorm (I ⊔ Ideal.span {(m : 𝓞 L)}) with ha_def
+  set b := Ideal.absNorm (I ⊔ Ideal.span {(n : 𝓞 L)}) with hb_def
+  have h_prod : (I ⊔ Ideal.span {(m : 𝓞 L)}) * (I ⊔ Ideal.span {(n : 𝓞 L)}) = I := by
+    rw [sup_span_mul_sup_span L hcop I]
+    refine le_antisymm (sup_le le_rfl ?_) le_sup_left
+    rw [Ideal.span_le, Set.singleton_subset_iff]
+    exact_mod_cast hI ▸ Ideal.absNorm_mem I
+  have h_ab : a * b = m * n := by rw [ha_def, hb_def, ← map_mul, h_prod, hI]
+  have h_a_dvd_m : a ∣ m :=
+    ((hcop.pow_left (Module.finrank ℤ (𝓞 L))).coprime_dvd_left
+      (absNorm_span_singleton_natCast L m ▸ Ideal.absNorm_dvd_absNorm_of_le
+        le_sup_right)).dvd_of_dvd_mul_right ⟨b, h_ab.symm⟩
+  have h_b_dvd_n : b ∣ n :=
+    ((hcop.symm.pow_left (Module.finrank ℤ (𝓞 L))).coprime_dvd_left
+      (absNorm_span_singleton_natCast L n ▸ Ideal.absNorm_dvd_absNorm_of_le
+        le_sup_right)).dvd_of_dvd_mul_right ⟨a, by linarith [h_ab, mul_comm a b, mul_comm m n]⟩
+  have ha_le : a ≤ m := Nat.le_of_dvd hm h_a_dvd_m
+  have hb_le : b ≤ n := Nat.le_of_dvd hn h_b_dvd_n
+  refine ⟨Nat.le_antisymm ha_le ?_, Nat.le_antisymm hb_le ?_⟩ <;>
+    nlinarith [h_ab, ha_le, hb_le, hm, hn]
+
+private lemma mul_sup_span_natCast_left {m n : ℕ} (hcop : Nat.Coprime m n)
+    (J L' : Ideal (𝓞 L)) (hJ : Ideal.absNorm J = m) (hL : Ideal.absNorm L' = n) :
+    J * L' ⊔ Ideal.span {(m : 𝓞 L)} = J := by
+  have h_cop_mL_sup : Ideal.span {(m : 𝓞 L)} ⊔ L' = ⊤ := by
+    refine top_le_iff.mp ?_
+    calc ⊤ = Ideal.span {(m : 𝓞 L)} ⊔ Ideal.span {(n : 𝓞 L)} :=
+          (span_natCast_sup_span_natCast L hcop).symm
+      _ ≤ Ideal.span {(m : 𝓞 L)} ⊔ L' := sup_le_sup_left (by
+          rw [Ideal.span_le, Set.singleton_subset_iff]
+          exact_mod_cast hL ▸ Ideal.absNorm_mem L') _
+  refine le_antisymm (sup_le Ideal.mul_le_right ?_) ?_
+  · rw [Ideal.span_le, Set.singleton_subset_iff]
+    exact_mod_cast hJ ▸ Ideal.absNorm_mem J
+  · calc J = J * ⊤ := (Ideal.mul_top J).symm
+      _ = J * (Ideal.span {(m : 𝓞 L)} ⊔ L') := by rw [h_cop_mL_sup]
+      _ = J * Ideal.span {(m : 𝓞 L)} ⊔ J * L' := Ideal.mul_sup _ _ _
+      _ ≤ Ideal.span {(m : 𝓞 L)} ⊔ J * L' := sup_le_sup_right Ideal.mul_le_left _
+      _ = J * L' ⊔ Ideal.span {(m : 𝓞 L)} := sup_comm _ _
+
 lemma idealNormMultiplicity_mul {m n : ℕ} (hcop : Nat.Coprime m n) :
     idealNormMultiplicity L (m * n) =
       idealNormMultiplicity L m * idealNormMultiplicity L n := by
@@ -74,114 +148,22 @@ lemma idealNormMultiplicity_mul {m n : ℕ} (hcop : Nat.Coprime m n) :
   rcases Nat.lt_or_ge 1 m with hm1 | hm1
   all_goals rcases Nat.lt_or_ge 1 n with hn1 | hn1
   · classical
-    have h_cop_spans : (Ideal.span {(m : 𝓞 L)}) ⊔ (Ideal.span {(n : 𝓞 L)}) = ⊤ := by
-      rw [← Ideal.isCoprime_iff_sup_eq, Ideal.isCoprime_span_singleton_iff]
-      simpa using (Nat.Coprime.isCoprime hcop).map (algebraMap ℤ (𝓞 L))
-    have h_mul_sup : ∀ (I : Ideal (𝓞 L)),
-        (I ⊔ Ideal.span {(m : 𝓞 L)}) * (I ⊔ Ideal.span {(n : 𝓞 L)}) =
-          I ⊔ Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)} := fun I => by
-      rw [Ideal.sup_mul, Ideal.mul_sup, Ideal.mul_sup,
-        mul_comm (Ideal.span {(m : 𝓞 L)}) I,
-        Ideal.span_singleton_mul_span_singleton,
-        show I * I ⊔ I * Ideal.span {(n : 𝓞 L)} ⊔
-            (I * Ideal.span {(m : 𝓞 L)} ⊔ Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)}) =
-            (I * I ⊔ I * Ideal.span {(n : 𝓞 L)} ⊔ I * Ideal.span {(m : 𝓞 L)}) ⊔
-              Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)} by ac_rfl,
-        ← Ideal.mul_sup, ← Ideal.mul_sup,
-        show I ⊔ Ideal.span {(n : 𝓞 L)} ⊔ Ideal.span {(m : 𝓞 L)} = ⊤ by
-          rw [sup_assoc, sup_comm (Ideal.span {(n : 𝓞 L)}) _, h_cop_spans, sup_top_eq],
-        Ideal.mul_top]
     have h_sup_absNorm : ∀ (I : Ideal (𝓞 L)), Ideal.absNorm I = m * n →
         I ⊔ Ideal.span {(m : 𝓞 L) * (n : 𝓞 L)} = I := fun I hI => by
       refine le_antisymm (sup_le le_rfl ?_) le_sup_left
       rw [Ideal.span_le, Set.singleton_subset_iff]
       exact_mod_cast hI ▸ Ideal.absNorm_mem I
-    have h_abs_span_nat : ∀ (r : ℕ), Ideal.absNorm (Ideal.span {(r : 𝓞 L)}) =
-        r ^ Module.finrank ℤ (𝓞 L) := fun r => by
-      rw [Ideal.absNorm_span_singleton,
-        show ((r : 𝓞 L)) = algebraMap ℤ (𝓞 L) (r : ℤ) by push_cast; rfl,
-        Algebra.norm_algebraMap_of_basis (Module.finBasis ℤ (𝓞 L))]
-      simp
-    have h_fwd_norms : ∀ (I : Ideal (𝓞 L)), Ideal.absNorm I = m * n →
-        Ideal.absNorm (I ⊔ Ideal.span {(m : 𝓞 L)}) = m ∧
-          Ideal.absNorm (I ⊔ Ideal.span {(n : 𝓞 L)}) = n := fun I hI => by
-      set a := Ideal.absNorm (I ⊔ Ideal.span {(m : 𝓞 L)}) with ha_def
-      set b := Ideal.absNorm (I ⊔ Ideal.span {(n : 𝓞 L)}) with hb_def
-      have h_prod : (I ⊔ Ideal.span {(m : 𝓞 L)}) * (I ⊔ Ideal.span {(n : 𝓞 L)}) = I := by
-        rw [h_mul_sup I, h_sup_absNorm I hI]
-      have h_ab : a * b = m * n := by
-        rw [ha_def, hb_def, ← map_mul, h_prod, hI]
-      have h_a_dvd_md : a ∣ m ^ Module.finrank ℤ (𝓞 L) := by
-        rw [← h_abs_span_nat m]
-        exact Ideal.absNorm_dvd_absNorm_of_le le_sup_right
-      have h_b_dvd_nd : b ∣ n ^ Module.finrank ℤ (𝓞 L) := by
-        rw [← h_abs_span_nat n]
-        exact Ideal.absNorm_dvd_absNorm_of_le le_sup_right
-      have h_cop_an : Nat.Coprime a n :=
-        (hcop.pow_left _).coprime_dvd_left h_a_dvd_md
-      have h_cop_bm : Nat.Coprime b m :=
-        (hcop.symm.pow_left _).coprime_dvd_left h_b_dvd_nd
-      have h_a_dvd_m : a ∣ m :=
-        h_cop_an.dvd_of_dvd_mul_right ⟨b, h_ab.symm⟩
-      have h_b_dvd_n : b ∣ n :=
-        h_cop_bm.dvd_of_dvd_mul_right ⟨a, by linarith [h_ab, mul_comm a b, mul_comm m n]⟩
-      have ha_le : a ≤ m := Nat.le_of_dvd hm h_a_dvd_m
-      have hb_le : b ≤ n := Nat.le_of_dvd hn h_b_dvd_n
-      refine ⟨Nat.le_antisymm ha_le ?_, Nat.le_antisymm hb_le ?_⟩ <;>
-        nlinarith [h_ab, ha_le, hb_le, hm, hn]
-    have h_cop_m_L : ∀ (L' : Ideal (𝓞 L)), Ideal.absNorm L' = n →
-        IsCoprime (Ideal.span {(m : 𝓞 L)}) L' := fun L' hL => by
-      rw [Ideal.isCoprime_iff_sup_eq]
-      refine top_le_iff.mp ?_
-      calc
-        ⊤ = Ideal.span {(m : 𝓞 L)} ⊔ Ideal.span {(n : 𝓞 L)} := h_cop_spans.symm
-        _ ≤ Ideal.span {(m : 𝓞 L)} ⊔ L' := sup_le_sup_left (by
-            rw [Ideal.span_le, Set.singleton_subset_iff]
-            exact_mod_cast hL ▸ Ideal.absNorm_mem L') _
-    have h_cop_n_J : ∀ (J : Ideal (𝓞 L)), Ideal.absNorm J = m →
-        IsCoprime (Ideal.span {(n : 𝓞 L)}) J := fun J hJ => by
-      rw [Ideal.isCoprime_iff_sup_eq]
-      refine top_le_iff.mp ?_
-      calc
-        ⊤ = Ideal.span {(n : 𝓞 L)} ⊔ Ideal.span {(m : 𝓞 L)} :=
-            ((sup_comm _ _).trans h_cop_spans).symm
-        _ ≤ Ideal.span {(n : 𝓞 L)} ⊔ J := sup_le_sup_left (by
-            rw [Ideal.span_le, Set.singleton_subset_iff]
-            exact_mod_cast hJ ▸ Ideal.absNorm_mem J) _
-    have h_inv_m : ∀ (J L' : Ideal (𝓞 L)), Ideal.absNorm J = m → Ideal.absNorm L' = n →
-        J * L' ⊔ Ideal.span {(m : 𝓞 L)} = J := fun J L' hJ hL => by
-      have h_cop_mL_sup : Ideal.span {(m : 𝓞 L)} ⊔ L' = ⊤ :=
-        Ideal.isCoprime_iff_sup_eq.mp (h_cop_m_L L' hL)
-      refine le_antisymm (sup_le Ideal.mul_le_right ?_) ?_
-      · rw [Ideal.span_le, Set.singleton_subset_iff]
-        exact_mod_cast hJ ▸ Ideal.absNorm_mem J
-      · calc
-          J = J * ⊤ := (Ideal.mul_top J).symm
-          _ = J * (Ideal.span {(m : 𝓞 L)} ⊔ L') := by rw [h_cop_mL_sup]
-          _ = J * Ideal.span {(m : 𝓞 L)} ⊔ J * L' := Ideal.mul_sup _ _ _
-          _ ≤ Ideal.span {(m : 𝓞 L)} ⊔ J * L' := sup_le_sup_right Ideal.mul_le_left _
-          _ = J * L' ⊔ Ideal.span {(m : 𝓞 L)} := sup_comm _ _
     have h_inv_n : ∀ (J L' : Ideal (𝓞 L)), Ideal.absNorm J = m → Ideal.absNorm L' = n →
-        J * L' ⊔ Ideal.span {(n : 𝓞 L)} = L' := fun J L' hJ hL => by
-      have h_cop_nJ_sup : Ideal.span {(n : 𝓞 L)} ⊔ J = ⊤ :=
-        Ideal.isCoprime_iff_sup_eq.mp (h_cop_n_J J hJ)
-      refine le_antisymm (sup_le Ideal.mul_le_left ?_) ?_
-      · rw [Ideal.span_le, Set.singleton_subset_iff]
-        exact_mod_cast hL ▸ Ideal.absNorm_mem L'
-      · calc
-          L' = ⊤ * L' := (Ideal.top_mul L').symm
-          _ = (Ideal.span {(n : 𝓞 L)} ⊔ J) * L' := by rw [h_cop_nJ_sup]
-          _ = Ideal.span {(n : 𝓞 L)} * L' ⊔ J * L' := Ideal.sup_mul _ _ _
-          _ ≤ Ideal.span {(n : 𝓞 L)} ⊔ J * L' := sup_le_sup_right Ideal.mul_le_right _
-          _ = J * L' ⊔ Ideal.span {(n : 𝓞 L)} := sup_comm _ _
+        J * L' ⊔ Ideal.span {(n : 𝓞 L)} = L' := fun J L' hJ hL =>
+      mul_comm J L' ▸ mul_sup_span_natCast_left L hcop.symm L' J hL hJ
     let fwd : {I : NonzeroIdeal L // Ideal.absNorm I.1 = m * n} →
         {J : NonzeroIdeal L // Ideal.absNorm J.1 = m} ×
           {L' : NonzeroIdeal L // Ideal.absNorm L'.1 = n} :=
       fun ⟨⟨I, hI_ne⟩, hI_norm⟩ =>
         ⟨⟨⟨I ⊔ Ideal.span {(m : 𝓞 L)}, fun h => hI_ne (le_bot_iff.mp (h ▸ le_sup_left))⟩,
-          (h_fwd_norms I hI_norm).1⟩,
+          (absNorm_sup_span_natCast L hcop hm hn I hI_norm).1⟩,
          ⟨⟨I ⊔ Ideal.span {(n : 𝓞 L)}, fun h => hI_ne (le_bot_iff.mp (h ▸ le_sup_left))⟩,
-          (h_fwd_norms I hI_norm).2⟩⟩
+          (absNorm_sup_span_natCast L hcop hm hn I hI_norm).2⟩⟩
     let bwd : {J : NonzeroIdeal L // Ideal.absNorm J.1 = m} ×
         {L' : NonzeroIdeal L // Ideal.absNorm L'.1 = n} →
         {I : NonzeroIdeal L // Ideal.absNorm I.1 = m * n} :=
@@ -196,10 +178,12 @@ lemma idealNormMultiplicity_mul {m n : ℕ} (hcop : Nat.Coprime m n) :
         invFun := bwd
         left_inv := fun ⟨⟨I, hI_ne⟩, hI_norm⟩ => by
           simp only [fwd, bwd]
-          exact Subtype.ext (Subtype.ext ((h_mul_sup I).trans (h_sup_absNorm I hI_norm)))
+          exact Subtype.ext (Subtype.ext
+            ((sup_span_mul_sup_span L hcop I).trans (h_sup_absNorm I hI_norm)))
         right_inv := fun ⟨⟨⟨J, hJ_ne⟩, hJ_norm⟩, ⟨⟨L', hL_ne⟩, hL_norm⟩⟩ => by
           simp only [fwd, bwd]
-          exact Prod.ext (Subtype.ext (Subtype.ext (h_inv_m J L' hJ_norm hL_norm)))
+          exact Prod.ext
+            (Subtype.ext (Subtype.ext (mul_sup_span_natCast_left L hcop J L' hJ_norm hL_norm)))
             (Subtype.ext (Subtype.ext (h_inv_n J L' hJ_norm hL_norm))) }
     unfold idealNormMultiplicity
     rw [Nat.card_congr h_equiv, Nat.card_prod]
@@ -241,7 +225,7 @@ lemma summable_tsum_symGeometric (α : Type*) [Fintype α] [Finite α] {z : ℂ}
     Summable (fun n : ℕ => (Fintype.card (Sym α n) : ℂ) * z ^ n) ∧
       (∑' n : ℕ, (Fintype.card (Sym α n) : ℂ) * z ^ n) = ((1 - z)⁻¹) ^ Fintype.card α := by
   by_cases hα : Fintype.card α = 0
-  · haveI : IsEmpty α := Fintype.card_eq_zero_iff.mp hα
+  · have : IsEmpty α := Fintype.card_eq_zero_iff.mp hα
     let term : ℕ → ℂ := fun n => (Fintype.card (Sym α n) : ℂ) * z ^ n
     have hzero : ∀ n ≠ 0, term n = 0 := by
       intro n hn
@@ -259,10 +243,6 @@ lemma summable_tsum_symGeometric (α : Type*) [Fintype α] [Finite α] {z : ℂ}
     refine ⟨(summable_choose_mul_geometric_of_norm_lt_one k hz).congr hterm, ?_⟩
     rw [tsum_congr fun n => (hterm n).symm, tsum_choose_mul_geometric_of_norm_lt_one k hz, one_div,
       hk, inv_pow]
-
-lemma tsum_symGeometric (α : Type*) [Fintype α] [Finite α] {z : ℂ} (hz : ‖z‖ < 1) :
-    (∑' n : ℕ, (Fintype.card (Sym α n) : ℂ) * z ^ n) = ((1 - z)⁻¹) ^ Fintype.card α :=
-  (summable_tsum_symGeometric α hz).2
 
 /-- The partial sums of the ideal-norm multiplicity counting function grow like `O(n)`: the number
 of nonzero ideals of `𝓞 L` with norm `≤ n` is `∑_{k ≤ n} idealNormMultiplicity L k`, and
@@ -348,25 +328,8 @@ inductive step: `insertPiEquiv` re-indexes exponent vectors over `insert a s` as
 
 /-- Re-index exponent vectors on `insert a s` as `(value at a, restriction to s)`. -/
 private noncomputable def insertPiEquiv {ι : Type*} [DecidableEq ι] (a : ι) (s : Finset ι)
-    (ha : a ∉ s) : ({i // i ∈ insert a s} → ℕ) ≃ ℕ × ({i // i ∈ s} → ℕ) where
-  toFun f := (f ⟨a, Finset.mem_insert_self a s⟩,
-    fun i => f ⟨i.1, Finset.mem_insert_of_mem i.2⟩)
-  invFun p := fun i =>
-    if h : i.1 = a then p.1 else p.2 ⟨i.1, (Finset.mem_insert.mp i.2).resolve_left h⟩
-  left_inv f := by
-    funext i
-    obtain ⟨i, hi⟩ := i
-    by_cases h : i = a
-    · subst h
-      simp
-    · simp only [h, dif_neg, not_false_iff]
-  right_inv p := by
-    obtain ⟨n, f⟩ := p
-    ext i
-    · simp
-    · obtain ⟨i, hi⟩ := i
-      have hia : i ≠ a := fun h => ha (h ▸ hi)
-      simp [hia]
+    (ha : a ∉ s) : ({i // i ∈ insert a s} → ℕ) ≃ ℕ × ({i // i ∈ s} → ℕ) :=
+  ((Finset.subtypeInsertEquivOption ha).arrowCongr (Equiv.refl ℕ)).trans Equiv.piOptionEquivProd
 
 @[simp] private lemma insertPiEquiv_fst {ι : Type*} [DecidableEq ι] (a : ι) (s : Finset ι)
     (ha : a ∉ s) (e : {i // i ∈ insert a s} → ℕ) :
@@ -541,9 +504,7 @@ map `e ↦ ∏_𝔭 𝔭^{e 𝔭}` is injective with range exactly those `S`-fac
 (`UniqueFactorizationMonoid.factorization` of ideals); as `S ↑ ⊤` every nonzero ideal is
 eventually captured, so the partial sums tend to `∑_𝔞 N𝔞^{-s} = ζ_K(s)`. -/
 
-/-- For `1 < Re s`, `∑_𝔞 N𝔞^{-s}` over nonzero ideals of `𝓞 L` has sum `ζ_K(s)`. (Public: the
-abelian Euler-product factorisation in `ZetaProduct.lean` needs the `ζ_L = Σ_𝔞 N𝔞^{-s}` ideal-sum
-form both for multipliability of the prime product and for the `L_1 ≤ ζ_K` sub-product comparison.) -/
+/-- For `1 < Re s`, `∑_𝔞 N𝔞^{-s}` over nonzero ideals of `𝓞 L` has sum `ζ_K(s)`. -/
 theorem hasSum_nonzeroIdeal_absNorm_cpow {s : ℂ} (hs : 1 < s.re) :
     HasSum (fun I : NonzeroIdeal L => (Ideal.absNorm I.1 : ℂ) ^ (-s))
       (NumberField.dedekindZeta L s) := by
@@ -679,6 +640,44 @@ private theorem mem_primeFactorsOf (𝔞 : NonzeroIdeal L) (p : Ideal (𝓞 L))
   exact ⟨⟨p, by rwa [Multiset.mem_toFinset]⟩, Finset.mem_attach _ _, rfl⟩
 
 open UniqueFactorizationMonoid in
+private theorem factorization_idealOfExp_eq
+    (S : Finset {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}) (f : S →₀ ℕ) (𝔮 : S) :
+    factorization (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭) 𝔮.1.1 = f 𝔮 := by
+  classical
+  have hprod : (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔭.1)
+      = ∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭 :=
+    Finset.prod_congr rfl fun 𝔭 _ => by simp only [dif_pos 𝔭.2]
+  rw [← hprod, factorization_prod_primePow_eq L S
+    (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔮.1, if_pos 𝔮.2, dif_pos 𝔮.2]
+
+open UniqueFactorizationMonoid in
+private theorem prod_primePow_count_eq (S : Finset {𝔭 : Ideal (𝓞 L) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})
+    (𝔞 : NonzeroIdeal L) (hsupp : ∀ p ∈ normalizedFactors 𝔞.1, ∃ 𝔭 ∈ S, 𝔭.1 = p) :
+    (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1) = 𝔞.1 := by
+  classical
+  rw [show (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1)
+      = ∏ p ∈ S.image (fun 𝔭 => 𝔭.1), p ^ (normalizedFactors 𝔞.1).count p by
+    rw [Finset.prod_image (fun x _ y _ h => Subtype.ext h), ← Finset.prod_attach S
+      (fun p => p.1 ^ (normalizedFactors 𝔞.1).count p.1)]]
+  rw [← Finset.prod_subset (s₁ := (normalizedFactors 𝔞.1).toFinset)
+    (s₂ := S.image (fun 𝔭 => 𝔭.1))
+    (fun p hp => by
+      rw [Multiset.mem_toFinset] at hp
+      obtain ⟨𝔭, h𝔭S, rfl⟩ := hsupp p hp
+      exact Finset.mem_image.mpr ⟨𝔭, h𝔭S, rfl⟩)
+    (fun p _ hp => by
+      rw [Multiset.mem_toFinset] at hp
+      rw [Multiset.count_eq_zero_of_notMem hp, pow_zero])]
+  conv_rhs => rw [← finprod_pow_count_eq_of_subsingleton_units 𝔞.2]
+  exact (finprod_eq_finsetProd_of_mulSupport_subset _ (by
+    intro p hp
+    simp only [Function.mem_mulSupport] at hp
+    rw [Finset.mem_coe, Multiset.mem_toFinset]
+    by_contra hc
+    rw [Multiset.count_eq_zero_of_notMem hc, pow_zero] at hp
+    exact hp rfl)).symm
+
+open UniqueFactorizationMonoid in
 /-- **Prime-ideal Euler product** (Sharifi, *Algebraic Number Theory*, Theorem 7.1.12,
 p. 140): for `1 < Re s`, `ζ_K(s) = ∏_𝔭 (1 - N𝔭^{-s})^{-1}` over the nonzero prime ideals. -/
 theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
@@ -697,47 +696,15 @@ theorem dedekindZeta_eq_tprod_primeIdeal {s : ℂ} (hs : 1 < s.re) :
     intro S e e' h
     rw [hidealOfExp, Subtype.mk.injEq] at h
     ext 𝔮
-    have key : ∀ f : S →₀ ℕ,
-        factorization (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭) 𝔮.1.1 = f 𝔮 := by
-      intro f
-      have hprod : (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔭.1)
-          = ∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭 :=
-        Finset.prod_congr rfl fun 𝔭 _ => by simp only [dif_pos 𝔭.2]
-      rw [← hprod, factorization_prod_primePow_eq L S
-        (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔮.1, if_pos 𝔮.2, dif_pos 𝔮.2]
-    rw [← key e, ← key e', h]
+    rw [← factorization_idealOfExp_eq L S e 𝔮, ← factorization_idealOfExp_eq L S e' 𝔮, h]
   have hmem : ∀ (S : Finset P) (𝔞 : NonzeroIdeal L),
       (∀ p ∈ normalizedFactors 𝔞.1, ∃ 𝔭 ∈ S, 𝔭.1 = p) →
       𝔞 ∈ Set.range (idealOfExp S) := by
     intro S 𝔞 hsupp
     refine ⟨Finsupp.onFinset S.attach
       (fun 𝔭 => (normalizedFactors 𝔞.1).count 𝔭.1.1) (by simp), ?_⟩
-    have hreconstruct : (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1) = 𝔞.1 := by
-      rw [show (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1)
-          = ∏ p ∈ S.image (fun 𝔭 : P => 𝔭.1),
-              p ^ (normalizedFactors 𝔞.1).count p from by
-        rw [Finset.prod_image (fun x _ y _ h => Subtype.ext h), ← Finset.prod_attach S
-          (fun p => p.1 ^ (normalizedFactors 𝔞.1).count p.1)]]
-      rw [← Finset.prod_subset (s₁ := (normalizedFactors 𝔞.1).toFinset)
-        (s₂ := S.image (fun 𝔭 : P => 𝔭.1))
-        (fun p hp => by
-          rw [Multiset.mem_toFinset] at hp
-          obtain ⟨𝔭, h𝔭S, rfl⟩ := hsupp p hp
-          exact Finset.mem_image.mpr ⟨𝔭, h𝔭S, rfl⟩)
-        (fun p _ hp => by
-          rw [Multiset.mem_toFinset] at hp
-          rw [Multiset.count_eq_zero_of_notMem hp, pow_zero])]
-      conv_rhs => rw [← finprod_pow_count_eq_of_subsingleton_units 𝔞.2]
-      exact (finprod_eq_finsetProd_of_mulSupport_subset _ (by
-        intro p hp
-        simp only [Function.mem_mulSupport] at hp
-        rw [Finset.mem_coe, Multiset.mem_toFinset]
-        by_contra hc
-        rw [Multiset.count_eq_zero_of_notMem hc, pow_zero] at hp
-        exact hp rfl)).symm
     rw [hidealOfExp, Subtype.ext_iff]
-    simp only [Finsupp.onFinset_apply]
-    exact hreconstruct
+    simpa only [Finsupp.onFinset_apply] using prod_primePow_count_eq L S 𝔞 hsupp
   have hpartial : ∀ S : Finset P,
       (∏ 𝔭 ∈ S, (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
         = ∑' 𝔞 : Set.range (idealOfExp S), D 𝔞.1 := by
@@ -886,49 +853,15 @@ theorem weighted_eulerProduct_eq_tsum {s : ℂ} (hs : 1 < s.re)
     intro S e e' h
     rw [hidealOfExp, Subtype.mk.injEq] at h
     ext 𝔮
-    have key : ∀ f : S →₀ ℕ,
-        factorization (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭) 𝔮.1.1 = f 𝔮 := by
-      intro f
-      have hprod : (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔭.1)
-          = ∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ f 𝔭 :=
-        Finset.prod_congr rfl fun 𝔭 _ => by simp only [dif_pos 𝔭.2]
-      rw [← hprod, factorization_prod_primePow_eq L S
-        (fun q => if h : q ∈ S then f ⟨q, h⟩ else 0) 𝔮.1, if_pos 𝔮.2, dif_pos 𝔮.2]
-    rw [← key e, ← key e', h]
+    rw [← factorization_idealOfExp_eq L S e 𝔮, ← factorization_idealOfExp_eq L S e' 𝔮, h]
   have hmem : ∀ (S : Finset P) (𝔞 : NonzeroIdeal L),
       (∀ p ∈ normalizedFactors 𝔞.1, ∃ 𝔭 ∈ S, 𝔭.1 = p) →
       𝔞 ∈ Set.range (idealOfExp S) := by
     intro S 𝔞 hsupp
     refine ⟨Finsupp.onFinset S.attach
       (fun 𝔭 => (normalizedFactors 𝔞.1).count 𝔭.1.1) (by simp), ?_⟩
-    have hreconstruct :
-        (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1) = 𝔞.1 := by
-      rw [show (∏ 𝔭 ∈ S.attach, 𝔭.1.1 ^ (normalizedFactors 𝔞.1).count 𝔭.1.1)
-          = ∏ p ∈ S.image (fun 𝔭 : P => 𝔭.1),
-              p ^ (normalizedFactors 𝔞.1).count p from by
-        rw [Finset.prod_image (fun x _ y _ h => Subtype.ext h), ← Finset.prod_attach S
-          (fun p => p.1 ^ (normalizedFactors 𝔞.1).count p.1)]]
-      rw [← Finset.prod_subset
-        (s₁ := (normalizedFactors 𝔞.1).toFinset)
-        (s₂ := S.image (fun 𝔭 : P => 𝔭.1))
-        (fun p hp => by
-          rw [Multiset.mem_toFinset] at hp
-          obtain ⟨𝔭, h𝔭S, rfl⟩ := hsupp p hp
-          exact Finset.mem_image.mpr ⟨𝔭, h𝔭S, rfl⟩)
-        (fun p _ hp => by
-          rw [Multiset.mem_toFinset] at hp
-          rw [Multiset.count_eq_zero_of_notMem hp, pow_zero])]
-      conv_rhs => rw [← finprod_pow_count_eq_of_subsingleton_units 𝔞.2]
-      exact (finprod_eq_finsetProd_of_mulSupport_subset _ (by
-        intro p hp
-        simp only [Function.mem_mulSupport] at hp
-        rw [Finset.mem_coe, Multiset.mem_toFinset]
-        by_contra hc
-        rw [Multiset.count_eq_zero_of_notMem hc, pow_zero] at hp
-        exact hp rfl)).symm
     rw [hidealOfExp, Subtype.ext_iff]
-    simp only [Finsupp.onFinset_apply]
-    exact hreconstruct
+    simpa only [Finsupp.onFinset_apply] using prod_primePow_count_eq L S 𝔞 hsupp
   have hpartial : ∀ S : Finset P,
       (∏ 𝔭 ∈ S, (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
         = ∑' 𝔞 : Set.range (idealOfExp S), Dw 𝔞.1 := by
