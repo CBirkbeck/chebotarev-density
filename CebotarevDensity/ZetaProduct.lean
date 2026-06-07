@@ -129,89 +129,6 @@ theorem galoisCharacterOnIdeal_one
   rw [galoisCharacterOnIdeal_eq_map_prod, ← Ideal.one_eq_top,
     UniqueFactorizationMonoid.normalizedFactors_one, Multiset.map_zero, Multiset.prod_zero]
 
-/-- Summation-by-parts (Dirichlet-test) bound: if `a` is antitone and nonnegative and the
-partial sums of `z` are bounded by `B`, then `‖∑_{i<n} a i • z i‖ ≤ B · a 0`. This is the
-convergence input (Sharifi Lemma 7.1.5) used to extend `L(χ,·)` past `Re s = 1`. Ported from
-`flt-regular-bernoulli` (`BernoulliRegular.LValueAtOne.DirichletBounds`). -/
-lemma norm_sum_range_smul_le_of_antitone_of_nonneg_of_bounded
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    {a : ℕ → ℝ} {z : ℕ → E} {B : ℝ}
-    (ha : Antitone a) (ha_nonneg : ∀ n, 0 ≤ a n)
-    (hbound : ∀ n, ‖∑ i ∈ Finset.range n, z i‖ ≤ B) (n : ℕ) :
-    ‖∑ i ∈ Finset.range n, a i • z i‖ ≤ B * a 0 := by
-  have hB : 0 ≤ B := by simpa using hbound 0
-  rcases n.eq_zero_or_pos with rfl | hn
-  · simpa using mul_nonneg hB (ha_nonneg 0)
-  rw [Finset.sum_range_by_parts (f := a) (g := z) (n := n)]
-  have hsum_le :
-      ‖∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ ≤
-        B * (a 0 - a (n - 1)) := by
-    calc
-      ‖∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
-          ≤ ∑ i ∈ Finset.range (n - 1),
-              ‖(a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ :=
-            norm_sum_le _ _
-      _ ≤ ∑ i ∈ Finset.range (n - 1), B * (a i - a (i + 1)) := by
-            refine Finset.sum_le_sum fun i _ => ?_
-            calc
-              ‖(a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
-                  = (a i - a (i + 1)) * ‖∑ j ∈ Finset.range (i + 1), z j‖ := by
-                      rw [norm_smul, Real.norm_eq_abs,
-                        abs_of_nonpos (sub_nonpos.mpr (ha (Nat.le_succ i)))]
-                      ring
-              _ ≤ (a i - a (i + 1)) * B := by
-                    gcongr
-                    · exact sub_nonneg.mpr (ha (Nat.le_succ i))
-                    · exact hbound (i + 1)
-              _ = B * (a i - a (i + 1)) := by ring
-      _ = B * (a 0 - a (n - 1)) := by
-            rw [← Finset.mul_sum, Finset.sum_range_sub']
-  have hfirst : ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ ≤ B * a (n - 1) := by
-    calc
-      ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ = a (n - 1) * ‖∑ i ∈ Finset.range n, z i‖ := by
-        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (ha_nonneg _)]
-      _ ≤ a (n - 1) * B := by gcongr; exacts [ha_nonneg _, hbound n]
-      _ = B * a (n - 1) := by ring
-  calc
-    ‖a (n - 1) • ∑ i ∈ Finset.range n, z i -
-        ∑ i ∈ Finset.range (n - 1), (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖
-        ≤ ‖a (n - 1) • ∑ i ∈ Finset.range n, z i‖ +
-            ‖∑ i ∈ Finset.range (n - 1),
-                (a (i + 1) - a i) • ∑ j ∈ Finset.range (i + 1), z j‖ :=
-            norm_sub_le _ _
-    _ ≤ B * a (n - 1) + B * (a 0 - a (n - 1)) := add_le_add hfirst hsum_le
-    _ = B * a 0 := by ring
-
-/-- Partial sums over a shifted sequence are controlled by the same bound up to a factor `2`.
-Ported from `flt-regular-bernoulli`. -/
-lemma norm_sum_range_shift_le_of_bounded
-    {E : Type*} [NormedAddCommGroup E] {z : ℕ → E} {B : ℝ}
-    (hbound : ∀ n, ‖∑ i ∈ Finset.range n, z i‖ ≤ B) (m n : ℕ) :
-    ‖∑ i ∈ Finset.range n, z (m + i)‖ ≤ 2 * B := by
-  have hshift : ∑ i ∈ Finset.range n, z (m + i) =
-      ∑ i ∈ Finset.range (m + n), z i - ∑ i ∈ Finset.range m, z i :=
-    eq_sub_iff_add_eq.mpr <| (add_comm _ _).trans (Finset.sum_range_add z m n).symm
-  rw [hshift]
-  calc
-    ‖∑ i ∈ Finset.range (m + n), z i - ∑ i ∈ Finset.range m, z i‖
-        ≤ ‖∑ i ∈ Finset.range (m + n), z i‖ + ‖∑ i ∈ Finset.range m, z i‖ :=
-            norm_sub_le _ _
-    _ ≤ B + B := add_le_add (hbound _) (hbound _)
-    _ = 2 * B := by ring
-
-/-- Tail sums of a weighted series inherit the same summation-by-parts bound. Ported from
-`flt-regular-bernoulli`. -/
-lemma norm_sum_range_shift_smul_le_of_antitone_of_nonneg_of_bounded
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    {a : ℕ → ℝ} {z : ℕ → E} {B : ℝ}
-    (ha : Antitone a) (ha_nonneg : ∀ n, 0 ≤ a n)
-    (hbound : ∀ n, ‖∑ i ∈ Finset.range n, z i‖ ≤ B) (m n : ℕ) :
-    ‖∑ i ∈ Finset.range n, a (m + i) • z (m + i)‖ ≤ 2 * B * a m := by
-  simpa using norm_sum_range_smul_le_of_antitone_of_nonneg_of_bounded
-    (a := fun k => a (m + k)) (z := fun k => z (m + k)) (B := 2 * B)
-    (fun i j hij => ha (Nat.add_le_add_left hij m)) (fun k => ha_nonneg (m + k))
-    (fun k => norm_sum_range_shift_le_of_bounded (z := z) (B := B) hbound m k) n
-
 /-! ### Sub-lemmas for `exists_dedekindZeta_factorisation`
 
 Decomposed per Sharifi 7.1.16 (factorisation), 7.1.18 (abelian Euler
@@ -291,8 +208,6 @@ theorem exists_artinLSeries_eulerProduct_abelian
   rw [← weighted_eulerProduct_eq_tsum K (s := s) hs w (galoisCharacterOnIdeal_one K L χ)
     (fun {𝔞 𝔟} h𝔞 h𝔟 => galoisCharacterOnIdeal_mul K L χ h𝔞 h𝔟)
     (norm_galoisCharacterOnIdeal_le_one K L χ)]
-  -- The weighted product over all nonzero primes restricts to the unramified ones: at a ramified
-  -- prime the weight is `0`, so the local factor is `1`.
   set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} →
       {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := fun 𝔭 => ⟨𝔭.1, 𝔭.2.1, 𝔭.2.2.ne_bot⟩ with hg
   set f : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℂ :=
@@ -393,7 +308,7 @@ private theorem prod_galoisCharacter_one_sub {G : Type*} [CommGroup G] [Finite G
     rw [Nat.card_eq_fintype_card, ← Fintype.card_coe]
     refine Fintype.card_congr (Equiv.subtypeEquivRight fun χ => ?_)
     simp only [Finset.mem_filter, Finset.mem_univ, true_and, MonoidHom.mem_ker, hevC_apply]
-    rw [show ((χ σ : ℂˣ) : ℂ) = 1 ↔ (χ σ : ℂˣ) = 1 from by
+    rw [show ((χ σ : ℂˣ) : ℂ) = 1 ↔ (χ σ : ℂˣ) = 1 by
       rw [← Units.val_one]; exact Units.val_inj, ← charEval_apply σ χ]
   have huniform : ∀ c ∈ Set.range evC, #{χ : G →* ℂˣ | evC χ = c} = Nat.card (charEval σ).ker := by
     intro c hc
@@ -410,7 +325,7 @@ private theorem prod_galoisCharacter_one_sub {G : Type*} [CommGroup G] [Finite G
   have hkerpos : 0 < Nat.card (charEval σ).ker := Nat.card_pos
   have hcardG : Nat.card G = (Finset.univ.image evC).card * Nat.card (charEval σ).ker := by
     have hsum := Finset.card_eq_sum_card_image evC (Finset.univ : Finset (G →* ℂˣ))
-    rw [show (Finset.univ : Finset (G →* ℂˣ)).card = Nat.card (G →* ℂˣ) from by
+    rw [show (Finset.univ : Finset (G →* ℂˣ)).card = Nat.card (G →* ℂˣ) by
       rw [Nat.card_eq_fintype_card, Finset.card_univ],
       CommGroup.card_monoidHom_of_hasEnoughRootsOfUnity] at hsum
     rw [hsum, Finset.sum_congr rfl (fun c hc => huniform c ?_), Finset.sum_const, smul_eq_mul]
@@ -474,19 +389,16 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
   haveI : Fintype Gal(L/K) := Fintype.ofFinite _
   haveI : Fintype (Gal(L/K) →* ℂˣ) := Fintype.ofFinite _
   have hfpos : 0 < f := hf ▸ orderOf_pos_iff.mpr (isOfFinOrder_of_finite σ)
-  -- the splitting count g = |G| / f
   have hcount : Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
       = Nat.card Gal(L/K) / f := by
     have hmul := card_primesAbove_mul_orderOf_eq K L σ (frobeniusClass K L 𝔭)
       (Quotient.out_eq _) 𝔭 _hunr rfl
     rw [← hf] at hmul
     exact (Nat.div_eq_of_eq_mul_left hfpos hmul.symm).symm
-  -- RHS = ((1 - Y^f)^g)⁻¹
   have hRHS : (∏' χ : galoisCharacter K L,
         (1 - ((χ σ : ℂˣ) : ℂ) * Y)⁻¹)
       = ((1 - Y ^ f) ^ (Nat.card Gal(L/K) / f))⁻¹ := by
     rw [tprod_fintype, Finset.prod_inv_distrib, prod_galoisCharacter_one_sub σ Y, hf]
-  -- finiteness of the primes above `𝔭`
   have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L _hunr
   haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal hpbot
   haveI : Finite (𝔭.primesOver (𝓞 L)) := (IsDedekindDomain.primesOver_finite 𝔭 (𝓞 L)).to_subtype
@@ -496,13 +408,11 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
         (⟨𝔓.1, 𝔓.2.1, 𝔓.2.2.1⟩ : 𝔭.primesOver (𝓞 L)))
       fun _ _ hab => Subtype.ext (by simpa using hab)
   haveI : Fintype {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} := Fintype.ofFinite _
-  -- each prime above `𝔭` has norm `N𝔭 ^ f`, so its local factor is the constant `(1 - Y^f)⁻¹`
   have hterm : ∀ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥},
       (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ = (1 - Y ^ f)⁻¹ := by
     intro 𝔓
     haveI := 𝔓.2.1
     haveI hlo : 𝔓.1.LiesOver 𝔭 := 𝔓.2.2.1
-    -- inertia degree at `𝔓` equals `f = orderOf σ` (residue degree = Frobenius order)
     have hdeg : (𝔓.1.under (𝓞 K)).inertiaDeg 𝔓.1 = f := by
       rw [Ideal.inertiaDeg_algebraMap, hf]
       exact finrank_residue_eq_orderOf K L σ (frobeniusClass K L 𝔭) (Quotient.out_eq _)
@@ -519,64 +429,41 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
 
 /-! ### Sub-lemmas for `exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow` (leaf G)
 
-**The geometry-of-numbers bridge (decomposition.md "Frobenius-fibre chain", 2026-06-05).**
+The geometry-of-numbers bridge (Sharifi 7.1.19 step 1, p. 142).
 
-For `L = K(μ_m)` cyclotomic, `galoisCharacterOnIdeal K L χ 𝔞 = χ(Frob_𝔞)` **on
-unramified-supported `𝔞`** — i.e. on `𝔞` satisfying `U 𝔞 := ∀ 𝔭 ∈ normalizedFactors 𝔞,
+For `L = K(μ_m)` cyclotomic, `galoisCharacterOnIdeal K L χ 𝔞 = χ(Frob_𝔞)` on
+unramified-supported `𝔞` — i.e. on `𝔞` satisfying `U 𝔞 := ∀ 𝔭 ∈ normalizedFactors 𝔞,
 UnramifiedIn K L 𝔭` — where `Frob_𝔞 ∈ Gal(L/K)` is the completely-multiplicative ideal Frobenius
-(abelian, so a genuine group element, not just a conjugacy class). `U 𝔞` is the **exact** support
-condition `χ(𝔞) ≠ 0`: a single ramified factor zeroes the product. Hence the **value-fibre**
-`{𝔞 : χ(𝔞) = ζ}` (for `ζ ≠ 0`) is *exactly* the **unramified-supported Frobenius-value-fibre**
-`{𝔞 : U 𝔞 ∧ χ(Frob_𝔞) = ζ}` — an exact set equality (the earlier "thin-error bridge" between
-`{χ(𝔞)=ζ}` and the *unconditional* `{χ(Frob_𝔞)=ζ}` was mathematically **false**: the junk-class
-`Frob_𝔞` ignores ramified factors, so the unconditional fibre is bigger by a `Θ(N)`, not
-`O(N^{1−1/d})`, set). That fibre is then a finite union of **unramified-supported Frobenius-fibres**
-`{𝔞 : U 𝔞 ∧ Frob_𝔞 = g}` over `g` in the coset `χ⁻¹(ζ) ⊆ G`. The proof decomposes into:
+(abelian, so a genuine group element, not just a conjugacy class). `U 𝔞` is the exact support
+condition `χ(𝔞) ≠ 0`: a single ramified factor zeroes the product. Hence the value-fibre
+`{𝔞 : χ(𝔞) = ζ}` (for `ζ ≠ 0`) equals the unramified-supported Frobenius-value-fibre
+`{𝔞 : U 𝔞 ∧ χ(Frob_𝔞) = ζ}`, which in turn is a finite union of unramified-supported
+Frobenius-fibres `{𝔞 : U 𝔞 ∧ Frob_𝔞 = g}` over `g` in the coset `χ⁻¹(ζ) ⊆ G`. The decomposition:
 
-* **`frobeniusIdeal`** — the `G`-valued completely-multiplicative ideal Frobenius. A genuine
-  `def` (no sorry): the `Multiset.map`-product of `(frobeniusClass K L 𝔭).out` over the prime
-  factors, mirroring `galoisCharacterOnIdeal`.
-* **The support condition is `U`, not coprimality.** An earlier draft used `(N𝔞).Coprime m` as the
-  support condition via a claimed iff `unramifiedIn_iff_absNorm_coprime`
-  (`UnramifiedIn K L 𝔭 ↔ (N𝔭).Coprime m`). That iff is **false** in the `⟹` direction: if
-  `K ⊇ ℚ(μ_{p^a})` and `m = p^a·m'` (`p ∤ m'`), a prime `𝔭` over `p` is unramified in `K(μ_m)/K`
-  (the local extension `K_𝔭(μ_m)/K_𝔭` is unramified, `K_𝔭` already containing `μ_{p^a}`) yet
-  `N𝔭 = p^f` is **not** coprime to `m`. So the coprime condition is strictly stronger than `U` and
-  was dropped; `U` is the genuine support condition and needs **no** cyclotomic-ramification side
-  fact — it *is* the `if UnramifiedIn` branch of the product.
-* **Helper 1 (`galoisCharacterOnIdeal_eq_char_frobeniusIdeal`)** and **Helper 1a
-  (`card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre`)** — the cyclotomic identity
+* `frobeniusIdeal` — the `G`-valued completely-multiplicative ideal Frobenius: the `Multiset.map`-
+  product of `(frobeniusClass K L 𝔭).out` over the prime factors, like `galoisCharacterOnIdeal`.
+* Helper 1 (`galoisCharacterOnIdeal_eq_char_frobeniusIdeal`) and Helper 1a
+  (`card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre`) — the cyclotomic identity
   `χ(𝔞) = χ(Frob_𝔞)` on unramified-supported `𝔞` (Sharifi p. 142) and the value-fibre =
-  unramified-supported Frobenius-value-fibre set equality. Both are **sorry-free** (`U` is the exact
-  support condition, so the `if UnramifiedIn` branch is always taken — no ramification side-fact).
-* **L2 (`exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le`)** — unramified-supported
-  Frobenius-fibre equidistribution:
-  `∃ κ, ∀ g, |#{𝔞 ≠ ⊥ : N𝔞 ≤ N, U 𝔞, Frob_𝔞 = g} − κ·N| ≤ C·N^{1−1/d}` with `κ` **independent of
-  `g`**. Proof: split an unramified-supported `𝔞` into its (finitely many possible) **bad-prime
-  part** (factors unramified but with `N𝔭` *not* coprime to `m`, i.e. `𝔭 ∣ m`, whose Frobenius is
-  not the norm-power) times a **good part** (`N𝔭` coprime to `m`, `Frob = (Frob_p)^f` by
-  `cyclotomic_frobenius_acts_as_norm_power`, cut out by `N𝔞 ≡ a mod m`). L1 applied to the ideal
-  lattice (`idealLattice`, `normLeOne`, `fundamentalCone` — the mathlib dictionary
-  `tendsto_norm_le_and_mk_eq_div_atTop`) intersected with the congruence sublattice counts each good
-  part; summing over the finite bad-part set keeps `κ` `g`-independent (each good fibre is an
-  equal-covolume union of congruence cosets). **Sub-gap 3** (the bad-prime split + coordinate
-  transport of ideals-of-bounded-norm to lattice-points-in-a-set, per congruence coset), **built on
-  Sub-gap 2** — the now-extracted **`normLeOne_frontier_lipschitz`**, the Lipschitz-boundary
-  hypothesis L1 needs (mathlib proves only `volume_frontier_normLeOne = 0`; the Lipschitz regularity
-  is Gun–Ramaré–Sivaraman, *J. Number Theory* 243 (2023) §3.3, a genuine future mathlib-PR — the
-  project's deepest gap).
+  unramified-supported Frobenius-value-fibre set equality.
+* L2 (`exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le`) — unramified-supported Frobenius-fibre
+  equidistribution `∃ κ, ∀ g, |#{𝔞 ≠ ⊥ : N𝔞 ≤ N, U 𝔞, Frob_𝔞 = g} − κ·N| ≤ C·N^{1−1/d}` with `κ`
+  independent of `g`. An unramified-supported `𝔞` splits as (bad part)·(good part), where the bad
+  primes (unramified but with `N𝔭` not coprime to `m`) range over a finite set and the good part
+  (coprime norm) is counted by the effective lattice-point count L1 on the ideal lattice intersected
+  with each congruence sublattice (`exists_card_inter_smul_lattice_sub_volume_mul_pow_le`, fed the
+  Lipschitz-frontier cover `normLeOne_frontier_lipschitz_cover`); summing over the bad-part set
+  keeps `κ` independent of `g`.
 
-Leaf G is then proved *from* Helper 1a + L2 (exact set equality + coset counting), with **no
-residual `sorry` of its own**. -/
+Leaf G follows from Helper 1a and L2 (set equality plus coset counting). -/
 
 open Classical in
 /-- The `Gal(L/K)`-valued completely-multiplicative **ideal Frobenius**: on a prime `𝔭` it is the
 chosen representative `(frobeniusClass K L 𝔭).out` of the Frobenius conjugacy class (a genuine
 group element since `Gal(L/K)` is abelian, so the class is a singleton), extended completely
 multiplicatively over the prime factorisation. Companion of `galoisCharacterOnIdeal`: the
-character value is `χ` applied to this element (Helper 1). A real `def` (no sorry). The
-`Multiset.prod` over the (unordered) prime factors needs commutativity, supplied by the abelian
-hypothesis `IsMulCommutative Gal(L/K)`. -/
+character value is `χ` applied to this element (Helper 1). The `Multiset.prod` over the (unordered)
+prime factors needs commutativity, supplied by `IsMulCommutative Gal(L/K)`. -/
 noncomputable def frobeniusIdeal (K L : Type*) [Field K] [NumberField K] [Field L]
     [NumberField L] [Algebra K L] [IsGalois K L] [IsMulCommutative Gal(L/K)]
     (𝔞 : Ideal (𝓞 K)) : Gal(L/K) :=
@@ -615,20 +502,10 @@ theorem frobeniusIdeal_one
 
 open Classical in
 /-- **Helper 1 (cyclotomic identity `χ(𝔞) = χ(Frob_𝔞)` on unramified-supported `𝔞`).** For
-`L = K(μ_m)` cyclotomic, `𝔞 ≠ ⊥` all of whose prime factors are unramified in `L`, the
-multiplicative ideal character `χ(𝔞)` equals `χ` of the ideal Frobenius
-`Frob_𝔞 = frobeniusIdeal K L 𝔞`.
-
-The support hypothesis `hU : ∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭` is the **exact**
-condition under which `galoisCharacterOnIdeal K L χ 𝔞 ≠ 0` (a single ramified factor zeroes the
-product), so it is the right hypothesis — and it is *literally* what the multiplicativity proof
-needs, with no cyclotomic-ramification side-fact.
-
-**The multiplicativity reduction is fully proved here (no residual `sorry`):** both sides are the
-`Multiset`-product of `χ((frobeniusClass 𝔭).out)` over the prime factors of `𝔞` — the left via
-`galoisCharacterOnIdeal_eq_map_prod` (the `if UnramifiedIn` branch always taken because `hU` says
-every factor is unramified), the right via `frobeniusIdeal` + `map_multiset_prod` — and they match
-term by term (`Multiset.map_congr` + `if_pos (hU 𝔭 h𝔭)`). -/
+`L = K(μ_m)` cyclotomic and `𝔞` all of whose prime factors are unramified in `L`, the multiplicative
+ideal character `χ(𝔞)` equals `χ` of the ideal Frobenius `Frob_𝔞 = frobeniusIdeal K L 𝔞`.
+The support hypothesis `hU : ∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭` is the exact condition
+under which `galoisCharacterOnIdeal K L χ 𝔞 ≠ 0` (a single ramified factor zeroes the product). -/
 theorem galoisCharacterOnIdeal_eq_char_frobeniusIdeal
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
@@ -636,10 +513,6 @@ theorem galoisCharacterOnIdeal_eq_char_frobeniusIdeal
     (hU : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) :
     galoisCharacterOnIdeal K L χ 𝔞 = (χ (frobeniusIdeal K L 𝔞) : ℂ) := by
   letI : CommGroup Gal(L/K) := { mul_comm := mul_comm' }
-  -- With every factor unramified (exactly `hU`), both `χ(𝔞)` and `χ(Frob_𝔞)` are the
-  -- multiset-product of `χ((frobeniusClass 𝔭).out)` over the prime factors
-  -- (`galoisCharacterOnIdeal_eq_map_prod` resp. `frobeniusIdeal` + `map_multiset_prod`), the
-  -- `if unramified` branch always taken.
   have hfrob : (χ (frobeniusIdeal K L 𝔞) : ℂ) =
       ((UniqueFactorizationMonoid.normalizedFactors 𝔞).map
         (fun 𝔭 => (χ (frobeniusClass K L 𝔭).out : ℂ))).prod := by
@@ -652,23 +525,13 @@ theorem galoisCharacterOnIdeal_eq_char_frobeniusIdeal
 
 open Classical in
 /-- **Helper 1a (cardinality form) — value-fibre = unramified-supported Frobenius-value-fibre.** For
-`ζ ≠ 0`, the **value-fibre** `{𝔞 : χ(𝔞) = ζ}` and the **unramified-supported Frobenius-value-fibre**
+`ζ ≠ 0`, the value-fibre `{𝔞 : χ(𝔞) = ζ}` and the unramified-supported Frobenius-value-fibre
 `{𝔞 : U 𝔞 ∧ χ(Frob_𝔞) = ζ}`, where `U 𝔞 := ∀ 𝔭 ∈ normalizedFactors 𝔞, UnramifiedIn K L 𝔭`, are the
-**same set** (hence have equal `Nat.card`) — not merely close. `U 𝔞` is the **exact** support
-condition `galoisCharacterOnIdeal χ 𝔞 ≠ 0`: a single ramified factor zeroes the product, so the
-value-fibre (for `ζ ≠ 0`) contains *only* `𝔞` with every factor unramified, on which
-`χ(𝔞) = χ(Frob_𝔞)` by Helper 1. (The `junk`-class `frobeniusIdeal` would otherwise *include*
-ramified-divisible `𝔞`, so keeping the `U` field on the Frobenius side is what makes this an exact
-equality rather than a count off by a `Θ(N)` set.)
-
-Proof of the set equality (predicate `↔` for fixed `𝔞 ≠ ⊥`, `N𝔞 ≤ N`):
-* **⟹** `χ(𝔞) = ζ ≠ 0` ⟹ `χ(𝔞) ≠ 0` ⟹ no `(if unramified … else 0)` factor of the multiset product
-  vanishes (`Multiset.prod_eq_zero_iff`) ⟹ every prime factor is unramified, i.e. `U 𝔞`; then
-  Helper 1 gives `χ(Frob_𝔞) = χ(𝔞) = ζ`.
-* **⟸** `U 𝔞` ⟹ Helper 1 gives `χ(𝔞) = χ(Frob_𝔞) = ζ`.
-
-Fully proved (**no `sorry`**): `U` is the exact support condition, so no cyclotomic-ramification
-side-fact is needed. -/
+same set, hence have equal `Nat.card`. `U 𝔞` is the exact support condition
+`galoisCharacterOnIdeal χ 𝔞 ≠ 0`: a single ramified factor zeroes the product, so the value-fibre
+(for `ζ ≠ 0`) contains only `𝔞` with every factor unramified, on which `χ(𝔞) = χ(Frob_𝔞)` by
+Helper 1. Keeping the `U` field on the Frobenius side is what makes this an exact equality (the
+unconditional `frobeniusIdeal` ignores ramified factors, enlarging the fibre by a `Θ(N)` set). -/
 theorem card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
@@ -681,10 +544,8 @@ theorem card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre
               (χ (frobeniusIdeal K L 𝔞) : ℂ) = ζ} := by
   refine Nat.card_congr (Equiv.subtypeEquivRight fun 𝔞 => and_congr_right fun h𝔞 =>
     and_congr_right fun _hN => ?_)
-  -- Reduce to the core predicate `↔` under `h𝔞 : 𝔞 ≠ ⊥`.
   constructor
-  · -- ⟹ : `χ(𝔞) = ζ ≠ 0` forces every factor unramified (`U 𝔞`); then Helper 1.
-    intro hval
+  · intro hval
     have hU : ∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭 := by
       intro 𝔭 h𝔭
       by_contra hnr
@@ -697,18 +558,12 @@ theorem card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre
     refine ⟨hU, ?_⟩
     rw [← galoisCharacterOnIdeal_eq_char_frobeniusIdeal K L m χ hU]
     exact hval
-  · -- ⟸ : `U 𝔞` ⟹ Helper 1 ⟹ `χ(𝔞) = χ(Frob_𝔞) = ζ`.
-    rintro ⟨hU, hfrob⟩
+  · rintro ⟨hU, hfrob⟩
     rw [galoisCharacterOnIdeal_eq_char_frobeniusIdeal K L m χ hU]
     exact hfrob
 
-/-- **The image of a character `χ` of a finite abelian group is exactly `μ_{orderOf χ}`.** Hence
-every `ζ` with `ζ^{orderOf χ} = 1` lies in the image of `χ`. The image `range χ` is a finite —
-hence cyclic (`isCyclic_subgroup_units`) — subgroup of `ℂˣ`, of order `orderOf χ` (for a cyclic
-group `Nat.card = Monoid.exponent`, and `orderOf χ = exponent (range χ)`), contained in the `n`-th
-roots of unity `rootsOfUnity n ℂ` which also has order `n = orderOf χ`
-(`Complex.card_rootsOfUnity`); equal cardinality forces equality of the two subgroups.
-Fully proved (no sorry). -/
+/-- The image of a character `χ` of a finite abelian group is exactly `μ_{orderOf χ}`, so every
+`ζ` with `ζ ^ orderOf χ = 1` lies in the image of `χ`. -/
 theorem charFibre_mem_range
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (ζ : ℂˣ)
@@ -744,26 +599,17 @@ theorem charFibre_mem_range
   rw [← heq] at hmem
   exact hmem
 
-/-- **Helper 1b — the character fibre `{g : χ g = ζ}` has constant cardinality over roots of
-unity.** For a character `χ : G →* ℂˣ` of a finite abelian group and any `ζ` with
-`ζ^{orderOf χ} = 1`: `ζ` lies in the image of `χ` (`charFibre_mem_range`: the image of `χ` is the
-full group `μ_n` of `n`-th roots of unity, `n = orderOf χ`, since it is cyclic of order `n`), and
-the fibre `{g : χ g = ζ}` is a coset of `ker χ`, hence
-`Nat.card {g : χ g = ζ} = Nat.card (MonoidHom.ker χ)`, **independent of `ζ`**. This is the
-`|χ⁻¹(ζ)| = |ker χ|` constancy that makes leaf G's leading constant `C = |ker χ|·κ` independent of
-`ζ`. Fully proved (no sorry). -/
+/-- **Helper 1b.** For a character `χ : G →* ℂˣ` of a finite abelian group and any `ζ` with
+`ζ ^ orderOf χ = 1`, the fibre `{g : χ g = ζ}` is a coset of `ker χ`, so
+`Nat.card {g : χ g = ζ} = Nat.card (MonoidHom.ker χ)`, independent of `ζ`. This `ζ`-independence is
+what makes leaf G's leading constant `C = |ker χ| · κ` independent of `ζ`. -/
 theorem card_charFibre_eq_card_ker
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) (ζ : ℂˣ)
     (hζ : ζ ^ orderOf χ = 1) :
     Nat.card {g : Gal(L/K) // χ g = ζ} = Nat.card (MonoidHom.ker χ) := by
   letI : CommGroup Gal(L/K) := { mul_comm := mul_comm' }
-  -- `ζ` lies in the image of `χ` (image = `μ_{orderOf χ}`, since the image is a finite — hence
-  -- cyclic — subgroup of `ℂˣ` of order `orderOf χ`, contained in and equal to the `n`-th roots
-  -- of unity). **Residual sub-fact** (`ζ ∈ range χ`); the rest of Helper 1b is proved.
   obtain ⟨g₀, hg₀⟩ : ∃ g : Gal(L/K), χ g = ζ := charFibre_mem_range K L χ ζ hζ
-  -- The fibre `{g : χ g = ζ}` is the right coset `(ker χ)·g₀`, bijective to `ker χ` via
-  -- `k ↦ k·g₀` (inverse `g ↦ g·g₀⁻¹`).
   refine Nat.card_congr (Equiv.ofBijective (fun g => (⟨g.1 * g₀⁻¹, ?_⟩ : MonoidHom.ker χ)) ?_)
   · rw [MonoidHom.mem_ker, map_mul, map_inv, g.2, hg₀, mul_inv_cancel]
   · constructor
