@@ -18,7 +18,7 @@ Branch: **`development`**. Many local commits are unpushed — push with
 
 ---
 
-## 2. Current state (2026-06-07): GAP B CLOSED — chebotarev_cyclotomic unconditional
+## 2. Current state (2026-06-07): THE THEOREM IS COMPLETE
 
 **PROVEN this session (2026-06-05/06), all verified by cache-bypassing `lake env lean` +
 `#print axioms` + an adversarial read:**
@@ -39,13 +39,28 @@ character_sum_geometry_of_numbers_bound (LF3)           same
 dirichlet_primes_in_AP                                  same axioms as chebotarev_cyclotomic
 ```
 
-Sorry-free files: ICC, ZetaProduct, CNR, Cyclotomic, Main (incl. the `chebotarev_density`
-assembly and `dirichlet_primes_in_AP`), Density, Frobenius, NumberFieldEulerProduct. The ONLY
-remaining sorries: Abelian's AB1 leaves (master `exists_crossing_family_tagged`, C1
-`gal_compositum_prod_iso`, C5 `density_lift_through_fixedField_repl`) — endgame worker in
-flight (C5 by relocating Main's Abelian-independent Step-1 block into a new
-`FixedFieldDensity` module; C1 by joint-restriction injectivity + tower-degree counting via
-the proven C2a; the master assembling C1–C5 + `chebotarev_cyclotomic` at `M/F`).
+**ZERO sorries project-wide** (commit c1eb32c). The completion audit (independent,
+cache-bypassing `lake env lean`; build green 3805 jobs):
+
+```
+chebotarev_density           [propext, Classical.choice, Quot.sound]
+chebotarev_density_of_comm   same
+density_split_completely     same
+dirichlet_primes_in_AP       same
+```
+
+AB1 closed via the leaf decomposition: C2a by mathlib's
+`linearDisjoint_of_isGalois_isCoprime_discr` (Minkowski internalized) + the new
+`prime_dvd_natAbs_discr_cyclotomic_dvd`; C5 by RELOCATING Main's Abelian-independent Step-1
+block (18 decls) into the new module `CebotarevDensity/FixedFieldDensity.lean` (imported by
+Abelian and Main — no cycle); C1 = the joint-restriction product iso (injective on
+generators, surjective by the C2a-at-L degree count); the master assembles the tag (the
+cyclotomic character of the M-Frobenius), the τ-dictionary through the C1-inverse, the C3
+gate from `|G| ∣ ord τ`, `chebotarev_cyclotomic` at `M/F`, and the relocated transfer.
+
+Remaining board: CL1 (the /cleanup campaign over the session's ~6000 new lines), BP1
+(blueprint sync — the new modules + the hm/hcop restatements), UP1 (mathlib-upstream
+candidates). Push to origin/development needs Chris (LEAN4_GUARDRAILS_BYPASS=1 git push).
 
 Gap B's proof (the session centerpiece; ~8 worker-layers in ICC + the ZetaProduct assembly):
 ξ-uniform coset workhorse → explicit-constant cone-point cell counts → per-residue effective
