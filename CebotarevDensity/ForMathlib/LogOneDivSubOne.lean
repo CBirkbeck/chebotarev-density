@@ -29,12 +29,12 @@ asymptotics. -/
 theorem tendsto_log_one_div_sub_one_atTop :
     Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1))) (𝓝[>] (1 : ℝ)) atTop := by
   refine Real.tendsto_log_atTop.comp ?_
-  have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-    refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_ ?_
-    · exact ((continuous_sub_right 1).tendsto' 1 0 (by ring)).mono_left nhdsWithin_le_nhds
-    · filter_upwards [self_mem_nhdsWithin] with s hs
-      simp only [Set.mem_Ioi] at hs ⊢
-      linarith
+  have h1 : Tendsto (fun s : ℝ ↦ s - 1) (𝓝[>] (1 : ℝ)) (𝓝[>] (0 : ℝ)) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      (((continuous_sub_right 1).tendsto' 1 0 (by ring)).mono_left nhdsWithin_le_nhds)
+      (eventually_nhdsWithin_of_forall fun s hs ↦ by
+        simp only [Set.mem_Ioi] at hs ⊢
+        linarith)
   simpa only [one_div] using! h1.inv_tendsto_nhdsGT_zero
 
 /-- Generic squeeze: if `f(s) = log(1/(s-1)) + bounded` on a right
@@ -42,7 +42,8 @@ neighbourhood of `1`, then `f(s) / log(1/(s-1)) → 1` as `s ↓ 1`. The
 analytic content is just that `log(1/(s-1)) → ∞`, so the additive
 bounded term washes out under division. -/
 theorem tendsto_ratio_one_of_log_pm_bounded
-    (f : ℝ → ℝ) (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
+    (f : ℝ → ℝ)
+    (h_le : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), f s ≤ Real.log (1 / (s - 1)) + C)
     (h_lower : ∃ C : ℝ, ∀ᶠ s in 𝓝[>] (1 : ℝ), Real.log (1 / (s - 1)) - C ≤ f s) :
     Tendsto (fun s : ℝ ↦ f s / Real.log (1 / (s - 1))) (𝓝[>] 1) (𝓝 1) := by
   obtain ⟨C₁, hle⟩ := h_le
