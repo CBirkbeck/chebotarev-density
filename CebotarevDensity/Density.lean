@@ -101,31 +101,11 @@ theorem hasDirichletDensity_empty :
 
 /-- Over the nonzero ideals of `𝓞 K`, the series `Σ_I N(I)^{-s}` is summable for `1 < s`. -/
 private theorem summable_nonzeroIdeal_absNorm_rpow {s : ℝ} (hs : 1 < s) :
-    Summable (fun I : NonzeroIdeal K ↦ (Ideal.absNorm I.1 : ℝ) ^ (-s)) := by
-  have hf_nonneg : ∀ I : NonzeroIdeal K, 0 ≤ (Ideal.absNorm I.1 : ℝ) ^ (-s) :=
-    fun I ↦ Real.rpow_nonneg (by positivity) _
-  have hfiber : ∀ n : ℕ, Finite {I : NonzeroIdeal K // Ideal.absNorm I.1 = n} := fun n ↦
-    Set.Finite.to_subtype <| Set.Finite.of_finite_image
-      (f := fun I : NonzeroIdeal K ↦ I.1)
-      ((Ideal.finite_setOf_absNorm_eq (S := 𝓞 K) n).subset
-        (by rintro _ ⟨⟨I, _⟩, rfl, rfl⟩; rfl))
-      (fun _ _ _ _ ↦ Subtype.ext)
-  have hfiber_sum : ∀ n : ℕ,
-      (∑' y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n}, (Ideal.absNorm (y.1).1 : ℝ) ^ (-s))
-        = ‖(idealNormMultiplicity K n : ℂ) * (n : ℂ) ^ (-(s : ℂ))‖ := fun n ↦ by
-    rcases Nat.eq_zero_or_pos n with rfl | hn
-    · have : IsEmpty {I : NonzeroIdeal K // Ideal.absNorm I.1 = 0} :=
-        ⟨fun y ↦ y.1.2 (Ideal.absNorm_eq_zero_iff.mp y.2)⟩
-      simp [idealNormMultiplicity_zero]
-    · have hconst : ∀ y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
-          (Ideal.absNorm (y.1).1 : ℝ) ^ (-s) = (n : ℝ) ^ (-s) := fun y ↦ by rw [y.2]
-      rw [tsum_congr hconst, tsum_const, norm_mul, Complex.norm_natCast,
-        Complex.norm_natCast_cpow_of_pos hn, Complex.neg_re, Complex.ofReal_re, nsmul_eq_mul,
-        idealNormMultiplicity]
-  rw [← (Equiv.sigmaFiberEquiv (fun I : NonzeroIdeal K ↦ Ideal.absNorm I.1)).summable_iff]
-  refine (summable_sigma_of_nonneg (fun _ ↦ hf_nonneg _)).mpr ⟨fun _ ↦ Summable.of_finite, ?_⟩
-  have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
-  exact (summable_idealNormMultiplicity_mul_cpow_neg K hs').congr (fun n ↦ (hfiber_sum n).symm)
+    Summable (fun I : NonzeroIdeal K ↦ (Ideal.absNorm I.1 : ℝ) ^ (-s)) :=
+  ((hasSum_nonzeroIdeal_absNorm_cpow K (s := (s : ℂ)) (by simpa using hs)).summable.norm).congr
+    fun I ↦ (Complex.norm_natCast_cpow_of_pos
+      (Nat.pos_of_ne_zero (mt Ideal.absNorm_eq_zero_iff.mp I.2)) _).trans <| by
+      rw [Complex.neg_re, Complex.ofReal_re]
 
 /-- Over the nonzero prime ideals of `𝓞 K` lying in any set `S`, the series `Σ_𝔭 N𝔭^{-s}` is
 summable for `1 < s`. -/
@@ -140,9 +120,8 @@ theorem summable_prime_absNorm_rpow (S : Set (Ideal (𝓞 K))) {s : ℝ} (hs : 1
 
 /-- The partial Dirichlet series is nonnegative. -/
 private theorem primeIdealZetaSum_nonneg (S : Set (Ideal (𝓞 K))) (s : ℝ) :
-    0 ≤ primeIdealZetaSum S s := by
-  rw [primeIdealZetaSum_def]
-  exact tsum_nonneg fun _ ↦ Real.rpow_nonneg (by positivity) _
+    0 ≤ primeIdealZetaSum S s :=
+  tsum_nonneg fun _ ↦ by positivity
 
 /-- The partial Dirichlet series over `S` is bounded above by the one over all primes, for
 `1 < s`. -/
@@ -157,20 +136,19 @@ private theorem primeIdealZetaSum_le_univ {s : ℝ} (hs : 1 < s) :
 
 /-- The partial Dirichlet series over `S ⊆ T` is bounded above by the one over `T`, for
 `1 < s`. -/
-theorem primeIdealZetaSum_le_of_subset {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {s : ℝ}
-    (hs : 1 < s) :
+theorem primeIdealZetaSum_le_of_subset {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {s : ℝ} (hs : 1 < s) :
     primeIdealZetaSum S s ≤ primeIdealZetaSum T s := by
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
   refine (summable_prime_absNorm_rpow S hs).tsum_le_tsum_of_inj
     (fun 𝔭 ↦ ⟨𝔭.1, hST 𝔭.2.1, 𝔭.2.2.1, 𝔭.2.2.2⟩)
     (fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab))
     (fun c _ ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _)
-    (fun 𝔭 ↦ le_of_eq rfl) (summable_prime_absNorm_rpow T hs)
+    (fun _ ↦ le_rfl) (summable_prime_absNorm_rpow T hs)
 
 /-- For disjoint `S` and `T`, the partial Dirichlet series over `S ∪ T` splits as the sum of those
 over `S` and `T`, for `1 < s`. -/
-theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T)
-    {s : ℝ} (hs : 1 < s) :
+theorem primeIdealZetaSum_union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {s : ℝ}
+    (hs : 1 < s) :
     primeIdealZetaSum (S ∪ T) s = primeIdealZetaSum S s + primeIdealZetaSum T s := by
   let eS : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
       ↑{x : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∪ T ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} | (x.1 : Ideal (𝓞 K)) ∈ S} :=
@@ -221,48 +199,52 @@ theorem primeIdealZetaSum_eq_univ_of_forall_prime_mem
     primeIdealZetaSum S s = primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s := by
   let e : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
       {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (univ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
-    { toFun := fun 𝔭 ↦ ⟨𝔭.1, mem_univ _, 𝔭.2.2.1, 𝔭.2.2.2⟩
-      invFun := fun 𝔭 ↦ ⟨𝔭.1, hS 𝔭.1 𝔭.2.2.1 𝔭.2.2.2, 𝔭.2.2.1, 𝔭.2.2.2⟩
-      left_inv := fun _ ↦ rfl
-      right_inv := fun _ ↦ rfl }
+    Equiv.subtypeEquivRight fun 𝔭 ↦
+      ⟨fun h ↦ ⟨mem_univ _, h.2⟩, fun h ↦ ⟨hS 𝔭 h.2.1 h.2.2, h.2⟩⟩
   rw [primeIdealZetaSum_def, primeIdealZetaSum_def,
     ← e.tsum_eq (fun 𝔭 ↦ (Ideal.absNorm (𝔭.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
   rfl
 
+/-- The density ratio `Σ_S / Σ_univ` is bounded below (it is everywhere nonnegative). -/
+private theorem isBoundedUnder_ge_primeIdealZetaSum_ratio (S : Set (Ideal (𝓞 K))) :
+    IsBoundedUnder (· ≥ ·) (𝓝[>] (1 : ℝ))
+      (fun s ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s) :=
+  isBoundedUnder_of ⟨0, fun s ↦ div_nonneg (primeIdealZetaSum_nonneg S s)
+    (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)⟩
+
+/-- The density ratio `Σ_S / Σ_univ` is eventually at most `1` as `s ↓ 1`, since `Σ_S ≤ Σ_univ`
+and the denominator is nonnegative. -/
+private theorem eventually_primeIdealZetaSum_ratio_le_one (S : Set (Ideal (𝓞 K))) :
+    ∀ᶠ s in 𝓝[>] (1 : ℝ),
+      primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s ≤ 1 := by
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  simp only [mem_Ioi] at hs
+  exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ hs)
+    (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
+
 /-- If the upper density of `S` equals the lower density of `S` and both equal `δ`, then the
 Dirichlet density of `S` is `δ`. (Sandwich criterion used in the Chebotarev proof: Sharifi 7.2.2
 Step 2 last paragraph.) -/
-theorem HasDirichletDensity.of_upper_eq_lower
-    (hUp : HasUpperDirichletDensity S δ)
+theorem HasDirichletDensity.of_upper_eq_lower (hUp : HasUpperDirichletDensity S δ)
     (hLow : HasLowerDirichletDensity S δ) :
-    HasDirichletDensity S δ := by
-  refine tendsto_of_liminf_eq_limsup hLow hUp ?_ ?_
-  · refine ⟨1, ?_⟩
-    rw [eventually_map]
-    filter_upwards [self_mem_nhdsWithin] with s hs
-    simp only [mem_Ioi] at hs
-    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ hs)
-      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
-  · exact isBoundedUnder_of ⟨0, fun s ↦
-      div_nonneg (primeIdealZetaSum_nonneg S s)
-        (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)⟩
+    HasDirichletDensity S δ :=
+  tendsto_of_liminf_eq_limsup hLow hUp
+    ⟨1, eventually_map.mpr (eventually_primeIdealZetaSum_ratio_le_one S)⟩
+    (isBoundedUnder_ge_primeIdealZetaSum_ratio S)
 
 /-- The upper Dirichlet density extracted from `HasDirichletDensity`. -/
-theorem HasDirichletDensity.hasUpper
-    (h : HasDirichletDensity S δ) :
+theorem HasDirichletDensity.hasUpper (h : HasDirichletDensity S δ) :
     HasUpperDirichletDensity S δ :=
   h.limsup_eq
 
 /-- The lower Dirichlet density extracted from `HasDirichletDensity`. -/
-theorem HasDirichletDensity.hasLower
-    (h : HasDirichletDensity S δ) :
+theorem HasDirichletDensity.hasLower (h : HasDirichletDensity S δ) :
     HasLowerDirichletDensity S δ :=
   h.liminf_eq
 
 /-- The Dirichlet density of a disjoint union is the sum of the densities. -/
-theorem HasDirichletDensity.union_of_disjoint
-    {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T) {ε : ℝ} (hS : HasDirichletDensity S δ)
-    (hT : HasDirichletDensity T ε) :
+theorem HasDirichletDensity.union_of_disjoint {T : Set (Ideal (𝓞 K))} (hDisj : Disjoint S T)
+    {ε : ℝ} (hS : HasDirichletDensity S δ) (hT : HasDirichletDensity T ε) :
     HasDirichletDensity (S ∪ T) (δ + ε) := by
   rw [HasDirichletDensity] at hS hT ⊢
   refine (hS.add hT).congr' ?_
@@ -271,24 +253,18 @@ theorem HasDirichletDensity.union_of_disjoint
   rw [primeIdealZetaSum_union_of_disjoint hDisj hs, add_div]
 
 /-- Monotonicity of the lower density under inclusion. -/
-theorem HasLowerDirichletDensity.mono
-    {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {ε : ℝ} (hS : HasLowerDirichletDensity S δ)
-    (hT : HasLowerDirichletDensity T ε) :
+theorem HasLowerDirichletDensity.mono {T : Set (Ideal (𝓞 K))} (hST : S ⊆ T) {ε : ℝ}
+    (hS : HasLowerDirichletDensity S δ) (hT : HasLowerDirichletDensity T ε) :
     δ ≤ ε := by
   rw [HasLowerDirichletDensity] at hS hT
   rw [← hS, ← hT]
-  refine liminf_le_liminf ?_ ?_ (isCoboundedUnder_ge_of_eventually_le (x := 1) _ ?_)
-  · filter_upwards [self_mem_nhdsWithin] with s hs
-    simp only [mem_Ioi] at hs
-    exact div_le_div_of_nonneg_right (primeIdealZetaSum_le_of_subset hST hs)
-      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
-  · exact isBoundedUnder_of ⟨0, fun s ↦
-      div_nonneg (primeIdealZetaSum_nonneg S s)
-        (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)⟩
-  · filter_upwards [self_mem_nhdsWithin] with s hs
-    simp only [mem_Ioi] at hs
-    exact div_le_one_of_le₀ (primeIdealZetaSum_le_univ hs)
-      (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
+  refine liminf_le_liminf ?_ (isBoundedUnder_ge_primeIdealZetaSum_ratio S)
+    (isCoboundedUnder_ge_of_eventually_le (x := 1) _
+      (eventually_primeIdealZetaSum_ratio_le_one T))
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  simp only [mem_Ioi] at hs
+  exact div_le_div_of_nonneg_right (primeIdealZetaSum_le_of_subset hST hs)
+    (primeIdealZetaSum_nonneg (univ : Set (Ideal (𝓞 K))) s)
 
 /-! ### Sub-lemmas for `primeIdealZetaSum_univ_tendsto_log`
 
@@ -308,21 +284,23 @@ variable (K)
 `Σ_𝔭 N𝔭^{-s}` is summable for `1 < s`. -/
 private theorem summable_prime2_absNorm_rpow {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) := by
-  have hi : Function.Injective
-      (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-        (⟨𝔭.1, mem_univ _, 𝔭.2.1, 𝔭.2.2⟩ :
-          {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ univ ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-    fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
-  exact ((summable_prime_absNorm_rpow (univ : Set (Ideal (𝓞 K))) hs).comp_injective hi).congr
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
+  ((summable_prime_absNorm_rpow (univ : Set (Ideal (𝓞 K))) hs).comp_injective
+    (Equiv.subtypeEquivRight fun _ ↦ ⟨fun h ↦ ⟨mem_univ _, h⟩, fun h ↦ h.2⟩).injective).congr
     fun _ ↦ rfl
 
 /-- A nonzero prime ideal of `𝓞 K` has absolute norm at least `2`. -/
 private theorem two_le_absNorm_of_prime {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
-    (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) := by
-  have h0 : Ideal.absNorm 𝔭 ≠ 0 := by rwa [Ne, Ideal.absNorm_eq_zero_iff]
-  have h1 : Ideal.absNorm 𝔭 ≠ 1 := by rw [Ne, Ideal.absNorm_eq_one_iff]; exact hp.ne_top
-  exact_mod_cast show (2 : ℕ) ≤ Ideal.absNorm 𝔭 by lia
+    (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) :=
+  have : (2 : ℕ) ≤ Ideal.absNorm 𝔭 := Nat.two_le_iff _ |>.2
+    ⟨mt Ideal.absNorm_eq_zero_iff.1 hne, mt Ideal.absNorm_eq_one_iff.1 hp.ne_top⟩
+  mod_cast this
+
+/-- For a nonzero prime `𝔭` and `1 < s`, the Euler factor `N𝔭^{-s}` is strictly less than `1`. -/
+private theorem absNorm_rpow_neg_lt_one {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) {s : ℝ}
+    (hs : 1 < s) : (Ideal.absNorm 𝔭 : ℝ) ^ (-s) < 1 :=
+  Real.rpow_lt_one_of_one_lt_of_neg
+    (by have := two_le_absNorm_of_prime K hp hne; linarith) (by linarith)
 
 /-- Per-prime termwise bound for the higher-power tail. For `1 < s` and a nonzero prime `𝔭`, the
 geometric term `N𝔭^{-2s}/(1 - N𝔭^{-s})` is dominated by `2·N𝔭^{-2}`. -/
@@ -332,22 +310,18 @@ private theorem primeIdealHigherTail_term_le {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.
       2 * (Ideal.absNorm 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
   set x : ℝ := (Ideal.absNorm 𝔭 : ℝ)
   have hx : (2 : ℝ) ≤ x := two_le_absNorm_of_prime K hp hne
-  have hx0 : (0 : ℝ) < x := by linarith
-  have hxs_le : x ^ (-s) ≤ (2 : ℝ) ^ (-s) :=
-    Real.rpow_le_rpow_of_nonpos zero_lt_two hx (by linarith)
-  have h2s_le : (2 : ℝ) ^ (-s) ≤ (2 : ℝ) ^ (-(1 : ℝ)) :=
-    Real.rpow_le_rpow_of_exponent_le one_le_two (by linarith)
-  have h2half : (2 : ℝ) ^ (-(1 : ℝ)) = 1 / 2 := by rw [Real.rpow_neg_one]; norm_num
-  have hxs_half : x ^ (-s) ≤ 1 / 2 := by rw [← h2half]; exact le_trans hxs_le h2s_le
+  have hxs_half : x ^ (-s) ≤ 1 / 2 :=
+    calc x ^ (-s) ≤ (2 : ℝ) ^ (-s) := Real.rpow_le_rpow_of_nonpos zero_lt_two hx (by linarith)
+      _ ≤ (2 : ℝ) ^ (-(1 : ℝ)) := Real.rpow_le_rpow_of_exponent_le one_le_two (by linarith)
+      _ = 1 / 2 := by rw [Real.rpow_neg_one]; norm_num
   have hden_pos : (0 : ℝ) < 1 - x ^ (-s) := by linarith
   have hinv_le : (1 - x ^ (-s))⁻¹ ≤ 2 := by
     rw [inv_le_comm₀ hden_pos (by norm_num)]; linarith
   have hexp : x ^ (-(2 : ℝ) * s) ≤ x ^ (-(2 : ℝ)) :=
     Real.rpow_le_rpow_of_exponent_le (by linarith) (by nlinarith)
-  have hx2_nonneg : (0 : ℝ) ≤ x ^ (-(2 : ℝ)) := Real.rpow_nonneg hx0.le _
   rw [div_eq_mul_inv]
   calc x ^ (-(2 : ℝ) * s) * (1 - x ^ (-s))⁻¹
-      ≤ x ^ (-(2 : ℝ)) * 2 := mul_le_mul hexp hinv_le (by positivity) hx2_nonneg
+      ≤ x ^ (-(2 : ℝ)) * 2 := mul_le_mul hexp hinv_le (by positivity) (by positivity)
     _ = 2 * x ^ (-(2 : ℝ)) := by ring
 
 /-- Sharifi 7.1.12 proof (p. 140), bounded tail step. The geometric higher-power tail `Σ_𝔭
@@ -367,24 +341,16 @@ theorem primeIdealZetaHigherTail_bounded :
     primeIdealHigherTail_term_le K 𝔭.2.1 𝔭.2.2 hs
   have hnonneg : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
-    fun 𝔭 ↦ by
-      have hx : (2 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := two_le_absNorm_of_prime K 𝔭.2.1 𝔭.2.2
-      have hden_pos : (0 : ℝ) < 1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
-        have := Real.rpow_lt_one_of_one_lt_of_neg (x := (Ideal.absNorm 𝔭.1 : ℝ))
-          (by linarith) (by linarith : -s < 0)
-        linarith
-      exact div_nonneg (Real.rpow_nonneg (by positivity) _) hden_pos.le
+    fun 𝔭 ↦ div_nonneg (Real.rpow_nonneg (by positivity) _)
+      (by have := absNorm_rpow_neg_lt_one K 𝔭.2.1 𝔭.2.2 hs; linarith)
   have hsummable_rhs : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
       2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ))) :=
     (summable_prime2_absNorm_rpow K one_lt_two).mul_left 2
-  have hsummable_lhs : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))) :=
-    Summable.of_nonneg_of_le hnonneg hbound hsummable_rhs
   calc ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))
       ≤ ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
           2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) :=
-        hsummable_lhs.tsum_le_tsum hbound hsummable_rhs
+        (Summable.of_nonneg_of_le hnonneg hbound hsummable_rhs).tsum_le_tsum hbound hsummable_rhs
     _ = 2 * ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
           (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := tsum_mul_left
 
@@ -392,22 +358,15 @@ theorem primeIdealZetaHigherTail_bounded :
 private theorem primeIdealZetaSum_univ_eq_tsum_prime2 (s : ℝ) :
     primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s =
       ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥}, (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
-  rw [primeIdealZetaSum_def]
-  let e : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ≃
-      {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ (univ : Set (Ideal (𝓞 K))) ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} :=
-    { toFun := fun 𝔭 ↦ ⟨𝔭.1, mem_univ _, 𝔭.2.1, 𝔭.2.2⟩
-      invFun := fun 𝔭 ↦ ⟨𝔭.1, 𝔭.2.2.1, 𝔭.2.2.2⟩
-      left_inv := fun _ ↦ rfl
-      right_inv := fun _ ↦ rfl }
-  rw [← e.tsum_eq (fun 𝔭 ↦ (Ideal.absNorm (𝔭.1 : Ideal (𝓞 K)) : ℝ) ^ (-s))]
+  rw [primeIdealZetaSum_def, ← (Equiv.subtypeEquivRight fun 𝔭 ↦
+    ⟨fun h ↦ ⟨mem_univ _, h⟩, fun h ↦ h.2⟩).tsum_eq
+    fun 𝔭 ↦ (Ideal.absNorm (𝔭.1 : Ideal (𝓞 K)) : ℝ) ^ (-s)]
   rfl
 
 /-- For a nonzero prime `𝔭` and `1 < s`, the Euler-factor denominator `1 - N𝔭^{-s}` is positive. -/
 private theorem one_sub_absNorm_rpow_pos {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥)
     {s : ℝ} (hs : 1 < s) : (0 : ℝ) < 1 - (Ideal.absNorm 𝔭 : ℝ) ^ (-s) := by
-  have h2 : (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) := two_le_absNorm_of_prime K hp hne
-  have := Real.rpow_lt_one_of_one_lt_of_neg (x := (Ideal.absNorm 𝔭 : ℝ)) (by linarith)
-    (by linarith : -s < 0)
+  have := absNorm_rpow_neg_lt_one K hp hne hs
   linarith
 
 /-- For `0 ≤ x < 1`, `0 ≤ -log(1 - x) - x ≤ x²/(1 - x)`. -/
@@ -425,9 +384,8 @@ private theorem neg_log_one_sub_sub_le {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x < 1) :
 private theorem summable_neg_log_one_sub_absNorm_rpow {s : ℝ} (hs : 1 < s) :
     Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
       - Real.log (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))) := by
-  have hsum : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-      - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) := (summable_prime2_absNorm_rpow K hs).neg
-  refine ((Real.summable_log_one_add_of_summable hsum).neg).congr (fun 𝔭 ↦ ?_)
+  refine ((Real.summable_log_one_add_of_summable
+    (summable_prime2_absNorm_rpow K hs).neg).neg).congr fun 𝔭 ↦ ?_
   rw [sub_eq_add_neg]
 
 /-- For real `s > 1`, `log ζ_K(s) = Σ_𝔭 -log(1 - N𝔭^{-s})` (Sharifi 7.1.12, p. 140). -/
@@ -442,33 +400,19 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
   have hlogsum : Summable (fun 𝔭 ↦ Real.log (g 𝔭)) := by
     refine (summable_neg_log_one_sub_absNorm_rpow K hs).congr (fun 𝔭 ↦ ?_)
     rw [hg, Real.log_inv]
-  have hRprod : HasProd g (Real.exp (∑' 𝔭, Real.log (g 𝔭))) :=
-    Real.hasProd_of_hasSum_log hgpos hlogsum.hasSum
-  have hfeq : (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦ ((g 𝔭 : ℝ) : ℂ))
-      = (fun 𝔭 ↦ (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹) := by
-    funext 𝔭
-    rw [hg]
-    push_cast
-    rw [Complex.ofReal_cpow (by positivity)]
-    push_cast
-    ring
   have hCprod : HasProd (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
       (1 - (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))⁻¹)
       ((Real.exp (∑' 𝔭, Real.log (g 𝔭)) : ℝ) : ℂ) := by
-    have hmap := hRprod.map Complex.ofRealHom Complex.continuous_ofReal
-    rw [Function.comp_def] at hmap
-    simp only [Complex.ofRealHom_eq_coe] at hmap
-    rw [← hfeq]
-    exact hmap
-  have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
-  have hzeta : dedekindZeta K (s : ℂ) = ((Real.exp (∑' 𝔭, Real.log (g 𝔭)) : ℝ) : ℂ) := by
-    rw [dedekindZeta_eq_tprod_primeIdeal K hs']
-    exact hCprod.tprod_eq
+    refine ((Real.hasProd_of_hasSum_log hgpos hlogsum.hasSum).map Complex.ofRealHom
+      Complex.continuous_ofReal).congr_fun fun 𝔭 ↦ ?_
+    rw [Function.comp_apply, Complex.ofRealHom_eq_coe, hg]
+    push_cast [Complex.ofReal_cpow (show (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) by positivity)]
+    ring
   have hre : (dedekindZeta K (s : ℂ)).re = Real.exp (∑' 𝔭, Real.log (g 𝔭)) := by
-    rw [hzeta, Complex.ofReal_re]
+    rw [dedekindZeta_eq_tprod_primeIdeal K (by simpa using hs), hCprod.tprod_eq,
+      Complex.ofReal_re]
   rw [hre, Real.log_exp]
-  refine tsum_congr (fun 𝔭 ↦ ?_)
-  rw [hg, Real.log_inv]
+  exact tsum_congr fun 𝔭 ↦ by rw [hg, Real.log_inv]
 
 /-- The remainder `Σ_𝔭 (-log(1 - N𝔭^{-s}) - N𝔭^{-s})` is bounded near `s = 1` (Sharifi 7.1.12). -/
 private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
@@ -485,9 +429,7 @@ private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
   set h : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
     fun 𝔭 ↦ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) with hh
   have hxbound : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
-      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) < 1 := fun 𝔭 ↦
-    Real.rpow_lt_one_of_one_lt_of_neg
-      (by have := two_le_absNorm_of_prime K 𝔭.2.1 𝔭.2.2; linarith) (by linarith)
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) < 1 := fun 𝔭 ↦ absNorm_rpow_neg_lt_one K 𝔭.2.1 𝔭.2.2 hs1
   have hxnn : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ Real.rpow_nonneg (by positivity) _
   have hfnn : ∀ 𝔭, 0 ≤ f 𝔭 := fun 𝔭 ↦ (neg_log_one_sub_sub_le (hxnn 𝔭) (hxbound 𝔭)).1
@@ -518,11 +460,10 @@ theorem logDedekindZeta_sub_primeIdealZetaSum_bounded :
   refine ⟨C, ?_⟩
   filter_upwards [hC, self_mem_nhdsWithin] with s hs_bound hs1
   simp only [mem_Ioi] at hs1
-  rw [log_dedekindZeta_re_eq_tsum_neg_log_one_sub K hs1,
+  rwa [log_dedekindZeta_re_eq_tsum_neg_log_one_sub K hs1,
     primeIdealZetaSum_univ_eq_tsum_prime2 K s,
     ← (summable_neg_log_one_sub_absNorm_rpow K hs1).tsum_sub
       (summable_prime2_absNorm_rpow K hs1)]
-  exact hs_bound
 
 /-- Sharifi 7.1.12 proof (p. 140), simple-pole identity: `log ζ_K(s) = log(1/(s-1)) + O(1)` as
 `s ↓ 1`, from the simple pole of `ζ_K` at `s=1` (mathlib's
@@ -621,28 +562,6 @@ theorem primeIdealZetaSum_le_card_of_finite (hS : S.Finite)
     _ = (Fintype.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} : ℝ) := by
         rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
 
-/-- **Density of a finite set of primes is `0`** (Sharifi 7.1.13). The numerator `Σ_{𝔭 ∈ S} N𝔭^{-s}`
-is bounded (finitely many terms, each `≤ 1`) while the denominator `Σ_𝔭 N𝔭^{-s} → ∞`, so the ratio
-`→ 0`. -/
-theorem hasDirichletDensity_of_finite (hS : S.Finite) :
-    HasDirichletDensity S 0 := by
-  have hUniv := primeIdealZetaSum_univ_tendsto_atTop K
-  have hUnivPos : ∀ᶠ s in 𝓝[>] (1 : ℝ), 0 < primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s :=
-    hUniv.eventually_gt_atTop 0
-  change Tendsto (fun s ↦ primeIdealZetaSum S s / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
-    (𝓝[>] 1) (𝓝 0)
-  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' (g := fun _ ↦ (0 : ℝ))
-    (h := fun s ↦ (Nat.card {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ S ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} : ℝ)
-      / primeIdealZetaSum (univ : Set (Ideal (𝓞 K))) s)
-    tendsto_const_nhds (tendsto_const_nhds.div_atTop hUniv) ?_ ?_
-  · filter_upwards [hUnivPos] with s hpos
-    exact div_nonneg (by rw [primeIdealZetaSum_def]; exact tsum_nonneg fun _ ↦ by positivity)
-      hpos.le
-  · filter_upwards [hUnivPos, self_mem_nhdsWithin] with s hpos hs1
-    simp only [mem_Ioi] at hs1
-    exact (div_le_div_iff_of_pos_right hpos).mpr
-      (primeIdealZetaSum_le_card_of_finite K hS (by linarith))
-
 /-- **Squeeze to zero density from a constant numerator bound.** If the partial sum `Σ_{𝔭 ∈ U} N𝔭⁻ˢ`
 is bounded above by a fixed constant `C` for all `s` near `1` (from the right), then the density
 ratio `Σ_U / Σ_univ → 0`, since the denominator `→ ∞`. This is the common engine behind
@@ -662,6 +581,15 @@ theorem tendsto_primeIdealZetaSum_div_univ_zero_of_le_const (U : Set (Ideal (�
     exact div_nonneg (primeIdealZetaSum_nonneg U s) hpos.le
   · filter_upwards [hUnivPos, hbd] with s hpos hle
     exact (div_le_div_iff_of_pos_right hpos).mpr hle
+
+/-- **Density of a finite set of primes is `0`** (Sharifi 7.1.13). The numerator `Σ_{𝔭 ∈ S} N𝔭^{-s}`
+is bounded (finitely many terms, each `≤ 1`) while the denominator `Σ_𝔭 N𝔭^{-s} → ∞`, so the ratio
+`→ 0`. -/
+theorem hasDirichletDensity_of_finite (hS : S.Finite) :
+    HasDirichletDensity S 0 :=
+  tendsto_primeIdealZetaSum_div_univ_zero_of_le_const K S _
+    (eventually_nhdsWithin_of_forall fun _ hs ↦
+      primeIdealZetaSum_le_card_of_finite K hS (zero_lt_one.trans (mem_Ioi.mp hs)))
 
 /-- The Dirichlet density of the set of all (nonzero) prime ideals is `1`: the ratio
 `Σ_𝔭 N𝔭⁻ˢ / Σ_𝔭 N𝔭⁻ˢ` is eventually `1` since the denominator is eventually nonzero (it `→ ∞`). -/
