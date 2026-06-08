@@ -103,9 +103,8 @@ theorem cyclic_subgroup_meets_G_times_one_trivially
   exact ⟨by simpa [hg2] using (congrArg Prod.fst hk).symm, hh⟩
 
 /-- The Dirichlet density of a finite pairwise-disjoint union of sets, each of the
-*same* density `c`, is `|t| • c`. Pure `Density.lean`-API assembly (induction on `t`
-from `HasDirichletDensity.union_of_disjoint`), used to sum the `|H_n|` equal cyclotomic-
-crossing fibre densities `1/(|G|·|H|)` in `liminf_density_S_sigma_ge_card_H_n_div_GH`. -/
+*same* density `c`, is `|t| • c`. Used to sum the `|H_n|` equal cyclotomic-crossing fibre
+densities `1/(|G|·|H|)` in `liminf_density_S_sigma_ge_card_H_n_div_GH`. -/
 private theorem hasDirichletDensity_biUnion_const {F : Type*} [Field F] [NumberField F]
     {ι : Type*} (t : Finset ι) (S : ι → Set (Ideal (𝓞 F))) (c : ℝ)
     (hdisj : (t : Set ι).PairwiseDisjoint S)
@@ -204,8 +203,8 @@ stated against the compositum `M = L(μ_m)` (carrier `CyclotomicField m L` with 
 
 /-- Generic disjointness from a global tag: if every member of `S i` carries the same tag
 `f i` under a single function `t`, and `f` is injective, the family `S` is pairwise disjoint.
-Pure set-theory assembly used to derive `exists_cyclotomicCrossing_fibres` from the tagged
-master leaf `exists_crossing_family_tagged`. -/
+Used to derive `exists_cyclotomicCrossing_fibres` from the tagged master leaf
+`exists_crossing_family_tagged`. -/
 private theorem pairwiseDisjoint_of_tag {α ι κ : Type*} (t : α → κ) (f : ι → κ)
     (hf : Function.Injective f) (S : ι → Set α) (htag : ∀ i, ∀ a ∈ S i, t a = f i) :
     (Set.univ : Set ι).PairwiseDisjoint S := by
@@ -225,37 +224,25 @@ relevant instance binders so they do not depend on that carrier choice. -/
 
 /-- **C2a-ramif — primes ramifying in a rational cyclotomic field divide `m`.** A prime `p`
 dividing the discriminant of an `{m}`-cyclotomic extension `E/ℚ` necessarily divides `m`: for
-`p ∤ m` every prime `P` of `𝓞 E` over `p` is unramified
+`p ∤ m` every prime `P` of `𝓞 E` lying over `p` is unramified
 (`IsCyclotomicExtension.Rat.ramificationIdx_eq_of_not_dvd` gives `e = 1`, lifted to
 `Algebra.IsUnramifiedAt` via `isUnramifiedAt_iff_of_isDedekindDomain`), so by
-`not_dvd_discr_iff_forall_mem` we get `p ∤ discr E`. -/
+`not_dvd_discr_iff_forall_liesOver` we get `p ∤ discr E`. -/
 private theorem prime_dvd_natAbs_discr_cyclotomic_dvd
     (E : Type*) [Field E] [NumberField E] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} ℚ E]
     {p : ℕ} (hp : p.Prime) (hpd : p ∣ (NumberField.discr E).natAbs) : p ∣ m := by
   by_contra hpm
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
   have hpprime : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
-  have hpd' : (p : ℤ) ∣ NumberField.discr E := Int.ofNat_dvd_left.mpr hpd
-  refine absurd hpd' ?_
-  rw [NumberField.not_dvd_discr_iff_forall_mem E (𝓞 E) hpprime]
-  intro P hP hmem
-  haveI hPp : P.IsPrime := hP
-  have hunder : Ideal.under ℤ P = Ideal.span {(p : ℤ)} := by
-    haveI hUP : (Ideal.under ℤ P).IsPrime := inferInstance
-    have hmem' : (p : ℤ) ∈ Ideal.under ℤ P := by rw [Ideal.mem_under]; simpa using hmem
-    have hspan_le : Ideal.span {(p : ℤ)} ≤ Ideal.under ℤ P := by
-      rw [Ideal.span_le]; simpa using hmem'
-    have hmax : (Ideal.span {(p : ℤ)}).IsMaximal :=
-      PrincipalIdealRing.isMaximal_of_irreducible (Nat.prime_iff_prime_int.mp hp).irreducible
-    exact (hmax.eq_of_le hUP.ne_top hspan_le).symm
-  have hPbot : P ≠ ⊥ := by
-    rintro rfl
-    rw [Ideal.mem_bot] at hmem
-    have hne : ((p : ℤ) : 𝓞 E) ≠ 0 := by
-      simp only [ne_eq, Int.cast_natCast, Nat.cast_eq_zero]; exact hp.pos.ne'
-    exact hne hmem
-  rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := ℤ) (S := 𝓞 E) hPbot, hunder]
-  haveI : P.LiesOver (Ideal.span {(p : ℤ)}) := ⟨by rw [← hunder]⟩
+  refine absurd (Int.ofNat_dvd_left.mpr hpd) ?_
+  rw [NumberField.not_dvd_discr_iff_forall_liesOver E (𝓞 E) hpprime]
+  intro P hPmax hlo
+  haveI := hPmax.isPrime
+  haveI := hlo
+  have hspanbot : Ideal.span {(p : ℤ)} ≠ ⊥ := by
+    rw [Ne, Ideal.span_singleton_eq_bot]; exact hpprime.ne_zero
+  have hPbot : P ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hspanbot P
+  rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := ℤ) (S := 𝓞 E) hPbot, hlo.over.symm]
   exact IsCyclotomicExtension.Rat.ramificationIdx_eq_of_not_dvd p E P hpm
 
 /-- **C2a — cyclotomic degree over the base** (the deep ramification/Minkowski leaf). Source
@@ -429,8 +416,8 @@ private theorem compositum_isCyclotomic_over_fixedField
       (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥) :
     letI := (IntermediateField.fixedField (Subgroup.zpowers g)).isScalarTower_mid'
     IsCyclotomicExtension {m} ↥(IntermediateField.fixedField (Subgroup.zpowers g)) M := by
-  set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers g) with hF
-  set Kμ : IntermediateField K M := IntermediateField.adjoin K {b : M | b ^ m = 1} with hKμ
+  set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers g)
+  set Kμ : IntermediateField K M := IntermediateField.adjoin K {b : M | b ^ m = 1}
   obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
     IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
   have hadjζ : IntermediateField.adjoin K {ζ} = Kμ := by
@@ -479,11 +466,8 @@ private theorem smul_algebraMap_eq_repl
       (smul_distrib_smul (G := L ≃ₐ[K] L) (R := 𝓞 L) (S := L) g z 1).symm
   have hcoe : ∀ z : 𝓞 L, ((algebraMap (𝓞 L) (𝓞 M) z : 𝓞 M) : M) = algebraMap L M (z : L) :=
     fun z ↦ by
-      rw [show ((algebraMap (𝓞 L) (𝓞 M) z : 𝓞 M) : M)
-            = algebraMap (𝓞 M) M (algebraMap (𝓞 L) (𝓞 M) z) from rfl,
-        ← IsScalarTower.algebraMap_apply (𝓞 L) (𝓞 M) M,
-        show ((z : L)) = algebraMap (𝓞 L) L z from rfl,
-        ← IsScalarTower.algebraMap_apply (𝓞 L) L M]
+      rw [RingOfIntegers.coe_eq_algebraMap, ← IsScalarTower.algebraMap_apply (𝓞 L) (𝓞 M) M,
+        RingOfIntegers.coe_eq_algebraMap, ← IsScalarTower.algebraMap_apply (𝓞 L) L M]
   rw [RingOfIntegers.ext_iff, hbridgeM, hcoe y, hcoe ((σ.restrictNormal L) • y), hbridgeL,
     AlgEquiv.smul_def, AlgEquiv.smul_def, AlgEquiv.restrictNormal_commutes]
 
@@ -501,9 +485,8 @@ private theorem isArithFrobAt_restrictNormal_repl
   haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
   have hunder : (𝔓.under (𝓞 L)).under (𝓞 K) = 𝔓.under (𝓞 K) := Ideal.under_under 𝔓
   intro y
-  rw [hunder, Ideal.under, Ideal.mem_comap, map_sub, map_pow]
-  rw [show (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) (σ.restrictNormal L)) y
-        = (σ.restrictNormal L) • y from rfl, ← smul_algebraMap_eq_repl K L M σ y]
+  rw [hunder, Ideal.under, Ideal.mem_comap, map_sub, map_pow,
+    MulSemiringAction.toAlgHom_apply, ← smul_algebraMap_eq_repl K L M σ y]
   exact hσ (algebraMap (𝓞 L) (𝓞 M) y)
 
 private theorem frobeniusClass_proj_isPrime_aux
@@ -519,7 +502,7 @@ private theorem frobeniusClass_proj_isPrime_aux
   haveI := h𝔓lo
   haveI : Finite (𝓞 M ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K M (UnramifiedIn.ramificationIdx_eq_one K M _hunrM 𝔓 h𝔓lo))
-  set σM : Gal(M/K) := arithFrobAt (𝓞 K) Gal(M/K) 𝔓 with hσM
+  set σM : Gal(M/K) := arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hMfrobσM : IsArithFrobAt (𝓞 K) σM 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hconjM : IsConj σM τM := ConjClasses.mk_eq_mk_iff_isConj.mp
     ((frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM σM 𝔓 hMfrobσM h𝔓lo).symm.trans _hfr)
@@ -687,13 +670,91 @@ private theorem autToPow_eq_one_of_fixes
     have hzp : IsPrimitiveRoot z m := by rwa [IsPrimitiveRoot.coe_units_iff] at hζ
     have hord : orderOf z = m := (IsPrimitiveRoot.eq_orderOf hzp).symm
     have h' : z ^ (u : ZMod m).val = z ^ (1 : ℕ) := by
-      apply Units.ext; push_cast; rw [pow_one]; exact hspec
+      apply Units.ext
+      push_cast
+      rw [pow_one]
+      exact hspec
     rwa [pow_eq_pow_iff_modEq, hord] at h'
   have hu1 : (u : ZMod m) = 1 := by
     have hcast : ((u : ZMod m).val : ZMod m) = (1 : ZMod m) := by
-      rw [← Nat.cast_one]; exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
+      rw [← Nat.cast_one]
+      exact (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmod
     rwa [ZMod.natCast_val, ZMod.cast_id] at hcast
   exact Units.ext hu1
+
+/-- Concrete realisation of `cyclic_subgroup_meets_G_times_one_trivially` inside `Gal(M/K)`:
+for `s` with `|G| ∣ ord τ`, restricting to `σ` over `L` and with cyclotomic character `τ`, the
+cyclic subgroup `⟨s⟩` meets the fixing subgroup of `K(μ_m) = adjoin K {b | b ^ m = 1}` (the
+`G × {1}` factor) trivially. The defining fact for `compositum_isCyclotomic_over_fixedField`
+(C3) at `s = (σ, τ)`. -/
+private theorem zpowers_inf_fixingSubgroup_eq_bot_aux
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M] [IsGalois K L] [IsGalois K M]
+    (m : ℕ) [NeZero m] (ζ : M) (hζ : IsPrimitiveRoot ζ m) (σ : Gal(L/K)) (τ : (ZMod m)ˣ)
+    (hτ : Nat.card Gal(L/K) ∣ orderOf τ) (s : Gal(M/K))
+    (hsrestr : AlgEquiv.restrictNormalHom L s = σ) (hschar : hζ.autToPow K s = τ)
+    (hΦbij : Function.Bijective ((AlgEquiv.restrictNormalHom L).prod (hζ.autToPow K))) :
+    Subgroup.zpowers s ⊓
+        (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥ := by
+  rw [eq_bot_iff]
+  rintro g hg
+  rw [Subgroup.mem_inf] at hg
+  obtain ⟨⟨k, hk⟩, hgfix⟩ := hg
+  simp only at hk
+  have hgζ : g ζ = ζ :=
+    (IntermediateField.mem_fixingSubgroup_iff _ g).mp hgfix ζ <|
+      IntermediateField.subset_adjoin K _ hζ.pow_eq_one
+  have hχg : hζ.autToPow K g = 1 := autToPow_eq_one_of_fixes K M m ζ hζ g hgζ
+  have hχgτ : τ ^ k = 1 := by
+    rw [← hschar, ← map_zpow, hk]
+    exact hχg
+  have hGk : (Nat.card Gal(L/K) : ℤ) ∣ k :=
+    dvd_trans (Int.natCast_dvd_natCast.mpr hτ) (orderOf_dvd_iff_zpow_eq_one.mpr hχgτ)
+  have hσk : σ ^ k = 1 :=
+    orderOf_dvd_iff_zpow_eq_one.mp
+      (dvd_trans (Int.natCast_dvd_natCast.mpr (orderOf_dvd_natCard σ)) hGk)
+  have hrestrg : AlgEquiv.restrictNormalHom L g = 1 := by rw [← hk, map_zpow, hsrestr, hσk]
+  rw [Subgroup.mem_bot]
+  apply hΦbij.injective
+  rw [MonoidHom.prod_apply, MonoidHom.prod_apply, hrestrg, hχg, map_one, map_one]
+
+/-- Per-`τ` density of the crossing fibre (Sharifi 7.2.2 Step 2, p. 144, density `1/(|G|·|H|)`).
+For `s ∈ Gal(M/K)` whose cyclic group meets `Gal(M/K(μ_m))` trivially (so `M/F` is cyclotomic at
+`F = M^⟨s⟩`), `chebotarev_cyclotomic` at `M/F` and `s`, lifted through `F/K` by
+`density_lift_through_fixedField_repl` (C5), gives the `s`-Frobenius fibre of `K` density
+`1/(|G|·|H|)` — using `|carrier| = 1` (commutativity) and `|Gal(M/K)| = |G|·φ(m)`. -/
+private theorem density_crossing_fibre_aux
+    (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
+    [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M] [IsGalois K L] [IsGalois K M]
+    [IsMulCommutative Gal(M/K)] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} L M]
+    (hm4 : m % 4 ≠ 2) (hcop : ((NumberField.discr L).natAbs).Coprime m) (s : Gal(M/K))
+    (hgate : Subgroup.zpowers s ⊓
+      (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥) :
+    HasDirichletDensity
+      {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+        frobeniusClass K M 𝔭 = ConjClasses.mk s}
+      ((Nat.card Gal(L/K) * Nat.card ((ZMod m)ˣ) : ℝ)⁻¹) := by
+  set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers s) with hF
+  haveI : IsScalarTower K ↥F M := F.isScalarTower_mid'
+  haveI : IsCyclotomicExtension {m} ↥F M :=
+    compositum_isCyclotomic_over_fixedField K L M m s hgate
+  set σE : Gal(M/↥F) :=
+    IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers s) ⟨s, Subgroup.mem_zpowers s⟩
+  have hlift := density_lift_through_fixedField_repl K M s F σE
+    (by ext x; rfl) rfl (chebotarev_cyclotomic (K := ↥F) (L := M) m hm4 σE)
+  have hcarrier : Nat.card (ConjClasses.mk s).carrier = 1 := by
+    letI : CommMonoid Gal(M/K) := IsMulCommutative.instCommMonoid
+    have hcar : (ConjClasses.mk s).carrier = {s} := by
+      ext a
+      rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj,
+        isConj_iff_eq, Set.mem_singleton_iff]
+    rw [hcar, Nat.card_coe_set_eq, Set.ncard_singleton]
+  have hcardMK : Nat.card Gal(M/K) = Nat.card Gal(L/K) * Nat.card (ZMod m)ˣ := by
+    rw [IsGalois.card_aut_eq_finrank K M, IsGalois.card_aut_eq_finrank K L,
+      ← Module.finrank_mul_finrank K L M, cyclotomicField_finrank_eq L M m hcop,
+      Nat.card_eq_fintype_card (α := (ZMod m)ˣ), ZMod.card_units_eq_totient]
+  rw [hcarrier, hcardMK] at hlift
+  simpa using hlift
 
 /-- **Cyclotomic-crossing tagged master leaf** (Sharifi 7.2.2 Step 2, p. 144). For admissible
 `m` (`hm4 : m % 4 ≠ 2`, `hcop : (disc L).natAbs.Coprime m`) and `σ ∈ G = Gal(L/K)`, there is a
@@ -766,51 +827,9 @@ private theorem exists_crossing_family_tagged
     change χK (frobeniusClass K M 𝔭).out = (τ : (ZMod m)ˣ)
     rw [isConj_iff_eq.mp (χK.map_isConj hconj), hσMchar]
   · rintro ⟨τ, hτ⟩
-    have hgate : Subgroup.zpowers (σM τ) ⊓
-        (IntermediateField.adjoin K {b : M | b ^ m = 1}).fixingSubgroup = ⊥ := by
-      rw [eq_bot_iff]
-      rintro g hg
-      rw [Subgroup.mem_inf] at hg
-      obtain ⟨⟨k, hk⟩, hgfix⟩ := hg
-      simp only at hk
-      have hζmem : ζ ∈ IntermediateField.adjoin K {b : M | b ^ m = 1} :=
-        IntermediateField.subset_adjoin K _ hζ.pow_eq_one
-      have hgζ : g ζ = ζ :=
-        (IntermediateField.mem_fixingSubgroup_iff _ g).mp hgfix ζ hζmem
-      have hχg : χK g = 1 := autToPow_eq_one_of_fixes K M m ζ hζ g hgζ
-      have hχgτ : τ ^ k = 1 := by rw [← hσMchar τ, ← map_zpow, hk]; exact hχg
-      have hGk : (Nat.card Gal(L/K) : ℤ) ∣ k :=
-        dvd_trans (Int.natCast_dvd_natCast.mpr hτ) (orderOf_dvd_iff_zpow_eq_one.mpr hχgτ)
-      have hσk : σ ^ k = 1 :=
-        orderOf_dvd_iff_zpow_eq_one.mp
-          (dvd_trans (Int.natCast_dvd_natCast.mpr (orderOf_dvd_natCard σ)) hGk)
-      have hrestrg : AlgEquiv.restrictNormalHom L g = 1 := by
-        rw [← hk, map_zpow, hσMrestr, hσk]
-      rw [Subgroup.mem_bot]
-      apply hΦbij.injective
-      rw [MonoidHom.prod_apply, MonoidHom.prod_apply, hrestrg, hχg, map_one, map_one]
-    set F : IntermediateField K M := IntermediateField.fixedField (Subgroup.zpowers (σM τ)) with hF
-    haveI : IsScalarTower K ↥F M := F.isScalarTower_mid'
-    haveI hcycFM : IsCyclotomicExtension {m} ↥F M :=
-      compositum_isCyclotomic_over_fixedField K L M m (σM τ) hgate
-    set e := IntermediateField.subgroupEquivAlgEquiv (Subgroup.zpowers (σM τ)) with he
-    set σE : Gal(M/↥F) := e ⟨σM τ, Subgroup.mem_zpowers (σM τ)⟩ with hσE
-    have hcyc := chebotarev_cyclotomic (K := ↥F) (L := M) m hm4 σE
-    have hlift := density_lift_through_fixedField_repl K M (σM τ) F σE
-      (by ext x; rfl) rfl hcyc
-    have hcarrier : Nat.card (ConjClasses.mk (σM τ)).carrier = 1 := by
-      letI : CommMonoid Gal(M/K) := IsMulCommutative.instCommMonoid
-      have hcar : (ConjClasses.mk (σM τ)).carrier = {σM τ} := by
-        ext a
-        rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj,
-          isConj_iff_eq, Set.mem_singleton_iff]
-      rw [hcar, Nat.card_coe_set_eq, Set.ncard_singleton]
-    have hcardMK : Nat.card Gal(M/K) = Nat.card Gal(L/K) * Nat.card (ZMod m)ˣ := by
-      rw [IsGalois.card_aut_eq_finrank K M, IsGalois.card_aut_eq_finrank K L,
-        ← Module.finrank_mul_finrank K L M, cyclotomicField_finrank_eq L M m hcop,
-        Nat.card_eq_fintype_card (α := (ZMod m)ˣ), ZMod.card_units_eq_totient]
-    rw [hcarrier, hcardMK] at hlift
-    simpa using hlift
+    exact density_crossing_fibre_aux K L M m hm4 hcop (σM τ)
+      (zpowers_inf_fixingSubgroup_eq_bot_aux K L M m ζ hζ σ τ hτ (σM τ) (hσMrestr τ)
+        (hσMchar τ) hΦbij)
 
 private theorem exists_cyclotomicCrossing_fibres
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
@@ -858,8 +877,8 @@ theorem liminf_density_S_sigma_ge_card_H_n_div_GH
   have hpd' : (t : Set {τ : (ZMod m)ˣ // Nat.card Gal(L/K) ∣ orderOf τ}).PairwiseDisjoint S := by
     rw [ht, Finset.coe_univ]; exact hpd
   have hUdens : HasDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) :=
-    hasDirichletDensity_biUnion_const t S c hpd' (fun i _ => hd i)
-  have hUsub : (⋃ i ∈ t, S i) ⊆ Sσ := Set.iUnion₂_subset fun i _ => hsub i
+    hasDirichletDensity_biUnion_const t S c hpd' fun i _ ↦ hd i
+  have hUsub : (⋃ i ∈ t, S i) ⊆ Sσ := Set.iUnion₂_subset fun i _ ↦ hsub i
   have hUlow : HasLowerDirichletDensity (⋃ i ∈ t, S i) ((t.card : ℝ) • c) := hUdens.hasLower
   have hSσlow : HasLowerDirichletDensity Sσ
       (Filter.liminf
@@ -890,10 +909,11 @@ private theorem torsion_card_le (G : Type*) [CommGroup G] [Finite G] (M : ℕ) :
   classical
   set f : G →* G := powMonoidHom M with hf
   have hker : Nat.card f.ker = Nat.card {x : G // x ^ M = 1} :=
-    Nat.card_congr (Equiv.subtypeEquivRight (fun x => by rw [MonoidHom.mem_ker]; rfl))
+    Nat.card_congr (Equiv.subtypeEquivRight fun x ↦ by rw [MonoidHom.mem_ker]; rfl)
   have hcard : Nat.card f.ker * Nat.card f.range = Nat.card G := by
     rw [Subgroup.card_eq_card_quotient_mul_card_subgroup f.ker,
-      Nat.card_congr (QuotientGroup.quotientKerEquivRange f).toEquiv]; ring
+      Nat.card_congr (QuotientGroup.quotientKerEquivRange f).toEquiv]
+    ring
   obtain ⟨g, hg⟩ := Monoid.exists_orderOf_eq_exponent (Monoid.ExponentExists.of_finite (G := G))
   have hord : orderOf (g ^ M) = Monoid.exponent G / Nat.gcd (Monoid.exponent G) M := by
     rw [orderOf_pow, hg]
@@ -907,51 +927,56 @@ private theorem torsion_card_le (G : Type*) [CommGroup G] [Finite G] (M : ℕ) :
     _ ≤ Nat.card f.ker * Nat.card f.range := Nat.mul_le_mul_left _ hle
     _ = Nat.card G := hcard
 
+/-- The `q`-adic valuation of the "capped" modulus `ordCompl[p] E * p ^ (v - 1)` (which
+replaces `E`'s `p`-part by `p ^ (v - 1)`): it is `v - 1` at `q = p` and `v_q(E)` elsewhere. -/
+private theorem factorization_ordCompl_mul_pow (E p v : ℕ) (hp : p.Prime) (hE : E ≠ 0) (q : ℕ) :
+    (ordCompl[p] E * p ^ (v - 1)).factorization q
+      = if q = p then v - 1 else E.factorization q := by
+  rw [Nat.factorization_mul (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)]
+  simp only [Finsupp.coe_add, Pi.add_apply, hp.factorization_pow, Finsupp.single_apply,
+    Nat.factorization_ordCompl]
+  by_cases hq : q = p
+  · subst hq; rw [Finsupp.erase_same, if_pos rfl, if_pos rfl, zero_add]
+  · rw [Finsupp.erase_ne hq, if_neg fun h ↦ hq h.symm, if_neg hq, add_zero]
+
 /-- If `d ∣ E` and the `p`-adic valuation of `d` is `≤ v - 1`, then `d` divides the
 "capped" modulus `ordCompl[p] E * p ^ (v - 1)` (which replaces `E`'s `p`-part by
 `p ^ (v - 1)`). Used to land a small-order element in an `M`-torsion subgroup. -/
 private theorem dvd_capped (E d p v : ℕ) (hp : p.Prime) (hE : E ≠ 0) (hd : d ∣ E)
     (hvp : d.factorization p ≤ v - 1) : d ∣ ordCompl[p] E * p ^ (v - 1) := by
-  have hdne : d ≠ 0 := fun h => by subst h; exact hE (Nat.eq_zero_of_zero_dvd hd)
-  have hMne : ordCompl[p] E * p ^ (v - 1) ≠ 0 :=
-    mul_ne_zero (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)
-  rw [← Nat.factorization_le_iff_dvd hdne hMne]
+  have hdne : d ≠ 0 := fun h ↦ by subst h; exact hE (Nat.eq_zero_of_zero_dvd hd)
+  rw [← Nat.factorization_le_iff_dvd hdne
+    (mul_ne_zero (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero))]
   intro q
-  rw [Nat.factorization_mul (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)]
-  simp only [Finsupp.coe_add, Pi.add_apply, hp.factorization_pow, Finsupp.single_apply,
-    Nat.factorization_ordCompl]
+  rw [factorization_ordCompl_mul_pow E p v hp hE q]
   by_cases hq : q = p
-  · subst hq; rw [Finsupp.erase_same]; simp only [if_pos, zero_add]; exact hvp
-  · rw [Finsupp.erase_ne hq, if_neg (fun h => hq h.symm), add_zero]
-    exact (Nat.factorization_le_iff_dvd hdne hE).mpr hd q
+  · subst hq; rwa [if_pos rfl]
+  · rw [if_neg hq]; exact (Nat.factorization_le_iff_dvd hdne hE).mpr hd q
 
 /-- The capped modulus `ordCompl[p] E * p ^ (v - 1)` divides `E` when `v - 1 ≤ v_p(E)`. -/
 private theorem M_dvd_E (E p v : ℕ) (hp : p.Prime) (hE : E ≠ 0) (hle : v - 1 ≤ E.factorization p) :
     ordCompl[p] E * p ^ (v - 1) ∣ E := by
-  have hMne : ordCompl[p] E * p ^ (v - 1) ≠ 0 :=
-    mul_ne_zero (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)
-  rw [← Nat.factorization_le_iff_dvd hMne hE]
+  rw [← Nat.factorization_le_iff_dvd
+    (mul_ne_zero (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)) hE]
   intro q
-  rw [Nat.factorization_mul (Nat.ordCompl_pos p hE).ne' (pow_ne_zero _ hp.ne_zero)]
-  simp only [Finsupp.coe_add, Pi.add_apply, hp.factorization_pow, Finsupp.single_apply,
-    Nat.factorization_ordCompl]
+  rw [factorization_ordCompl_mul_pow E p v hp hE q]
   by_cases hq : q = p
-  · subst hq; rw [Finsupp.erase_same, if_pos rfl]; omega
-  · rw [Finsupp.erase_ne hq, if_neg (fun h => hq h.symm)]; omega
+  · subst hq; rwa [if_pos rfl]
+  · rw [if_neg hq]
 
 /-- Factoring out the complementary `p`-power: `E = (ordCompl[p] E * p ^ (v - 1)) *
 p ^ (v_p(E) - (v - 1))`, used to compute `E / M = p ^ (v_p(E) - (v - 1))`. -/
 private theorem E_eq_M_mul (E p v : ℕ) (hle : v - 1 ≤ E.factorization p) :
     E = ordCompl[p] E * p ^ (v - 1) * p ^ (E.factorization p - (v - 1)) := by
   rw [mul_assoc, ← pow_add,
-    show v - 1 + (E.factorization p - (v - 1)) = E.factorization p by omega,
+    show v - 1 + (E.factorization p - (v - 1)) = E.factorization p by lia,
     mul_comm (ordCompl[p] E), Nat.ordProj_mul_ordCompl_eq_self]
 
 /-- For a prime `p ∣ n`, the Carmichael function satisfies
 `p ^ (k · v_p(n) - 2) ∣ λ(n^k)`. -/
 private theorem pk_dvd_carmichael (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) :
     p ^ (k * n.factorization p - 2) ∣ ArithmeticFunction.carmichael (n ^ k) := by
-  set v := n.factorization p with hv
+  set v := n.factorization p
   have hdvd1 : p ^ (k * v) ∣ n ^ k := by
     calc p ^ (k * v) = (p ^ v) ^ k := by rw [← pow_mul, mul_comm]
       _ ∣ n ^ k := pow_dvd_pow_of_dvd (Nat.ordProj_dvd n p) k
@@ -968,7 +993,7 @@ private theorem pk_dvd_carmichael (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) :
       · obtain ⟨m, hm⟩ := Nat.exists_eq_succ_of_ne_zero hpos.ne'
         rw [hm] at *
         rw [Nat.totient_prime_pow_succ hp]
-        exact (pow_dvd_pow p (show m + 1 - 2 ≤ m by omega)).trans (dvd_mul_right (p ^ m) (p - 1))
+        exact (pow_dvd_pow p (show m + 1 - 2 ≤ m by lia)).trans (dvd_mul_right (p ^ m) (p - 1))
   exact hdvd3.trans hdvd2
 
 /-- Cardinality monotonicity for the "bad at `p`" set sitting inside an `M`-torsion
@@ -976,8 +1001,7 @@ subgroup, given each bad element satisfies `xᴹ = 1`. -/
 private theorem bad_le_torsion (G : Type*) [Finite G] [Monoid G] (M p v : ℕ)
     (h : ∀ x : G, ¬ p ^ v ∣ orderOf x → x ^ M = 1) :
     Nat.card {x : G // ¬ p ^ v ∣ orderOf x} ≤ Nat.card {x : G // x ^ M = 1} :=
-  Nat.card_le_card_of_injective (fun x => ⟨x.1, h x.1 x.2⟩)
-    (fun a b hab => Subtype.ext (by simpa using congrArg Subtype.val hab))
+  Nat.card_le_card_of_injective _ (Subtype.impEmbedding _ _ h).injective
 
 /-- If `n ∤ d` (with `n, d ≠ 0`) then some prime power `p ^ v_p(n)` already fails to
 divide `d`: the contrapositive of the prime-power criterion `n ∣ d`. -/
@@ -1004,29 +1028,29 @@ private theorem card_le_sum_card {G : Type*} [Finite G] {ι : Type*} (s : Finset
   simp only [Nat.card_eq_fintype_card]
   calc Fintype.card {x : G // P x}
       = (Finset.univ.filter P).card := by rw [Fintype.card_subtype]
-    _ ≤ (s.biUnion (fun i => Finset.univ.filter (Q i))).card := by
-        refine Finset.card_le_card (fun x hx => ?_)
+    _ ≤ (s.biUnion (fun i ↦ Finset.univ.filter (Q i))).card := by
+        refine Finset.card_le_card (fun x hx ↦ ?_)
         rw [Finset.mem_filter] at hx
         obtain ⟨i, hi, hqi⟩ := h x hx.2
         exact Finset.mem_biUnion.mpr ⟨i, hi, Finset.mem_filter.mpr ⟨Finset.mem_univ x, hqi⟩⟩
     _ ≤ ∑ i ∈ s, (Finset.univ.filter (Q i)).card := Finset.card_biUnion_le
     _ = ∑ i ∈ s, Fintype.card {x : G // Q i x} :=
-        Finset.sum_congr rfl (fun i _ => by rw [Fintype.card_subtype])
+        Finset.sum_congr rfl (fun i _ ↦ by rw [Fintype.card_subtype])
 
 /-- Each per-prime tail `1 / p ^ (k · v - v - 1) → 0` as `k → ∞` (base `p ≥ 2`,
 exponent `→ ∞`). -/
 private theorem summand_tendsto (p v : ℕ) (hp : 2 ≤ p) (hv : 1 ≤ v) :
-    Tendsto (fun k : ℕ => (1 : ℝ) / (p : ℝ) ^ (k * v - v - 1)) atTop (𝓝 0) := by
+    Tendsto (fun k : ℕ ↦ (1 : ℝ) / (p : ℝ) ^ (k * v - v - 1)) atTop (𝓝 0) := by
   have hp0 : (0 : ℝ) < (p : ℝ) := by positivity
   have hpinv1 : (p : ℝ)⁻¹ < 1 := by
     rw [inv_lt_one₀ hp0]; exact_mod_cast hp.trans_lt' Nat.one_lt_two
-  have hbase : Tendsto (fun m : ℕ => ((p : ℝ)⁻¹) ^ m) atTop (𝓝 0) :=
+  have hbase : Tendsto (fun m : ℕ ↦ ((p : ℝ)⁻¹) ^ m) atTop (𝓝 0) :=
     tendsto_pow_atTop_nhds_zero_of_lt_one (by positivity) hpinv1
-  have hexp : Tendsto (fun k : ℕ => k * v - v - 1) atTop atTop := by
-    refine tendsto_atTop_mono (f := fun k : ℕ => k - (v + 1)) (fun k => ?_)
+  have hexp : Tendsto (fun k : ℕ ↦ k * v - v - 1) atTop atTop := by
+    refine tendsto_atTop_mono (f := fun k : ℕ ↦ k - (v + 1)) (fun k ↦ ?_)
       (tendsto_sub_atTop_nat (v + 1))
-    have : k ≤ k * v := Nat.le_mul_of_pos_right k hv; omega
-  refine (hbase.comp hexp).congr (fun k => ?_)
+    have : k ≤ k * v := Nat.le_mul_of_pos_right k hv; lia
+  refine (hbase.comp hexp).congr (fun k ↦ ?_)
   simp [Function.comp_apply, one_div, inv_pow]
 
 /-- The "bad" ratio is bounded by the sum of per-prime tails: from a cover
@@ -1044,12 +1068,45 @@ private theorem ratio_bound (bad total : ℕ) (s : Finset ℕ) (badp : ℕ → �
       ≤ (∑ p ∈ s, (badp p : ℝ)) / total := by gcongr
     _ = ∑ p ∈ s, (badp p : ℝ) / total := by rw [Finset.sum_div]
     _ ≤ ∑ p ∈ s, (1 : ℝ) / (P p : ℝ) ^ (e p) := by
-        refine Finset.sum_le_sum (fun p hps => ?_)
+        refine Finset.sum_le_sum (fun p hps ↦ ?_)
         have hPp : (0 : ℝ) < (P p : ℝ) ^ (e p) := by have := hP p hps; positivity
         rw [div_le_div_iff₀ htotR hPp, one_mul]
         calc (badp p : ℝ) * (P p : ℝ) ^ (e p) = ((badp p * (P p) ^ (e p) : ℕ) : ℝ) := by
               push_cast; ring
           _ ≤ (total : ℝ) := by exact_mod_cast hbound p hps
+
+/-- Shared core of the per-prime bounds: in a finite commutative group `G` whose exponent
+has `p`-adic valuation at least `e + (v - 1)`, the number of `x` with `p ^ v ∤ ord x`, times
+`p ^ e`, is at most `|G|`. The small-order elements all land in the `M`-torsion subgroup
+for the capped modulus `M = ordCompl[p] E · p ^ (v - 1)`, whose index supplies the `p ^ e`
+factor via `torsion_card_le`. -/
+private theorem perprime_bound_core (G : Type*) [CommGroup G] [Finite G] (p v e : ℕ)
+    (hp : p.Prime) (hv1 : 1 ≤ v) (he : e + (v - 1) ≤ (Monoid.exponent G).factorization p) :
+    Nat.card {x : G // ¬ p ^ v ∣ orderOf x} * p ^ e ≤ Nat.card G := by
+  classical
+  set E := Monoid.exponent G with hE
+  have hEne : E ≠ 0 := hE ▸ (Monoid.ExponentExists.of_finite (G := G)).exponent_ne_zero
+  set M := ordCompl[p] E * p ^ (v - 1)
+  have hMne : M ≠ 0 := mul_ne_zero (Nat.ordCompl_pos p hEne).ne' (pow_ne_zero _ hp.ne_zero)
+  have hle1 : v - 1 ≤ E.factorization p := by lia
+  have hMdvdE : M ∣ E := M_dvd_E E p v hp hEne hle1
+  have hgcd : Nat.gcd E M = M := Nat.gcd_eq_right hMdvdE
+  have hEdivM : E / M = p ^ (E.factorization p - (v - 1)) :=
+    Nat.div_eq_of_eq_mul_right (Nat.pos_of_ne_zero hMne) (E_eq_M_mul E p v hle1)
+  have hbad_sub : Nat.card {x : G // ¬ p ^ v ∣ orderOf x} ≤ Nat.card {x : G // x ^ M = 1} := by
+    refine bad_le_torsion G M p v (fun x hx ↦ ?_)
+    rw [← orderOf_dvd_iff_pow_eq_one]
+    refine dvd_capped E (orderOf x) p v hp hEne ?_ ?_
+    · rw [hE]; exact Monoid.order_dvd_exponent x
+    · by_contra! hcon
+      exact hx ((Nat.Prime.pow_dvd_iff_le_factorization hp (orderOf_pos x).ne').mpr (by lia))
+  have hEM : p ^ e ≤ E / M := by
+    rw [hEdivM]; exact pow_le_pow_right₀ hp.one_le (by lia)
+  calc Nat.card {x : G // ¬ p ^ v ∣ orderOf x} * p ^ e
+      ≤ Nat.card {x : G // x ^ M = 1} * p ^ e := Nat.mul_le_mul_right _ hbad_sub
+    _ ≤ Nat.card {x : G // x ^ M = 1} * (E / M) := Nat.mul_le_mul_left _ hEM
+    _ = Nat.card {x : G // x ^ M = 1} * (E / Nat.gcd E M) := by rw [hgcd]
+    _ ≤ Nat.card G := torsion_card_le G M
 
 /-- The number of units of `ZMod (n^k)` with `p ^ v_p(n) ∤ ord τ`, times
 `p ^ (k v_p(n) - v_p(n) - 1)`, is at most `φ(n^k)`. -/
@@ -1057,40 +1114,16 @@ private theorem perprime_bound (n k p : ℕ) (hp : p.Prime) (hpn : p ∣ n) (hn2
     Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ p ^ n.factorization p ∣ orderOf τ}
       * p ^ (k * n.factorization p - n.factorization p - 1)
       ≤ Nat.card (ZMod (n ^ k))ˣ := by
-  classical
-  have hnk : NeZero (n ^ k) := ⟨pow_ne_zero k (by omega)⟩
-  set G := (ZMod (n ^ k))ˣ with hG
+  have hnk : NeZero (n ^ k) := ⟨pow_ne_zero k (by lia)⟩
   set v := n.factorization p with hv
-  have hv1 : 1 ≤ v := hv ▸ Nat.Prime.factorization_pos_of_dvd hp (by omega) hpn
-  set E := Monoid.exponent G with hE
-  have hEne : E ≠ 0 := hE ▸ (Monoid.ExponentExists.of_finite (G := G)).exponent_ne_zero
-  set M := ordCompl[p] E * p ^ (v - 1) with hM
-  have hMne : M ≠ 0 := mul_ne_zero (Nat.ordCompl_pos p hEne).ne' (pow_ne_zero _ hp.ne_zero)
-  have h2v : 2 * v ≤ k * v := Nat.mul_le_mul_right v hk
-  have hvpE : k * v - 2 ≤ E.factorization p := by
-    have hdvd : p ^ (k * v - 2) ∣ E := by
-      rw [hE, ← ArithmeticFunction.carmichael_eq_exponent' (n ^ k)]
+  have hv1 : 1 ≤ v := hv ▸ Nat.Prime.factorization_pos_of_dvd hp (by lia) hpn
+  have hvpE : k * v - 2 ≤ (Monoid.exponent (ZMod (n ^ k))ˣ).factorization p := by
+    refine (Nat.Prime.pow_dvd_iff_le_factorization hp ?_).mp ?_
+    · exact (Monoid.ExponentExists.of_finite (G := (ZMod (n ^ k))ˣ)).exponent_ne_zero
+    · rw [← ArithmeticFunction.carmichael_eq_exponent' (n ^ k)]
       exact pk_dvd_carmichael n k p hp hpn
-    exact (Nat.Prime.pow_dvd_iff_le_factorization hp hEne).mp hdvd
-  have hle1 : v - 1 ≤ E.factorization p := by omega
-  have hMdvdE : M ∣ E := M_dvd_E E p v hp hEne hle1
-  have hgcd : Nat.gcd E M = M := Nat.gcd_eq_right hMdvdE
-  have hEdivM : E / M = p ^ (E.factorization p - (v - 1)) :=
-    Nat.div_eq_of_eq_mul_right (Nat.pos_of_ne_zero hMne) (E_eq_M_mul E p v hle1)
-  have hbad_sub : Nat.card {τ : G // ¬ p ^ v ∣ orderOf τ} ≤ Nat.card {τ : G // τ ^ M = 1} := by
-    refine bad_le_torsion G M p v (fun x hx => ?_)
-    rw [← orderOf_dvd_iff_pow_eq_one]
-    refine dvd_capped E (orderOf x) p v hp hEne ?_ ?_
-    · rw [hE]; exact Monoid.order_dvd_exponent x
-    · by_contra! hcon
-      exact hx ((Nat.Prime.pow_dvd_iff_le_factorization hp (orderOf_pos x).ne').mpr (by omega))
-  have hEM : p ^ (k * v - v - 1) ≤ E / M := by
-    rw [hEdivM]; exact pow_le_pow_right₀ hp.one_le (by omega)
-  calc Nat.card {τ : G // ¬ p ^ v ∣ orderOf τ} * p ^ (k * v - v - 1)
-      ≤ Nat.card {τ : G // τ ^ M = 1} * p ^ (k * v - v - 1) := Nat.mul_le_mul_right _ hbad_sub
-    _ ≤ Nat.card {τ : G // τ ^ M = 1} * (E / M) := Nat.mul_le_mul_left _ hEM
-    _ = Nat.card {τ : G // τ ^ M = 1} * (E / Nat.gcd E M) := by rw [hgcd]
-    _ ≤ Nat.card G := torsion_card_le G M
+  have h2v : 2 * v ≤ k * v := Nat.mul_le_mul_right v hk
+  exact perprime_bound_core (ZMod (n ^ k))ˣ p v _ hp hv1 (by lia)
 
 /-- Exponent-keyed per-prime bound — the generalisation of `perprime_bound` from the
 specific group `(ZMod (n^k))ˣ` to *any* finite commutative group `G`, keyed on a
@@ -1099,36 +1132,14 @@ The number of `x : G` with `p ^ v ∤ ord x`, times `p ^ (a - v - 1)`, is at mos
 
 Used at the admissible-prime sequence `m ≡ 1 (mod 4·n^k)` of `liminf_ratio_ge_inv_card_G`:
 there `G = (ZMod m)ˣ` is cyclic of exponent `m - 1`, and `n^k ∣ m - 1`, so
-`p ^ (k·v_p(n)) ∣ m - 1 = exponent`. The proof is `perprime_bound`'s, with the
-`pk_dvd_carmichael` input replaced by the hypothesis `hdvd`. -/
+`p ^ (k·v_p(n)) ∣ m - 1 = exponent`. -/
 private theorem perprime_bound_exp (G : Type*) [CommGroup G] [Finite G] (p a v : ℕ)
     (hp : p.Prime) (hv1 : 1 ≤ v) (hav : v ≤ a) (hdvd : p ^ a ∣ Monoid.exponent G) :
     Nat.card {x : G // ¬ p ^ v ∣ orderOf x} * p ^ (a - v - 1) ≤ Nat.card G := by
-  classical
-  set E := Monoid.exponent G with hE
-  have hEne : E ≠ 0 := hE ▸ (Monoid.ExponentExists.of_finite (G := G)).exponent_ne_zero
-  set M := ordCompl[p] E * p ^ (v - 1) with hM
-  have hMne : M ≠ 0 := mul_ne_zero (Nat.ordCompl_pos p hEne).ne' (pow_ne_zero _ hp.ne_zero)
-  have haE : a ≤ E.factorization p := (Nat.Prime.pow_dvd_iff_le_factorization hp hEne).mp hdvd
-  have hle1 : v - 1 ≤ E.factorization p := by omega
-  have hMdvdE : M ∣ E := M_dvd_E E p v hp hEne hle1
-  have hgcd : Nat.gcd E M = M := Nat.gcd_eq_right hMdvdE
-  have hEdivM : E / M = p ^ (E.factorization p - (v - 1)) :=
-    Nat.div_eq_of_eq_mul_right (Nat.pos_of_ne_zero hMne) (E_eq_M_mul E p v hle1)
-  have hbad_sub : Nat.card {x : G // ¬ p ^ v ∣ orderOf x} ≤ Nat.card {x : G // x ^ M = 1} := by
-    refine bad_le_torsion G M p v (fun x hx => ?_)
-    rw [← orderOf_dvd_iff_pow_eq_one]
-    refine dvd_capped E (orderOf x) p v hp hEne ?_ ?_
-    · rw [hE]; exact Monoid.order_dvd_exponent x
-    · by_contra! hcon
-      exact hx ((Nat.Prime.pow_dvd_iff_le_factorization hp (orderOf_pos x).ne').mpr (by omega))
-  have hEM : p ^ (a - v - 1) ≤ E / M := by
-    rw [hEdivM]; exact pow_le_pow_right₀ hp.one_le (by omega)
-  calc Nat.card {x : G // ¬ p ^ v ∣ orderOf x} * p ^ (a - v - 1)
-      ≤ Nat.card {x : G // x ^ M = 1} * p ^ (a - v - 1) := Nat.mul_le_mul_right _ hbad_sub
-    _ ≤ Nat.card {x : G // x ^ M = 1} * (E / M) := Nat.mul_le_mul_left _ hEM
-    _ = Nat.card {x : G // x ^ M = 1} * (E / Nat.gcd E M) := by rw [hgcd]
-    _ ≤ Nat.card G := torsion_card_le G M
+  have haE : a ≤ (Monoid.exponent G).factorization p :=
+    (Nat.Prime.pow_dvd_iff_le_factorization hp
+      (Monoid.ExponentExists.of_finite (G := G)).exponent_ne_zero).mp hdvd
+  exact perprime_bound_core G p v _ hp hv1 (by lia)
 
 /-- Single-group form of the `H_n` ratio lower bound — the generalisation of (the per-`k`
 step inside) `H_n_over_H_tends_to_one` to *any* finite commutative group `G` whose
@@ -1153,23 +1164,23 @@ private theorem H_n_ratio_ge (G : Type*) [CommGroup G] [Finite G] (n k : ℕ) (h
     simp only [Nat.card_eq_fintype_card]
     rw [Fintype.card_subtype_compl]
     have hle : Fintype.card {τ : G // n ∣ orderOf τ} ≤ Fintype.card G := Fintype.card_subtype_le _
-    omega
+    lia
   have hbadratio : (bad : ℝ) / total
       ≤ ∑ p ∈ n.primeFactors,
           (1 : ℝ) / (p : ℝ) ^ (k * n.factorization p - n.factorization p - 1) := by
     refine ratio_bound bad total n.primeFactors
-      (fun p => Nat.card {τ : G // ¬ p ^ n.factorization p ∣ orderOf τ})
-      (fun p => k * n.factorization p - n.factorization p - 1) (fun p => p)
+      (fun p ↦ Nat.card {τ : G // ¬ p ^ n.factorization p ∣ orderOf τ})
+      (fun p ↦ k * n.factorization p - n.factorization p - 1) (fun p ↦ p)
       htotpos ?_ ?_ ?_
     · rw [hbad]
-      refine card_le_sum_card n.primeFactors (fun τ => ¬ n ∣ orderOf τ)
-        (fun p τ => ¬ p ^ n.factorization p ∣ orderOf τ) (fun τ hτ => ?_)
-      exact exists_prime_pow_not_dvd n (orderOf τ) (by omega) (orderOf_pos τ).ne' hτ
-    · exact fun p hp => (Nat.prime_of_mem_primeFactors hp).pos
+      refine card_le_sum_card n.primeFactors (fun τ ↦ ¬ n ∣ orderOf τ)
+        (fun p τ ↦ ¬ p ^ n.factorization p ∣ orderOf τ) (fun τ hτ ↦ ?_)
+      exact exists_prime_pow_not_dvd n (orderOf τ) (by lia) (orderOf_pos τ).ne' hτ
+    · exact fun p hp ↦ (Nat.prime_of_mem_primeFactors hp).pos
     · intro p hp
       have hpp : p.Prime := Nat.prime_of_mem_primeFactors hp
       have hpn : p ∣ n := Nat.dvd_of_mem_primeFactors hp
-      have hv1 : 1 ≤ n.factorization p := Nat.Prime.factorization_pos_of_dvd hpp (by omega) hpn
+      have hv1 : 1 ≤ n.factorization p := Nat.Prime.factorization_pos_of_dvd hpp (by lia) hpn
       have hav : n.factorization p ≤ k * n.factorization p := Nat.le_mul_of_pos_left _ hk
       exact perprime_bound_exp G p (k * n.factorization p) (n.factorization p) hpp hv1 hav
         (hexp p hp)
@@ -1192,47 +1203,47 @@ theorem H_n_over_H_tends_to_one (n : ℕ) (_hn : 1 ≤ n) :
   classical
   rcases eq_or_lt_of_le _hn with rfl | hn2'
   · have hconst : ∀ k : ℕ, (Nat.card {τ : (ZMod (1 ^ k))ˣ // (1 : ℕ) ∣ orderOf τ} : ℝ)
-        / Nat.card ((ZMod (1 ^ k))ˣ) = 1 := fun k => by
-      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x => one_dvd _)),
+        / Nat.card ((ZMod (1 ^ k))ˣ) = 1 := fun k ↦ by
+      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x ↦ one_dvd _)),
         div_self (by exact_mod_cast Nat.card_pos.ne')]
     rw [tendsto_congr hconst]; exact tendsto_const_nhds
   · have hn2 : 2 ≤ n := hn2'
-    set total : ℕ → ℕ := fun k => Nat.card ((ZMod (n ^ k))ˣ) with htotal
-    set good : ℕ → ℕ := fun k => Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} with hgood
-    set bad : ℕ → ℕ := fun k => Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ n ∣ orderOf τ} with hbad
-    have hnk : ∀ k, NeZero (n ^ k) := fun k => ⟨pow_ne_zero k (by omega)⟩
-    have htotpos : ∀ k, 0 < total k := fun k => by have := hnk k; exact Nat.card_pos
-    have hgb : ∀ k, good k + bad k = total k := fun k => by
+    set total : ℕ → ℕ := fun k ↦ Nat.card ((ZMod (n ^ k))ˣ) with htotal
+    set good : ℕ → ℕ := fun k ↦ Nat.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ} with hgood
+    set bad : ℕ → ℕ := fun k ↦ Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ n ∣ orderOf τ} with hbad
+    have hnk : ∀ k, NeZero (n ^ k) := fun k ↦ ⟨pow_ne_zero k (by lia)⟩
+    have htotpos : ∀ k, 0 < total k := fun k ↦ by have := hnk k; exact Nat.card_pos
+    have hgb : ∀ k, good k + bad k = total k := fun k ↦ by
       have := hnk k
       rw [hgood, hbad, htotal]
       simp only [Nat.card_eq_fintype_card]
       rw [Fintype.card_subtype_compl]
       have hle : Fintype.card {τ : (ZMod (n ^ k))ˣ // n ∣ orderOf τ}
           ≤ Fintype.card ((ZMod (n ^ k))ˣ) := Fintype.card_subtype_le _
-      omega
-    set S : ℕ → ℝ := fun k => ∑ p ∈ n.primeFactors,
+      lia
+    set S : ℕ → ℝ := fun k ↦ ∑ p ∈ n.primeFactors,
       (1 : ℝ) / (p : ℝ) ^ (k * n.factorization p - n.factorization p - 1) with hSdef
     have hStendsto : Tendsto S atTop (𝓝 0) := by
       rw [hSdef, show (0 : ℝ) = ∑ _p ∈ n.primeFactors, (0 : ℝ) by simp]
-      refine tendsto_finsetSum _ (fun p hp => ?_)
+      refine tendsto_finsetSum _ (fun p hp ↦ ?_)
       have hpp : p.Prime := Nat.prime_of_mem_primeFactors hp
       have hpdvd : p ∣ n := Nat.dvd_of_mem_primeFactors hp
       exact summand_tendsto p (n.factorization p) hpp.two_le
-        (Nat.Prime.factorization_pos_of_dvd hpp (by omega) hpdvd)
-    have hbadratio : Tendsto (fun k => (bad k : ℝ) / total k) atTop (𝓝 0) := by
+        (Nat.Prime.factorization_pos_of_dvd hpp (by lia) hpdvd)
+    have hbadratio : Tendsto (fun k ↦ (bad k : ℝ) / total k) atTop (𝓝 0) := by
       refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hStendsto
-        (Filter.Eventually.of_forall (fun k => by positivity)) ?_
+        (Filter.Eventually.of_forall (fun k ↦ by positivity)) ?_
       filter_upwards [Filter.eventually_ge_atTop 2] with k hk
       refine ratio_bound (bad k) (total k) n.primeFactors
-        (fun p => Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ p ^ n.factorization p ∣ orderOf τ})
-        (fun p => k * n.factorization p - n.factorization p - 1) (fun p => p)
+        (fun p ↦ Nat.card {τ : (ZMod (n ^ k))ˣ // ¬ p ^ n.factorization p ∣ orderOf τ})
+        (fun p ↦ k * n.factorization p - n.factorization p - 1) (fun p ↦ p)
         (htotpos k) ?_ ?_ ?_
       · rw [hbad]
-        refine card_le_sum_card n.primeFactors (fun τ => ¬ n ∣ orderOf τ)
-          (fun p τ => ¬ p ^ n.factorization p ∣ orderOf τ) (fun τ hτ => ?_)
+        refine card_le_sum_card n.primeFactors (fun τ ↦ ¬ n ∣ orderOf τ)
+          (fun p τ ↦ ¬ p ^ n.factorization p ∣ orderOf τ) (fun τ hτ ↦ ?_)
         have := hnk k
-        exact exists_prime_pow_not_dvd n (orderOf τ) (by omega) (orderOf_pos τ).ne' hτ
-      · exact fun p hp => (Nat.prime_of_mem_primeFactors hp).pos
+        exact exists_prime_pow_not_dvd n (orderOf τ) (by lia) (orderOf_pos τ).ne' hτ
+      · exact fun p hp ↦ (Nat.prime_of_mem_primeFactors hp).pos
       · intro p hp
         have := hnk k
         exact perprime_bound n k p (Nat.prime_of_mem_primeFactors hp)
@@ -1257,24 +1268,25 @@ private theorem ratio_card_dvd_orderOf_tendsto_one (n : ℕ) (hn1 : 1 ≤ n) (m 
       / Nat.card ((ZMod (m k))ˣ)) Filter.atTop (𝓝 1) := by
   rcases eq_or_lt_of_le hn1 with hn1' | hn2'
   · have hconst : ∀ k, (Nat.card {τ : (ZMod (m k))ˣ // n ∣ orderOf τ} : ℝ)
-        / Nat.card ((ZMod (m k))ˣ) = 1 := fun k => by
+        / Nat.card ((ZMod (m k))ˣ) = 1 := fun k ↦ by
       have := hmNeZero k
-      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x => hn1'.symm ▸ one_dvd _)),
+      rw [Nat.card_congr (Equiv.subtypeUnivEquiv (fun x ↦ hn1'.symm ▸ one_dvd _)),
         div_self (by exact_mod_cast Nat.card_pos.ne')]
-    rw [tendsto_congr hconst]; exact tendsto_const_nhds
+    rw [tendsto_congr hconst]
+    exact tendsto_const_nhds
   · have hn2 : 2 ≤ n := hn2'
-    set S : ℕ → ℝ := fun k => ∑ p ∈ n.primeFactors,
+    set S : ℕ → ℝ := fun k ↦ ∑ p ∈ n.primeFactors,
       (1 : ℝ) / (p : ℝ) ^ (k * n.factorization p - n.factorization p - 1) with hSdef
     have hSt : Filter.Tendsto S Filter.atTop (𝓝 0) := by
       rw [hSdef, show (0 : ℝ) = ∑ _p ∈ n.primeFactors, (0 : ℝ) by simp]
-      refine tendsto_finsetSum _ (fun p hp => ?_)
+      refine tendsto_finsetSum _ (fun p hp ↦ ?_)
       have hpp : p.Prime := Nat.prime_of_mem_primeFactors hp
       exact summand_tendsto p (n.factorization p) hpp.two_le
-        (Nat.Prime.factorization_pos_of_dvd hpp (by omega) (Nat.dvd_of_mem_primeFactors hp))
-    have hlo : Filter.Tendsto (fun k => 1 - S k) Filter.atTop (𝓝 1) := by
+        (Nat.Prime.factorization_pos_of_dvd hpp (by lia) (Nat.dvd_of_mem_primeFactors hp))
+    have hlo : Filter.Tendsto (fun k ↦ 1 - S k) Filter.atTop (𝓝 1) := by
       simpa using hSt.const_sub 1
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo tendsto_const_nhds ?_
-      (Filter.Eventually.of_forall (fun k => ?_))
+      (Filter.Eventually.of_forall (fun k ↦ ?_))
     · filter_upwards [Filter.eventually_ge_atTop 1] with k hk1
       exact H_n_ratio_ge (ZMod (m k))ˣ n k hn2 hk1 (hdvd k hk1)
     · have := hmNeZero k
@@ -1290,7 +1302,8 @@ private theorem exists_admissible_prime (n d : ℕ) (hn : 1 ≤ n) (k : ℕ) :
     (q := 4 * n ^ k) (by positivity) (Nat.coprime_one_left _)
   have hdvd : 4 * n ^ k ∣ m - 1 := (Nat.modEq_iff_dvd' hmp.one_lt.le).mp hmeq.symm
   refine ⟨m, hmp, by omega, ?_, dvd_trans ⟨4, by ring⟩ hdvd⟩
-  have := dvd_trans ⟨n ^ k, rfl⟩ hdvd; omega
+  have := dvd_trans ⟨n ^ k, rfl⟩ hdvd
+  omega
 
 /-- Per-`σ` lower bound `δ_inf(S_σ) ≥ 1/|G|`, the limit of the per-`m` bound
 `liminf_density_S_sigma_ge_card_H_n_div_GH` as `m → ∞` along a sequence of
@@ -1320,15 +1333,17 @@ theorem liminf_ratio_ge_inv_card_G
   have hnpos : 0 < n := hn ▸ Nat.card_pos
   have hn1 : 1 ≤ n := hnpos
   set dB : ℕ := (NumberField.discr L).natAbs with hdB
-  have hdBpos : 0 < dB := by rw [hdB, Int.natAbs_pos]; exact NumberField.discr_ne_zero L
+  have hdBpos : 0 < dB := by
+    rw [hdB, Int.natAbs_pos]
+    exact NumberField.discr_ne_zero L
   choose m hmp hmgt hm4 hmdvd using exists_admissible_prime n dB hn1
-  have hm1 : ∀ k, 1 ≤ m k := fun k => (hmp k).one_lt.le
-  have hmne : ∀ k, m k ≠ 0 := fun k => (hmp k).pos.ne'
-  have hmNeZero : ∀ k, NeZero (m k) := fun k => ⟨hmne k⟩
-  have hmcop : ∀ k, dB.Coprime (m k) := fun k => by
+  have hm1 : ∀ k, 1 ≤ m k := fun k ↦ (hmp k).one_lt.le
+  have hmne : ∀ k, m k ≠ 0 := fun k ↦ (hmp k).pos.ne'
+  have hmNeZero : ∀ k, NeZero (m k) := fun k ↦ ⟨hmne k⟩
+  have hmcop : ∀ k, dB.Coprime (m k) := fun k ↦ by
     rw [Nat.coprime_comm, (hmp k).coprime_iff_not_dvd]
-    exact fun hdvd => absurd (Nat.le_of_dvd hdBpos hdvd) (Nat.not_le.mpr (hmgt k))
-  have hexp : ∀ k, Monoid.exponent (ZMod (m k))ˣ = m k - 1 := fun k => by
+    exact fun hdvd ↦ absurd (Nat.le_of_dvd hdBpos hdvd) (Nat.not_le.mpr (hmgt k))
+  have hexp : ∀ k, Monoid.exponent (ZMod (m k))ˣ = m k - 1 := fun k ↦ by
     haveI : Fact (m k).Prime := ⟨hmp k⟩
     rw [IsCyclic.exponent_eq_card, Nat.card_eq_fintype_card, ZMod.card_units_eq_totient,
       Nat.totient_prime (hmp k)]
@@ -1346,7 +1361,7 @@ theorem liminf_ratio_ge_inv_card_G
     have hnR : (n : ℝ) ≠ 0 := by exact_mod_cast hnpos.ne'
     field_simp
   have hexpdvd : ∀ k, 1 ≤ k → ∀ p ∈ n.primeFactors,
-      p ^ (k * n.factorization p) ∣ Monoid.exponent (ZMod (m k))ˣ := fun k _ p hp => by
+      p ^ (k * n.factorization p) ∣ Monoid.exponent (ZMod (m k))ˣ := fun k _ p hp ↦ by
     rw [hexp k]
     refine dvd_trans ?_ (hmdvd k)
     calc p ^ (k * n.factorization p) = (p ^ n.factorization p) ^ k := by rw [← pow_mul, mul_comm]
@@ -1375,24 +1390,22 @@ theorem ratioSum_frobeniusFibres_tendsto_one
           / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
       (𝓝[>] 1) (𝓝 1) := by
   classical
-  set S : Gal(L/K) → Set (Ideal (𝓞 K)) := fun σ =>
+  set S : Gal(L/K) → Set (Ideal (𝓞 K)) := fun σ ↦
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧ frobeniusClass K L 𝔭 = ConjClasses.mk σ}
     with hS
   set R : Set (Ideal (𝓞 K)) :=
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} with hR
   set D : ℝ → ℝ := primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) with hD
-  have hmk_inj : Function.Injective (ConjClasses.mk : Gal(L/K) → ConjClasses Gal(L/K)) := by
-    intro a b hab
-    obtain ⟨c, hc⟩ : IsConj a b := ConjClasses.mk_eq_mk_iff_isConj.mp hab
-    rw [SemiconjBy, mul_comm' (c : Gal(L/K))] at hc
-    exact mul_right_cancel hc
+  letI : CommMonoid Gal(L/K) := IsMulCommutative.instCommMonoid
+  have hmk_inj : Function.Injective (ConjClasses.mk : Gal(L/K) → ConjClasses Gal(L/K)) :=
+    ConjClasses.mk_injective
   have hpd : ((Finset.univ : Finset Gal(L/K)) : Set Gal(L/K)).PairwiseDisjoint S := by
     intro a _ b _ hab
-    refine Set.disjoint_left.mpr fun 𝔭 ha hb => hab (hmk_inj ?_)
+    refine Set.disjoint_left.mpr fun 𝔭 ha hb ↦ hab (hmk_inj ?_)
     rw [hS] at ha hb
     exact ha.2.2.symm.trans hb.2.2
   have hdisjR : Disjoint (⋃ σ ∈ (Finset.univ : Finset Gal(L/K)), S σ) R := by
-    refine Set.disjoint_left.mpr fun 𝔭 hmem hbad => ?_
+    refine Set.disjoint_left.mpr fun 𝔭 hmem hbad ↦ ?_
     simp only [Set.mem_iUnion] at hmem
     obtain ⟨σ, -, hσ⟩ := hmem
     exact hbad.2.2 (hS ▸ hσ).2.1
@@ -1434,22 +1447,6 @@ instance we apply them at is `ℝ`. -/
 variable {ι α : Type*} [AddCommGroup α] [ConditionallyCompleteLinearOrder α]
   [DenselyOrdered α] [AddLeftMono α] {l : Filter ι} [l.NeBot]
 
-omit [DenselyOrdered α] [l.NeBot] in
-/-- A finite sum of below-bounded functions is below-bounded. -/
-private lemma sum_isBoundedUnder_ge {κ : Type*} (g : κ → ι → α) (t : Finset κ)
-    (h : ∀ j ∈ t, l.IsBoundedUnder (· ≥ ·) (g j)) :
-    l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ t, g j x) :=
-  funext (fun x ↦ Finset.sum_apply x t g) ▸
-    Filter.isBoundedUnder_sum (fun _ _ ↦ isBoundedUnder_ge_add) le_rfl t h
-
-omit [DenselyOrdered α] [l.NeBot] in
-/-- A finite sum of above-bounded functions is above-bounded. -/
-private lemma sum_isBoundedUnder_le {κ : Type*} (g : κ → ι → α) (t : Finset κ)
-    (h : ∀ j ∈ t, l.IsBoundedUnder (· ≤ ·) (g j)) :
-    l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ t, g j x) :=
-  funext (fun x ↦ Finset.sum_apply x t g) ▸
-    Filter.isBoundedUnder_sum (fun _ _ ↦ isBoundedUnder_le_add) le_rfl t h
-
 /-- Superadditivity of `liminf` over a `Finset.sum`: the sum of the `liminf`s is
 at most the `liminf` of the sum. -/
 private lemma sum_liminf_le_liminf_sum {κ : Type*} (g : κ → ι → α) (t : Finset κ)
@@ -1462,9 +1459,11 @@ private lemma sum_liminf_le_liminf_sum {κ : Type*} (g : κ → ι → α) (t : 
   | insert a s ha ih =>
       rw [Finset.sum_insert ha]
       have hbS : l.IsBoundedUnder (· ≥ ·) (fun x ↦ ∑ j ∈ s, g j x) :=
-        sum_isBoundedUnder_ge g s (fun j hj ↦ hbelow j (Finset.mem_insert_of_mem hj))
+        Finset.sum_fn s g ▸ Filter.isBoundedUnder_ge_sum s
+          (fun j hj ↦ hbelow j (Finset.mem_insert_of_mem hj))
       have haS : l.IsBoundedUnder (· ≤ ·) (fun x ↦ ∑ j ∈ s, g j x) :=
-        sum_isBoundedUnder_le g s (fun j hj ↦ habove j (Finset.mem_insert_of_mem hj))
+        Finset.sum_fn s g ▸ Filter.isBoundedUnder_le_sum s
+          (fun j hj ↦ habove j (Finset.mem_insert_of_mem hj))
       have step : liminf (g a) l + liminf (fun x ↦ ∑ j ∈ s, g j x) l
           ≤ liminf (fun x ↦ g a x + ∑ j ∈ s, g j x) l :=
         le_liminf_add (hbelow a (Finset.mem_insert_self a s))
@@ -1478,6 +1477,21 @@ private lemma sum_liminf_le_liminf_sum {κ : Type*} (g : κ → ι → α) (t : 
         _ = liminf (fun x ↦ ∑ j ∈ insert a s, g j x) l := by simp_rw [Finset.sum_insert ha]
 
 end LiminfSumGlue
+
+/-- If a finite sum `∑ gᵢ` is above-bounded and each `gⱼ` is below-bounded, then every
+`gᵢ` is above-bounded: write `gᵢ = (∑ gⱼ) - ∑_{j ≠ i} gⱼ`. -/
+private theorem isBoundedUnder_le_of_isBoundedUnder_le_sum {β ι : Type*} [Fintype ι] {l : Filter β}
+    (g : ι → β → ℝ) (hF : l.IsBoundedUnder (· ≤ ·) (fun s ↦ ∑ i, g i s))
+    (hbelow : ∀ i, l.IsBoundedUnder (· ≥ ·) (g i)) (i : ι) :
+    l.IsBoundedUnder (· ≤ ·) (g i) := by
+  classical
+  obtain ⟨a, ha⟩ := hF.eventually_le
+  obtain ⟨b, hb⟩ := (Finset.sum_fn _ g ▸
+    Filter.isBoundedUnder_ge_sum (Finset.univ.erase i) (fun j _ ↦ hbelow j)).eventually_ge
+  refine isBoundedUnder_of_eventually_le (a := a - b) ?_
+  filter_upwards [ha, hb] with s hsa hsb
+  have := Finset.add_sum_erase Finset.univ (fun j ↦ g j s) (Finset.mem_univ i)
+  linarith
 
 /-- Pure real-analysis glue: a finite family `gᵢ` of functions, each with
 `liminf gᵢ ≥ 1/N` (where `N` is the family size) and bounded below, whose sum
@@ -1501,28 +1515,16 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one {ι : Type*} [Fintype �
   set F : ℝ → ℝ := fun s ↦ ∑ i, g i s with hF
   have hFle : l.IsBoundedUnder (· ≤ ·) F := hsum.isBoundedUnder_le
   have hFlimsup : limsup F l = 1 := hsum.limsup_eq
-  have hgle : ∀ i, l.IsBoundedUnder (· ≤ ·) (g i) := by
-    intro i
-    have hdecomp : ∀ s, g i s = F s - ∑ j ∈ Finset.univ.erase i, g j s := by
-      intro s
-      have := Finset.add_sum_erase Finset.univ (fun j ↦ g j s) (Finset.mem_univ i)
-      simp only [hF]
-      linarith [this]
-    obtain ⟨a, ha⟩ := hFle.eventually_le
-    have hrestge : l.IsBoundedUnder (· ≥ ·) (fun s ↦ ∑ j ∈ Finset.univ.erase i, g j s) :=
-      sum_isBoundedUnder_ge g (Finset.univ.erase i) (fun j _ ↦ hbelow j)
-    obtain ⟨b, hb⟩ := hrestge.eventually_ge
-    refine isBoundedUnder_of_eventually_le (a := a - b) ?_
-    filter_upwards [ha, hb] with s hsa hsb
-    rw [hdecomp s]; linarith
+  have hgle : ∀ i, l.IsBoundedUnder (· ≤ ·) (g i) :=
+    isBoundedUnder_le_of_isBoundedUnder_le_sum g hFle hbelow
   haveI : Nonempty ι := ⟨i₀⟩
   have hNpos : 0 < N := Fintype.card_pos
   have hNR : (0 : ℝ) < N := by exact_mod_cast hNpos
   set t : Finset ι := Finset.univ.erase i₀ with ht
   have hrestge : l.IsBoundedUnder (· ≥ ·) (fun s ↦ ∑ j ∈ t, g j s) :=
-    sum_isBoundedUnder_ge g t (fun j _ ↦ hbelow j)
+    Finset.sum_fn t g ▸ Filter.isBoundedUnder_ge_sum t (fun j _ ↦ hbelow j)
   have hrestle : l.IsBoundedUnder (· ≤ ·) (fun s ↦ ∑ j ∈ t, g j s) :=
-    sum_isBoundedUnder_le g t (fun j _ ↦ hgle j)
+    Finset.sum_fn t g ▸ Filter.isBoundedUnder_le_sum t (fun j _ ↦ hgle j)
   have hcard : t.card = N - 1 := Finset.card_erase_of_mem (Finset.mem_univ i₀)
   have hliminf_rest : ((N : ℝ) - 1) / N ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l := by
     have hsuper : ∑ j ∈ t, liminf (g j) l ≤ liminf (fun s ↦ ∑ j ∈ t, g j s) l :=
@@ -1535,8 +1537,10 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one {ι : Type*} [Fintype �
     have hcast : ((N : ℝ) - 1) / N = ((N - 1 : ℕ) : ℝ) * (N : ℝ)⁻¹ := by
       have hsub : ((N - 1 : ℕ) : ℝ) = (N : ℝ) - 1 := by
         have : (1 : ℕ) ≤ N := hNpos
-        push_cast [Nat.cast_sub this]; ring
-      rw [hsub]; ring
+        push_cast [Nat.cast_sub this]
+        ring
+      rw [hsub]
+      ring
     rw [hcast]
     exact le_trans hlb hsuper
   have hFeq : (fun s ↦ g i₀ s + ∑ j ∈ t, g j s) = F := by
@@ -1551,9 +1555,19 @@ theorem tendsto_inv_card_of_liminf_ge_of_sum_tendsto_one {ι : Type*} [Fintype �
     have hrest_le : liminf (fun s ↦ ∑ j ∈ t, g j s) l ≤ 1 - limsup (g i₀) l := by linarith
     have h1 : limsup (g i₀) l ≤ 1 - ((N : ℝ) - 1) / N := by
       linarith [le_trans hliminf_rest hrest_le]
-    have h2 : 1 - ((N : ℝ) - 1) / N = (N : ℝ)⁻¹ := by field_simp; ring
-    rw [h2] at h1; exact h1
+    have h2 : 1 - ((N : ℝ) - 1) / N = (N : ℝ)⁻¹ := by
+      field_simp
+      ring
+    rwa [h2] at h1
   exact tendsto_of_le_liminf_of_limsup_le (hlo i₀) hlimsup_le (hgle i₀) (hbelow i₀)
+
+private theorem isBoundedUnder_ge_ratio_zetaSum (T : Set (Ideal (𝓞 K))) :
+    Filter.IsBoundedUnder (· ≥ ·) (𝓝[>] (1 : ℝ))
+      (fun s ↦ primeIdealZetaSum T s / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s) :=
+  have hnn : ∀ (S : Set (Ideal (𝓞 K))) (s : ℝ), 0 ≤ primeIdealZetaSum S s := fun S s ↦
+    primeIdealZetaSum_def S s ▸ tsum_nonneg fun _ ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _
+  isBoundedUnder_of_eventually_ge (a := 0)
+    (Filter.Eventually.of_forall fun s ↦ div_nonneg (hnn _ s) (hnn _ s))
 
 /-- **Chebotarev's theorem, abelian case** (Sharifi 7.2.2 Step 2).
 
@@ -1579,13 +1593,8 @@ theorem chebotarev_abelian
           {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
             frobeniusClass K L 𝔭 = ConjClasses.mk τ} s
         / primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s)
-    (fun τ ↦ ?_) (fun τ ↦ ?_) (ratioSum_frobeniusFibres_tendsto_one K L) σ
-  · simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
-  · have hzeta_nonneg : ∀ (S : Set (Ideal (𝓞 K))) (s : ℝ), 0 ≤ primeIdealZetaSum S s := by
-      intro S s
-      rw [primeIdealZetaSum_def]
-      exact tsum_nonneg fun _ ↦ Real.rpow_nonneg (Nat.cast_nonneg _) _
-    exact isBoundedUnder_of_eventually_ge (a := 0)
-      (Filter.Eventually.of_forall fun s ↦ div_nonneg (hzeta_nonneg _ s) (hzeta_nonneg _ s))
+    (fun τ ↦ ?_) (fun τ ↦ isBoundedUnder_ge_ratio_zetaSum K _)
+    (ratioSum_frobeniusFibres_tendsto_one K L) σ
+  simpa only [Nat.card_eq_fintype_card] using liminf_ratio_ge_inv_card_G K L τ
 
 end Chebotarev
