@@ -80,6 +80,41 @@ variable {ι : Type*} [Fintype ι]
 /-- The image of `ι → ℤ` inside `ι → ℝ`, abbreviated as in `LatticePointCount`. -/
 local notation "Λ" => span ℤ (Set.range (Pi.basisFun ℝ ι))
 
+private theorem isBounded_image_smul_add {δ : Type*} [Fintype δ] {M : ℝ≥0}
+    {φ : (δ → ℝ) → (ι → ℝ)} (hφ : LipschitzWith M φ) (c : ℝ) (v : ι → ℝ)
+    {A : Set (δ → ℝ)} (hA : Bornology.IsBounded A) :
+    Bornology.IsBounded ((fun y ↦ v + c • φ y) '' A) := by
+  have hb : Bornology.IsBounded (φ '' A) := hφ.isBounded_image hA
+  have heq : (fun y ↦ v + c • φ y) '' A = v +ᵥ (c • (φ '' A)) := by
+    ext z
+    simp only [Set.mem_image, Set.mem_vadd_set, Set.mem_smul_set]
+    constructor
+    · rintro ⟨y, hy, rfl⟩; exact ⟨c • φ y, ⟨φ y, ⟨y, hy, rfl⟩, rfl⟩, rfl⟩
+    · rintro ⟨w, ⟨u, ⟨y, hy, rfl⟩, rfl⟩, rfl⟩; exact ⟨y, hy, rfl⟩
+  rw [heq]
+  exact (hb.smul₀ c).vadd v
+
+private theorem diam_ceil_fibre_le {d : ℕ} (N : ℕ) (hN0 : (0 : ℝ) < N) (w : Fin d → ℤ) :
+    Metric.diam (Set.Icc (0 : Fin d → ℝ) 1 ∩ (fun y k ↦ ⌈(N : ℝ) * y k⌉) ⁻¹' {w}) ≤ 1 / N := by
+  refine Metric.diam_le_of_forall_dist_le (by positivity) fun y hy y' hy' ↦ ?_
+  rw [dist_pi_le_iff (by positivity)]
+  intro k
+  have hyv : (⌈(N : ℝ) * y k⌉ : ℤ) = w k := congrFun hy.2 k
+  have hyv' : (⌈(N : ℝ) * y' k⌉ : ℤ) = w k := congrFun hy'.2 k
+  have hce : ⌈(N : ℝ) * y k⌉ = ⌈(N : ℝ) * y' k⌉ := hyv.trans hyv'.symm
+  have h1 : (⌈(N : ℝ) * y k⌉ : ℝ) - 1 < (N : ℝ) * y k ∧ (N : ℝ) * y k ≤ ⌈(N : ℝ) * y k⌉ :=
+    Int.ceil_eq_iff.mp rfl
+  have h2 : (⌈(N : ℝ) * y' k⌉ : ℝ) - 1 < (N : ℝ) * y' k ∧ (N : ℝ) * y' k ≤ ⌈(N : ℝ) * y' k⌉ :=
+    Int.ceil_eq_iff.mp rfl
+  rw [hce] at h1
+  have habs : |(N : ℝ) * y k - (N : ℝ) * y' k| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> nlinarith [h1.1, h1.2, h2.1, h2.2]
+  rw [Real.dist_eq, show y k - y' k = ((N : ℝ) * y k - (N : ℝ) * y' k) / N by
+      field_simp, abs_div, abs_of_pos hN0]
+  rw [div_le_div_iff_of_pos_right hN0]
+  exact habs
+
 /-- **Real-scale scaled-translated chart count.** For an `M`-Lipschitz map `φ` and a real scale
 `c ≥ 1`, the number of unit grid cells (`index 1`) meeting the scaled-and-translated chart image
 `{v + c • φ y : y ∈ [0,1]ᵈ⁻¹}` is at most `(2⌈M⌉₊ + 1)ᵈ · (⌈c⌉₊ + 1)ᵈ⁻¹ = O(cᵈ⁻¹)`. This is the
@@ -101,42 +136,14 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
   have hcN : c ≤ (N : ℝ) := Nat.le_ceil c
   set ψ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) := fun y ↦ v + c • φ y with hψ
   have hψbdd : ∀ A : Set (Fin (Fintype.card ι - 1) → ℝ), Bornology.IsBounded A →
-      Bornology.IsBounded (ψ '' A) := by
-    intro A hA
-    have hb : Bornology.IsBounded (φ '' A) := hφ.isBounded_image hA
-    have heq : ψ '' A = v +ᵥ (c • (φ '' A)) := by
-      ext z
-      simp only [hψ, Set.mem_image, Set.mem_vadd_set, Set.mem_smul_set]
-      constructor
-      · rintro ⟨y, hy, rfl⟩; exact ⟨c • φ y, ⟨φ y, ⟨y, hy, rfl⟩, rfl⟩, rfl⟩
-      · rintro ⟨w, ⟨u, ⟨y, hy, rfl⟩, rfl⟩, rfl⟩; exact ⟨y, hy, rfl⟩
-    rw [heq]
-    exact (hb.smul₀ c).vadd v
+      Bornology.IsBounded (ψ '' A) := fun A hA ↦ isBounded_image_smul_add hφ c v hA
   set q : (Fin (Fintype.card ι - 1) → ℝ) → (Fin (Fintype.card ι - 1) → ℤ) :=
     fun y k ↦ ⌈(N : ℝ) * y k⌉ with hq
   set T : Finset (Fin (Fintype.card ι - 1) → ℤ) :=
     Finset.Icc (0 : Fin (Fintype.card ι - 1) → ℤ) (fun _ ↦ (N : ℤ)) with hT
   have hdiam : ∀ w : Fin (Fintype.card ι - 1) → ℤ,
-      Metric.diam (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w}) ≤ 1 / N := by
-    intro w
-    refine Metric.diam_le_of_forall_dist_le (by positivity) fun y hy y' hy' ↦ ?_
-    rw [dist_pi_le_iff (by positivity)]
-    intro k
-    have hyv : (⌈(N : ℝ) * y k⌉ : ℤ) = w k := congrFun hy.2 k
-    have hyv' : (⌈(N : ℝ) * y' k⌉ : ℤ) = w k := congrFun hy'.2 k
-    have hce : ⌈(N : ℝ) * y k⌉ = ⌈(N : ℝ) * y' k⌉ := hyv.trans hyv'.symm
-    have h1 : (⌈(N : ℝ) * y k⌉ : ℝ) - 1 < (N : ℝ) * y k ∧ (N : ℝ) * y k ≤ ⌈(N : ℝ) * y k⌉ :=
-      Int.ceil_eq_iff.mp rfl
-    have h2 : (⌈(N : ℝ) * y' k⌉ : ℝ) - 1 < (N : ℝ) * y' k ∧ (N : ℝ) * y' k ≤ ⌈(N : ℝ) * y' k⌉ :=
-      Int.ceil_eq_iff.mp rfl
-    rw [hce] at h1
-    have habs : |(N : ℝ) * y k - (N : ℝ) * y' k| ≤ 1 := by
-      rw [abs_le]
-      constructor <;> nlinarith [h1.1, h1.2, h2.1, h2.2]
-    rw [Real.dist_eq, show y k - y' k = ((N : ℝ) * y k - (N : ℝ) * y' k) / N by
-        field_simp, abs_div, abs_of_pos hN0]
-    rw [div_le_div_iff_of_pos_right hN0]
-    exact habs
+      Metric.diam (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w}) ≤ 1 / N :=
+    fun w ↦ diam_ceil_fibre_le N hN0 w
   have hcover : index 1 '' (ψ '' Set.Icc 0 1) ⊆
       ⋃ w ∈ T, index 1 '' (ψ '' (Set.Icc (0 : Fin (Fintype.card ι - 1) → ℝ) 1 ∩ q ⁻¹' {w})) := by
     rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
@@ -270,13 +277,9 @@ private theorem abs_cardR_translate_sub_volume_le {s : Set (ι → ℝ)}
     exact Set.iUnion_mono fun j ↦ (hchart_eq j).le
   have hbdcell : (index 1 '' frontier R).ncard ≤
       (m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι) * (⌈c⌉₊ + 1) ^ (Fintype.card ι - 1) := by
-    have hfin : ∀ j : Fin m, (index 1 '' ((fun y ↦ (-w) + c • φ j y) '' Set.Icc 0 1)).Finite := by
-      intro j
-      refine setFinite_index_image_of_isBounded 1 ?_
-      have hb : Bornology.IsBounded (φ j '' Set.Icc 0 1) :=
-        (hφ j).isBounded_image (Metric.isBounded_Icc 0 1)
-      rw [← hchart_eq j]
-      exact ((hb.smul₀ c).vadd (-w))
+    have hfin : ∀ j : Fin m, (index 1 '' ((fun y ↦ (-w) + c • φ j y) '' Set.Icc 0 1)).Finite :=
+      fun j ↦ setFinite_index_image_of_isBounded 1
+        (isBounded_image_smul_add (hφ j) c (-w) (Metric.isBounded_Icc 0 1))
     have hsub : index 1 '' frontier R ⊆
         ⋃ j, index 1 '' ((fun y ↦ (-w) + c • φ j y) '' Set.Icc 0 1) := by
       rw [← Set.image_iUnion]
@@ -344,7 +347,7 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
     rw [Set.image_iUnion]
     refine Set.iUnion_mono fun j ↦ ?_
     rw [Set.image_image]
-    exact le_of_eq rfl
+    exact le_rfl
   have hvolD' : MeasureTheory.volume.real D' =
       MeasureTheory.volume.real D / |LinearMap.det (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ))| := by
     have hcoe : (⇑T.symm : (ι → ℝ) → (ι → ℝ)) = ⇑(T.symm : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)) := rfl
@@ -368,22 +371,9 @@ theorem exists_card_coset_inter_smul_sub_volume_mul_rpow_le
     rw [← Nat.card_image_of_injective hinj, Set.image_inter hinj]
     have h1 : T.symm '' (ξ +ᵥ (T '' (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ))))
         = (T.symm ξ) +ᵥ (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)) := by
-      rw [show (ξ +ᵥ (T '' (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ))))
-            = (fun x ↦ ξ + x) '' (T '' (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)))
-          from rfl, Set.image_image, Set.image_image,
-        show ((T.symm ξ) +ᵥ (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)))
-            = (fun z ↦ T.symm ξ + z) '' (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ))
-          from rfl]
-      apply Set.image_congr'
-      intro z
-      simp only [map_add, LinearEquiv.symm_apply_apply]
-    have h2 : T.symm '' (t • D) = t • D' := by
-      rw [hD']
-      ext z
-      simp only [Set.mem_image, Set.mem_smul_set]
-      constructor
-      · rintro ⟨x, ⟨y, hy, rfl⟩, rfl⟩; exact ⟨T.symm y, ⟨y, hy, rfl⟩, by rw [map_smul]⟩
-      · rintro ⟨x, ⟨y, hy, rfl⟩, rfl⟩; exact ⟨t • y, ⟨y, hy, rfl⟩, by rw [map_smul]⟩
+      rw [← Set.image_vadd, ← Set.image_vadd, Set.image_image, Set.image_image]
+      exact Set.image_congr' (fun z ↦ by simp [vadd_eq_add, map_add])
+    have h2 : T.symm '' (t • D) = t • D' := by rw [hD', image_smul_set]
     rw [h1, h2, Set.inter_comm]
     have hbij : ↑(D' ∩ t⁻¹ • ((T.symm ξ) +ᵥ
           (span ℤ (Set.range (Pi.basisFun ℝ ι)) : Set (ι → ℝ)))) ≃
@@ -405,24 +395,13 @@ private theorem natCast_algebraNorm_add_nsmul_mul {K : Type*} [Field K] [NumberF
     ((Algebra.norm ℤ (x + (M : 𝓞 K) * y) : ℤ) : ZMod M) = ((Algebra.norm ℤ x : ℤ) : ZMod M) := by
   classical
   let b := Module.Free.chooseBasis ℤ (𝓞 K)
-  have hN : ∀ z : 𝓞 K, (Algebra.norm ℤ z : ℤ) = (Algebra.leftMulMatrix b z).det :=
-    fun z ↦ Algebra.norm_eq_matrix_det b z
-  rw [hN, hN]
-  rw [show ((Algebra.leftMulMatrix b (x + (M : 𝓞 K) * y)).det : ZMod M) =
-      (((Int.castRingHom (ZMod M)).mapMatrix
-        (Algebra.leftMulMatrix b (x + (M : 𝓞 K) * y))).det) by rw [← RingHom.map_det]; rfl]
-  rw [show ((Algebra.leftMulMatrix b x).det : ZMod M) =
-      (((Int.castRingHom (ZMod M)).mapMatrix (Algebra.leftMulMatrix b x)).det) by
-        rw [← RingHom.map_det]; rfl]
+  rw [Algebra.norm_eq_matrix_det b, Algebra.norm_eq_matrix_det b, Int.cast_det, Int.cast_det]
   congr 1
-  have hMy : (M : 𝓞 K) * y = M • y := by rw [nsmul_eq_mul]
-  rw [hMy, map_add, map_nsmul]
+  rw [show (M : 𝓞 K) * y = M • y from (nsmul_eq_mul _ _).symm, map_add, map_nsmul]
   ext i j
-  simp only [Matrix.add_apply, RingHom.mapMatrix_apply, Matrix.map_apply, Matrix.smul_apply,
-    eq_intCast, Int.cast_add]
+  simp only [Matrix.map_apply, Matrix.add_apply, Matrix.smul_apply, Int.cast_add]
   rw [show (((M • (Algebra.leftMulMatrix b) y i j) : ℤ) : ZMod M) = 0 by
-    rw [nsmul_eq_mul, Int.cast_mul, Int.cast_natCast, ZMod.natCast_self, zero_mul]]
-  rw [add_zero]
+    rw [nsmul_eq_mul, Int.cast_mul, Int.cast_natCast, ZMod.natCast_self, zero_mul], add_zero]
 
 open Classical NumberField.InfinitePlace in
 /-- **Signed product formula for the rational norm.** For `y : K`,
@@ -442,11 +421,11 @@ private theorem norm_eq_prod_real_emb_mul_prod_complex {K : Type*} [Field K] [Nu
       ((∏ w : {w : InfinitePlace K // IsReal w}, embedding_of_isReal w.2 y : ℝ) : ℂ) *
         ((∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) y‖ ^ 2 : ℝ) : ℂ) := by
     have hperplace : ∀ w : InfinitePlace K,
-        ∏ ψ ∈ Finset.univ.filter (fun ψ : K →+* ℂ => mk ψ = w), ψ y =
+        ∏ ψ ∈ Finset.univ.filter (fun ψ : K →+* ℂ ↦ mk ψ = w), ψ y =
           if hw : IsReal w then ((embedding_of_isReal hw y : ℝ) : ℂ)
           else (‖(embedding w) y‖ ^ 2 : ℝ) := by
       intro w
-      have hfilter : Finset.univ.filter (fun ψ : K →+* ℂ => mk ψ = w)
+      have hfilter : Finset.univ.filter (fun ψ : K →+* ℂ ↦ mk ψ = w)
           = {embedding w, ComplexEmbedding.conjugate (embedding w)} := by
         ext ψ
         simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert,
@@ -465,16 +444,16 @@ private theorem norm_eq_prod_real_emb_mul_prod_complex {K : Type*} [Field K] [Nu
         · rw [Ne, eq_comm, ← ComplexEmbedding.isReal_iff, ← isReal_iff]; exact hw
     have hemb : (algebraMap ℚ ℂ) (Algebra.norm ℚ y) = ∏ ψ : K →+* ℂ, ψ y := by
       rw [Algebra.norm_eq_prod_embeddings ℚ ℂ y]
-      exact (Fintype.prod_equiv RingHom.equivRatAlgHom (fun ψ : K →+* ℂ => ψ y)
-        (fun σ : K →ₐ[ℚ] ℂ => σ y) (fun ψ => by simp [RingHom.equivRatAlgHom_apply])).symm
+      exact (Fintype.prod_equiv RingHom.equivRatAlgHom (fun ψ : K →+* ℂ ↦ ψ y)
+        (fun σ : K →ₐ[ℚ] ℂ ↦ σ y) (fun ψ ↦ by simp [RingHom.equivRatAlgHom_apply])).symm
     rw [show ((Algebra.norm ℚ y : ℝ) : ℂ) = (algebraMap ℚ ℂ) (Algebra.norm ℚ y) by
         rw [eq_ratCast (algebraMap ℚ ℂ), Complex.ofReal_ratCast], hemb,
-      ← Finset.prod_fiberwise (g := fun ψ : K →+* ℂ => mk ψ) (f := fun ψ => ψ y) Finset.univ]
+      ← Finset.prod_fiberwise (g := fun ψ : K →+* ℂ ↦ mk ψ) (f := fun ψ ↦ ψ y) Finset.univ]
     simp_rw [hperplace]
     rw [prod_eq_prod_mul_prod]
     congr 1
-    · rw [Finset.prod_congr rfl (fun w _ => by rw [dif_pos w.2]), Complex.ofReal_prod]
-    · rw [Finset.prod_congr rfl (fun w _ => by rw [dif_neg (not_isReal_iff_isComplex.mpr w.2)]),
+    · rw [Finset.prod_congr rfl (fun w _ ↦ by rw [dif_pos w.2]), Complex.ofReal_prod]
+    · rw [Finset.prod_congr rfl (fun w _ ↦ by rw [dif_neg (not_isReal_iff_isComplex.mpr w.2)]),
         Complex.ofReal_prod]
   exact_mod_cast hcc
 
@@ -485,12 +464,12 @@ private theorem prod_eq_neg_one_pow_card_mul_prod_abs {ι : Type*} [Fintype ι]
     (f : ι → R) (hpos : ∀ w ∉ s, 0 < f w) (hneg : ∀ w ∈ s, f w < 0) :
     (∏ w, f w) = (-1) ^ (s.card) * (∏ w, |f w|) := by
   classical
-  rw [← Finset.prod_mul_prod_compl s f, ← Finset.prod_mul_prod_compl s (fun w => |f w|),
+  rw [← Finset.prod_mul_prod_compl s f, ← Finset.prod_mul_prod_compl s (fun w ↦ |f w|),
     show ((-1 : R)) ^ s.card = ∏ w ∈ s, (-1 : R) by rw [Finset.prod_const],
     ← mul_assoc, ← Finset.prod_mul_distrib]
   congr 1
-  · exact Finset.prod_congr rfl (fun w hw => by rw [neg_one_mul, abs_of_neg (hneg w hw), neg_neg])
-  · exact Finset.prod_congr rfl (fun w hw => (abs_of_pos (hpos w (Finset.mem_compl.mp hw))).symm)
+  · exact Finset.prod_congr rfl (fun w hw ↦ by rw [neg_one_mul, abs_of_neg (hneg w hw), neg_neg])
+  · exact Finset.prod_congr rfl (fun w hw ↦ (abs_of_pos (hpos w (Finset.mem_compl.mp hw))).symm)
 
 open Classical NumberField.InfinitePlace NumberField.mixedEmbedding in
 /-- **Sign of the integer norm on a sign-orthant.** If the real coordinates of
@@ -507,16 +486,16 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
     rw [← Algebra.coe_norm_int]; push_cast; ring
   have hcpx : 0 ≤
       (∏ w : {w : InfinitePlace K // IsComplex w}, ‖(w.1.embedding) (y : K)‖ ^ 2) :=
-    Finset.prod_nonneg (fun w _ => sq_nonneg _)
+    Finset.prod_nonneg (fun w _ ↦ sq_nonneg _)
   have hmix : ∀ w : {w : InfinitePlace K // IsReal w},
-      embedding_of_isReal w.2 (y : K) = (mixedEmbedding K (y : K)).1 w := fun w => by
+      embedding_of_isReal w.2 (y : K) = (mixedEmbedding K (y : K)).1 w := fun w ↦ by
     rw [mixedEmbedding_apply_isReal]
-  have hneg' : ∀ w ∈ s, embedding_of_isReal w.2 (y : K) < 0 := fun w hw => by
+  have hneg' : ∀ w ∈ s, embedding_of_isReal w.2 (y : K) < 0 := fun w hw ↦ by
     rw [hmix]; exact hneg w hw
-  have hpos' : ∀ w ∉ s, 0 < embedding_of_isReal w.2 (y : K) := fun w hw => by
+  have hpos' : ∀ w ∉ s, 0 < embedding_of_isReal w.2 (y : K) := fun w hw ↦ by
     rw [hmix]; exact hpos w hw
   have hsign := prod_eq_neg_one_pow_card_mul_prod_abs s
-    (fun w : {w : InfinitePlace K // IsReal w} => embedding_of_isReal w.2 (y : K)) hpos' hneg'
+    (fun w : {w : InfinitePlace K // IsReal w} ↦ embedding_of_isReal w.2 (y : K)) hpos' hneg'
   have hnf := norm_eq_prod_real_emb_mul_prod_complex (K := K) (y : K)
   have habs : |((Algebra.norm ℚ (y : K) : ℝ))|
       = (∏ w : {w : InfinitePlace K // IsReal w}, |embedding_of_isReal w.2 (y : K)|) *
@@ -534,13 +513,8 @@ private theorem natAbs_norm_eq_neg_one_pow_mul_norm {K : Type*} [Field K] [Numbe
       rw [hcoe]
       exact hkeyR
     exact_mod_cast hZ
-  have hsq : ((-1 : ℤ)) ^ s.card * (-1) ^ s.card = 1 := by
-    rw [← pow_add, ← two_mul, pow_mul]; simp
-  calc ((Algebra.norm ℤ y).natAbs : ℤ)
-      = 1 * ((Algebra.norm ℤ y).natAbs : ℤ) := (one_mul _).symm
-    _ = ((-1) ^ s.card * (-1) ^ s.card) * ((Algebra.norm ℤ y).natAbs : ℤ) := by rw [hsq]
-    _ = (-1) ^ s.card * ((-1) ^ s.card * ((Algebra.norm ℤ y).natAbs : ℤ)) := by ring
-    _ = (-1) ^ s.card * (Algebra.norm ℤ y : ℤ) := by rw [← hZ']
+  conv_rhs => rw [hZ']
+  rw [← mul_assoc, ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul]
 
 open Ideal in
 /-- **Class split of the residue count.** The number of nonzero integral ideals of norm `≤ N`
@@ -559,34 +533,34 @@ private theorem card_norm_le_residue_eq_sum_class {K : Type*} [Field K] [NumberF
     Ideal.finite_setOf_absNorm_le₀ N
   have hfin : Finite {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} :=
-    Finite.of_injective (fun I => (⟨I.1, I.2.1⟩ :
+    Finite.of_injective (fun I ↦ (⟨I.1, I.2.1⟩ :
       {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N}))
-      (fun x y h => Subtype.ext (by simpa using h))
+      (fun x y h ↦ Subtype.ext (by simpa using h))
   have hfinC : ∀ C : ClassGroup (𝓞 K), Finite {I : (Ideal (𝓞 K))⁰ //
       (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
-        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} := fun C =>
-    Finite.of_injective (fun I => (⟨I.1, I.2.1.1⟩ :
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} := fun C ↦
+    Finite.of_injective (fun I ↦ (⟨I.1, I.2.1.1⟩ :
       {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N}))
-      (fun x y h => Subtype.ext (by simpa using h))
+      (fun x y h ↦ Subtype.ext (by simpa using h))
   have hF : Fintype {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} := Fintype.ofFinite _
   have hFC : ∀ C, Fintype {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} :=
-    fun C => Fintype.ofFinite _
+    fun C ↦ Fintype.ofFinite _
   rw [Nat.card_eq_fintype_card,
-    Finset.sum_congr rfl (fun C _ => Nat.card_eq_fintype_card (α := {I : (Ideal (𝓞 K))⁰ //
+    Finset.sum_congr rfl (fun C _ ↦ Nat.card_eq_fintype_card (α := {I : (Ideal (𝓞 K))⁰ //
       (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C})),
     ← Fintype.card_sigma]
   refine Fintype.card_congr ((Equiv.sigmaFiberEquiv (fun I :
     {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} => ClassGroup.mk0 I.1)).symm.trans ?_)
-  refine Equiv.sigmaCongrRight (fun C => ?_)
+      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a} ↦ ClassGroup.mk0 I.1)).symm.trans ?_)
+  refine Equiv.sigmaCongrRight (fun C ↦ ?_)
   exact {
-    toFun := fun I => ⟨I.1.1, I.1.2, I.2⟩
-    invFun := fun I => ⟨⟨I.1, I.2.1⟩, I.2.2⟩
-    left_inv := fun _ => rfl
-    right_inv := fun _ => rfl }
+    toFun := fun I ↦ ⟨I.1.1, I.1.2, I.2⟩
+    invFun := fun I ↦ ⟨⟨I.1, I.2.1⟩, I.2.2⟩
+    left_inv := fun _ ↦ rfl
+    right_inv := fun _ ↦ rfl }
 
 /-- **Modular cancellation.** `m ≡ a (mod c)` iff `m·NJ ≡ a·NJ (mod c·NJ)` (for `NJ > 0`).
 This transports the norm residue through the principalization map `I ↦ J · I`, under which the
@@ -596,7 +570,7 @@ private theorem natCast_eq_iff_mul_natCast_eq (cc NJ m a : ℕ) (hNJ : 0 < NJ) :
       (((m * NJ : ℕ) : ZMod (cc * NJ)) = ((a * NJ : ℕ) : ZMod (cc * NJ))) := by
   rw [ZMod.natCast_eq_natCast_iff, ZMod.natCast_eq_natCast_iff, Nat.ModEq, Nat.ModEq,
     Nat.mul_mod_mul_right, Nat.mul_mod_mul_right]
-  exact ⟨fun h => by rw [h], fun h => Nat.eq_of_mul_eq_mul_right hNJ h⟩
+  exact ⟨fun h ↦ by rw [h], fun h ↦ Nat.eq_of_mul_eq_mul_right hNJ h⟩
 
 open Ideal Submodule in
 /-- **Principalization correspondence (per ideal).** Under `I ↦ J · I` (`Equiv.dvd J`, with
@@ -664,7 +638,7 @@ private theorem card_principalize {K : Type*} [Field K] [NumberField K] (c : ℕ
   classical
   simp_rw [← nonZeroDivisors_dvd_iff_dvd_coe]
   exact Nat.card_congr
-    (((Equiv.dvd J).subtypeEquiv (fun I => principalize_iff c a N C J I hJ hNJ)).trans
+    (((Equiv.dvd J).subtypeEquiv (fun I ↦ principalize_iff c a N C J I hJ hNJ)).trans
       (Equiv.subtypeSubtypeEquivSubtypeInter (fun I : (Ideal (𝓞 K))⁰ ↦ J ∣ I) _))
 
 /-- **`ℤ`-span transport along an `ℝ`-linear equivalence.** For an `ℝ`-linear equivalence `f` and a
@@ -672,12 +646,7 @@ set `S`, the image of the `ℤ`-span of `S` is the `ℤ`-span of the image (as s
 private theorem map_span_int_linearEquiv {E F : Type*} [AddCommGroup E] [Module ℝ E]
     [AddCommGroup F] [Module ℝ F] (f : E ≃ₗ[ℝ] F) (S : Set E) :
     f '' (span ℤ S : Set E) = (span ℤ (f '' S) : Set F) := by
-  have key : (span ℤ ((f.restrictScalars ℤ) '' S) : Submodule ℤ F)
-      = (span ℤ S).map (f.restrictScalars ℤ).toLinearMap := (Submodule.map_span _ S).symm
-  have himg : (f '' (span ℤ S : Set E))
-      = ((span ℤ S).map (f.restrictScalars ℤ).toLinearMap : Set F) := by
-    rw [Submodule.map_coe]; rfl
-  rw [himg, ← key]; rfl
+  simpa using congrArg SetLike.coe (Submodule.map_span (f.restrictScalars ℤ).toLinearMap S)
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
 /-- **Homogeneity of the norm-bounded cone region.** For `t ≥ 1`, the slice of the fundamental
@@ -722,8 +691,8 @@ private theorem exists_latticeEquiv_image_idealLattice {K : Type*} [Field K] [Nu
         = ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
             (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)) := by
   classical
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
-  set I := FractionalIdeal.mk0 K J with hI
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
+  set I := FractionalIdeal.mk0 K J
   have e : Module.Free.ChooseBasisIndex ℤ I ≃ index K := by
     apply Fintype.equivOfCardEq
     rw [← Module.finrank_eq_card_chooseBasisIndex, NumberField.fractionalIdeal_rank,
@@ -759,11 +728,11 @@ private theorem exists_lipschitz_cube_cover_hyperplane_slab {ι : Type*} [Fintyp
   have hcard : Fintype.card {i : ι // i ≠ j} = Fintype.card ι - 1 := by
     rw [Fintype.card_subtype_compl]; simp
   set σ : Fin (Fintype.card ι - 1) ≃ {i : ι // i ≠ j} :=
-    (Fintype.equivFinOfCardEq hcard).symm with hσ
+    (Fintype.equivFinOfCardEq hcard).symm
   set φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) :=
-    fun c i => if h : i = j then 0 else (2 * R) * c (σ.symm ⟨i, h⟩) - R with hφ
+    fun c i ↦ if h : i = j then 0 else (2 * R) * c (σ.symm ⟨i, h⟩) - R with hφ
   refine ⟨(2 * R).toNNReal, φ, ?_, ?_⟩
-  · refine LipschitzWith.of_dist_le_mul fun c c' => ?_
+  · refine LipschitzWith.of_dist_le_mul fun c c' ↦ ?_
     rw [dist_pi_le_iff (by positivity)]
     intro i
     by_cases hij : i = j
@@ -785,7 +754,7 @@ private theorem exists_lipschitz_cube_cover_hyperplane_slab {ι : Type*} [Fintyp
       by_cases hij : i = j
       · rw [dif_pos hij, hx0]; rfl
       · rw [dif_neg hij, hx0]; simp [← hR0]
-    · refine ⟨fun k => (x (σ k) + R) / (2 * R), ⟨?_, ?_⟩, ?_⟩
+    · refine ⟨fun k ↦ (x (σ k) + R) / (2 * R), ⟨?_, ?_⟩, ?_⟩
       · intro k; simp only [Pi.zero_apply]
         rw [le_div_iff₀ (by positivity)]; have := (abs_le.mp (hxbd (σ k))).1; linarith
       · intro k; simp only [Pi.one_apply]
@@ -807,17 +776,17 @@ private theorem exists_lipschitz_cover_union {ι : Type*} [Fintype ι] (A B : Se
       (∀ j, LipschitzWith M (φ j)) ∧ (A ∪ B : Set (ι → ℝ)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := by
   obtain ⟨m1, M1, φ1, hL1, hc1⟩ := h1
   obtain ⟨m2, M2, φ2, hL2, hc2⟩ := h2
-  refine ⟨m1 + m2, max M1 M2, fun j => Sum.elim φ1 φ2 (finSumFinEquiv.symm j), ?_, ?_⟩
+  refine ⟨m1 + m2, max M1 M2, fun j ↦ Sum.elim φ1 φ2 (finSumFinEquiv.symm j), ?_, ?_⟩
   · intro j
     simp only
     rcases h : finSumFinEquiv.symm j with k | k
     · rw [Sum.elim_inl]; exact (hL1 k).weaken (le_max_left _ _)
     · rw [Sum.elim_inr]; exact (hL2 k).weaken (le_max_right _ _)
   · refine Set.union_subset ?_ ?_
-    · refine hc1.trans (Set.iUnion_subset fun k => ?_)
+    · refine hc1.trans (Set.iUnion_subset fun k ↦ ?_)
       refine Set.subset_iUnion_of_subset (finSumFinEquiv (Sum.inl k)) ?_
       simp only [Equiv.symm_apply_apply, Sum.elim_inl, subset_refl]
-    · refine hc2.trans (Set.iUnion_subset fun k => ?_)
+    · refine hc2.trans (Set.iUnion_subset fun k ↦ ?_)
       refine Set.subset_iUnion_of_subset (finSumFinEquiv (Sum.inr k)) ?_
       simp only [Equiv.symm_apply_apply, Sum.elim_inr, subset_refl]
 
@@ -833,13 +802,13 @@ private theorem exists_lipschitz_cover_iUnion {ι : Type*} [Fintype ι] {γ : Ty
   classical
   have : Fintype γ := Fintype.ofFinite γ
   choose mf Mf φf hLf hcf using h
-  set e := Fintype.equivFin (Σ g, Fin (mf g)) with he
+  set e := Fintype.equivFin (Σ g, Fin (mf g))
   set Ψ : (Σ g, Fin (mf g)) → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ) :=
-    fun p => φf p.1 p.2 with hΨ
-  refine ⟨Fintype.card (Σ g, Fin (mf g)), Finset.univ.sup Mf, fun j => Ψ (e.symm j), ?_, ?_⟩
+    fun p ↦ φf p.1 p.2 with hΨ
+  refine ⟨Fintype.card (Σ g, Fin (mf g)), Finset.univ.sup Mf, fun j ↦ Ψ (e.symm j), ?_, ?_⟩
   · intro j
     exact (hLf (e.symm j).1 (e.symm j).2).weaken (Finset.le_sup (Finset.mem_univ _))
-  · refine Set.iUnion_subset fun g => (hcf g).trans (Set.iUnion_subset fun k => ?_)
+  · refine Set.iUnion_subset fun g ↦ (hcf g).trans (Set.iUnion_subset fun k ↦ ?_)
     refine Set.subset_iUnion_of_subset (e ⟨g, k⟩) ?_
     simp only [hΨ, Equiv.symm_apply_apply, subset_refl]
 
@@ -850,44 +819,32 @@ in it, so a boundary point lies in the orthant but not its interior, forcing som
 private theorem frontier_signOrthant_subset {ι κ : Type*} [Finite κ] (g : κ → ι) (s : Finset κ) :
     frontier ({y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))})
       ⊆ ⋃ k : κ, {y : ι → ℝ | y (g k) = 0} := by
-  classical
-  have : Fintype κ := Fintype.ofFinite κ
   set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hO
   set Os : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) < 0) ∧ (∀ k ∉ s, 0 < y (g k))} with hOs
   have hOclosed : IsClosed O := by
-    rw [hO, setOf_and]
-    refine IsClosed.inter ?_ ?_
-    · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) ≤ 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) ≤ 0} := by
-        ext y; simp
-      rw [h]
-      exact isClosed_biInter (fun k _ => isClosed_le (continuous_apply (g k)) continuous_const)
-    · have h : {y : ι → ℝ | ∀ k ∉ s, 0 ≤ y (g k)}
-          = ⋂ k ∈ (sᶜ : Finset κ), {y : ι → ℝ | 0 ≤ y (g k)} := by ext y; simp
-      rw [h]
-      exact isClosed_biInter (fun k _ => isClosed_le continuous_const (continuous_apply (g k)))
+    simp only [hO, Set.setOf_and, Set.setOf_forall]
+    exact (isClosed_iInter fun k ↦ isClosed_iInter fun _ ↦
+        isClosed_le (continuous_apply (g k)) continuous_const).inter
+      (isClosed_iInter fun k ↦ isClosed_iInter fun _ ↦
+        isClosed_le continuous_const (continuous_apply (g k)))
   have hOsopen : IsOpen Os := by
-    rw [hOs, setOf_and]
-    refine IsOpen.inter ?_ ?_
-    · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) < 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) < 0} := by
-        ext y; simp
-      rw [h]
-      exact isOpen_biInter_finset (fun k _ => isOpen_lt (continuous_apply (g k)) continuous_const)
-    · have h : {y : ι → ℝ | ∀ k ∉ s, 0 < y (g k)}
-          = ⋂ k ∈ (sᶜ : Finset κ), {y : ι → ℝ | 0 < y (g k)} := by ext y; simp
-      rw [h]
-      exact isOpen_biInter_finset (fun k _ => isOpen_lt continuous_const (continuous_apply (g k)))
-  have hsub : Os ⊆ O := fun y hy => ⟨fun k hk => (hy.1 k hk).le, fun k hk => (hy.2 k hk).le⟩
+    simp only [hOs, Set.setOf_and, Set.setOf_forall]
+    exact (isOpen_iInter_of_finite fun k ↦ isOpen_iInter_of_finite fun _ ↦
+        isOpen_lt (continuous_apply (g k)) continuous_const).inter
+      (isOpen_iInter_of_finite fun k ↦ isOpen_iInter_of_finite fun _ ↦
+        isOpen_lt continuous_const (continuous_apply (g k)))
+  have hsub : Os ⊆ O := fun y hy ↦ ⟨fun k hk ↦ (hy.1 k hk).le, fun k hk ↦ (hy.2 k hk).le⟩
   intro y hy
   have hyO : y ∈ O := hOclosed.closure_eq ▸ frontier_subset_closure hy
   have hyni : y ∉ interior O := by
     rw [frontier_eq_closure_inter_closure] at hy
-    rw [interior_eq_compl_closure_compl]; exact fun hh => hh hy.2
+    rw [interior_eq_compl_closure_compl]; exact fun hh ↦ hh hy.2
   by_contra hcon
   simp only [Set.mem_iUnion, Set.mem_setOf_eq, not_exists] at hcon
   apply hyni
   exact mem_interior.mpr ⟨Os, hsub, hOsopen,
-    ⟨fun k hk => lt_of_le_of_ne (hyO.1 k hk) (hcon k),
-     fun k hk => lt_of_le_of_ne (hyO.2 k hk) (Ne.symm (hcon k))⟩⟩
+    ⟨fun k hk ↦ lt_of_le_of_ne (hyO.1 k hk) (hcon k),
+     fun k hk ↦ lt_of_le_of_ne (hyO.2 k hk) (Ne.symm (hcon k))⟩⟩
 
 /-- **Lipschitz frontier cover of an orthant-cut region.** If `D₀` is bounded with a Lipschitz cube
 cover of its frontier, then `D₀ ∩ orthant` (orthant cutting the coordinates `g k`) also has a
@@ -906,58 +863,33 @@ private theorem exists_frontier_cover_inter_orthant {ι : Type*} [Fintype ι] {�
   classical
   obtain ⟨R, hR0, hRbd⟩ : ∃ R : ℝ, 0 ≤ R ∧ ∀ x ∈ closure D₀, ∀ i, |x i| ≤ R := by
     obtain ⟨R, hR⟩ := isBounded_iff_forall_norm_le.mp hbdd.closure
-    refine ⟨max R 0, le_max_right _ _, fun x hx i => ?_⟩
+    refine ⟨max R 0, le_max_right _ _, fun x hx i ↦ ?_⟩
     calc |x i| = ‖x i‖ := (Real.norm_eq_abs _).symm
       _ ≤ ‖x‖ := norm_le_pi_norm x i
       _ ≤ max R 0 := le_max_of_le_left (hR x hx)
-  set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hO
+  set O : Set (ι → ℝ) := {y | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))}
   have hsub : frontier (D₀ ∩ O)
       ⊆ frontier D₀ ∪ ⋃ k : κ, {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R} := by
     refine (frontier_inter_subset D₀ O).trans (Set.union_subset ?_ ?_)
     · exact Set.inter_subset_left.trans Set.subset_union_left
-    · refine fun x hx => Or.inr ?_
+    · refine fun x hx ↦ Or.inr ?_
       obtain ⟨k, hxk⟩ := Set.mem_iUnion.mp (frontier_signOrthant_subset g s hx.2)
-      exact Set.mem_iUnion.mpr ⟨k, hxk, fun i => hRbd x hx.1 i⟩
+      exact Set.mem_iUnion.mpr ⟨k, hxk, hRbd x hx.1⟩
   obtain ⟨m, M, φ, hL, hc⟩ := exists_lipschitz_cover_union (frontier D₀)
     (⋃ k : κ, {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R}) hcov
-    (exists_lipschitz_cover_iUnion (fun k => {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R})
-      (fun k => by
+    (exists_lipschitz_cover_iUnion (fun k ↦ {x : ι → ℝ | x (g k) = 0 ∧ ∀ i, |x i| ≤ R})
+      (fun k ↦ by
         obtain ⟨M, φ, hL, hc⟩ := exists_lipschitz_cube_cover_hyperplane_slab (g k) hR0
-        exact ⟨1, M, fun _ => φ, fun _ => hL, hc.trans (Set.subset_iUnion_of_subset 0 subset_rfl)⟩))
+        exact ⟨1, M, fun _ ↦ φ, fun _ ↦ hL, hc.trans (Set.subset_iUnion_of_subset 0 subset_rfl)⟩))
   exact ⟨m, M, φ, hL, hsub.trans hc⟩
 
 /-- **Membership in the standard integer lattice ⟺ integer coordinates.** A point of `ι → ℝ` lies in
 `span ℤ (range (Pi.basisFun ℝ ι))` iff every coordinate is an integer. -/
 private theorem mem_span_int_basisFun_iff {ι : Type*} [Finite ι] (v : ι → ℝ) :
     v ∈ span ℤ (Set.range (Pi.basisFun ℝ ι)) ↔ ∀ i, ∃ n : ℤ, v i = (n : ℝ) := by
-  classical
   have : Fintype ι := Fintype.ofFinite ι
-  constructor
-  · intro hv i
-    induction hv using Submodule.span_induction with
-    | mem x hx =>
-      obtain ⟨j, rfl⟩ := hx
-      rw [Pi.basisFun_apply, Pi.single_apply]
-      by_cases hij : i = j
-      · exact ⟨1, by simp [hij]⟩
-      · exact ⟨0, by simp [hij]⟩
-    | zero => exact ⟨0, by simp⟩
-    | add x y _ _ ihx ihy =>
-      obtain ⟨a, ha⟩ := ihx; obtain ⟨b, hb⟩ := ihy
-      exact ⟨a + b, by rw [Pi.add_apply, ha, hb]; push_cast; ring⟩
-    | smul c x _ ih =>
-      obtain ⟨a, ha⟩ := ih
-      exact ⟨c * a, by rw [Pi.smul_apply, ha, zsmul_eq_mul]; push_cast; ring⟩
-  · intro h
-    choose n hn using h
-    have hv : v = ∑ i, (n i) • (Pi.basisFun ℝ ι i) := by
-      ext j
-      rw [Finset.sum_apply, hn j, Finset.sum_eq_single j]
-      · simp [Pi.basisFun_apply]
-      · intro b _ hbj; simp [Pi.basisFun_apply, Ne.symm hbj]
-      · intro hj; exact absurd (Finset.mem_univ j) hj
-    rw [hv]
-    exact sum_mem (fun i _ => zsmul_mem (subset_span (Set.mem_range_self i)) _)
+  simp only [(Pi.basisFun ℝ ι).mem_span_iff_repr_mem ℤ v, Pi.basisFun_repr,
+    Set.mem_range, eq_intCast, eq_comm]
 
 open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Units in
 open Classical in
@@ -992,10 +924,10 @@ private theorem card_isPrincipal_dvd_norm_le_residue {K : Type*} [Field K] [Numb
                 ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))) ∧
                 Ideal.absNorm I.1 = i} × torsion K :=
               Equiv.prodCongrLeft fun _ ↦ Equiv.subtypeSubtypeEquivSubtypeInter
-                (p := fun I : (Ideal (𝓞 K))⁰ => (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+                (p := fun I : (Ideal (𝓞 K))⁰ ↦ (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
                   (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
                   ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))
-                (q := fun I => Ideal.absNorm (I : Ideal (𝓞 K)) = i)
+                (q := fun I ↦ Ideal.absNorm (I : Ideal (𝓞 K)) = i)
           _ ≃ {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
                 (I : Ideal (𝓞 K)) ∧ Ideal.absNorm (I : Ideal (𝓞 K)) = i} × torsion K :=
               Equiv.prodCongrLeft fun _ ↦ Equiv.subtypeEquivRight fun I ↦ by
@@ -1007,25 +939,25 @@ private theorem card_isPrincipal_dvd_norm_le_residue {K : Type*} [Field K] [Numb
                 (idealSetEquivNorm K J i).symm
           _ ≃ {a : idealSet K J // intNorm (idealSetEquiv K J a).1 = i} := by
                 simp_rw [← intNorm_idealSetEquiv_apply, Nat.cast_inj]; rfl
-          _ ≃ _ := (Equiv.subtypeSubtypeEquivSubtype (p := fun a : idealSet K J =>
+          _ ≃ _ := (Equiv.subtypeSubtypeEquivSubtype (p := fun a : idealSet K J ↦
                 mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
                   ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
-                (q := fun a => intNorm (idealSetEquiv K J a).1 = i) fun {a} h ↦ by
+                (q := fun a ↦ intNorm (idealSetEquiv K J a).1 = i) fun {a} h ↦ by
                 rw [← intNorm_idealSetEquiv_apply, h]
                 exact ⟨by exact_mod_cast hile, by rw [h] at *; exact hib⟩).symm
-    · haveI : IsEmpty {a : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+    · have : IsEmpty {a : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
           ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} //
           intNorm (idealSetEquiv K J a.1).1 = i} := ⟨fun a ↦ hib (by rw [← a.2]; exact a.1.2.2)⟩
-      haveI : IsEmpty {a : ({I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+      have : IsEmpty {a : ({I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
           (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
           ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} × torsion K) //
           Ideal.absNorm a.1.1.1 = i} := ⟨fun a ↦ hib (by rw [← a.2]; exact a.1.1.2.2.2.2)⟩
       exact Equiv.equivOfIsEmpty _ _
-  · haveI : IsEmpty {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
+  · have : IsEmpty {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ I ∧ Submodule.IsPrincipal
         (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ s ∧
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} :=
       ⟨fun I ↦ absurd I.2.2.2.1 (not_le.mpr (lt_of_lt_of_le hs (Nat.cast_nonneg _)))⟩
-    haveI : IsEmpty {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
+    have : IsEmpty {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s ∧
         ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} :=
       ⟨fun a ↦ absurd a.2.1 (not_le.mpr (lt_of_lt_of_le hs (mixedEmbedding.norm_nonneg _)))⟩
     rw [Nat.card_of_isEmpty, Nat.card_of_isEmpty, zero_mul]
@@ -1055,9 +987,9 @@ private theorem exists_card_cell_sub_mul_rpow_le_explicit {ι : Type*} [Fintype 
         ≤ C * t ^ (Fintype.card ι - 1 : ℕ) := by
   classical
   haveI : Fintype κ := Fintype.ofFinite κ
-  set T' : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ) := (LinearEquiv.smulOfNeZero ℝ (ι → ℝ) (m : ℝ) hm).trans T with hT'
+  set T' : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ) := (LinearEquiv.smulOfNeZero ℝ (ι → ℝ) (m : ℝ) hm).trans T
   set Ds : Set (ι → ℝ) :=
-    D₀ ∩ {y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} with hDs
+    D₀ ∩ {y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))}
   have hDsbdd : Bornology.IsBounded Ds := hbdd.subset Set.inter_subset_left
   have hOclosed : IsClosed {y : ι → ℝ | (∀ k ∈ s, y (g k) ≤ 0) ∧ (∀ k ∉ s, 0 ≤ y (g k))} := by
     classical
@@ -1066,11 +998,11 @@ private theorem exists_card_cell_sub_mul_rpow_le_explicit {ι : Type*} [Fintype 
     · have h : {y : ι → ℝ | ∀ k ∈ s, y (g k) ≤ 0} = ⋂ k ∈ s, {y : ι → ℝ | y (g k) ≤ 0} := by
         ext y; simp
       rw [h]
-      exact isClosed_biInter (fun k _ => isClosed_le (continuous_apply (g k)) continuous_const)
+      exact isClosed_biInter (fun k _ ↦ isClosed_le (continuous_apply (g k)) continuous_const)
     · have h : {y : ι → ℝ | ∀ k ∉ s, 0 ≤ y (g k)}
           = ⋂ k ∈ (sᶜ : Finset κ), {y : ι → ℝ | 0 ≤ y (g k)} := by ext y; simp
       rw [h]
-      exact isClosed_biInter (fun k _ => isClosed_le continuous_const (continuous_apply (g k)))
+      exact isClosed_biInter (fun k _ ↦ isClosed_le continuous_const (continuous_apply (g k)))
   have hDsmeas : MeasurableSet Ds := hmeas.inter hOclosed.measurableSet
   obtain ⟨C, hC⟩ := exists_card_coset_inter_smul_sub_volume_mul_rpow_le T' Ds hDsbdd hDsmeas
     (exists_frontier_cover_inter_orthant g s D₀ hbdd hlip)
@@ -1113,7 +1045,7 @@ private theorem exists_int_coord_of_mem {K : Type*} [Field K] [NumberField K]
     (i : index K) :
     ∃ n : ℤ, (T.symm ((mixedEmbedding.stdBasis K).equivFunL x)) i = (n : ℝ) := by
   classical
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
   have hmem : Φ x ∈ T '' (span ℤ (Set.range (Pi.basisFun ℝ (index K)))) := by
     rw [hT]; exact ⟨x, hx, rfl⟩
   obtain ⟨v, hv, hveq⟩ := hmem
@@ -1144,23 +1076,23 @@ private theorem sub_mem_nsmul_of_coord_eq {K : Type*} [Field K] [NumberField K]
   rw [← hΦ] at hn₁ hn₂
   have hround : ∀ (x : mixedSpace K) (n : index K → ℤ),
       (∀ i, (T.symm (Φ x)) i = (n i : ℝ)) →
-        ∀ i, round ((T.symm (Φ x)) i) = n i := fun x n h i => by
+        ∀ i, round ((T.symm (Φ x)) i) = n i := fun x n h i ↦ by
     rw [h i, round_intCast]
-  have hdvd : ∀ i, (m : ℤ) ∣ (n₁ i - n₂ i) := fun i => by
+  have hdvd : ∀ i, (m : ℤ) ∣ (n₁ i - n₂ i) := fun i ↦ by
     have h := hcos i
     rw [hround x₁ n₁ hn₁ i, hround x₂ n₂ hn₂ i] at h
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd, Int.cast_sub, sub_eq_zero]
     exact h
   choose p hp using hdvd
-  have hdiff : T.symm (Φ x₁) - T.symm (Φ x₂) = (m : ℝ) • (fun i => (p i : ℝ)) := by
+  have hdiff : T.symm (Φ x₁) - T.symm (Φ x₂) = (m : ℝ) • (fun i ↦ (p i : ℝ)) := by
     funext i
     rw [Pi.sub_apply, Pi.smul_apply, hn₁ i, hn₂ i, smul_eq_mul]
     have hZ : (n₁ i - n₂ i : ℤ) = (m : ℤ) * p i := hp i
     have : (n₁ i : ℝ) - (n₂ i : ℝ) = (m : ℝ) * (p i : ℝ) := by exact_mod_cast hZ
     linarith
-  have hpmem : (fun i => (p i : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) :=
-    (mem_span_int_basisFun_iff _).mpr (fun i => ⟨p i, rfl⟩)
-  have hTp : T (fun i => (p i : ℝ)) ∈ Φ '' (mixedEmbedding.idealLattice K
+  have hpmem : (fun i ↦ (p i : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) :=
+    (mem_span_int_basisFun_iff _).mpr (fun i ↦ ⟨p i, rfl⟩)
+  have hTp : T (fun i ↦ (p i : ℝ)) ∈ Φ '' (mixedEmbedding.idealLattice K
       (FractionalIdeal.mk0 K J) : Set (mixedSpace K)) := by
     rw [← hT]; exact ⟨_, hpmem, rfl⟩
   obtain ⟨z, hzmem, hzeq⟩ := hTp
@@ -1202,6 +1134,13 @@ private theorem norm_zmod_eq_of_emb_sub_mem {K : Type*} [Field K] [NumberField K
   rw [hx]
   exact natCast_algebraNorm_add_nsmul_mul m y w
 
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone in
+private theorem mixedEmbedding_preimageOfMemIntegerSet_idealSetMap {K : Type*} [Field K]
+    [NumberField K] (J : (Ideal (𝓞 K))⁰) (a : idealSet K J) :
+    mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a) : 𝓞 K) : K) =
+      (a : mixedSpace K) := by
+  rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
+
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace in
 /-- **Residue ⟺ signed residue on an orthant.** On the orthant where the real coordinates of `a`
@@ -1215,11 +1154,11 @@ private theorem residue_iff_signed_on_orthant {K : Type*} [Field K] [NumberField
     ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)) ↔
       (((-1) ^ s.card * (Algebra.norm ℤ (preimageOfMemIntegerSet (idealSetMap K J a) : 𝓞 K) : ℤ) :
         ℤ) : ZMod m) = (b : ZMod m) := by
-  set gen : 𝓞 K := (preimageOfMemIntegerSet (idealSetMap K J a) : 𝓞 K) with hgen
-  have hema : mixedEmbedding K (gen : K) = (a : mixedSpace K) := by
-    rw [hgen, mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]
+  set gen : 𝓞 K := (preimageOfMemIntegerSet (idealSetMap K J a) : 𝓞 K)
+  have hema : mixedEmbedding K (gen : K) = (a : mixedSpace K) :=
+    mixedEmbedding_preimageOfMemIntegerSet_idealSetMap J a
   have hsign := natAbs_norm_eq_neg_one_pow_mul_norm gen s
-    (fun w hw => by rw [hema]; exact hneg w hw) (fun w hw => by rw [hema]; exact hpos w hw)
+    (fun w hw ↦ by rw [hema]; exact hneg w hw) (fun w hw ↦ by rw [hema]; exact hpos w hw)
   have hRes : intNorm (idealSetEquiv K J a).val = (Algebra.norm ℤ gen).natAbs := rfl
   have hcast : ((intNorm (idealSetEquiv K J a).val : ℕ) : ZMod m) =
       (((-1) ^ s.card * (Algebra.norm ℤ gen : ℤ) : ℤ) : ZMod m) := by
@@ -1241,7 +1180,7 @@ private theorem mem_coset_iff_cos_eq {K : Type*} [Field K] [NumberField K]
     (k : index K → ZMod m) {x : mixedSpace K}
     (hx : x ∈ mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)) :
     (mixedEmbedding.stdBasis K).equivFunL x ∈
-        ((T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+        ((T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
           (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
             (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ)))) ↔
       (∀ i, ((round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL x)) i) : ZMod m)) = k i) := by
@@ -1249,16 +1188,16 @@ private theorem mem_coset_iff_cos_eq {K : Type*} [Field K] [NumberField K]
   set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
   choose n hn using exists_int_coord_of_mem J T hT hx
   rw [← hΦ] at hn
-  have hround : ∀ i, round ((T.symm (Φ x)) i) = n i := fun i => by rw [hn i, round_intCast]
+  have hround : ∀ i, round ((T.symm (Φ x)) i) = n i := fun i ↦ by rw [hn i, round_intCast]
   simp only [hround, Set.mem_vadd_set, Set.mem_image, SetLike.mem_coe]
   have hgoal : (∀ i, ((n i : ZMod m)) = k i) ↔ (∀ i, (m : ℤ) ∣ (n i - (k i).val)) := by
-    refine forall_congr' fun i => ?_
+    refine forall_congr' fun i ↦ ?_
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd, Int.cast_sub, sub_eq_zero, Int.cast_natCast,
       ZMod.natCast_zmod_val]
   rw [hgoal]
   have hkey : ∀ p : index K → ℤ,
-      (T ((fun i => ((k i).val : ℝ)) + (m : ℝ) • (fun i => (p i : ℝ))) = Φ x) ↔
-        (∀ i, n i = (k i).val + (m : ℤ) * p i) := fun p => by
+      (T ((fun i ↦ ((k i).val : ℝ)) + (m : ℝ) • (fun i ↦ (p i : ℝ))) = Φ x) ↔
+        (∀ i, n i = (k i).val + (m : ℤ) * p i) := fun p ↦ by
     rw [← (LinearEquiv.eq_symm_apply T)]
     constructor
     · intro heq i
@@ -1275,15 +1214,24 @@ private theorem mem_coset_iff_cos_eq {K : Type*} [Field K] [NumberField K]
     rw [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, vadd_eq_add, ← map_add] at hweq
     rw [mem_span_int_basisFun_iff] at hv
     choose p hp using hv
-    have hpp : v = (fun i => (p i : ℝ)) := funext hp
+    have hpp : v = (fun i ↦ (p i : ℝ)) := funext hp
     rw [hpp] at hweq
-    exact fun i => ⟨p i, by rw [(hkey p).mp hweq i]; ring⟩
+    exact fun i ↦ ⟨p i, by rw [(hkey p).mp hweq i]; ring⟩
   · intro h
     choose p hp using h
-    refine ⟨(LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T (fun i => (p i : ℝ)),
-      ⟨_, (mem_span_int_basisFun_iff _).mpr (fun i => ⟨p i, rfl⟩), rfl⟩, ?_⟩
+    refine ⟨(LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T (fun i ↦ (p i : ℝ)),
+      ⟨_, (mem_span_int_basisFun_iff _).mpr (fun i ↦ ⟨p i, rfl⟩), rfl⟩, ?_⟩
     rw [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, vadd_eq_add, ← map_add]
-    exact (hkey p).mpr (fun i => by have := hp i; omega)
+    exact (hkey p).mpr fun i ↦ by have := hp i; lia
+
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
+  NumberField.InfinitePlace in
+private theorem realComponent_ne_zero_of_mem_fundamentalCone {K : Type*} [Field K] [NumberField K]
+    {x : mixedSpace K} (hx : x ∈ fundamentalCone K) (w : {w : InfinitePlace K // IsReal w}) :
+    x.1 w ≠ 0 := fun h ↦ by
+  have hp := fundamentalCone.normAtPlace_pos_of_mem hx w.1
+  rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
+  simp [h] at hp
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
@@ -1299,25 +1247,22 @@ private theorem mem_smul_cell_iff_norm_le_and_filter_eq {K : Type*} [Field K] [N
         (normLeOne K) ∩ {y : index K → ℝ |
           (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))}) ↔
       (mixedEmbedding.norm x ≤ t ^ Module.finrank ℚ K ∧
-        Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s) := by
+        Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w < 0) = s) := by
   classical
   set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
-  set d := Module.finrank ℚ K with hd
+  set d := Module.finrank ℚ K
   have hΦreal : ∀ (x : mixedSpace K) (w : {w : InfinitePlace K // IsReal w}),
-      Φ x (Sum.inl w) = x.1 w := fun x w => by
+      Φ x (Sum.inl w) = x.1 w := fun x w ↦ by
     rw [hΦ, Module.Basis.equivFunL_apply, mixedEmbedding.stdBasis_apply_isReal]
   have hcone : {x : mixedSpace K | x ∈ fundamentalCone K ∧ mixedEmbedding.norm x ≤ t ^ d}
       = t • normLeOne K := cone_normLe_eq_smul_normLeOne ht
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
   have htinv : (0 : ℝ) < t⁻¹ := inv_pos.mpr (lt_of_lt_of_le one_pos ht)
   have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
-    Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
+    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
   have hnz : ∀ x ∈ t • normLeOne K, ∀ w : {w : InfinitePlace K // IsReal w}, x.1 w ≠ 0 := by
     rintro _ ⟨z, hz, rfl⟩ w
-    have hcx : t • z ∈ fundamentalCone K := smul_mem_of_mem hz.1 ht0
-    have hp := fundamentalCone.normAtPlace_pos_of_mem hcx w.1
-    rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
-    exact fun h => by simp [h] at hp
+    exact realComponent_ne_zero_of_mem_fundamentalCone (smul_mem_of_mem hz.1 ht0) w
   rw [Set.smul_set_inter₀ ht0, Set.mem_inter_iff, ← himg]
   constructor
   · rintro ⟨hmem, horth⟩
@@ -1331,7 +1276,7 @@ private theorem mem_smul_cell_iff_norm_le_and_filter_eq {K : Type*} [Field K] [N
     simp only [Finset.mem_filter, Finset.mem_univ, true_and]
     rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0] at horth
     obtain ⟨hneg, hpos⟩ := horth
-    refine ⟨fun hlt => ?_, fun hw => ?_⟩
+    refine ⟨fun hlt ↦ ?_, fun hw ↦ ?_⟩
     · by_contra hws
       have h2 := hpos w hws
       rw [Pi.smul_apply, smul_eq_mul, hΦreal] at h2
@@ -1345,15 +1290,15 @@ private theorem mem_smul_cell_iff_norm_le_and_filter_eq {K : Type*} [Field K] [N
     have hxcone : x ∈ t • normLeOne K := by rw [← hcone]; exact ⟨hx.1, hnorm⟩
     refine ⟨⟨x, hxcone, rfl⟩, ?_⟩
     rw [Set.mem_smul_set_iff_inv_smul_mem₀ ht0]
-    refine ⟨fun w hw => ?_, fun w hw => ?_⟩
+    refine ⟨fun w hw ↦ ?_, fun w hw ↦ ?_⟩
     · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
       have hlt : x.1 w < 0 := by
-        have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := horth ▸ hw
+        have : w ∈ Finset.univ.filter (fun w ↦ x.1 w < 0) := horth ▸ hw
         simpa using this
       nlinarith [hlt, htinv]
     · rw [Pi.smul_apply, smul_eq_mul, hΦreal]
-      have hxw : ¬ x.1 w < 0 := fun hlt => hw (by
-        have : w ∈ Finset.univ.filter (fun w => x.1 w < 0) := by simpa using hlt
+      have hxw : ¬ x.1 w < 0 := fun hlt ↦ hw (by
+        have : w ∈ Finset.univ.filter (fun w ↦ x.1 w < 0) := by simpa using hlt
         rwa [horth] at this)
       nlinarith [not_lt.mp hxw, htinv]
 
@@ -1374,39 +1319,35 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
     (s : Finset {w : InfinitePlace K // IsReal w}) (k : index K → ZMod m)
     {t : ℝ} (ht : 1 ≤ t) :
     Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+        (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
           (a : mixedSpace K))) i) : ZMod m)) = k}
-    = Nat.card ↑(((T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+    = Nat.card ↑(((T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
         (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
           (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ)))) ∩
         t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩
           {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))})) := by
   classical
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
-  set d := Module.finrank ℚ K with hd
-  set T' : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ) :=
-    (LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T with hT'
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
+  set d := Module.finrank ℚ K
   set f : {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
-      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (a : mixedSpace K).1 w < 0) = s) ∧
-      (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} → (index K → ℝ) :=
-    fun a => Φ (a.1 : mixedSpace K) with hf
-  have hfinj : Function.Injective f := fun a₁ a₂ h => by
-    apply Subtype.ext; apply Subtype.ext
-    exact Φ.injective h
+      (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} → (index K → ℝ) :=
+    fun a ↦ Φ (a.1 : mixedSpace K) with hf
+  have hfinj : Function.Injective f := fun _ _ h ↦ Subtype.ext (Subtype.ext (Φ.injective h))
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
   have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
-    Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
+    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
   set Os : Set (index K → ℝ) :=
     {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))} with hOs
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
       (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
         (mixedEmbedding.norm x ≤ t ^ d ∧
-          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) :=
-    fun x hx => mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
-  have hsub : ((T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w < 0) = s)) :=
+    fun x hx ↦ mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
+  have hsub : ((T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
       (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
         (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))))
       ⊆ (Φ '' (mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)) := by
@@ -1415,11 +1356,11 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
     simp only [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, vadd_eq_add]
     rw [← map_add]
     refine ⟨_, ?_, rfl⟩
-    refine add_mem ((mem_span_int_basisFun_iff _).mpr (fun i => ⟨(k i).val, rfl⟩)) ?_
+    refine add_mem ((mem_span_int_basisFun_iff _).mpr (fun i ↦ ⟨(k i).val, rfl⟩)) ?_
     rw [Nat.cast_smul_eq_nsmul]
     exact nsmul_mem hv _
   have hset : Set.range f =
-      (((T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+      (((T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
         (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
           (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ)))) ∩
         t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os)) := by
@@ -1427,7 +1368,7 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
     simp only [hf, Set.mem_range, Subtype.exists, Set.mem_inter_iff]
     constructor
     · rintro ⟨a, ha, hP, rfl⟩
-      refine ⟨(mem_coset_iff_cos_eq m hm J T hT k ha.2).mpr (fun i => congrFun hP.2.2 i), ?_⟩
+      refine ⟨(mem_coset_iff_cos_eq m hm J T hT k ha.2).mpr (fun i ↦ congrFun hP.2.2 i), ?_⟩
       exact hreg a ha |>.mpr ⟨hP.1, hP.2.1⟩
     · rintro ⟨hcoset, hregion⟩
       obtain ⟨z, hzlat, hzeq⟩ := hsub hcoset
@@ -1459,36 +1400,32 @@ private theorem residue_fibre_const_aux {K : Type*} [Field K] [NumberField K]
             (FractionalIdeal.mk0 K J)) : Set (index K → ℝ)))
     (s : Finset {w : InfinitePlace K // IsReal w}) (k : index K → ZMod m)
     (a a' : idealSet K J)
-    (horth : Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+    (horth : Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
       (a : mixedSpace K).1 w < 0) = s)
-    (hcos : (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+    (hcos : (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
       (a : mixedSpace K))) i) : ZMod m)) = k)
-    (horth' : Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+    (horth' : Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
       (a' : mixedSpace K).1 w < 0) = s)
-    (hcos' : (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+    (hcos' : (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
       (a' : mixedSpace K))) i) : ZMod m)) = k) :
     (((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)) ↔
       ((intNorm (idealSetEquiv K J a').val : ZMod m) = (b : ZMod m))) := by
   classical
-  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
   have hsign : ∀ c : idealSet K J,
-      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (c : mixedSpace K).1 w < 0) = s →
       (((intNorm (idealSetEquiv K J c).val : ZMod m) = (b : ZMod m)) ↔
         (((-1) ^ s.card *
           (Algebra.norm ℤ (preimageOfMemIntegerSet (idealSetMap K J c) : 𝓞 K) : ℤ) : ℤ) :
           ZMod m) = (b : ZMod m)) := by
     intro c hc
-    refine residue_iff_signed_on_orthant m b J c s (fun w hw => ?_) (fun w hw => ?_)
-    · have : w ∈ Finset.univ.filter (fun w => (c : mixedSpace K).1 w < 0) := hc ▸ hw
+    refine residue_iff_signed_on_orthant m b J c s (fun w hw ↦ ?_) (fun w hw ↦ ?_)
+    · have : w ∈ Finset.univ.filter (fun w ↦ (c : mixedSpace K).1 w < 0) := hc ▸ hw
       simpa using this
-    · have hcw : (c : mixedSpace K).1 w ≠ 0 := by
-        have hcone : (c : mixedSpace K) ∈ fundamentalCone K := c.2.1
-        have hp := fundamentalCone.normAtPlace_pos_of_mem hcone w.1
-        rw [mixedEmbedding.normAtPlace_apply_of_isReal w.2] at hp
-        exact fun h => by simp [h] at hp
-      have hge : ¬ (c : mixedSpace K).1 w < 0 := fun hlt => hw (by
-        have : w ∈ Finset.univ.filter (fun w => (c : mixedSpace K).1 w < 0) := by simpa using hlt
+    · have hcw : (c : mixedSpace K).1 w ≠ 0 :=
+        realComponent_ne_zero_of_mem_fundamentalCone c.2.1 w
+      have hge : ¬ (c : mixedSpace K).1 w < 0 := fun hlt ↦ hw (by
+        have : w ∈ Finset.univ.filter (fun w ↦ (c : mixedSpace K).1 w < 0) := by simpa using hlt
         rwa [hc] at this)
       exact lt_of_le_of_ne (not_lt.mp hge) (Ne.symm hcw)
   rw [hsign a horth, hsign a' horth']
@@ -1496,13 +1433,9 @@ private theorem residue_fibre_const_aux {K : Type*} [Field K] [NumberField K]
         ZMod m) =
       ((Algebra.norm ℤ (preimageOfMemIntegerSet (idealSetMap K J a') : 𝓞 K) : ℤ) : ZMod m) := by
     refine norm_zmod_eq_of_emb_sub_mem m J _ _ ?_
-    rw [show mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a) : 𝓞 K) : K) =
-          (a : mixedSpace K) from by
-        rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply],
-      show mixedEmbedding K ((preimageOfMemIntegerSet (idealSetMap K J a') : 𝓞 K) : K) =
-          (a' : mixedSpace K) from by
-        rw [mixedEmbedding_preimageOfMemIntegerSet, idealSetMap_apply]]
-    exact sub_mem_nsmul_of_coord_eq m J T hT a.2.2 a'.2.2 (fun i => by
+    rw [mixedEmbedding_preimageOfMemIntegerSet_idealSetMap J a,
+      mixedEmbedding_preimageOfMemIntegerSet_idealSetMap J a']
+    exact sub_mem_nsmul_of_coord_eq m J T hT a.2.2 a'.2.2 (fun i ↦ by
       rw [congrFun hcos i, congrFun hcos' i])
   push_cast
   rw [hnormeq]
@@ -1526,14 +1459,14 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le_explicit {K : Type*} [
       |(Nat.card {a : idealSet K J //
           (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
             ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = s) ∧
-          (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+          (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
             (a : mixedSpace K))) i) : ZMod m)) = k} : ℝ)
           - (if (∃ a : idealSet K J,
-              (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+              (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
                 (a : mixedSpace K).1 w < 0) = s) ∧
-              ((fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+              ((fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
                 (a : mixedSpace K))) i) : ZMod m)) = k) ∧
               ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
             then MeasureTheory.volume.real
@@ -1548,39 +1481,39 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le_explicit {K : Type*} [
   have hcard : Fintype.card (index K) = Module.finrank ℚ K := by
     rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]
   have hconst : ∀ a a' : idealSet K J,
-      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => (a : mixedSpace K).1 w < 0)
+      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦ (a : mixedSpace K).1 w < 0)
         = s →
-      (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k →
-      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => (a' : mixedSpace K).1 w < 0)
+      (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k →
+      Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦ (a' : mixedSpace K).1 w < 0)
         = s →
-      (fun i => (round ((T.symm (Φ (a' : mixedSpace K))) i) : ZMod m)) = k →
+      (fun i ↦ (round ((T.symm (Φ (a' : mixedSpace K))) i) : ZMod m)) = k →
       (((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)) ↔
         ((intNorm (idealSetEquiv K J a').val : ZMod m) = (b : ZMod m))) :=
-    fun a a' h1 h2 h3 h4 => residue_fibre_const_aux m b J T hT s k a a' h1 h2 h3 h4
+    fun a a' h1 h2 h3 h4 ↦ residue_fibre_const_aux m b J T hT s k a a' h1 h2 h3 h4
   by_cases hQ : ∃ a : idealSet K J,
-      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (a : mixedSpace K).1 w < 0) = s) ∧
-      ((fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
+      ((fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))
   · obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
     obtain ⟨cellC, hcell⟩ := exists_card_cell_sub_mul_rpow_le_explicit T m hm
       (Φ '' (normLeOne K)) (Φ.lipschitz.isBounded_image (isBounded_normLeOne K))
       ((Φ.toHomeomorph.toMeasurableEquiv).measurableSet_image.mpr (measurableSet_normLeOne K))
       hcov (Sum.inl : {w : InfinitePlace K // IsReal w} → index K) s
-    refine ⟨cellC, fun t ht => ?_⟩
+    refine ⟨cellC, fun t ht ↦ ?_⟩
     rw [if_pos ⟨a₀, horth₀, hcos₀, hres₀⟩]
     have hfibre : Nat.card {a : idealSet K J //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
           ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k}
+        (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k}
         = Nat.card {a : idealSet K J //
           mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = s) ∧
-          (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
-      refine Nat.card_congr (Equiv.subtypeEquivRight fun a => ?_)
+          (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
+      refine Nat.card_congr (Equiv.subtypeEquivRight fun a ↦ ?_)
       constructor
       · rintro ⟨⟨hn, _⟩, ho, hc⟩; exact ⟨hn, ho, hc⟩
       · rintro ⟨hn, ho, hc⟩
@@ -1590,18 +1523,17 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le_explicit {K : Type*} [
     have hpow2 : t ^ (Module.finrank ℚ K - 1 : ℕ) = t ^ (Fintype.card (index K) - 1 : ℕ) := by
       rw [hcard]
     rw [hpow1, hpow2]
-    exact hcell (T (fun i => ((k i).val : ℝ))) t ht
-  · refine ⟨0, fun t ht => ?_⟩
+    exact hcell (T (fun i ↦ ((k i).val : ℝ))) t ht
+  · refine ⟨0, fun t ht ↦ ?_⟩
     rw [if_neg hQ]
     have hempty : IsEmpty {a : idealSet K J //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
           ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} :=
-      ⟨fun a => hQ ⟨a.1, a.2.2.1, a.2.2.2, a.2.1.2⟩⟩
-    rw [Nat.card_of_isEmpty]
-    simp
+        (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} :=
+      ⟨fun a ↦ hQ ⟨a.1, a.2.2.1, a.2.2.2, a.2.1.2⟩⟩
+    simp [Nat.card_of_isEmpty]
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
@@ -1623,16 +1555,16 @@ private theorem exists_card_residue_fibre_sub_mul_rpow_le {K : Type*} [Field K] 
       |(Nat.card {a : idealSet K J //
           (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
             ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = s) ∧
-          (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+          (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
             (a : mixedSpace K))) i) : ZMod m)) = k} : ℝ) - L * t ^ Module.finrank ℚ K|
         ≤ C * t ^ (Module.finrank ℚ K - 1 : ℕ) := by
   obtain ⟨C, hC⟩ := exists_card_residue_fibre_sub_mul_rpow_le_explicit m hm b J T hT hcov s k
   exact ⟨if (∃ a : idealSet K J,
-      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (a : mixedSpace K).1 w < 0) = s) ∧
-      ((fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+      ((fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
         (a : mixedSpace K))) i) : ZMod m)) = k) ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
     then MeasureTheory.volume.real
@@ -1651,13 +1583,10 @@ private theorem finite_idealSet_norm_le {K : Type*} [Field K] [NumberField K]
     (J : (Ideal (𝓞 K))⁰) (s : ℝ) :
     Finite {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ s} := by
   classical
-  have hbase : Finite ({I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ ⌊s⌋₊} ×
-      torsion K) := by
-    haveI : Finite {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ ⌊s⌋₊} :=
-      (Ideal.finite_setOf_absNorm_le₀ ⌊s⌋₊).to_subtype
-    infer_instance
+  have : Finite {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ ⌊s⌋₊} :=
+    (Ideal.finite_setOf_absNorm_le₀ ⌊s⌋₊).to_subtype
   refine Finite.of_injective (β := {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ ⌊s⌋₊} ×
-      torsion K) (fun a => ⟨⟨(integerSetEquiv K (idealSetMap K J a.1)).1.1, ?_⟩,
+      torsion K) (fun a ↦ ⟨⟨(integerSetEquiv K (idealSetMap K J a.1)).1.1, ?_⟩,
     (integerSetEquiv K (idealSetMap K J a.1)).2⟩) ?_
   · have hnorm : Ideal.absNorm ((integerSetEquiv K (idealSetMap K J a.1)).1.1 : Ideal (𝓞 K))
         = intNorm (idealSetMap K J a.1) := by
@@ -1689,8 +1618,8 @@ private theorem card_idealSet_residue_eq_sum_cell {K : Type*} [Field K] [NumberF
           (mixedEmbedding.norm (a : mixedSpace K) ≤ S ∧
             ((intNorm (idealSetEquiv K I₀ a).val : ZMod m) = (b : ZMod m))) ∧
           (Finset.univ.filter (fun w : {w : NumberField.InfinitePlace K //
-            NumberField.InfinitePlace.IsReal w} => (a : mixedSpace K).1 w < 0) = p.1) ∧
-          (fun i => (round ((Tc.symm ((mixedEmbedding.stdBasis K).equivFunL
+            NumberField.InfinitePlace.IsReal w} ↦ (a : mixedSpace K).1 w < 0) = p.1) ∧
+          (fun i ↦ (round ((Tc.symm ((mixedEmbedding.stdBasis K).equivFunL
             (a : mixedSpace K))) i) : ZMod m)) = p.2} := by
   classical
   set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL with hΦ
@@ -1698,31 +1627,31 @@ private theorem card_idealSet_residue_eq_sum_cell {K : Type*} [Field K] [NumberF
       ((intNorm (idealSetEquiv K I₀ a).val : ZMod m) = (b : ZMod m))} →
       Finset {w : NumberField.InfinitePlace K // NumberField.InfinitePlace.IsReal w} ×
         (index K → ZMod m) :=
-    fun a => (Finset.univ.filter (fun w => (a.1 : mixedSpace K).1 w < 0),
-      fun i => (round ((Tc.symm (Φ (a.1 : mixedSpace K))) i) : ZMod m))
-  haveI hfinbase : Finite {a : idealSet K I₀ //
+    fun a ↦ (Finset.univ.filter (fun w ↦ (a.1 : mixedSpace K).1 w < 0),
+      fun i ↦ (round ((Tc.symm (Φ (a.1 : mixedSpace K))) i) : ZMod m))
+  have hfinbase : Finite {a : idealSet K I₀ //
       mixedEmbedding.norm (a : mixedSpace K) ≤ S} :=
     finite_idealSet_norm_le I₀ _
-  haveI : ∀ p : Finset {w : NumberField.InfinitePlace K //
+  have : ∀ p : Finset {w : NumberField.InfinitePlace K //
       NumberField.InfinitePlace.IsReal w} × (index K → ZMod m),
       Finite {a : idealSet K I₀ //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ S ∧
           ((intNorm (idealSetEquiv K I₀ a).val : ZMod m) = (b : ZMod m))) ∧
         (Finset.univ.filter (fun w : {w : NumberField.InfinitePlace K //
-          NumberField.InfinitePlace.IsReal w} => (a : mixedSpace K).1 w < 0) = p.1) ∧
-        (fun i => (round ((Tc.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = p.2} := fun p =>
-    Finite.of_injective (fun a => (⟨a.1, a.2.1.1⟩ : {a : idealSet K I₀ //
+          NumberField.InfinitePlace.IsReal w} ↦ (a : mixedSpace K).1 w < 0) = p.1) ∧
+        (fun i ↦ (round ((Tc.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = p.2} := fun p ↦
+    Finite.of_injective (fun a ↦ (⟨a.1, a.2.1.1⟩ : {a : idealSet K I₀ //
       mixedEmbedding.norm (a : mixedSpace K) ≤ S}))
-      (fun x y h => Subtype.ext (by simpa using h))
+      (fun x y h ↦ Subtype.ext (by simpa using h))
   rw [← Nat.card_sigma]
-  refine Nat.card_congr ((Equiv.sigmaFiberEquiv cls).symm.trans (Equiv.sigmaCongrRight fun p =>
+  refine Nat.card_congr ((Equiv.sigmaFiberEquiv cls).symm.trans (Equiv.sigmaCongrRight fun p ↦
     ?_))
   exact {
-    toFun := fun a => ⟨a.1.1, ⟨a.1.2, by
+    toFun := fun a ↦ ⟨a.1.1, ⟨a.1.2, by
         have := a.2; simp only [cls, Prod.ext_iff] at this; exact ⟨this.1, this.2⟩⟩⟩
-    invFun := fun a => ⟨⟨a.1, a.2.1⟩, by simp only [cls, Prod.ext_iff]; exact ⟨a.2.2.1, a.2.2.2⟩⟩
-    left_inv := fun _ => rfl
-    right_inv := fun _ => rfl }
+    invFun := fun a ↦ ⟨⟨a.1, a.2.1⟩, by simp only [cls, Prod.ext_iff]; exact ⟨a.2.2.1, a.2.2.2⟩⟩
+    left_inv := fun _ ↦ rfl
+    right_inv := fun _ ↦ rfl }
 
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
@@ -1738,9 +1667,9 @@ private theorem card_residue_sum_bound_aux {K : Type*} [Field K] [NumberField K]
       |(Nat.card {a : idealSet K I₀ //
           (mixedEmbedding.norm (a : mixedSpace K) ≤ tN ^ Module.finrank ℚ K ∧
             ((intNorm (idealSetEquiv K I₀ a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = p.1) ∧
-          (fun i => (round ((Tc.symm ((mixedEmbedding.stdBasis K).equivFunL
+          (fun i ↦ (round ((Tc.symm ((mixedEmbedding.stdBasis K).equivFunL
             (a : mixedSpace K))) i) : ZMod m)) = p.2} : ℝ) - Lc p * tN ^ Module.finrank ℚ K|
         ≤ Cc p * tN ^ (Module.finrank ℚ K - 1 : ℕ)) :
     |(Nat.card {a : idealSet K I₀ // mixedEmbedding.norm (a : mixedSpace K) ≤ S ∧
@@ -1770,7 +1699,7 @@ private theorem card_residue_sum_bound_aux {K : Type*} [Field K] [NumberField K]
   have hbound : (∑ p, Cc p) * S ^ (1 - (d : ℝ)⁻¹) = ∑ p, Cc p * tN ^ (d - 1 : ℕ) := by
     simp_rw [htNd1, Finset.sum_mul]
   rw [hbound]
-  refine Finset.sum_le_sum (fun p _ => ?_)
+  refine Finset.sum_le_sum (fun p _ ↦ ?_)
   rw [← htNd]
   exact hcell p tN htN1
 
@@ -1817,14 +1746,14 @@ private theorem exists_card_idealSet_residue_le {K : Type*} [Field K] [NumberFie
   have hcov : ∃ (mc : ℕ) (M : ℝ≥0) (φ : Fin mc → (Fin (Fintype.card (index K) - 1) → ℝ) →
       (index K → ℝ)), (∀ j, LipschitzWith M (φ j)) ∧
       frontier (Φ '' (normLeOne K)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 := ⟨mc, M, φ, hφ, hcovraw⟩
-  choose L C hLC using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) =>
+  choose L C hLC using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) ↦
     exists_card_residue_fibre_sub_mul_rpow_le m hm b J T hT hcov p.1 p.2
-  refine ⟨(∑ p, L p) * NJ, (∑ p, |C p|) * (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹), fun N hN => ?_⟩
+  refine ⟨(∑ p, L p) * NJ, (∑ p, |C p|) * (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹), fun N hN ↦ ?_⟩
   have hNN1 : 1 ≤ ((N * NJ : ℕ) : ℝ) := by
     rw [Nat.one_le_cast]
     exact Nat.one_le_iff_ne_zero.mpr (Nat.mul_ne_zero (Nat.one_le_iff_ne_zero.mp hN) hNJ.ne')
-  have hbase := card_residue_sum_bound_aux m b J T ((N * NJ : ℕ) : ℝ) hNN1 L (fun p => |C p|)
-    (fun p tN htN => (hLC p tN htN).trans (by gcongr; exact le_abs_self _))
+  have hbase := card_residue_sum_bound_aux m b J T ((N * NJ : ℕ) : ℝ) hNN1 L (fun p ↦ |C p|)
+    (fun p tN htN ↦ (hLC p tN htN).trans (by gcongr; exact le_abs_self _))
   rw [show (∑ p, L p) * NJ * (N : ℝ) = (∑ p, L p) * ((N * NJ : ℕ) : ℝ) by push_cast; ring]
   refine hbase.trans (le_of_eq ?_)
   rw [Nat.cast_mul, Real.mul_rpow (Nat.cast_nonneg N) (Nat.cast_nonneg NJ),
@@ -1851,46 +1780,30 @@ private theorem exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   obtain ⟨κ, C', hcore⟩ := exists_card_idealSet_residue_le m b J
-  have htors : (0 : ℝ) < torsionOrder K := by
-    exact_mod_cast (torsionOrder K).pos_of_ne_zero (torsionOrder_ne_zero K)
-  refine ⟨κ / torsionOrder K, C' / torsionOrder K, fun N hN => ?_⟩
-  have hcount : (Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-      (IsPrincipal (I : Ideal (𝓞 K)) ∧
-      Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) * torsionOrder K
-      = (Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
-          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
-        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) := by
-    rw [← Nat.cast_mul]; congr 1
+  have htors : (0 : ℝ) < torsionOrder K :=
+    mod_cast (torsionOrder K).pos_of_ne_zero (torsionOrder_ne_zero K)
+  refine ⟨κ / torsionOrder K, C' / torsionOrder K, fun N hN ↦ ?_⟩
+  set cnt : ℝ := (Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
+    (IsPrincipal (I : Ideal (𝓞 K)) ∧
+    Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
+    ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) with hcnt
+  set cone : ℝ := (Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
+    ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
+    ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) with hcone
+  have hcount : cnt * torsionOrder K = cone := by
+    rw [hcnt, hcone, ← Nat.cast_mul]
+    congr 1
     rw [← card_isPrincipal_dvd_norm_le_residue J m b
       ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ)]
     congr 1
-    exact Nat.card_congr (Equiv.subtypeEquivRight fun I => by simp only [Nat.cast_le])
-  have he : |(Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-      (IsPrincipal (I : Ideal (𝓞 K)) ∧
-      Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) - κ / torsionOrder K * N|
-      = |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
-          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
-        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * N| /
-        torsionOrder K := by
+    exact Nat.card_congr (Equiv.subtypeEquivRight fun I ↦ by simp only [Nat.cast_le])
+  have he : |cnt - κ / torsionOrder K * N| = |cone - κ * N| / torsionOrder K := by
     rw [eq_div_iff htors.ne', ← hcount,
-      show ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K)) ∧
-          (IsPrincipal (I : Ideal (𝓞 K)) ∧
-          Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) *
-            (torsionOrder K : ℝ) - κ * N)
-        = (torsionOrder K : ℝ) * ((Nat.card {I : (Ideal (𝓞 K))⁰ // (J : Ideal (𝓞 K)) ∣
-          (I : Ideal (𝓞 K)) ∧ (IsPrincipal (I : Ideal (𝓞 K)) ∧
-          Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m)))} : ℝ) -
-            κ / torsionOrder K * N) by field_simp,
+      show cnt * torsionOrder K - κ * N
+        = torsionOrder K * (cnt - κ / torsionOrder K * N) by field_simp,
       abs_mul, abs_of_pos htors, mul_comm]
   rw [he, div_le_iff₀ htors]
-  calc |(Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤
-          ((N * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) : ℝ) ∧
-        ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))} : ℝ) - κ * N|
-      ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := hcore N hN
+  calc |cone - κ * N| ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := hcore N hN
     _ = C' / torsionOrder K * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) * torsionOrder K := by
         field_simp
 
@@ -1917,7 +1830,7 @@ private theorem exists_card_norm_le_residue_class_eq_sub_mul_rpow_le
     ⟨Nat.mul_ne_zero (NeZero.ne c) hNJ.ne'⟩
   obtain ⟨κ, C', hκ⟩ := exists_card_dvd_principal_residue_eq_sub_mul_rpow_le
     (c * Ideal.absNorm (J : Ideal (𝓞 K))) (a.val * Ideal.absNorm (J : Ideal (𝓞 K))) J
-  refine ⟨κ, C', fun N hN => ?_⟩
+  refine ⟨κ, C', fun N hN ↦ ?_⟩
   rw [card_principalize c a N C J hJ hNJ]
   exact hκ N hN
 
@@ -1929,18 +1842,18 @@ density of `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le` a well-defined 
 residue, independent of the `∃`-witness. -/
 private theorem tendsto_div_atTop_of_sub_mul_rpow_le {f : ℕ → ℝ} {κ C' : ℝ} {d : ℕ}
     (hd : 0 < d) (hbound : ∀ N : ℕ, 1 ≤ N → |f N - κ * N| ≤ C' * (N : ℝ) ^ (1 - (d : ℝ)⁻¹)) :
-    Filter.Tendsto (fun N : ℕ => f N / (N : ℝ)) Filter.atTop (nhds κ) := by
+    Filter.Tendsto (fun N : ℕ ↦ f N / (N : ℝ)) Filter.atTop (nhds κ) := by
   have hdne : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hd.ne'
   have hdpos : (0 : ℝ) < (d : ℝ)⁻¹ := by positivity
-  have hzero : Filter.Tendsto (fun N : ℕ => |C'| * (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+  have hzero : Filter.Tendsto (fun N : ℕ ↦ |C'| * (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
       by
-    have h1 : Filter.Tendsto (fun x : ℝ => x ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+    have h1 : Filter.Tendsto (fun x : ℝ ↦ x ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
       tendsto_rpow_neg_atTop hdpos
-    have h2 : Filter.Tendsto (fun N : ℕ => (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
+    have h2 : Filter.Tendsto (fun N : ℕ ↦ (N : ℝ) ^ (-(d : ℝ)⁻¹)) Filter.atTop (nhds 0) :=
       h1.comp tendsto_natCast_atTop_atTop
     simpa using h2.const_mul |C'|
   rw [tendsto_iff_norm_sub_tendsto_zero]
-  refine squeeze_zero' (Filter.Eventually.of_forall fun N => norm_nonneg _) ?_ hzero
+  refine squeeze_zero' (Filter.Eventually.of_forall fun N ↦ norm_nonneg _) ?_ hzero
   filter_upwards [Filter.eventually_ge_atTop 1] with N hN
   have hNpos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one hN
   have hNne : (N : ℝ) ≠ 0 := hNpos.ne'
@@ -1967,24 +1880,15 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le
           - κ * N|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  choose κf C'f hκf using fun C : ClassGroup (𝓞 K) =>
+  choose κf C'f hκf using fun C : ClassGroup (𝓞 K) ↦
     exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c a C
-  refine ⟨∑ C : ClassGroup (𝓞 K), κf C, ∑ C : ClassGroup (𝓞 K), |C'f C|, fun N hN => ?_⟩
-  rw [card_norm_le_residue_eq_sum_class c a N]
-  rw [show ((∑ C : ClassGroup (𝓞 K),
-        Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} : ℕ) : ℝ)
-      = ∑ C : ClassGroup (𝓞 K),
-        (Nat.card {I : (Ideal (𝓞 K))⁰ // (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
-          ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = a) ∧ ClassGroup.mk0 I = C} : ℝ) by
-    push_cast; rfl]
-  rw [Finset.sum_mul, ← Finset.sum_sub_distrib]
+  refine ⟨∑ C : ClassGroup (𝓞 K), κf C, ∑ C : ClassGroup (𝓞 K), |C'f C|, fun N hN ↦ ?_⟩
+  rw [card_norm_le_residue_eq_sum_class c a N, Nat.cast_sum, Finset.sum_mul,
+    ← Finset.sum_sub_distrib]
   refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
   rw [Finset.sum_mul]
-  refine Finset.sum_le_sum (fun C _ => ?_)
-  refine (hκf C N hN).trans ?_
-  gcongr
-  exact le_abs_self _
+  refine Finset.sum_le_sum fun C _ ↦ ?_
+  exact (hκf C N hN).trans (by gcongr; exact le_abs_self _)
 
 /-- **Norm-residue count, abbreviation.** `cardNormLeResidue K c a N` is the number of nonzero
 integral ideals of `𝓞 K` of norm `≤ N` whose norm is `≡ a (mod c)`. The leading constant of its
@@ -1999,11 +1903,10 @@ private def cardNormLeResidue (K : Type*) [Field K] [NumberField K] (c : ℕ) (a
 `exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le`. -/
 private theorem exists_tendsto_cardNormLeResidue_div (K : Type*) [Field K] [NumberField K]
     (c : ℕ) [NeZero c] (a : ZMod c) :
-    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c a N : ℝ) / (N : ℝ))
+    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c a N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ) := by
   obtain ⟨κ, C', hκ⟩ := exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le K c a
-  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos
-    (fun N hN => hκ N hN)⟩
+  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos hκ⟩
 
 open scoped Classical in
 /-- **κ-uniformity over the realized-residue subgroup.** Under Fourier-decay `hF` (all nontrivial
@@ -2014,18 +1917,17 @@ nontrivial Fourier coefficient of `s ↦ κ_s` on `S` vanishes, so column orthog
 private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field K] [NumberField K]
     {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
     (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
-      Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+      Filter.Tendsto (fun N : ℕ ↦ (∑ s : S, ((χ s : ℂˣ) : ℂ) *
           (cardNormLeResidue K c ((s : (ZMod c)ˣ) : ZMod c) N : ℂ)) / (N : ℂ))
         Filter.atTop (nhds 0))
     {a a' : (ZMod c)ˣ} (ha : a ∈ S) (ha' : a' ∈ S) {κ κ' : ℝ}
-    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
+    (hκ : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
-    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
+    (hκ' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
-  haveI : NeZero ((Monoid.exponent S : ℕ) : ℂ) := ⟨Nat.cast_ne_zero.mpr (NeZero.ne _)⟩
-  haveI : Fintype (S →* ℂˣ) := Fintype.ofFinite _
-  choose κf hκf using fun s : S =>
+  have : Fintype (S →* ℂˣ) := Fintype.ofFinite _
+  choose κf hκf using fun s : S ↦
     exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
   have hκa : κ = κf ⟨a, ha⟩ := tendsto_nhds_unique hκ (hκf ⟨a, ha⟩)
   have hκa' : κ' = κf ⟨a', ha'⟩ := tendsto_nhds_unique hκ' (hκf ⟨a', ha'⟩)
@@ -2033,11 +1935,11 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
       ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) = 0 := by
     intro χ hχ
     refine tendsto_nhds_unique ?_ (hF χ hχ)
-    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) =>
+    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) ↦
       ((Complex.continuous_ofReal.tendsto (κf s)).comp (hκf s)).const_mul ((χ s : ℂˣ) : ℂ)
-    refine hsum.congr fun N => ?_
+    refine hsum.congr fun N ↦ ?_
     rw [Finset.sum_div]
-    refine Finset.sum_congr rfl fun s _ => ?_
+    refine Finset.sum_congr rfl fun s _ ↦ ?_
     simp only [Function.comp_apply]
     push_cast
     ring
@@ -2050,31 +1952,27 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
       · subst hs
         simp
       · rw [if_neg hs]
-        exact sum_char_apply_eq_zero_of_ne_one fun h => hs (inv_mul_eq_one.mp h).symm
+        exact sum_char_apply_eq_zero_of_ne_one fun h ↦ hs (inv_mul_eq_one.mp h).symm
     calc (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ)
         = ∑ s : S, (if s = u then (Fintype.card (S →* ℂˣ) : ℂ) else 0) * (κf s : ℂ) := by
           simp [ite_mul]
       _ = ∑ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ)) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun s _ => ?_
+          refine Finset.sum_congr rfl fun s _ ↦ ?_
           rw [horth s]
       _ = ∑ s : S, ∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun s _ => ?_
+          refine Finset.sum_congr rfl fun s _ ↦ ?_
           rw [Finset.sum_mul]
       _ = ∑ χ : S →* ℂˣ, ∑ s : S, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := Finset.sum_comm
       _ = ∑ χ : S →* ℂˣ, ((χ u⁻¹ : ℂˣ) : ℂ) * ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun χ _ => ?_
+          refine Finset.sum_congr rfl fun χ _ ↦ ?_
           rw [Finset.mul_sum]
-          refine Finset.sum_congr rfl fun s _ => ?_
+          refine Finset.sum_congr rfl fun s _ ↦ ?_
           rw [map_mul, Units.val_mul, mul_assoc]
       _ = ∑ s : S, (κf s : ℂ) := by
-          rw [Finset.sum_eq_single (1 : S →* ℂˣ)]
-          · simp
-          · intro χ _ hχ
-            rw [hhat χ hχ, mul_zero]
-          · intro h
-            exact absurd (Finset.mem_univ _) h
-  have hcard0 : ((Fintype.card (S →* ℂˣ) : ℂ)) ≠ 0 := by
-    exact_mod_cast Fintype.card_ne_zero
+          rw [Finset.sum_eq_single_of_mem (1 : S →* ℂˣ) (Finset.mem_univ _)
+            fun χ _ hχ ↦ by rw [hhat χ hχ, mul_zero]]
+          simp
+  have hcard0 : (Fintype.card (S →* ℂˣ) : ℂ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
   have hfc : (κf ⟨a, ha⟩ : ℂ) = (κf ⟨a', ha'⟩ : ℂ) :=
     mul_left_cancel₀ hcard0 ((hinv ⟨a, ha⟩).trans (hinv ⟨a', ha'⟩).symm)
   rw [hκa, hκa']
@@ -2091,7 +1989,7 @@ per-residue error constants over `ZMod c`. -/
 theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
     (K : Type*) [Field K] [NumberField K] (c : ℕ) [NeZero c] (S : Subgroup (ZMod c)ˣ)
     (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
-      Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+      Filter.Tendsto (fun N : ℕ ↦ (∑ s : S, ((χ s : ℂˣ) : ℂ) *
           (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
             ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((s : (ZMod c)ˣ) : ZMod c)} : ℂ))
           / (N : ℂ))
@@ -2104,10 +2002,10 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
   classical
   choose κf C'f hκf using exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le K c
   choose κlim hκlim using exists_tendsto_cardNormLeResidue_div K c
-  have hκfeq : ∀ a : ZMod c, κf a = κlim a := fun a =>
+  have hκfeq : ∀ a : ZMod c, κf a = κlim a := fun a ↦
     tendsto_nhds_unique
-      (tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hκf a N hN)) (hκlim a)
-  refine ⟨κlim ((1 : (ZMod c)ˣ) : ZMod c), ∑ b : ZMod c, |C'f b|, fun a ha N hN => ?_⟩
+      (tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (hκf a)) (hκlim a)
+  refine ⟨κlim ((1 : (ZMod c)ˣ) : ZMod c), ∑ b : ZMod c, |C'f b|, fun a ha N hN ↦ ?_⟩
   have hconst : κlim ((a : (ZMod c)ˣ) : ZMod c) = κlim ((1 : (ZMod c)ˣ) : ZMod c) :=
     cardNormLeResidue_density_eq_of_mem_subgroup hF ha (one_mem S)
       (hκlim ((a : (ZMod c)ˣ) : ZMod c)) (hκlim ((1 : (ZMod c)ˣ) : ZMod c))
@@ -2115,7 +2013,7 @@ theorem exists_card_norm_le_norm_residue_eq_sub_mul_rpow_le_uniform
   refine (hκf ((a : (ZMod c)ˣ) : ZMod c) N hN).trans
     (mul_le_mul_of_nonneg_right ?_ (Real.rpow_nonneg (Nat.cast_nonneg N) _))
   exact (le_abs_self _).trans (Finset.single_le_sum
-    (f := fun b => |C'f b|) (fun b _ => abs_nonneg _) (Finset.mem_univ _))
+    (f := fun b ↦ |C'f b|) (fun b _ ↦ abs_nonneg _) (Finset.mem_univ _))
 
 /-! ### Realizer-driven Fourier decay (the `hF` producer) -/
 
@@ -2155,10 +2053,10 @@ constant of the per-class effective estimate `exists_card_norm_le_residue_class_
 (via `tendsto_div_atTop_of_sub_mul_rpow_le`). -/
 private theorem exists_tendsto_cardNormLeResidueClass_div {K : Type*} [Field K] [NumberField K]
     (c : ℕ) [NeZero c] (y : ZMod c) (C : ClassGroup (𝓞 K)) :
-    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
+    ∃ κ : ℝ, Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ) := by
   obtain ⟨κ, C', hκ⟩ := exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c y C
-  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hκ N hN)⟩
+  exact ⟨κ, tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos hκ⟩
 
 open Ideal in
 /-- **The norm-residue density splits over the class group.** `κ_y = ∑_C κ_{C,y}`: the count
@@ -2166,15 +2064,15 @@ open Ideal in
 so its density (where it exists) is the sum of the per-class densities. -/
 private theorem tendsto_cardNormLeResidue_div_eq_sum_class {K : Type*} [Field K] [NumberField K]
     (c : ℕ) [NeZero c] (y : ZMod c) {κ : ℝ}
-    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c y N : ℝ) / (N : ℝ))
+    (hκ : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c y N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
     (κf : ClassGroup (𝓞 K) → ℝ)
-    (hκf : ∀ C, Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
+    (hκf : ∀ C, Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c y C N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κf C))) :
     κ = ∑ C : ClassGroup (𝓞 K), κf C := by
   refine tendsto_nhds_unique hκ ?_
-  have hsum := tendsto_finsetSum Finset.univ fun C (_ : C ∈ Finset.univ) => hκf C
-  refine hsum.congr fun N => ?_
+  have hsum := tendsto_finsetSum Finset.univ fun C (_ : C ∈ Finset.univ) ↦ hκf C
+  refine hsum.congr fun N ↦ ?_
   rw [cardNormLeResidue, card_norm_le_residue_eq_sum_class c y N, Nat.cast_sum, Finset.sum_div]
   rfl
 
@@ -2204,7 +2102,7 @@ private theorem cardNormLeResidueClass_eq_dvd {K : Type*} [Field K] [NumberField
   rw [cardNormLeResidueClass, cardNormLeResidueClassDvd]
   simp_rw [← nonZeroDivisors_dvd_iff_dvd_coe]
   refine Nat.card_congr
-    (((Equiv.dvd 𝔟).subtypeEquiv (fun I => ?_)).trans
+    (((Equiv.dvd 𝔟).subtypeEquiv (fun I ↦ ?_)).trans
       (Equiv.subtypeSubtypeEquivSubtypeInter (fun J : (Ideal (𝓞 K))⁰ ↦ 𝔟 ∣ J) _))
   have hnorm : absNorm (((Equiv.dvd 𝔟) I : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
       = absNorm (𝔟 : Ideal (𝓞 K)) * absNorm (I : Ideal (𝓞 K)) := by
@@ -2230,7 +2128,7 @@ is equivalent to `a ≤ m·⌊N/m⌋` (the largest multiple of `m` not exceeding
 private theorem Nat.le_iff_le_mul_div_of_dvd {a m : ℕ} (hm : 0 < m) (hd : m ∣ a) (N : ℕ) :
     a ≤ N ↔ a ≤ m * (N / m) := by
   obtain ⟨k, rfl⟩ := hd
-  refine ⟨fun h => ?_, fun h => le_trans h (Nat.mul_div_le N m)⟩
+  refine ⟨fun h ↦ ?_, fun h ↦ le_trans h (Nat.mul_div_le N m)⟩
   exact Nat.mul_le_mul_left m ((Nat.le_div_iff_mul_le hm).mpr (by rwa [mul_comm] at h))
 
 open Ideal in
@@ -2241,16 +2139,14 @@ multiple of `N(𝔟)` below `N`. -/
 private theorem cardNormLeResidueClassDvd_floor_collapse {K : Type*} [Field K]
     [NumberField K] (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰) (y : ZMod c)
     (D : ClassGroup (𝓞 K)) (N : ℕ) :
-    cardNormLeResidueClassDvd c 𝔟 y D N
-      = cardNormLeResidueClassDvd c 𝔟 y D
-          (Ideal.absNorm (𝔟 : Ideal (𝓞 K))
-            * (N / Ideal.absNorm (𝔟 : Ideal (𝓞 K)))) := by
+    cardNormLeResidueClassDvd c 𝔟 y D N = cardNormLeResidueClassDvd c 𝔟 y D
+        (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) * (N / Ideal.absNorm (𝔟 : Ideal (𝓞 K)))) := by
   classical
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
   have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
   rw [cardNormLeResidueClassDvd, cardNormLeResidueClassDvd]
-  refine Nat.card_congr (Equiv.subtypeEquivRight fun J => and_congr_right fun hb =>
-    and_congr_left fun _ => and_congr_left fun _ =>
+  refine Nat.card_congr (Equiv.subtypeEquivRight fun J ↦ and_congr_right fun hb ↦
+    and_congr_left fun _ ↦ and_congr_left fun _ ↦
       Nat.le_iff_le_mul_div_of_dvd hNB (map_dvd Ideal.absNorm hb) N)
 
 open Ideal in
@@ -2269,7 +2165,8 @@ private theorem absNorm_coprime_of_isCoprime_span {K : Type*} [Field K] [NumberF
   have hJP : (J : Ideal (𝓞 K)) ≤ P := Ideal.le_of_dvd hPdvd
   have hpP : (p : 𝓞 K) ∈ P := by
     have hpZ : (p : ℤ) ∈ Ideal.under ℤ P := by
-      rw [hPunder]; exact Ideal.mem_span_singleton_self _
+      rw [hPunder]
+      exact Ideal.mem_span_singleton_self _
     rw [Ideal.under, Ideal.mem_comap] at hpZ
     simpa using hpZ
   have hnP : (n : 𝓞 K) ∈ P := by
@@ -2278,10 +2175,10 @@ private theorem absNorm_coprime_of_isCoprime_span {K : Type*} [Field K] [NumberF
     push_cast
     exact Ideal.mul_mem_right _ _ hpP
   have hspanP : Ideal.span {(n : 𝓞 K)} ≤ P := by
-    rw [Ideal.span_le, Set.singleton_subset_iff]; exact hnP
+    rw [Ideal.span_le, Set.singleton_subset_iff]
+    exact hnP
   have hsupP : (J : Ideal (𝓞 K)) ⊔ Ideal.span {(n : 𝓞 K)} ≤ P := sup_le hJP hspanP
-  rw [Ideal.isCoprime_iff_sup_eq] at hcop
-  rw [hcop, top_le_iff] at hsupP
+  rw [Ideal.isCoprime_iff_sup_eq.mp hcop, top_le_iff] at hsupP
   exact hPmax.ne_top hsupP
 
 /-! ### Geometry-of-numbers core for the `𝔟`-divisible density (Lang VI §3 / GRS Thm 1)
@@ -2305,8 +2202,7 @@ private theorem span_image_basisFun_eq {ι : Type*} [Finite ι] (T : (ι → ℝ
     map_span_int_linearEquiv T (Set.range (Pi.basisFun ℝ ι))
   rw [h1, span_coe_eq_restrictScalars, Submodule.restrictScalars_self]
   congr 1
-  rw [show ⇑((Pi.basisFun ℝ ι).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ ι) from by
-    funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]
+  rw [Module.Basis.coe_map, Set.range_comp]
 
 open Submodule in
 /-- **Covolume of the image lattice is `|det T|`.** For a linear automorphism `T` of `ι → ℝ`, the
@@ -2323,14 +2219,11 @@ private theorem covolume_image_basisFun_eq_abs_det {ι : Type*} [Fintype ι]
       simpa using (algebraMap ℤ ℝ).injective_int)
   set b : Module.Basis ι ℤ (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Submodule ℤ (ι → ℝ)) :=
     Module.Basis.span hli with hbdef
-  rw [ZLattice.covolume_eq_det _ b]
-  have hcol : ((↑) ∘ b) = ⇑((Pi.basisFun ℝ ι).map T) := by
-    funext i; rw [Function.comp_apply, hbdef, Module.Basis.coe_span_apply]
-  rw [hcol]
-  congr 1
-  rw [← LinearMap.det_toMatrix (Pi.basisFun ℝ ι) (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)),
-      ← Matrix.det_transpose (LinearMap.toMatrix (Pi.basisFun ℝ ι) (Pi.basisFun ℝ ι)
-        (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)))]
+  rw [ZLattice.covolume_eq_det _ b, show ((↑) ∘ b) = ⇑((Pi.basisFun ℝ ι).map T) from
+      funext fun i ↦ by rw [Function.comp_apply, hbdef, Module.Basis.coe_span_apply],
+    ← LinearMap.det_toMatrix (Pi.basisFun ℝ ι) (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)),
+    ← Matrix.det_transpose (LinearMap.toMatrix (Pi.basisFun ℝ ι) (Pi.basisFun ℝ ι)
+      (T : (ι → ℝ) →ₗ[ℝ] (ι → ℝ)))]
   congr 1
 
 open Ideal NumberField in
@@ -2343,23 +2236,18 @@ private theorem relIndex_mul_ideal_eq_absNorm {K : Type*} [Field K] [NumberField
         ((J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup
       = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) := by
   classical
-  have hindex : ∀ I : Ideal (𝓞 K), I.toAddSubgroup.index = Ideal.absNorm I := by
-    intro I
-    rw [Ideal.absNorm_apply, Submodule.cardQuot_apply, AddSubgroup.index]
-    rfl
   have hle : ((𝔟 * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup
       ≤ ((J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)).toAddSubgroup := by
-    rw [Submodule.toAddSubgroup_le]; push_cast; exact Ideal.mul_le_left
+    rw [Submodule.toAddSubgroup_le]
+    push_cast
+    exact Ideal.mul_le_left
   have key := AddSubgroup.relIndex_mul_index hle
-  rw [hindex, hindex] at key
+  rw [← Ideal.absNorm_eq_index, ← Ideal.absNorm_eq_index] at key
   have hNbJ : Ideal.absNorm ((𝔟 * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K))
       = Ideal.absNorm (𝔟 : Ideal (𝓞 K)) * Ideal.absNorm (J : Ideal (𝓞 K)) := by
     rw [Submonoid.coe_mul, map_mul]
   rw [hNbJ] at key
-  have hNJ : 0 < Ideal.absNorm (J : Ideal (𝓞 K)) := by
-    have : (J : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero J
-    exact Nat.pos_of_ne_zero (fun h => this (Ideal.absNorm_eq_zero_iff.mp h))
-  exact Nat.eq_of_mul_eq_mul_right hNJ key
+  exact Nat.eq_of_mul_eq_mul_right (Ideal.absNorm_pos_of_nonZeroDivisors J) key
 
 open Ideal NumberField in
 /-- **Cone-point inclusion for a divisor multiple.** Since `(𝔟J : Ideal) ⊆ (J : Ideal)`, the ideal
@@ -2440,7 +2328,8 @@ private theorem chart_lattice_eq_map {K : Type*} [Field K] [NumberField K] (J : 
       = ↑((mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K J)).map
           (((mixedEmbedding.stdBasis K).equivFunL :
             mixedSpace K ≃ₗ[ℝ] (index K → ℝ)).restrictScalars ℤ).toLinearMap) := by
-    rw [Submodule.map_coe]; rfl
+    rw [Submodule.map_coe]
+    rfl
   rw [this, span_coe_eq_restrictScalars, Submodule.restrictScalars_self]
 
 open Ideal NumberField NumberField.mixedEmbedding Submodule in
@@ -2503,14 +2392,12 @@ private theorem abs_det_latticeEquiv_mul {K : Type*} [Field K] [NumberField K]
         * |LinearMap.det (T : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| := by
   classical
   set L : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T))
-    with hLdef
   set L' : Submodule ℤ (index K → ℝ) := span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
-    with hL'def
   have hcov := ZLattice.covolume_div_covolume_eq_relIndex L' L
     (chart_sublattice_le J 𝔟 T T' hT hT')
   rw [relIndex_chart_eq_absNorm J 𝔟 T T' hT hT',
     covolume_image_basisFun_eq_abs_det, covolume_image_basisFun_eq_abs_det] at hcov
-  have hdetJ : (0:ℝ) < |LinearMap.det (T : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| :=
+  have hdetJ : (0 : ℝ) < |LinearMap.det (T : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| :=
     abs_pos.mpr (LinearEquiv.isUnit_det' T).ne_zero
   field_simp at hcov
   linarith [hcov]
@@ -2533,13 +2420,14 @@ private theorem crt_single_coset {ι : Type*} [Finite ι] (L L' : Submodule ℤ 
         = (ξ' +ᵥ ((m : ℝ) • (L' : Set (ι → ℝ)))) := by
   have hmsmul : ∀ (M : Submodule ℤ (ι → ℝ)), ((m : ℝ) • (M : Set (ι → ℝ)))
       = {z | ∃ x ∈ M, z = m • x} := by
-    intro M; ext z
+    intro M
+    ext z
     simp only [Set.mem_smul_set, SetLike.mem_coe, Set.mem_setOf_eq]
-    exact ⟨fun ⟨x, hx, h⟩ => ⟨x, hx, by rw [← h, Nat.cast_smul_eq_nsmul]⟩,
-      fun ⟨x, hx, h⟩ => ⟨x, hx, by rw [h, Nat.cast_smul_eq_nsmul]⟩⟩
+    exact ⟨fun ⟨x, hx, h⟩ ↦ ⟨x, hx, by rw [← h, Nat.cast_smul_eq_nsmul]⟩,
+      fun ⟨x, hx, h⟩ ↦ ⟨x, hx, by rw [h, Nat.cast_smul_eq_nsmul]⟩⟩
+  have hbij := hcop.nsmul_right_bijective
+    (G := L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
   have hsurj : ∃ a' ∈ L'.toAddSubgroup, ∃ a ∈ L.toAddSubgroup, ξ = a' + m • a := by
-    have hbij := hcop.nsmul_right_bijective
-      (G := L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
     obtain ⟨q, hq⟩ := hbij.2 (QuotientAddGroup.mk (⟨ξ, hξ⟩ : L.toAddSubgroup))
     obtain ⟨a, rfl⟩ := QuotientAddGroup.mk_surjective q
     simp only at hq
@@ -2549,33 +2437,32 @@ private theorem crt_single_coset {ι : Type*} [Finite ι] (L L' : Submodule ℤ 
   refine ⟨ξ', hξ'L', ?_⟩
   have hinj2 : ∀ a : ι → ℝ, a ∈ L → m • a ∈ L' → a ∈ L' := by
     intro a ha hma
-    have hbij := hcop.nsmul_right_bijective
-      (G := L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
     have hzero : m • (QuotientAddGroup.mk (⟨a, ha⟩ : L.toAddSubgroup)
         : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
         = (0 : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) := by
       rw [← QuotientAddGroup.mk_nsmul, QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf]
       simpa using hma
     have hq0 : (QuotientAddGroup.mk (⟨a, ha⟩ : L.toAddSubgroup)
-        : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) = 0 := by
-      apply hbij.1
-      change m • _ = m • (0 : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup)
-      rw [hzero, smul_zero]
+        : L.toAddSubgroup ⧸ L'.toAddSubgroup.addSubgroupOf L.toAddSubgroup) = 0 :=
+      hbij.1 (by simp only [hzero, smul_zero])
     rw [QuotientAddGroup.eq_zero_iff, AddSubgroup.mem_addSubgroupOf] at hq0
     simpa using hq0
   ext a
   simp only [Set.mem_setOf_eq, hmsmul, Set.mem_vadd_set, Set.mem_setOf_eq, vadd_eq_add]
   constructor
   · rintro ⟨haL', w, ⟨x, hxL, rfl⟩, hweq⟩
+    rw [hξeq] at hweq
     have hmem : m • (a₀ + x) = a - ξ' := by
-      rw [smul_add]; rw [hξeq] at hweq; rw [← hweq]; abel
+      rw [smul_add, ← hweq]
+      abel
     refine ⟨a - ξ', ⟨a₀ + x, ?_, ?_⟩, by abel⟩
     · exact hinj2 _ (L.add_mem ha₀L hxL) (by rw [hmem]; exact L'.sub_mem haL' hξ'L')
     · rw [hmem]
   · rintro ⟨w, ⟨y, hyL', rfl⟩, rfl⟩
     refine ⟨L'.add_mem hξ'L' (L'.nsmul_mem hyL' m), m • (y - a₀),
       ⟨y - a₀, L.sub_mem (hle hyL') ha₀L, rfl⟩, ?_⟩
-    rw [hξeq, smul_sub]; abel
+    rw [hξeq, smul_sub]
+    abel
 
 open Ideal in
 /-- **(L1) Coprime class representative.** Every ideal class `D` has an integral representative `J`
@@ -2592,33 +2479,28 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
   rcases eq_or_ne n 1 with rfl | hn1
   · obtain ⟨J, hJ⟩ := ClassGroup.mk0_surjective D
     exact ⟨J, hJ, Nat.coprime_one_right _⟩
-  have hn2 : 2 ≤ n := by omega
+  have hn2 : 2 ≤ n := by lia
   obtain ⟨J₀, hJ₀⟩ := ClassGroup.mk0_surjective D⁻¹
   have hJ₀ne : (J₀ : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero J₀
   set 𝔫 : Ideal (𝓞 K) := Ideal.span {(n : 𝓞 K)} with h𝔫
   have hnZ : (n : 𝓞 K) ≠ 0 := by
     simpa using (Nat.cast_ne_zero (R := 𝓞 K)).mpr hn.ne'
   have h𝔫ne : 𝔫 ≠ ⊥ := by
-    rw [h𝔫, Ne, Ideal.span_singleton_eq_bot]; exact hnZ
+    rwa [h𝔫, Ne, Ideal.span_singleton_eq_bot]
   have h𝔫top : 𝔫 ≠ ⊤ := by
-    intro htop
-    have hN : Ideal.absNorm 𝔫 = n ^ Module.finrank ℤ (𝓞 K) := by
-      rw [h𝔫]; exact Ideal.absNorm_span_natCast n
-    rw [htop, Ideal.absNorm_top] at hN
-    have hd : 0 < Module.finrank ℤ (𝓞 K) := Module.finrank_pos
+    rw [Ne, ← Ideal.absNorm_eq_one_iff, h𝔫, Ideal.absNorm_span_natCast]
     have : 2 ≤ n ^ Module.finrank ℤ (𝓞 K) :=
-      le_trans hn2 (Nat.le_self_pow hd.ne' n)
-    omega
+      le_trans hn2 (Nat.le_self_pow Module.finrank_pos.ne' n)
+    lia
   have hle : 𝔫 * (J₀ : Ideal (𝓞 K)) ≤ (J₀ : Ideal (𝓞 K)) := Ideal.mul_le_left
-  have hIne : 𝔫 * (J₀ : Ideal (𝓞 K)) ≠ 0 := by
-    rw [Ne, mul_eq_zero, not_or]; exact ⟨h𝔫ne, hJ₀ne⟩
+  have hIne : 𝔫 * (J₀ : Ideal (𝓞 K)) ≠ 0 := mul_ne_zero h𝔫ne hJ₀ne
   obtain ⟨a, ha⟩ := IsDedekindDomain.exists_sup_span_eq hle hIne
   have hane : a ≠ 0 := by
     intro hbot
     rw [hbot, Ideal.span_singleton_zero, sup_bot_eq] at ha
     apply h𝔫top
     have : (J₀ : Ideal (𝓞 K)) * 𝔫 = (J₀ : Ideal (𝓞 K)) * ⊤ := by
-      rw [Ideal.mul_top, mul_comm]; exact ha
+      rwa [Ideal.mul_top, mul_comm]
     exact mul_left_cancel₀ hJ₀ne this
   have haJ₀ : Ideal.span {a} ≤ (J₀ : Ideal (𝓞 K)) := le_sup_right.trans (le_of_eq ha)
   obtain ⟨J₁, hJ₁⟩ : (J₀ : Ideal (𝓞 K)) ∣ Ideal.span {a} := Ideal.dvd_iff_le.mpr haJ₀
@@ -2636,21 +2518,25 @@ private theorem exists_mk0_eq_absNorm_coprime {K : Type*} [Field K] [NumberField
     exact mul_left_cancel₀ hJ₀ne hkey
   have hJ₁mem : J₁ ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hJ₁ne
   have hsaZ : Ideal.span {a} ≠ 0 := by
-    rw [Submodule.zero_eq_bot, Ne, Ideal.span_singleton_eq_bot]; exact hane
+    rwa [Submodule.zero_eq_bot, Ne, Ideal.span_singleton_eq_bot]
   set J₁' : (Ideal (𝓞 K))⁰ := ⟨J₁, hJ₁mem⟩ with hJ₁'
   refine ⟨J₁', ?_, ?_⟩
   · have hsa_mem : Ideal.span {a} ∈ (Ideal (𝓞 K))⁰ := mem_nonZeroDivisors_of_ne_zero hsaZ
     have hprinc : ClassGroup.mk0 (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = 1 :=
       (ClassGroup.mk0_eq_one_iff hsa_mem).mpr ⟨a, rfl⟩
-    have hfact : (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = J₀ * J₁' := by
-      apply Subtype.ext; simp only [Submonoid.coe_mul, hJ₁', hJ₁]
+    have hfact : (⟨Ideal.span {a}, hsa_mem⟩ : (Ideal (𝓞 K))⁰) = J₀ * J₁' :=
+      Subtype.ext (by simp only [Submonoid.coe_mul, hJ₁', hJ₁])
     rw [hfact, map_mul, hJ₀] at hprinc
     have hinv := mul_eq_one_iff_eq_inv.mp hprinc
     rw [← inv_inv (ClassGroup.mk0 J₁'), ← hinv, inv_inv]
   · have hcopI : IsCoprime (J₁ : Ideal (𝓞 K)) 𝔫 := by
-      rw [Ideal.isCoprime_iff_sup_eq, sup_comm]; exact hcop
+      rwa [Ideal.isCoprime_iff_sup_eq, sup_comm]
     exact absNorm_coprime_of_isCoprime_span J₁' n (by
       simpa only [hJ₁'] using hcopI)
+
+private theorem image_range_basisFun_eq {ι : Type*} [Finite ι] (T : (ι → ℝ) ≃ₗ[ℝ] (ι → ℝ)) :
+    (⇑T '' Set.range (Pi.basisFun ℝ ι)) = Set.range ((Pi.basisFun ℝ ι).map T) := by
+  rw [Module.Basis.coe_map, Set.range_comp]
 
 open Submodule Pointwise in
 /-- The `m`-sublattice of the chart lattice, in workhorse form: the image of `ℤ^ι` under
@@ -2662,10 +2548,7 @@ private theorem smul_chart_lattice_eq {ι : Type*} [Finite ι] (T : (ι → ℝ)
       = ((m : ℝ) • (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Set (ι → ℝ))) := by
   have hLeq : (span ℤ (Set.range ((Pi.basisFun ℝ ι).map T)) : Set (ι → ℝ))
       = ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ ι))) := by
-    rw [map_span_int_linearEquiv,
-      show (⇑T '' Set.range (Pi.basisFun ℝ ι)) = Set.range ((Pi.basisFun ℝ ι).map T) from by
-        rw [show ⇑((Pi.basisFun ℝ ι).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ ι) from by
-          funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]]
+    rw [map_span_int_linearEquiv, image_range_basisFun_eq]
   ext z
   simp only [LinearEquiv.trans_apply, LinearEquiv.smulOfNeZero_apply, Set.mem_image,
     Set.mem_smul_set, SetLike.mem_coe, hLeq]
@@ -2694,9 +2577,9 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
     {t : ℝ} (ht : 1 ≤ t) :
     ∃ ξ' : index K → ℝ, Nat.card {a : idealSet K (𝔟 * J) //
         mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+        (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
           (a : mixedSpace K))) i) : ZMod m)) = k}
       = Nat.card ↑((ξ' +ᵥ ((m : ℝ) • (span ℤ (Set.range ((Pi.basisFun ℝ (index K)).map T'))
           : Set (index K → ℝ)))) ∩
@@ -2725,46 +2608,38 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
         = L'.toAddSubgroup.relIndex L.toAddSubgroup from rfl, hrel]
     exact hcop
   have hLL' : L' ≤ L := chart_sublattice_le J 𝔟 T T' hT hT'
-  have hξkL : (T (fun i => ((k i).val : ℝ)) : index K → ℝ) ∈ L := by
-    have hv : (fun i => ((k i).val : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) := by
+  have hξkL : (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) ∈ L := by
+    have hv : (fun i ↦ ((k i).val : ℝ)) ∈ span ℤ (Set.range (Pi.basisFun ℝ (index K))) := by
       rw [mem_span_int_basisFun_iff]
-      exact fun i => ⟨((k i).val : ℤ), by push_cast; rfl⟩
-    have hmem : (T (fun i => ((k i).val : ℝ)) : index K → ℝ)
+      exact fun i ↦ ⟨((k i).val : ℤ), by push_cast; rfl⟩
+    have hmem : (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ)
         ∈ ⇑T '' ↑(span ℤ (Set.range (Pi.basisFun ℝ (index K)))) := ⟨_, hv, rfl⟩
     rw [map_span_int_linearEquiv] at hmem
     rw [hLdef]
-    rwa [show (⇑T '' Set.range (Pi.basisFun ℝ (index K)))
-        = Set.range ((Pi.basisFun ℝ (index K)).map T) from by
-      rw [show ⇑((Pi.basisFun ℝ (index K)).map T) = ⇑T ∘ ⇑(Pi.basisFun ℝ (index K)) from by
-        funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]] at hmem
+    rwa [image_range_basisFun_eq] at hmem
   obtain ⟨ξ', hξ'L', hcoset⟩ := crt_single_coset L L' hLL' m hcopC hξkL
   refine ⟨ξ', ?_⟩
   have hΦΛ' : ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
       (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) = ↑L' := by
-    rw [hL'def, ← hT', map_span_int_linearEquiv,
-      show (⇑T' '' Set.range (Pi.basisFun ℝ (index K)))
-        = Set.range ((Pi.basisFun ℝ (index K)).map T') from by
-      rw [show ⇑((Pi.basisFun ℝ (index K)).map T') = ⇑T' ∘ ⇑(Pi.basisFun ℝ (index K)) from by
-        funext i; rw [Module.Basis.map_apply]; rfl, Set.range_comp]]
+    rw [hL'def, ← hT', map_span_int_linearEquiv, image_range_basisFun_eq]
   have hincl : idealSet K (𝔟 * J) ⊆ idealSet K J := by
     intro x hx
     exact ⟨hx.1, idealLattice_mul_le J 𝔟 hx.2⟩
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
   have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
-    Set.image_smul_comm Φ t _ (fun b => map_smul Φ t b)
+    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
       (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
         (mixedEmbedding.norm x ≤ t ^ d ∧
-          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} => x.1 w < 0) = s)) :=
-    fun x hx => mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
+          Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦ x.1 w < 0) = s)) :=
+    fun x hx ↦ mem_smul_cell_iff_norm_le_and_filter_eq J s ht hx
   set f : {a : idealSet K (𝔟 * J) //
       mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
-      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (a : mixedSpace K).1 w < 0) = s) ∧
-      (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} → (index K → ℝ) :=
-    fun a => Φ (a.1 : mixedSpace K) with hf
-  have hfinj : Function.Injective f := fun a₁ a₂ h => by
-    apply Subtype.ext; apply Subtype.ext; exact Φ.injective h
+      (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} → (index K → ℝ) :=
+    fun a ↦ Φ (a.1 : mixedSpace K) with hf
+  have hfinj : Function.Injective f := fun _ _ h ↦ Subtype.ext (Subtype.ext (Φ.injective h))
   have hset : Set.range f =
       ((ξ' +ᵥ ((m : ℝ) • (L' : Set (index K → ℝ)))) ∩
         t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os)) := by
@@ -2777,12 +2652,12 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
         have hmm : Φ a ∈ ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
             (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) := ⟨a, ha.2, rfl⟩
         rwa [hΦΛ'] at hmm
-      have hcosetmem : Φ a ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+      have hcosetmem : Φ a ∈ (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
           (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
             (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))) :=
-        (mem_coset_iff_cos_eq m hm J T hT k haJ.2).mpr (fun i => congrFun hP.2.2 i)
+        (mem_coset_iff_cos_eq m hm J T hT k haJ.2).mpr (fun i ↦ congrFun hP.2.2 i)
       have hΦacoset : Φ a ∈ ξ' +ᵥ ((m : ℝ) • (L' : Set (index K → ℝ))) := by
-        have hmemL : Φ a ∈ {b | b ∈ L' ∧ b ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+        have hmemL : Φ a ∈ {b | b ∈ L' ∧ b ∈ (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
             ((m : ℝ) • (L : Set (index K → ℝ)))} := by
           refine ⟨haL', ?_⟩
           rw [hLdef, ← smul_chart_lattice_eq T m hm]
@@ -2803,10 +2678,10 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
           rw [show z = z' from Φ.injective (by rw [hz'eq, hzeq])]; exact hz'
         exact ⟨(by obtain ⟨z'', hz'', rfl⟩ := hzn; exact smul_mem_of_mem hz''.1 ht0), hzlat⟩
       have hzJ : z ∈ idealSet K J := hincl hzcone
-      have hcosetz : Φ z ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+      have hcosetz : Φ z ∈ (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
           (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
             (span ℤ (Set.range (Pi.basisFun ℝ (index K))) : Set (index K → ℝ))) := by
-        have hymem : y ∈ {a | a ∈ L' ∧ a ∈ (T (fun i => ((k i).val : ℝ)) : index K → ℝ) +ᵥ
+        have hymem : y ∈ {a | a ∈ L' ∧ a ∈ (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
             ((m : ℝ) • (L : Set (index K → ℝ)))} := by rw [hcoset]; exact hcosetmem
         rw [smul_chart_lattice_eq T m hm, ← hLdef, show (Φ z : index K → ℝ) = y from hzeq]
         exact hymem.2
@@ -2856,13 +2731,8 @@ private theorem abs_det_smulTrans_mul {K : Type*} [Field K] [NumberField K]
         * |LinearMap.det ((((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) m hm).trans T
             : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)) : (index K → ℝ) →ₗ[ℝ] (index K → ℝ)))| := by
   have hdet := abs_det_latticeEquiv_mul J 𝔟 T T' hT hT'
-  set E : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ) := LinearEquiv.smulOfNeZero ℝ (index K → ℝ) m hm
-    with hE
-  have htr : ∀ (S : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)),
-      (((E.trans S : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)) : (index K → ℝ) →ₗ[ℝ] (index K → ℝ)))
-        = (S : (index K → ℝ) →ₗ[ℝ] (index K → ℝ)).comp (E : (index K → ℝ) →ₗ[ℝ] (index K → ℝ)) := by
-    intro S; ext x; simp
-  rw [htr T, htr T', LinearMap.det_comp, LinearMap.det_comp, abs_mul, abs_mul, hdet]
+  rw [LinearEquiv.coe_trans, LinearEquiv.coe_trans, LinearMap.det_comp, LinearMap.det_comp,
+    abs_mul, abs_mul, hdet]
   ring
 
 open Ideal NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
@@ -2893,14 +2763,14 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
       |(Nat.card {a : idealSet K (𝔟 * J) //
           (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ Module.finrank ℚ K ∧
             ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod m) = (b : ZMod m))) ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = s) ∧
-          (fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+          (fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
             (a : mixedSpace K))) i) : ZMod m)) = k} : ℝ)
           - ((if (∃ a : idealSet K J,
-              (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+              (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
                 (a : mixedSpace K).1 w < 0) = s) ∧
-              ((fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+              ((fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
                 (a : mixedSpace K))) i) : ZMod m)) = k) ∧
               ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
             then MeasureTheory.volume.real
@@ -2916,7 +2786,6 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
   set Os : Set (index K → ℝ) :=
     {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))} with hOs
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
-  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (absNorm_pos_of_nonZeroDivisors 𝔟).ne'
   have hcard : Fintype.card (index K) = d := by
     rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank]
   obtain ⟨cellC', hcell'⟩ := exists_card_cell_sub_mul_rpow_le_explicit T' m hm
@@ -2929,29 +2798,27 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
       = MeasureTheory.volume.real (Φ '' (normLeOne K) ∩ Os)
           / |LinearMap.det (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T
             : (index K → ℝ) ≃ₗ[ℝ] (index K → ℝ)) : (index K → ℝ) →ₗ[ℝ] (index K → ℝ))| / NB := by
-    rw [abs_det_smulTrans_mul m hm J 𝔟 T T' hT hT', ← hNBdef]
-    rw [div_div, mul_comm (NB : ℝ), ← div_div]
-  refine ⟨|cellC'|, fun t ht => ?_⟩
-  have ht0 : (0 : ℝ) ≤ t ^ (d - 1 : ℕ) := by positivity
+    rw [abs_det_smulTrans_mul m hm J 𝔟 T T' hT hT', ← hNBdef, div_div, mul_comm (NB : ℝ), ← div_div]
+  refine ⟨|cellC'|, fun t ht ↦ ?_⟩
   by_cases hQ : ∃ a : idealSet K J,
-      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+      (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
         (a : mixedSpace K).1 w < 0) = s) ∧
-      ((fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
+      ((fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k) ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m))
   · obtain ⟨a₀, horth₀, hcos₀, hres₀⟩ := hQ
     rw [if_pos ⟨a₀, horth₀, hcos₀, hres₀⟩]
     have hdrop : Nat.card {a : idealSet K (𝔟 * J) //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
           ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod m) = (b : ZMod m))) ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k}
+        (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k}
         = Nat.card {a : idealSet K (𝔟 * J) //
           mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
-          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+          (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
             (a : mixedSpace K).1 w < 0) = s) ∧
-          (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
-      refine Nat.card_congr (Equiv.subtypeEquivRight fun a => ?_)
+          (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
+      refine Nat.card_congr (Equiv.subtypeEquivRight fun a ↦ ?_)
       constructor
       · rintro ⟨⟨hn, _⟩, ho, hc⟩; exact ⟨hn, ho, hc⟩
       · rintro ⟨hn, ho, hc⟩
@@ -2967,13 +2834,13 @@ private theorem exists_card_fibre_dvd_residue_sub_mul_rpow_le {K : Type*} [Field
     rw [smul_chart_lattice_eq T' m hm, ← hOs, hdetratio, hcard] at hcell''
     exact hcell''.trans (by gcongr; exact le_abs_self _)
   · rw [if_neg hQ, zero_div, zero_mul, sub_zero]
-    have hempty : IsEmpty {a : idealSet K (𝔟 * J) //
+    have : IsEmpty {a : idealSet K (𝔟 * J) //
         (mixedEmbedding.norm (a : mixedSpace K) ≤ t ^ d ∧
           ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod m) = (b : ZMod m))) ∧
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = s) ∧
-        (fun i => (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
-      refine ⟨fun a => hQ ⟨⟨(a.1 : mixedSpace K), a.1.2.1, idealLattice_mul_le J 𝔟 a.1.2.2⟩,
+        (fun i ↦ (round ((T.symm (Φ (a : mixedSpace K))) i) : ZMod m)) = k} := by
+      refine ⟨fun a ↦ hQ ⟨⟨(a.1 : mixedSpace K), a.1.2.1, idealLattice_mul_le J 𝔟 a.1.2.2⟩,
         a.2.2.1, a.2.2.2, ?_⟩⟩
       exact a.2.1.2
     rw [Nat.card_of_isEmpty, Nat.cast_zero, abs_zero]
@@ -3003,10 +2870,7 @@ private theorem exists_card_idealSet_residue_real_le_dvd {K : Type*} [Field K] [
           ≤ C' * S ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) := by
   classical
   set d := Module.finrank ℚ K with hd
-  have hdpos : 0 < d := Module.finrank_pos
-  have hdne : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hdpos.ne'
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
-  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (absNorm_pos_of_nonZeroDivisors 𝔟).ne'
   obtain ⟨T, hT⟩ := exists_latticeEquiv_image_idealLattice J
   obtain ⟨T', hT'⟩ := exists_latticeEquiv_image_idealLattice (𝔟 * J)
   obtain ⟨mc, M, φ, hφ, hcovraw⟩ := normLeOne_frontier_lipschitz_cover_index K
@@ -3014,15 +2878,15 @@ private theorem exists_card_idealSet_residue_real_le_dvd {K : Type*} [Field K] [
       (index K → ℝ)), (∀ j, LipschitzWith M (φ j)) ∧
       frontier ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K)) ⊆ ⋃ j, φ j '' Set.Icc 0 1 :=
     ⟨mc, M, φ, hφ, hcovraw⟩
-  choose CJ hCJ using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) =>
+  choose CJ hCJ using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) ↦
     exists_card_residue_fibre_sub_mul_rpow_le_explicit m hm b J T hT hcov p.1 p.2
-  choose CB hCB using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) =>
+  choose CB hCB using fun p : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) ↦
     exists_card_fibre_dvd_residue_sub_mul_rpow_le m hm b J 𝔟 hcop T T' hT hT' hcov p.1 p.2
   set L : Finset {w : InfinitePlace K // IsReal w} × (index K → ZMod m) → ℝ :=
-    fun p => if (∃ a : idealSet K J,
-        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} =>
+    fun p ↦ if (∃ a : idealSet K J,
+        (Finset.univ.filter (fun w : {w : InfinitePlace K // IsReal w} ↦
           (a : mixedSpace K).1 w < 0) = p.1) ∧
-        ((fun i => (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
+        ((fun i ↦ (round ((T.symm ((mixedEmbedding.stdBasis K).equivFunL
           (a : mixedSpace K))) i) : ZMod m)) = p.2) ∧
         ((intNorm (idealSetEquiv K J a).val : ZMod m) = (b : ZMod m)))
       then MeasureTheory.volume.real ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩
@@ -3032,15 +2896,15 @@ private theorem exists_card_idealSet_residue_real_le_dvd {K : Type*} [Field K] [
       else 0 with hL
   refine ⟨∑ p, L p, ∑ p, (|CJ p| + |CB p|), ?_, ?_⟩
   · intro S hS
-    refine card_residue_sum_bound_aux m b J T S hS L (fun p => |CJ p| + |CB p|)
-      (fun p tN htN => ?_)
+    refine card_residue_sum_bound_aux m b J T S hS L (fun p ↦ |CJ p| + |CB p|)
+      (fun p tN htN ↦ ?_)
     refine le_trans (hCJ p tN htN) ?_
     gcongr
     exact (le_abs_self _).trans (le_add_of_nonneg_right (abs_nonneg _))
   · intro S hS
-    rw [show (∑ p, L p) / (NB : ℝ) = ∑ p, (L p / (NB : ℝ)) from by rw [Finset.sum_div]]
-    refine card_residue_sum_bound_aux m b (𝔟 * J) T S hS (fun p => L p / (NB : ℝ))
-      (fun p => |CJ p| + |CB p|) (fun p tN htN => ?_)
+    rw [show (∑ p, L p) / (NB : ℝ) = ∑ p, (L p / (NB : ℝ)) by rw [Finset.sum_div]]
+    refine card_residue_sum_bound_aux m b (𝔟 * J) T S hS (fun p ↦ L p / (NB : ℝ))
+      (fun p ↦ |CJ p| + |CB p|) (fun p tN htN ↦ ?_)
     refine le_trans (hCB p tN htN) ?_
     gcongr
     exact (le_abs_self _).trans (le_add_of_nonneg_left (abs_nonneg _))
@@ -3069,15 +2933,15 @@ private theorem card_principalize_dvd {K : Type*} [Field K] [NumberField K] (c :
     rw [mul_comm (𝔟 : Ideal (𝓞 K)) (J : Ideal (𝓞 K)),
       mul_dvd_mul_iff_left (nonZeroDivisors.coe_ne_zero J)]
   refine Nat.card_congr
-    (((Equiv.dvd J).subtypeEquiv (fun I => ?_)).trans
-      (Equiv.subtypeSubtypeEquivSubtype (p := fun a : (Ideal (𝓞 K))⁰ => J ∣ a)
-        (q := fun I' : (Ideal (𝓞 K))⁰ => (𝔟 * J : Ideal (𝓞 K)) ∣ (I' : Ideal (𝓞 K)) ∧
+    (((Equiv.dvd J).subtypeEquiv (fun I ↦ ?_)).trans
+      (Equiv.subtypeSubtypeEquivSubtype (p := fun a : (Ideal (𝓞 K))⁰ ↦ J ∣ a)
+        (q := fun I' : (Ideal (𝓞 K))⁰ ↦ (𝔟 * J : Ideal (𝓞 K)) ∣ (I' : Ideal (𝓞 K)) ∧
           IsPrincipal (I' : Ideal (𝓞 K)) ∧
           Ideal.absNorm (I' : Ideal (𝓞 K)) ≤ N * Ideal.absNorm (J : Ideal (𝓞 K)) ∧
           ((Ideal.absNorm (I' : Ideal (𝓞 K)) : ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K)))) =
             ((y.val * Ideal.absNorm (J : Ideal (𝓞 K)) : ℕ) :
               ZMod (c * Ideal.absNorm (J : Ideal (𝓞 K))))))
-        (fun {a} hq => by
+        (fun {a} hq ↦ by
           rw [nonZeroDivisors_dvd_iff_dvd_coe]
           exact dvd_trans (Dvd.intro_left _ rfl) hq.1)))
   simp only [Equiv.dvd_apply, Submonoid.coe_mul]
@@ -3086,7 +2950,7 @@ private theorem card_principalize_dvd {K : Type*} [Field K] [NumberField K] (c :
         ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = y) ∧ ClassGroup.mk0 I = D))
       ↔ (((Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
           ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = y) ∧ ClassGroup.mk0 I = D) ∧
-        (𝔟 : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K))) from by tauto,
+        (𝔟 : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K))) by tauto,
     principalize_iff c y N D J I hJ hNJ]
   rw [show ((𝔟 : Ideal (𝓞 K)) ∣ (I : Ideal (𝓞 K))) ↔
       ((𝔟 * J : Ideal (𝓞 K)) ∣ ((J : Ideal (𝓞 K)) * (I : Ideal (𝓞 K)))) from (hdvd I).symm]
@@ -3100,36 +2964,29 @@ private theorem tendsto_count_div_of_cone_bridge {K : Type*} [Field K] [NumberFi
     (NJ : ℕ) (hNJ : 0 < NJ) (κ₀ C' : ℝ) (cnt : ℕ → ℕ) (coneR : ℝ → ℝ)
     (hbridge : ∀ N : ℕ, (cnt N : ℝ) * (torsionOrder K : ℝ) = coneR ((N * NJ : ℕ) : ℝ))
     (hcone : ∀ S : ℝ, 1 ≤ S → |coneR S - κ₀ * S| ≤ C' * S ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) :
-    Filter.Tendsto (fun N : ℕ => (cnt N : ℝ) / (N : ℝ))
+    Filter.Tendsto (fun N : ℕ ↦ (cnt N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ₀ * (NJ : ℝ) / (torsionOrder K : ℝ))) := by
   set d := Module.finrank ℚ K with hd
   have hdpos : 0 < d := Module.finrank_pos
   have htors : (0 : ℝ) < torsionOrder K := by
     exact_mod_cast (torsionOrder K).pos_of_ne_zero (torsionOrder_ne_zero K)
-  have hNJR : (0 : ℝ) < (NJ : ℝ) := by exact_mod_cast hNJ
-  have hexp : (0 : ℝ) ≤ 1 - (d : ℝ)⁻¹ := by
-    have : (d : ℝ)⁻¹ ≤ 1 := by
-      rw [inv_le_one₀ (by exact_mod_cast hdpos)]; exact_mod_cast hdpos
-    linarith
   refine tendsto_div_atTop_of_sub_mul_rpow_le (C' := |C'| * (NJ : ℝ) / (torsionOrder K : ℝ))
-    (d := d) hdpos (fun N hN => ?_)
+    (d := d) hdpos (fun N hN ↦ ?_)
   have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
   have hNJN : (1 : ℝ) ≤ ((N * NJ : ℕ) : ℝ) := by
     rw [Nat.cast_mul]; exact one_le_mul_of_one_le_of_one_le hNR (by exact_mod_cast hNJ)
   have hkey := hcone ((N * NJ : ℕ) : ℝ) hNJN
-  rw [← hbridge N] at hkey
-  have hcast : ((N * NJ : ℕ) : ℝ) = (N : ℝ) * (NJ : ℝ) := by rw [Nat.cast_mul]
-  rw [hcast] at hkey
+  rw [← hbridge N, Nat.cast_mul] at hkey
   rw [show (cnt N : ℝ) - κ₀ * (NJ : ℝ) / (torsionOrder K : ℝ) * N
       = ((cnt N : ℝ) * (torsionOrder K : ℝ) - κ₀ * ((N : ℝ) * (NJ : ℝ))) / (torsionOrder K : ℝ) by
     field_simp]
   rw [abs_div, abs_of_pos htors, div_le_iff₀ htors]
   refine hkey.trans ?_
   rw [Real.mul_rpow (by positivity) (by positivity)]
-  have hNJpow : (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹) ≤ (NJ : ℝ) := by
-    have h1d : (0 : ℝ) ≤ (d : ℝ)⁻¹ := by positivity
+  have hNJpow : (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹) ≤ (NJ : ℝ) :=
     calc (NJ : ℝ) ^ (1 - (d : ℝ)⁻¹) ≤ (NJ : ℝ) ^ (1 : ℝ) :=
-          Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hNJ) (by linarith)
+          Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hNJ)
+            (by simp only [tsub_le_iff_right, le_add_iff_nonneg_right]; positivity)
       _ = (NJ : ℝ) := Real.rpow_one _
   have hgoalRHS : |C'| * (NJ : ℝ) / (torsionOrder K : ℝ) * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) *
       (torsionOrder K : ℝ) = |C'| * ((N : ℝ) ^ (1 - (d : ℝ)⁻¹) * (NJ : ℝ)) := by
@@ -3139,6 +2996,22 @@ private theorem tendsto_count_div_of_cone_bridge {K : Type*} [Field K] [NumberFi
     mul_comm ((N : ℝ) ^ (1 - (d : ℝ)⁻¹)) (NJ : ℝ), ← mul_assoc, ← mul_assoc]
   gcongr
   exact le_abs_self _
+
+open Ideal NumberField NumberField.Units NumberField.mixedEmbedding
+  NumberField.mixedEmbedding.fundamentalCone in
+/-- The cone-count bridge with a natural-number norm bound: the
+`card_isPrincipal_dvd_norm_le_residue` torsion bridge specialised to the bound `N(I) ≤ (M : ℝ)`
+coming from a `ℕ`-bound `M`. -/
+private theorem card_isPrincipal_dvd_norm_le_residue_natBound {K : Type*} [Field K] [NumberField K]
+    (I₀ : (Ideal (𝓞 K))⁰) (m b M : ℕ) :
+    Nat.card {I : (Ideal (𝓞 K))⁰ // (I₀ : Ideal (𝓞 K)) ∣ I ∧ IsPrincipal (I : Ideal (𝓞 K)) ∧
+        Ideal.absNorm (I : Ideal (𝓞 K)) ≤ M ∧
+        ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m) = (b : ZMod m))} * torsionOrder K =
+      Nat.card {a : idealSet K I₀ // mixedEmbedding.norm (a : mixedSpace K) ≤ (M : ℝ) ∧
+        ((intNorm (idealSetEquiv K I₀ a).val : ZMod m) = (b : ZMod m))} := by
+  rw [← card_isPrincipal_dvd_norm_le_residue I₀ m b (M : ℝ)]
+  congr 1
+  exact Nat.card_congr (Equiv.subtypeEquivRight fun I ↦ by rw [Nat.cast_le])
 
 open Ideal NumberField NumberField.Units NumberField.mixedEmbedding
   NumberField.mixedEmbedding.fundamentalCone in
@@ -3152,9 +3025,9 @@ private theorem cardNormLeResidueClassDvd_div_density {K : Type*} [Field K] [Num
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (y : ZMod c) (D : ClassGroup (𝓞 K)) {κfull : ℝ}
-    (hκfull : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
+    (hκfull : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κfull)) :
-    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+    Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κfull / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) := by
   classical
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
@@ -3169,57 +3042,53 @@ private theorem cardNormLeResidueClassDvd_div_density {K : Type*} [Field K] [Num
   have hm : ((c * NJ : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne (c * NJ))
   obtain ⟨κ, C', hJcone, h𝔟Jcone⟩ :=
     exists_card_idealSet_residue_real_le_dvd (c * NJ) hm (y.val * NJ) J 𝔟 hcop
-  set coneJ : ℝ → ℝ := fun S => (Nat.card {a : idealSet K J //
+  set coneJ : ℝ → ℝ := fun S ↦ (Nat.card {a : idealSet K J //
     mixedEmbedding.norm (a : mixedSpace K) ≤ S ∧
       ((intNorm (idealSetEquiv K J a).val : ZMod (c * NJ))
         = ((y.val * NJ : ℕ) : ZMod (c * NJ)))} : ℝ)
     with hconeJ
-  set cone𝔟J : ℝ → ℝ := fun S => (Nat.card {a : idealSet K (𝔟 * J) //
+  set cone𝔟J : ℝ → ℝ := fun S ↦ (Nat.card {a : idealSet K (𝔟 * J) //
     mixedEmbedding.norm (a : mixedSpace K) ≤ S ∧
       ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod (c * NJ))
         = ((y.val * NJ : ℕ) : ZMod (c * NJ)))} : ℝ) with hcone𝔟J
-  have hboundcast : ∀ (I : (Ideal (𝓞 K))⁰) (N : ℕ),
-      (Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N * NJ) ↔ ((Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤
-        ((N * NJ : ℕ) : ℝ)) := fun I N => by rw [Nat.cast_le]
   have hbridgeJ : ∀ N : ℕ, (cardNormLeResidueClass c y D N : ℝ) * (torsionOrder K : ℝ)
-      = coneJ ((N * NJ : ℕ) : ℝ) := fun N => by
-    have hnat : cardNormLeResidueClass c y D N * torsionOrder K
-        = Nat.card {a : idealSet K J // mixedEmbedding.norm (a : mixedSpace K) ≤ ((N * NJ : ℕ) : ℝ)
-          ∧ ((intNorm (idealSetEquiv K J a).val : ZMod (c * NJ))
-            = ((y.val * NJ : ℕ) : ZMod (c * NJ)))} := by
-      rw [cardNormLeResidueClass, card_principalize c y N D J hJ hNJ,
-        ← card_isPrincipal_dvd_norm_le_residue J (c * NJ) (y.val * NJ) ((N * NJ : ℕ) : ℝ)]
-      congr 1
-      exact Nat.card_congr (Equiv.subtypeEquivRight fun I => by
-        rw [← hNJdef, hboundcast I N])
-    rw [hconeJ, ← Nat.cast_mul, hnat]
+      = coneJ ((N * NJ : ℕ) : ℝ) := fun N ↦ by
+    rw [hconeJ, ← Nat.cast_mul, cardNormLeResidueClass, card_principalize c y N D J hJ hNJ,
+      card_isPrincipal_dvd_norm_le_residue_natBound J (c * NJ) (y.val * NJ) (N * NJ)]
   have hbridge𝔟J : ∀ N : ℕ,
       (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) * (torsionOrder K : ℝ)
-      = cone𝔟J ((N * NJ : ℕ) : ℝ) := fun N => by
-    have hnat : cardNormLeResidueClassDvd c 𝔟 y D N * torsionOrder K
-        = Nat.card {a : idealSet K (𝔟 * J) //
-          mixedEmbedding.norm (a : mixedSpace K) ≤ ((N * NJ : ℕ) : ℝ)
-          ∧ ((intNorm (idealSetEquiv K (𝔟 * J) a).val : ZMod (c * NJ))
-            = ((y.val * NJ : ℕ) : ZMod (c * NJ)))} := by
-      rw [card_principalize_dvd c 𝔟 y N D J hJ hNJ,
-        ← card_isPrincipal_dvd_norm_le_residue (𝔟 * J) (c * NJ) (y.val * NJ) ((N * NJ : ℕ) : ℝ)]
-      congr 1
-      refine Nat.card_congr (Equiv.subtypeEquivRight fun I => ?_)
-      rw [← hNJdef, Submonoid.coe_mul, hboundcast I N]
-    rw [hcone𝔟J, ← Nat.cast_mul, hnat]
-  have hJdens : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
+      = cone𝔟J ((N * NJ : ℕ) : ℝ) := fun N ↦ by
+    rw [hcone𝔟J, ← Nat.cast_mul, card_principalize_dvd c 𝔟 y N D J hJ hNJ, ← Submonoid.coe_mul,
+      card_isPrincipal_dvd_norm_le_residue_natBound (𝔟 * J) (c * NJ) (y.val * NJ) (N * NJ)]
+  have hJdens : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ * (NJ : ℝ) / (torsionOrder K : ℝ))) :=
     tendsto_count_div_of_cone_bridge NJ hNJ κ C' (cardNormLeResidueClass c y D) coneJ hbridgeJ
-      (fun S hS => by rw [hconeJ]; exact hJcone S hS)
+      (fun S hS ↦ by rw [hconeJ]; exact hJcone S hS)
   have hκfull_eq : κfull = κ * (NJ : ℝ) / (torsionOrder K : ℝ) :=
     tendsto_nhds_unique hκfull hJdens
-  have h𝔟Jdens : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+  have h𝔟Jdens : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ / (NB : ℝ) * (NJ : ℝ) / (torsionOrder K : ℝ))) :=
     tendsto_count_div_of_cone_bridge NJ hNJ (κ / (NB : ℝ)) C' (cardNormLeResidueClassDvd c 𝔟 y D)
-      cone𝔟J hbridge𝔟J (fun S hS => by rw [hcone𝔟J]; exact h𝔟Jcone S hS)
+      cone𝔟J hbridge𝔟J (fun S hS ↦ by rw [hcone𝔟J]; exact h𝔟Jcone S hS)
   rw [show κfull / (NB : ℝ) = κ / (NB : ℝ) * (NJ : ℝ) / (torsionOrder K : ℝ) by
     rw [hκfull_eq]; ring]
   exact h𝔟Jdens
+
+open Ideal in
+/-- **Route-A count identity, floor form.** With `xC·N(𝔟) = y` and `CC·[𝔟] = D`, the `𝔟`-divisible
+class-`D` residue-`y` count at bound `N` equals the class-`CC` residue-`xC` count at bound
+`⌊N/N(𝔟)⌋` (combine `cardNormLeResidueClassDvd_floor_collapse` with
+`cardNormLeResidueClass_eq_dvd`). -/
+private theorem cardNormLeResidueClassDvd_eq_div {K : Type*} [Field K] [NumberField K] (c : ℕ)
+    [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰) (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
+    {xC y : ZMod c} {CC D : ClassGroup (𝓞 K)}
+    (hxmul : xC * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c) = y)
+    (hCmul : CC * ClassGroup.mk0 𝔟 = D) (N : ℕ) :
+    cardNormLeResidueClassDvd c 𝔟 y D N
+      = cardNormLeResidueClass c xC CC (N / Ideal.absNorm (𝔟 : Ideal (𝓞 K))) := by
+  rw [cardNormLeResidueClassDvd_floor_collapse c 𝔟 y D N,
+    cardNormLeResidueClass_eq_dvd c 𝔟 hu xC CC (N / Ideal.absNorm (𝔟 : Ideal (𝓞 K))),
+    hxmul, hCmul, mul_comm]
 
 open Ideal in
 /-- **Route A as a density (elementary, exact).** The `𝔟`-divisible class-`D` residue-`y` count has
@@ -3231,10 +3100,10 @@ private theorem cardNormLeResidueClassDvd_div_density_routeA {K : Type*} [Field 
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (y : ZMod c) (D : ClassGroup (𝓞 K)) {κCC : ℝ}
-    (hκCC : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c
+    (hκCC : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c
         (y * (↑hu.unit⁻¹ : ZMod c)) (D * (ClassGroup.mk0 𝔟)⁻¹) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κCC)) :
-    Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+    Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κCC / (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ℝ))) := by
   classical
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
@@ -3248,19 +3117,17 @@ private theorem cardNormLeResidueClassDvd_div_density_routeA {K : Type*} [Field 
     rw [hxC, ← hu_spec, mul_assoc, ← Units.val_mul, inv_mul_cancel, Units.val_one, mul_one]
   have hCmul : CC * ClassGroup.mk0 𝔟 = D := by rw [hCC, inv_mul_cancel_right]
   have hcount : ∀ N : ℕ, cardNormLeResidueClassDvd c 𝔟 y D N
-      = cardNormLeResidueClass c xC CC (N / NB) := by
-    intro N
-    rw [cardNormLeResidueClassDvd_floor_collapse c 𝔟 y D N,
-      cardNormLeResidueClass_eq_dvd c 𝔟 hu xC CC (N / NB), ← hNBdef, hxmul, hCmul, mul_comm NB]
-  refine (Filter.Tendsto.congr (fun N => by rw [hcount N]) ?_)
-  have hgN : Filter.Tendsto (fun N : ℕ => (N / NB : ℕ)) Filter.atTop Filter.atTop :=
+      = cardNormLeResidueClass c xC CC (N / NB) :=
+    fun N ↦ cardNormLeResidueClassDvd_eq_div c 𝔟 hu hxmul hCmul N
+  refine Filter.Tendsto.congr (fun N ↦ by rw [hcount N]) ?_
+  have hgN : Filter.Tendsto (fun N : ℕ ↦ (N / NB : ℕ)) Filter.atTop Filter.atTop :=
     Nat.tendsto_div_const_atTop hNB.ne'
-  have hratio : Filter.Tendsto (fun N : ℕ => ((N / NB : ℕ) : ℝ) / (N : ℝ))
+  have hratio : Filter.Tendsto (fun N : ℕ ↦ ((N / NB : ℕ) : ℝ) / (N : ℝ))
       Filter.atTop (nhds (1 / (NB : ℝ))) := by
-    have hsub : Filter.Tendsto (fun N : ℕ => ((N % NB : ℕ) : ℝ) / (N : ℝ))
+    have hsub : Filter.Tendsto (fun N : ℕ ↦ ((N % NB : ℕ) : ℝ) / (N : ℝ))
         Filter.atTop (nhds 0) := by
-      refine squeeze_zero' (Filter.Eventually.of_forall fun N => by positivity)
-        (Filter.Eventually.of_forall fun N => ?_)
+      refine squeeze_zero' (Filter.Eventually.of_forall fun N ↦ by positivity)
+        (Filter.Eventually.of_forall fun N ↦ ?_)
         (tendsto_const_div_atTop_nhds_zero_nat (NB : ℝ))
       rcases Nat.eq_zero_or_pos N with hN0 | hNpos
       · simp [hN0]
@@ -3275,13 +3142,13 @@ private theorem cardNormLeResidueClassDvd_div_density_routeA {K : Type*} [Field 
         exact_mod_cast Nat.div_add_mod' N NB
       field_simp
       nlinarith [hdm]
-    have hlim : Filter.Tendsto (fun N : ℕ => (1 - ((N % NB : ℕ) : ℝ) / (N : ℝ)) / (NB : ℝ))
-        Filter.atTop (nhds ((1 - 0) / (NB : ℝ))) := by
-      exact ((tendsto_const_nhds.sub hsub).div_const (NB : ℝ))
+    have hlim : Filter.Tendsto (fun N : ℕ ↦ (1 - ((N % NB : ℕ) : ℝ) / (N : ℝ)) / (NB : ℝ))
+        Filter.atTop (nhds ((1 - 0) / (NB : ℝ))) :=
+      (tendsto_const_nhds.sub hsub).div_const (NB : ℝ)
     refine (hlim.congr' ?_).mono_right (by rw [sub_zero])
     filter_upwards [Filter.eventually_ge_atTop 1] with N hN using (hkey N hN).symm
   have hcomp : Filter.Tendsto
-      (fun N : ℕ => (cardNormLeResidueClass c xC CC (N / NB) : ℝ) / ((N / NB : ℕ) : ℝ))
+      (fun N : ℕ ↦ (cardNormLeResidueClass c xC CC (N / NB) : ℝ) / ((N / NB : ℕ) : ℝ))
       Filter.atTop (nhds κCC) := hκCC.comp hgN
   have hprod := hcomp.mul hratio
   rw [show κCC * (1 / (NB : ℝ)) = κCC / (NB : ℝ) by ring] at hprod
@@ -3304,9 +3171,9 @@ private theorem tendsto_cardNormLeResidueClass_div_transfer {K : Type*} [Field K
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (x : ZMod c) (C : ClassGroup (𝓞 K)) {κ : ℝ}
-    (hκ : Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
+    (hκ : Filter.Tendsto (fun M : ℕ ↦ (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
       Filter.atTop (nhds κ)) :
-    Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c
+    Filter.Tendsto (fun M : ℕ ↦ (cardNormLeResidueClass c
         (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) (C * ClassGroup.mk0 𝔟) M : ℝ) / (M : ℝ))
       Filter.atTop (nhds κ) := by
   classical
@@ -3322,15 +3189,59 @@ private theorem tendsto_cardNormLeResidueClass_div_transfer {K : Type*} [Field K
   have hxC : y * (↑u⁻¹ : ZMod c) = x := by
     rw [hy, ← hu_spec, mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one, mul_one]
   have hCC : D * (ClassGroup.mk0 𝔟)⁻¹ = C := by rw [hD, mul_inv_cancel_right]
-  have hL2 : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+  have hL2 : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ' / (NB : ℝ))) :=
     cardNormLeResidueClassDvd_div_density c 𝔟 hu y D hκ'
-  have hL3 : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+  have hL3 : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ / (NB : ℝ))) := by
     refine cardNormLeResidueClassDvd_div_density_routeA c 𝔟 hu y D (κCC := κ) ?_
-    rw [hxC, hCC]; exact hκ
+    rwa [hxC, hCC]
   have hdiv : κ' / (NB : ℝ) = κ / (NB : ℝ) := tendsto_nhds_unique hL2 hL3
   exact (div_left_inj' hNB0).mp hdiv
+
+/-- Floor-division transfer of an `O(N^{1-1/d})` effective bound: if `f` satisfies
+`|f M - κ·M| ≤ C₀·M^{1-1/d}` for `M ≥ 1` and `f 0 = 0`, then `N ↦ f (N / NB)` satisfies the same
+shape with leading constant `κ/NB`. The new error constant is `|C₀| + |κ|`. -/
+private theorem exists_sub_mul_rpow_le_of_div {f : ℕ → ℝ} {κ C₀ : ℝ} {d NB : ℕ}
+    (hdpos : 0 < d) (hNB : 0 < NB) (hf0 : f 0 = 0)
+    (hbound : ∀ M : ℕ, 1 ≤ M → |f M - κ * M| ≤ C₀ * (M : ℝ) ^ (1 - (d : ℝ)⁻¹)) :
+    ∃ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
+      |f (N / NB) - κ / (NB : ℝ) * N| ≤ C' * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
+  have hexp : (0 : ℝ) ≤ 1 - (d : ℝ)⁻¹ := by
+    have : (d : ℝ)⁻¹ ≤ 1 := by rw [inv_le_one₀ (by exact_mod_cast hdpos)]; exact_mod_cast hdpos
+    linarith
+  refine ⟨|C₀| + |κ|, fun N hN ↦ ?_⟩
+  have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
+  have hN1exp : (1 : ℝ) ≤ (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := Real.one_le_rpow hNR hexp
+  set M : ℕ := N / NB with hMdef
+  rw [show f M - κ / (NB : ℝ) * N = (f M - κ * M) + (κ * M - κ / (NB : ℝ) * N) by ring]
+  refine (abs_add_le _ _).trans ?_
+  rw [add_mul]
+  gcongr ?_ + ?_
+  · rcases Nat.eq_zero_or_pos M with hM0 | hMpos
+    · rw [hM0, hf0, Nat.cast_zero, mul_zero, sub_zero, abs_zero]
+      positivity
+    · calc |f M - κ * M| ≤ C₀ * (M : ℝ) ^ (1 - (d : ℝ)⁻¹) := hbound M hMpos
+        _ ≤ |C₀| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
+            refine mul_le_mul (le_abs_self _) ?_ (by positivity) (abs_nonneg _)
+            exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.div_le_self N NB) hexp
+  · have hMlt : (N : ℝ) / (NB : ℝ) - (M : ℝ) < 1 := by
+      have hlt : N < (M + 1) * NB := by
+        have hmod : N = NB * M + N % NB := by rw [hMdef]; exact (Nat.div_add_mod N NB).symm
+        nlinarith [hmod, Nat.mod_lt N hNB]
+      have hltR : (N : ℝ) < ((M : ℝ) + 1) * NB := by exact_mod_cast hlt
+      rw [sub_lt_iff_lt_add, div_lt_iff₀ (by positivity)]
+      nlinarith [hltR]
+    have hMle : (M : ℝ) ≤ (N : ℝ) / (NB : ℝ) := by
+      rw [le_div_iff₀ (by positivity)]; exact_mod_cast Nat.div_mul_le_self N NB
+    have hnn : (0 : ℝ) ≤ (N : ℝ) / NB - M := by linarith
+    have heq : |κ * (M : ℝ) - κ / (NB : ℝ) * N| = |κ| * ((N : ℝ) / NB - M) := by
+      rw [show κ * (M : ℝ) - κ / (NB : ℝ) * N = -(κ * ((N : ℝ) / NB - M)) by field_simp; ring,
+        abs_neg, abs_mul, abs_of_nonneg hnn]
+    rw [heq]
+    calc |κ| * ((N : ℝ) / NB - M) ≤ |κ| * 1 :=
+          mul_le_mul_of_nonneg_left (by linarith) (abs_nonneg _)
+      _ ≤ |κ| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := mul_le_mul_of_nonneg_left hN1exp (abs_nonneg _)
 
 open Ideal in
 /-- **Effective form of the `𝔟`-divisible count (Lang, *Algebraic Number Theory* GTM 110, Ch. VI
@@ -3345,7 +3256,7 @@ private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] 
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (y : ZMod c) (D : ClassGroup (𝓞 K)) {κfull : ℝ}
-    (hκfull : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
+    (hκfull : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κfull)) :
     ∃ C' : ℝ, ∀ N : ℕ, 1 ≤ N →
       |(cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) -
@@ -3356,7 +3267,6 @@ private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] 
   have hdpos : 0 < d := Module.finrank_pos
   set NB : ℕ := Ideal.absNorm (𝔟 : Ideal (𝓞 K)) with hNBdef
   have hNB : 0 < NB := absNorm_pos_of_nonZeroDivisors 𝔟
-  have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
   set u : (ZMod c)ˣ := hu.unit with hudef
   have hu_spec : (↑u : ZMod c) = (NB : ZMod c) := hu.unit_spec
   set xC : ZMod c := y * (↑u⁻¹ : ZMod c) with hxC
@@ -3367,77 +3277,24 @@ private theorem cardNormLeResidueClassDvd_sub_mul_rpow_le {K : Type*} [Field K] 
     rw [hCC, inv_mul_cancel_right]
   obtain ⟨κC, C₀, hbound⟩ :=
     exists_card_norm_le_residue_class_eq_sub_mul_rpow_le (K := K) c xC CC
-  have hκC : Filter.Tendsto (fun M : ℕ => (cardNormLeResidueClass c xC CC M : ℝ) / (M : ℝ))
+  have hκC : Filter.Tendsto (fun M : ℕ ↦ (cardNormLeResidueClass c xC CC M : ℝ) / (M : ℝ))
       Filter.atTop (nhds κC) :=
     tendsto_div_atTop_of_sub_mul_rpow_le (C' := C₀) (d := d) hdpos
-      (fun N hN => by simpa only [cardNormLeResidueClass] using hbound N hN)
+      (fun N hN ↦ by simpa only [cardNormLeResidueClass] using hbound N hN)
   have hκCfull : κC = κfull := by
     refine tendsto_nhds_unique ?_ hκfull
     have := tendsto_cardNormLeResidueClass_div_transfer c 𝔟 hu xC CC hκC
     rw [hxmul, hCmul] at this
     exact this
-  have hcount : ∀ N : ℕ, cardNormLeResidueClassDvd c 𝔟 y D N
-      = cardNormLeResidueClass c xC CC (N / NB) := by
-    intro N
-    rw [cardNormLeResidueClassDvd_floor_collapse c 𝔟 y D N,
-      cardNormLeResidueClass_eq_dvd c 𝔟 hu xC CC (N / NB), ← hNBdef, hxmul, hCmul, mul_comm NB]
   subst hκCfull
-  refine ⟨|C₀| + |κC|, fun N hN => ?_⟩
-  have hNR : (1 : ℝ) ≤ (N : ℝ) := by exact_mod_cast hN
-  have hexp : (0 : ℝ) ≤ 1 - (d : ℝ)⁻¹ := by
-    have : (d : ℝ)⁻¹ ≤ 1 := by
-      rw [inv_le_one₀ (by exact_mod_cast hdpos)]; exact_mod_cast hdpos
-    linarith
-  have hN1exp : (1 : ℝ) ≤ (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := Real.one_le_rpow hNR hexp
-  rw [hcount N]
-  set M : ℕ := N / NB with hMdef
-  have hsplit : (cardNormLeResidueClass c xC CC M : ℝ) - κC / (NB : ℝ) * N
-      = ((cardNormLeResidueClass c xC CC M : ℝ) - κC * M)
-          + (κC * M - κC / (NB : ℝ) * N) := by
-    ring
-  rw [hsplit]
-  refine (abs_add_le _ _).trans ?_
-  rw [add_mul]
-  gcongr ?_ + ?_
-  · rcases Nat.eq_zero_or_pos M with hM0 | hMpos
-    · have : cardNormLeResidueClass c xC CC M = 0 := by
-        rw [hM0, cardNormLeResidueClass, Nat.card_eq_zero]
-        left
-        refine ⟨fun ⟨I, hI, _⟩ => ?_⟩
-        have hI0 : Ideal.absNorm (I : Ideal (𝓞 K)) = 0 := Nat.le_zero.mp hI.1
-        rw [absNorm_eq_zero_iff] at hI0
-        exact nonZeroDivisors.coe_ne_zero I hI0
-      rw [this, hM0]
-      simp only [Nat.cast_zero, mul_zero, sub_zero, abs_zero]
-      positivity
-    · have hMR : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hMpos
-      calc |(cardNormLeResidueClass c xC CC M : ℝ) - κC * M|
-          ≤ C₀ * (M : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
-            simpa only [cardNormLeResidueClass, hd] using hbound M hMpos
-        _ ≤ |C₀| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
-            refine mul_le_mul (le_abs_self _) ?_ (by positivity) (abs_nonneg _)
-            refine Real.rpow_le_rpow (by positivity) ?_ hexp
-            exact_mod_cast Nat.div_le_self N NB
-  · have hMle : (M : ℝ) ≤ (N : ℝ) / (NB : ℝ) := by
-      rw [le_div_iff₀ (by positivity)]
-      exact_mod_cast Nat.div_mul_le_self N NB
-    have hMlt : (N : ℝ) / (NB : ℝ) - (M : ℝ) < 1 := by
-      have hlt : N < (M + 1) * NB := by
-        have hmod : N = NB * M + N % NB := by rw [hMdef]; exact (Nat.div_add_mod N NB).symm
-        have hlt' : N % NB < NB := Nat.mod_lt N hNB
-        nlinarith [hmod, hlt']
-      have hltR : (N : ℝ) < ((M : ℝ) + 1) * NB := by exact_mod_cast hlt
-      rw [sub_lt_iff_lt_add, div_lt_iff₀ (by positivity)]
-      nlinarith [hltR]
-    have hnn : (0 : ℝ) ≤ (N : ℝ) / NB - M := by linarith
-    have heq : |κC * (M : ℝ) - κC / (NB : ℝ) * N| = |κC| * ((N : ℝ) / NB - M) := by
-      rw [show κC * (M : ℝ) - κC / (NB : ℝ) * N = -(κC * ((N : ℝ) / NB - M)) by
-        field_simp; ring, abs_neg, abs_mul, abs_of_nonneg hnn]
-    rw [heq]
-    calc |κC| * ((N : ℝ) / NB - M) ≤ |κC| * 1 :=
-          mul_le_mul_of_nonneg_left (by linarith) (abs_nonneg _)
-      _ ≤ |κC| * (N : ℝ) ^ (1 - (d : ℝ)⁻¹) :=
-          mul_le_mul_of_nonneg_left hN1exp (abs_nonneg _)
+  refine (exists_sub_mul_rpow_le_of_div hdpos hNB
+    (f := fun M ↦ (cardNormLeResidueClass c xC CC M : ℝ)) ?_
+    (fun M hM ↦ by simpa only [cardNormLeResidueClass] using hbound M hM)).imp
+    fun C' hC' N hN ↦ by
+      rw [cardNormLeResidueClassDvd_eq_div c 𝔟 hu hxmul hCmul N]; exact hC' N hN
+  simp only [cardNormLeResidueClass, Nat.cast_eq_zero, Nat.card_eq_zero]
+  exact Or.inl ⟨fun ⟨I, hI, _⟩ ↦ nonZeroDivisors.coe_ne_zero I
+    (absNorm_eq_zero_iff.mp (Nat.le_zero.mp hI.1))⟩
 
 open Ideal in
 /-- **Per-class realizer transfer (the geometric heart, Lang VI §3 Thm 3).** For a fixed nonzero
@@ -3451,9 +3308,9 @@ private theorem cardNormLeResidueClass_density_transfer {K : Type*} [Field K] [N
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (x : ZMod c) (C : ClassGroup (𝓞 K)) {κ κ' : ℝ}
-    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c x C N : ℝ) / (N : ℝ))
+    (hκ : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c x C N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
-    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClass c
+    (hκ' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClass c
         (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) (C * ClassGroup.mk0 𝔟) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
@@ -3463,19 +3320,19 @@ private theorem cardNormLeResidueClass_density_transfer {K : Type*} [Field K] [N
   have hNB0 : (NB : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hNB.ne'
   set y : ZMod c := x * (NB : ZMod c) with hy
   set D : ClassGroup (𝓞 K) := C * ClassGroup.mk0 𝔟 with hD
-  have hκd : Filter.Tendsto (fun N : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
+  have hκd : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D N : ℝ) / (N : ℝ))
       Filter.atTop (nhds (κ' / (NB : ℝ))) :=
-    (cardNormLeResidueClassDvd_sub_mul_rpow_le c 𝔟 hu y D hκ').elim fun _ hC' =>
-      tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos (fun N hN => hC' N hN)
+    (cardNormLeResidueClassDvd_sub_mul_rpow_le c 𝔟 hu y D hκ').elim fun _ hC' ↦
+      tendsto_div_atTop_of_sub_mul_rpow_le Module.finrank_pos hC'
   have hAlim : Filter.Tendsto
-      (fun M : ℕ => (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
+      (fun M : ℕ ↦ (cardNormLeResidueClass c x C M : ℝ) / (M : ℝ))
       Filter.atTop (nhds ((NB : ℝ) * (κ' / (NB : ℝ)))) := by
-    have hcomp : Filter.Tendsto (fun M : ℕ => M * NB) Filter.atTop Filter.atTop :=
-      Filter.tendsto_atTop_mono (fun M => Nat.le_mul_of_pos_right M hNB) Filter.tendsto_id
+    have hcomp : Filter.Tendsto (fun M : ℕ ↦ M * NB) Filter.atTop Filter.atTop :=
+      Filter.tendsto_atTop_mono (fun M ↦ Nat.le_mul_of_pos_right M hNB) Filter.tendsto_id
     have hd2 : Filter.Tendsto
-        (fun M : ℕ => (cardNormLeResidueClassDvd c 𝔟 y D (M * NB) : ℝ) / ((M * NB : ℕ) : ℝ))
+        (fun M : ℕ ↦ (cardNormLeResidueClassDvd c 𝔟 y D (M * NB) : ℝ) / ((M * NB : ℕ) : ℝ))
         Filter.atTop (nhds (κ' / (NB : ℝ))) := hκd.comp hcomp
-    refine (hd2.const_mul (NB : ℝ)).congr fun M => ?_
+    refine (hd2.const_mul (NB : ℝ)).congr fun M ↦ ?_
     rw [cardNormLeResidueClass_eq_dvd c 𝔟 hu x C M, ← hy, ← hD]
     rcases Nat.eq_zero_or_pos M with hM0 | hMpos
     · simp [hM0]
@@ -3493,15 +3350,15 @@ private theorem cardNormLeResidue_density_transfer {K : Type*} [Field K] [Number
     (c : ℕ) [NeZero c] (𝔟 : (Ideal (𝓞 K))⁰)
     (hu : IsUnit ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)))
     (x : ZMod c) {κ κ' : ℝ}
-    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c x N : ℝ) / (N : ℝ))
+    (hκ : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c x N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
-    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+    (hκ' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c
         (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
   classical
-  choose κf hκf using fun C => exists_tendsto_cardNormLeResidueClass_div (K := K) c x C
-  choose κf' hκf' using fun C =>
+  choose κf hκf using fun C ↦ exists_tendsto_cardNormLeResidueClass_div (K := K) c x C
+  choose κf' hκf' using fun C ↦
     exists_tendsto_cardNormLeResidueClass_div (K := K) c
       (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) C
   have hsplit : κ = ∑ C : ClassGroup (𝓞 K), κf C :=
@@ -3509,9 +3366,9 @@ private theorem cardNormLeResidue_density_transfer {K : Type*} [Field K] [Number
   have hsplit' : κ' = ∑ C : ClassGroup (𝓞 K), κf' C :=
     tendsto_cardNormLeResidue_div_eq_sum_class c
       (x * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) hκ' κf' hκf'
-  have htrans : ∀ C : ClassGroup (𝓞 K), κf C = κf' (C * ClassGroup.mk0 𝔟) := fun C =>
+  have htrans : ∀ C : ClassGroup (𝓞 K), κf C = κf' (C * ClassGroup.mk0 𝔟) := fun C ↦
     cardNormLeResidueClass_density_transfer c 𝔟 hu x C (hκf C) (hκf' (C * ClassGroup.mk0 𝔟))
-  rw [hsplit, hsplit', Finset.sum_congr rfl fun C _ => htrans C]
+  rw [hsplit, hsplit', Finset.sum_congr rfl fun C _ ↦ htrans C]
   exact Equiv.sum_comp (Equiv.mulRight (ClassGroup.mk0 𝔟)) κf'
 
 open scoped Classical in
@@ -3525,9 +3382,9 @@ private theorem cardNormLeResidue_density_const_of_realized
     (hS : ∀ a ∈ S, ∃ 𝔟 : (Ideal (𝓞 K))⁰,
       ((Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) = (a : ZMod c))
     {a a' : (ZMod c)ˣ} (ha : a ∈ S) (ha' : a' ∈ S) {κ κ' : ℝ}
-    (hκ : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
+    (hκ : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c (a : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ))
-    (hκ' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
+    (hκ' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
   classical
@@ -3540,12 +3397,12 @@ private theorem cardNormLeResidue_density_const_of_realized
     rw [one_mul, h𝔟]
   have hone_eq' : (1 : ZMod c) * (Ideal.absNorm (𝔟' : Ideal (𝓞 K)) : ZMod c) = (a' : ZMod c) := by
     rw [one_mul, h𝔟']
-  have hκ_a : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+  have hκ_a : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c
       ((1 : ZMod c) * (Ideal.absNorm (𝔟 : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
-      Filter.atTop (nhds κ) := by rw [hone_eq]; exact hκ
-  have hκ_a' : Filter.Tendsto (fun N : ℕ => (cardNormLeResidue K c
+      Filter.atTop (nhds κ) := by rwa [hone_eq]
+  have hκ_a' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c
       ((1 : ZMod c) * (Ideal.absNorm (𝔟' : Ideal (𝓞 K)) : ZMod c)) N : ℝ) / (N : ℝ))
-      Filter.atTop (nhds κ') := by rw [hone_eq']; exact hκ'
+      Filter.atTop (nhds κ') := by rwa [hone_eq']
   have h1 : κ₁ = κ := cardNormLeResidue_density_transfer c 𝔟 hu (1 : ZMod c) hκ₁ hκ_a
   have h2 : κ₁ = κ' := cardNormLeResidue_density_transfer c 𝔟' hu' (1 : ZMod c) hκ₁ hκ_a'
   rw [← h1, h2]
@@ -3575,20 +3432,20 @@ theorem tendsto_sum_char_mul_cardNormLeResidue_div_of_realized
         / (N : ℂ))
       Filter.atTop (nhds 0) := by
   classical
-  choose κf hκf using fun s : S =>
+  choose κf hκf using fun s : S ↦
     exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
-  have hconst : ∀ s : S, κf s = κf 1 := fun s =>
+  have hconst : ∀ s : S, κf s = κf 1 := fun s ↦
     cardNormLeResidue_density_const_of_realized hS s.2 (one_mem S) (hκf s) (hκf 1)
-  have hlim : Filter.Tendsto (fun N : ℕ => (∑ s : S, ((χ s : ℂˣ) : ℂ) *
+  have hlim : Filter.Tendsto (fun N : ℕ ↦ (∑ s : S, ((χ s : ℂˣ) : ℂ) *
         (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N ∧
           ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod c)) = ((s : (ZMod c)ˣ) : ZMod c)} : ℂ))
         / (N : ℂ))
       Filter.atTop (nhds (∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ))) := by
-    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) =>
+    have hsum := tendsto_finsetSum Finset.univ fun s (_ : s ∈ Finset.univ) ↦
       ((Complex.continuous_ofReal.tendsto (κf s)).comp (hκf s)).const_mul ((χ s : ℂˣ) : ℂ)
-    refine hsum.congr fun N => ?_
+    refine hsum.congr fun N ↦ ?_
     rw [Finset.sum_div]
-    refine Finset.sum_congr rfl fun s _ => ?_
+    refine Finset.sum_congr rfl fun s _ ↦ ?_
     simp only [Function.comp_apply, cardNormLeResidue]
     push_cast
     ring
@@ -3596,10 +3453,9 @@ theorem tendsto_sum_char_mul_cardNormLeResidue_div_of_realized
     have hrw : (∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ))
         = (∑ s : S, ((χ s : ℂˣ) : ℂ)) * (κf 1 : ℂ) := by
       rw [Finset.sum_mul]
-      refine Finset.sum_congr rfl fun s _ => ?_
+      refine Finset.sum_congr rfl fun s _ ↦ ?_
       rw [hconst s]
     rw [hrw, sum_char_self_eq_zero_of_ne_one hχ, zero_mul]
-  rw [hval] at hlim
-  exact hlim
+  rwa [hval] at hlim
 
 end Chebotarev
