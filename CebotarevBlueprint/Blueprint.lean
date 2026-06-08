@@ -21,13 +21,13 @@ tex_prelude r#"\def\Z{\mathbb{Z}}\def\Q{\mathbb{Q}}\def\R{\mathbb{R}}\def\C{\mat
 
 #doc (Manual) "Chebotarev density theorem" =>
 
-This blueprint tracks a Lean 4 / Mathlib formalisation of the **Chebotarev density
-theorem** in conjugacy-class form. For a finite Galois extension $`L/K` of number
+This blueprint tracks a Lean 4 / Mathlib formalisation of the *Chebotarev density
+theorem* in conjugacy-class form. For a finite Galois extension $`L/K` of number
 fields with Galois group $`G=\Gal{L/K}` and a conjugacy class $`C\subseteq G`, the
 Dirichlet density of the set of primes $`\fp` of $`\OK` whose Frobenius conjugacy
 class is $`C` equals $`\abs{C}/\abs{G}`.
 
-**The formalisation is complete.** Every declaration is fully proved — zero
+*The formalisation is complete.* Every declaration is fully proved — zero
 `sorry`s anywhere in the project — and the four headline theorems
 (`chebotarev_density`, `chebotarev_cyclotomic`, `chebotarev_abelian`,
 `density_split_completely`) rest on exactly the three standard Lean/Mathlib
@@ -41,7 +41,7 @@ The proof follows the modern exposition of {Informal.citet "stevenhagen-lenstra"
 {Informal.citet sharifi (kind := section) (index := "7.2")}[]
 (*Algebraic Number Theory*). Both references are included under `docs/`.
 
-**Outline.** The proof proceeds in three reductions, and needs no class field
+*Outline.* The proof proceeds in three reductions, and needs no class field
 theory — it is essentially Chebotarev's original strategy as expounded by
 {Informal.citet "stevenhagen-lenstra"}[]:
 
