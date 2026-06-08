@@ -1423,44 +1423,33 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
           - κ * (N : ℝ)|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  set d : ℕ := Module.finrank ℚ K with hd_def
+  set d : ℕ := Module.finrank ℚ K
   set α : ℝ := 1 - (d : ℝ)⁻¹ with hα
   set e₂ : ℝ := (d : ℝ)⁻¹ - 1 with he₂
-  have hdpos : (0 : ℝ) < (d : ℝ) := by
-    have hd0 : 0 < d := by omega
-    exact_mod_cast hd0
+  have hdpos : (0 : ℝ) < (d : ℝ) := by exact_mod_cast (show 0 < d by lia)
   have hd2 : (2 : ℝ) ≤ (d : ℝ) := by exact_mod_cast hd
   have he₂neg : e₂ < 0 := by
     have hle : (d : ℝ)⁻¹ ≤ (2 : ℝ)⁻¹ := by gcongr
     rw [he₂]; linarith [hle, (by norm_num : (2 : ℝ)⁻¹ < 1)]
   have hαnn : 0 ≤ α := by rw [hα]; linarith [he₂neg, he₂]
   have hαe₂ : α = -e₂ := by rw [hα, he₂]; ring
-  -- `(N𝔭)^e < 1` on the bad primes, for `e ∈ {-1, e₂}`.
   set P : Finset (Ideal (𝓞 K)) := (finite_badPrimes K m).toFinset with hP
   have hN𝔭2 : ∀ 𝔭 ∈ P, (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) := by
     intro 𝔭 h𝔭
     rw [hP, Set.Finite.mem_toFinset] at h𝔭
     have h1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => h𝔭.1.ne_top (Ideal.absNorm_eq_one_iff.mp h)
     have h0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => h𝔭.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
-    have : 2 ≤ Ideal.absNorm 𝔭 := by omega
-    exact_mod_cast this
+    exact_mod_cast (show 2 ≤ Ideal.absNorm 𝔭 by lia)
   have hxlt : ∀ e : ℝ, e < 0 → ∀ 𝔭 ∈ P, ((Ideal.absNorm 𝔭 : ℝ)) ^ e < 1 := by
     intro e he 𝔭 h𝔭
     exact Real.rpow_lt_one_of_one_lt_of_neg (by linarith [hN𝔭2 𝔭 h𝔭]) he
   have hxlt1 : ∀ 𝔭 ∈ P, ((Ideal.absNorm 𝔭 : ℝ)) ^ (-1 : ℝ) < 1 := hxlt _ (by norm_num)
   have hxlt2 : ∀ 𝔭 ∈ P, ((Ideal.absNorm 𝔭 : ℝ)) ^ e₂ < 1 := hxlt _ he₂neg
-  -- The Euler constants.
-  set E₁ : ℝ := ∏ 𝔭 ∈ P, (1 - ((Ideal.absNorm 𝔭 : ℝ)) ^ (-1 : ℝ))⁻¹ with hE₁
+  set E₁ : ℝ := ∏ 𝔭 ∈ P, (1 - ((Ideal.absNorm 𝔭 : ℝ)) ^ (-1 : ℝ))⁻¹
   set E₂ : ℝ := ∏ 𝔭 ∈ P, (1 - ((Ideal.absNorm 𝔭 : ℝ)) ^ e₂)⁻¹ with hE₂
-  -- The `g`-uniform per-residue constants.
   obtain ⟨κ₀, C₀, hunif⟩ := exists_kappa_uniform K L m hζ
-  -- The bad-part partial sum `T_N = ∑_{𝔟 ∈ badFinset N} (N𝔟)⁻¹` and its supremum `T`.
   set Tfun : ℕ → ℝ :=
     fun N => ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, ((Ideal.absNorm 𝔟 : ℝ))⁻¹ with hTfun
-  -- Each `N𝔟 > 0` for `𝔟 ∈ badFinset N` (nonzero ideal), so the terms are nonneg.
-  have hTnn : ∀ N, 0 ≤ Tfun N := fun N =>
-    Finset.sum_nonneg fun 𝔟 _ => by positivity
-  -- `(N𝔟)⁻¹ = (N𝔟)^(-1 : ℝ)`, so `T_N ≤ E₁` from the Euler bound.
   have hTfun_eq : ∀ N, Tfun N
       = ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, ((Ideal.absNorm 𝔟 : ℝ)) ^ (-1 : ℝ) := by
     intro N
@@ -1468,47 +1457,37 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
     rw [Real.rpow_neg_one]
   have hTbdd : ∀ N, Tfun N ≤ E₁ := fun N => by
     rw [hTfun_eq N]; exact sum_rpow_badFinset_le K L m N (-1) hxlt1
-  -- Monotone (`badFinset N ⊆ badFinset M` for `N ≤ M`, nonneg terms).
   have hTmono : Monotone Tfun := by
     intro N M hNM
     exact Finset.sum_le_sum_of_subset_of_nonneg (badFinset_subset_of_le K L m hNM)
       (fun 𝔟 _ _ => by positivity)
-  set T : ℝ := ⨆ N, Tfun N with hT
+  set T : ℝ := ⨆ N, Tfun N
   have hTbddAbove : BddAbove (Set.range Tfun) := ⟨E₁, fun y ⟨N, hN⟩ => hN ▸ hTbdd N⟩
   have hTfun_le_T : ∀ N, Tfun N ≤ T := fun N => le_ciSup hTbddAbove N
-  -- `E₂ ≥ 0`.
   have hE₂nn : 0 ≤ E₂ := by
     rw [hE₂]; refine Finset.prod_nonneg fun 𝔭 h𝔭 => ?_
     have := hxlt2 𝔭 h𝔭; positivity
-  -- The tail bound `T − T_N ≤ N^(−1/d)·E₂` (the bad-part inverse-norm tail).
   have htail : ∀ N : ℕ, 1 ≤ N → T - Tfun N ≤ (N : ℝ) ^ (-(d : ℝ)⁻¹) * E₂ := fun N hN1 =>
     ciSup_sum_inv_absNorm_sub_le K L m he₂ hE₂nn
       (fun M => sum_rpow_badFinset_le K L m M e₂ hxlt2) N hN1
-  -- Assemble: `κ = κ₀·T`, `C' = (C₀ + 2·|κ₀|)·E₂`.
   refine ⟨κ₀ * T, (C₀ + 2 * |κ₀|) * E₂, fun g N hN1 => ?_⟩
   have hNposR : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN1
   have hNα_nn : (0 : ℝ) ≤ (N : ℝ) ^ α := Real.rpow_nonneg (Nat.cast_nonneg N) _
-  -- count as the bad-part residue sum (cast pushed inside the sum).
   rw [card_L2_eq_sum_residue K L m hζ g N, Nat.cast_sum]
-  -- abbreviations: per-bad-part residue `a 𝔟` and window `⌊N/N𝔟⌋`.
   set a : Ideal (𝓞 K) → (ZMod m)ˣ :=
-    fun 𝔟 => hζ.autToPow K (g * (frobeniusIdeal K L 𝔟)⁻¹) with ha
+    fun 𝔟 => hζ.autToPow K (g * (frobeniusIdeal K L 𝔟)⁻¹)
   set RC : Ideal (𝓞 K) → ℝ := fun 𝔟 =>
     (Nat.card {I : (Ideal (𝓞 K))⁰ // Ideal.absNorm (I : Ideal (𝓞 K)) ≤ N / Ideal.absNorm 𝔟 ∧
-      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m)) = ((a 𝔟 : (ZMod m)ˣ) : ZMod m)} : ℝ) with hRC
+      ((Ideal.absNorm (I : Ideal (𝓞 K)) : ZMod m)) = ((a 𝔟 : (ZMod m)ˣ) : ZMod m)} : ℝ)
   change |(∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, RC 𝔟) - κ₀ * T * (N : ℝ)| ≤ _
-  -- each `a 𝔟` lies in `range autToPow`, so `hunif` governs `RC 𝔟`.
   have hamem : ∀ 𝔟, a 𝔟 ∈ (hζ.autToPow K).range := fun 𝔟 => ⟨_, rfl⟩
-  -- `C₀ ≥ 0` (from the bound at `a = 1`, `N = 1`).
   have hC₀nn : 0 ≤ C₀ := by
     have h := hunif 1 (one_mem _) 1 (le_refl 1)
     simp only [Nat.cast_one, Real.one_rpow, mul_one] at h
     exact le_trans (abs_nonneg _) h
-  -- per-bad-part facts: `Nb := N𝔟 ∈ [1, N]`, window `W := ⌊N/Nb⌋ ≥ 1`.
   have hbadmem : ∀ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
       𝔟 ≠ ⊥ ∧ Ideal.absNorm 𝔟 ≤ N := fun 𝔟 h𝔟 => by
     rw [Set.Finite.mem_toFinset] at h𝔟; exact ⟨h𝔟.1, h𝔟.2.2⟩
-  -- **Per-bad-part effective bound** (pieces I+II): real-division residue error.
   have hperbad : ∀ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
       |RC 𝔟 - κ₀ * ((N : ℝ) / (Ideal.absNorm 𝔟 : ℝ))|
         ≤ C₀ * (N : ℝ) ^ α * (Ideal.absNorm 𝔟 : ℝ) ^ e₂ + |κ₀| := by
@@ -1518,19 +1497,15 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
       Nat.pos_of_ne_zero fun h => hb0 (Ideal.absNorm_eq_zero_iff.mp h)
     exact abs_sub_kappa_mul_div_le hbpos hαnn hαe₂ hC₀nn
       (hunif (a 𝔟) (hamem 𝔟) _ ((Nat.one_le_div_iff hbpos).mpr hbN))
-  -- `∑_{BF N} N/N𝔟 = N·T_N`.
   have hsum_div : ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, (N : ℝ) / (Ideal.absNorm 𝔟 : ℝ)
       = (N : ℝ) * Tfun N := by
     rw [hTfun, Finset.mul_sum]
     refine Finset.sum_congr rfl fun 𝔟 _ => ?_
     rw [div_eq_mul_inv]
-  -- the `e₂`-sum bound `∑_{BF N}(N𝔟)^{e₂} ≤ E₂`.
   have hsumE₂ : ∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, ((Ideal.absNorm 𝔟 : ℝ)) ^ e₂ ≤ E₂ :=
     sum_rpow_badFinset_le K L m N e₂ hxlt2
-  -- `|BF N| ≤ N^α·E₂` (since `1 ≤ N^α·(N𝔟)^{e₂}` for `N𝔟 ≤ N`).
   have hcard_le : (((finite_isBadPart K L m N).toFinset.card : ℕ) : ℝ) ≤ (N : ℝ) ^ α * E₂ :=
     card_finite_isBadPart_le K L m hαnn hαe₂ N hNα_nn hsumE₂
-  -- **Piece A**: the per-bad-part error sum.
   have hA : |∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
         (RC 𝔟 - κ₀ * ((N : ℝ) / (Ideal.absNorm 𝔟 : ℝ)))|
       ≤ (C₀ + |κ₀|) * ((N : ℝ) ^ α * E₂) := by
@@ -1549,24 +1524,20 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
           refine add_le_add (mul_le_mul_of_nonneg_left hsumE₂ (mul_nonneg hC₀nn hNα_nn))
             (mul_le_mul_of_nonneg_left hcard_le (abs_nonneg _))
       _ = (C₀ + |κ₀|) * ((N : ℝ) ^ α * E₂) := by ring
-  -- **Piece B**: the bad-part tail.
   have hB : |κ₀ * ((∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
         (N : ℝ) / (Ideal.absNorm 𝔟 : ℝ)) - T * (N : ℝ))|
       ≤ |κ₀| * ((N : ℝ) ^ α * E₂) := by
     rw [hsum_div, abs_mul]
     refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
-    -- `|N·T_N − T·N| = N·(T − T_N) ≤ N·N^{−1/d}·E₂ = N^α·E₂`.
     have hTrw : (N : ℝ) * Tfun N - T * (N : ℝ) = -((N : ℝ) * (T - Tfun N)) := by ring
     rw [hTrw, abs_neg, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg N)
       (sub_nonneg.mpr (hTfun_le_T N)))]
-    -- `N·(T − T_N) ≤ N·(N^{−1/d}·E₂) = N^α·E₂`.
     refine le_trans (mul_le_mul_of_nonneg_left (htail N hN1) (Nat.cast_nonneg N)) ?_
     rw [← mul_assoc, hα]
     have hNmul : (N : ℝ) * (N : ℝ) ^ (-(d : ℝ)⁻¹) = (N : ℝ) ^ (1 - (d : ℝ)⁻¹) := by
       nth_rewrite 1 [← Real.rpow_one (N : ℝ)]
       rw [← Real.rpow_add hNposR, sub_eq_add_neg]
     rw [hNmul]
-  -- combine pieces A and B.
   have hdecomp : (∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset, RC 𝔟) - κ₀ * T * (N : ℝ)
       = (∑ 𝔟 ∈ (finite_isBadPart K L m N).toFinset,
           (RC 𝔟 - κ₀ * ((N : ℝ) / (Ideal.absNorm 𝔟 : ℝ))))
@@ -1575,7 +1546,6 @@ private theorem card_fibre_bound_two_le {ζ : L} (hζ : IsPrimitiveRoot ζ m)
     rw [Finset.sum_sub_distrib, ← Finset.mul_sum]; ring
   rw [hdecomp]
   refine le_trans (abs_add_le _ _) ?_
-  -- `C' · N^α = (C₀ + 2|κ₀|)·E₂ · N^α = (C₀ + |κ₀|)(N^α E₂) + |κ₀|(N^α E₂)`.
   have hgoal : (C₀ + 2 * |κ₀|) * E₂ * (N : ℝ) ^ α
       = (C₀ + |κ₀|) * ((N : ℝ) ^ α * E₂) + |κ₀| * ((N : ℝ) ^ α * E₂) := by ring
   rw [hgoal]
@@ -1613,9 +1583,8 @@ private theorem associated_natCast_sub_one_pow {A : Type*} [CommRing A] [IsDomai
     have hμp : IsPrimitiveRoot μ (p ^ (k + 1)) := isPrimitiveRoot_of_mem_primitiveRoots hμ
     obtain ⟨j, _, rfl⟩ := hζ'.eq_pow_of_pow_eq_one hμp.pow_eq_one
     have hjc : j.Coprime (p ^ (k + 1)) := (hζ'.pow_iff_coprime hpos j).mp hμp
-    have ha := hζ'.associated_sub_one_pow_sub_one_of_coprime hjc
     rw [show (1 : A) - ζ' ^ j = -(ζ' ^ j - 1) by ring]
-    exact ha.neg_right.symm
+    exact (hζ'.associated_sub_one_pow_sub_one_of_coprime hjc).neg_right.symm
   calc Associated (∏ μ ∈ primitiveRoots (p ^ (k + 1)) A, (1 - μ))
         (∏ _μ ∈ primitiveRoots (p ^ (k + 1)) A, (ζ' - 1)) := Associated.prod _ _ _ hassoc
     _ = (ζ' - 1) ^ (p ^ k * (p - 1)) := by rw [Finset.prod_const, hcard]
@@ -1624,11 +1593,11 @@ private theorem associated_natCast_sub_one_pow {A : Type*} [CommRing A] [IsDomai
 private theorem two_le_pow_mul_pred {p k : ℕ} (hp : p.Prime) (hbad : ¬ (p = 2 ∧ k = 0)) :
     2 ≤ p ^ k * (p - 1) := by
   rcases eq_or_ne p 2 with rfl | hp2
-  · have hk : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr (fun h => hbad ⟨rfl, h⟩)
+  · have hk : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr fun h => hbad ⟨rfl, h⟩
     calc 2 = 2 ^ 1 * (2 - 1) := by norm_num
       _ ≤ 2 ^ k * (2 - 1) := Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) hk)
   · have hp3 : 3 ≤ p := hp.two_le.lt_of_ne (Ne.symm hp2)
-    calc 2 ≤ 1 * (p - 1) := by omega
+    calc 2 ≤ 1 * (p - 1) := by lia
       _ ≤ p ^ k * (p - 1) := Nat.mul_le_mul_right _ (Nat.one_le_pow _ _ hp.pos)
 
 /-- The degenerate cyclotomic case `2 ∥ m` (i.e. `m.factorization 2 = 1`) is exactly `m ≡ 2 mod 4`,
@@ -1636,17 +1605,14 @@ ruled out by `hm`. -/
 private theorem factorization_two_ne_one_of_mod_four {m : ℕ} (hm0 : m ≠ 0) (hm : m % 4 ≠ 2) :
     m.factorization 2 ≠ 1 := by
   intro hf
-  apply hm
   have h2dvd : 2 ∣ m := by
     have h : (2 : ℕ) ^ 1 ∣ m :=
-      (Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mpr (by omega)
+      (Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mpr (by lia)
     simpa using h
-  have h4ndvd : ¬ (4 ∣ m) := by
-    intro h4
-    rw [show (4 : ℕ) = 2 ^ 2 by norm_num] at h4
-    have := (Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mp h4
-    omega
-  omega
+  have h4ndvd : ¬ 4 ∣ m := fun h4 =>
+    absurd ((Nat.Prime.pow_dvd_iff_le_factorization Nat.prime_two hm0).mp
+      (by rwa [show (4 : ℕ) = 2 ^ 2 by norm_num] at h4)) (by lia)
+  exact hm (by omega)
 
 /-- **At `[K : ℚ] = 1`, a rational prime in a prime `𝔭` spans `𝔭`.** Since `N((p)) = p^{[K:ℚ]} = p`
 and `𝔭 ∣ (p)` with `N𝔭 > 1`, the cofactor has norm `1`, so `(p) = 𝔭`. -/
@@ -1666,7 +1632,7 @@ private theorem span_singleton_natCast_eq_of_finrank_eq_one
     (Nat.Prime.eq_one_or_self_of_dvd hp _ ⟨_, hNmul.symm⟩).resolve_left hN𝔭1
   have hNC1 : Ideal.absNorm C = 1 := by
     rw [hN𝔭eq] at hNmul
-    exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [mul_one]; exact hNmul)
+    exact Nat.eq_of_mul_eq_mul_left hp.pos (by rwa [mul_one])
   rw [hC, Ideal.absNorm_eq_one_iff.mp hNC1, Ideal.mul_top]
 
 omit [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] in
@@ -1690,20 +1656,17 @@ private theorem coprime_absNorm_of_unramified_of_finrank_eq_one
     (hunr : UnramifiedIn K L 𝔭) (hm : m % 4 ≠ 2) : (Ideal.absNorm 𝔭).Coprime m := by
   classical
   by_contra hncop
-  -- extract the rational prime `p ∣ m` with `(p : 𝓞 K) ∈ 𝔭`.
   obtain ⟨p, hpm, hpmem𝔭⟩ := exists_primeFactor_natCast_mem_of_not_coprime K m 𝔭 h𝔭 hncop
   have hp : p.Prime := (Nat.mem_primeFactors.mp hpm).1
   haveI : Fact p.Prime := ⟨hp⟩
   have hpdvd : p ∣ m := Nat.dvd_of_mem_primeFactors hpm
   have hm0 : m ≠ 0 := (Nat.mem_primeFactors.mp hpm).2.2
-  -- `v = m.factorization p = k + 1 ≥ 1`, with `(p, k) ≠ (2, 0)`.
   set v := m.factorization p with hv
   have hv1 : 1 ≤ v := by rw [hv]; exact hp.factorization_pos_of_dvd hm0 hpdvd
-  obtain ⟨k, hk⟩ : ∃ k, v = k + 1 := ⟨v - 1, by omega⟩
+  obtain ⟨k, hk⟩ : ∃ k, v = k + 1 := ⟨v - 1, by lia⟩
   have hbad : ¬ (p = 2 ∧ k = 0) := by
     rintro ⟨rfl, rfl⟩
     exact factorization_two_ne_one_of_mod_four hm0 hm (by rw [← hv, hk])
-  -- a primitive `p^(k+1)`-th root `ζ'` in `𝓞 L`.
   have hpvdvd : p ^ v ∣ m := by rw [hv]; exact Nat.ordProj_dvd m p
   obtain ⟨ζm, hζm⟩ :=
     IsCyclotomicExtension.exists_isPrimitiveRoot K L (Set.mem_singleton m) (NeZero.ne m)
@@ -1711,19 +1674,16 @@ private theorem coprime_absNorm_of_unramified_of_finrank_eq_one
   have hqdvd : q ∣ m := Nat.div_dvd_of_dvd hpvdvd
   have hq0 : q ≠ 0 := Nat.div_ne_zero_iff.mpr
     ⟨pow_ne_zero _ hp.ne_zero, Nat.le_of_dvd (Nat.pos_of_ne_zero hm0) hpvdvd⟩
-  set ζ' : 𝓞 L := hζm.toInteger ^ q with hζ'def
+  set ζ' : 𝓞 L := hζm.toInteger ^ q
   have hmq : m / q = p ^ (k + 1) := by rw [hq, Nat.div_div_self hpvdvd hm0, ← hk]
   have hζ' : IsPrimitiveRoot ζ' (p ^ (k + 1)) := by
     have h := hζm.toInteger_isPrimitiveRoot.pow_of_dvd hq0 hqdvd
     rwa [hmq] at h
-  -- the Eisenstein identity and the totient bound.
   have hassoc : Associated (p : 𝓞 L) ((ζ' - 1) ^ (p ^ k * (p - 1))) :=
     associated_natCast_sub_one_pow hζ'
   have hφ2 : 2 ≤ p ^ k * (p - 1) := two_le_pow_mul_pred hp hbad
-  -- `(p) = 𝔭` at `d = 1`.
   have hspan𝔭 : Ideal.span {(p : 𝓞 K)} = 𝔭 :=
     span_singleton_natCast_eq_of_finrank_eq_one K hd1 p hp 𝔭 hpmem𝔭
-  -- a maximal prime `𝔓` over `𝔭`, and `¬ 𝔓 ∣ differentIdeal` from `hunr`.
   haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal h𝔭
   obtain ⟨𝔓, h𝔓max, h𝔓lo⟩ :=
     Ideal.exists_maximal_ideal_liesOver_of_isIntegral (R := 𝓞 K) (S := 𝓞 L) 𝔭
@@ -1733,7 +1693,6 @@ private theorem coprime_absNorm_of_unramified_of_finrank_eq_one
     rw [not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
     exact hunr.2 𝔓 h𝔓max h𝔓lo
   apply hnotdvd
-  -- `𝔓² ∣ (𝔭)·𝓞 L`, hence `𝔓 = 𝔓^{2-1} ∣ differentIdeal`.
   have hdvd2 : 𝔓 ^ 2 ∣ 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) := by
     have hmapeq : 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) = Ideal.span {(p : 𝓞 L)} := by
       rw [← hspan𝔭, Ideal.map_span, Set.image_singleton, map_natCast]
@@ -1770,18 +1729,14 @@ private theorem card_fibre_bound_eq_one {ζ : L} (hζ : IsPrimitiveRoot ζ m)
   classical
   obtain ⟨κ₀, C₀, hunif⟩ := exists_kappa_uniform K L m hζ
   refine ⟨κ₀, C₀, fun g N hN1 => ?_⟩
-  -- the bad-part set is exactly `{⊤}`.
   have hbadtop : (finite_isBadPart K L m N).toFinset = {⊤} := by
-    apply Finset.eq_singleton_iff_unique_mem.mpr
-    refine ⟨?_, fun 𝔟 h𝔟 => ?_⟩
-    · -- `⊤ ∈ badFinset N`.
-      rw [Set.Finite.mem_toFinset]
+    refine Finset.eq_singleton_iff_unique_mem.mpr ⟨?_, fun 𝔟 h𝔟 => ?_⟩
+    · rw [Set.Finite.mem_toFinset]
       refine ⟨by rw [Ne, ← Ideal.one_eq_top]; exact one_ne_zero, fun 𝔭 h𝔭 => ?_, ?_⟩
       · rw [← Ideal.one_eq_top, normalizedFactors_one] at h𝔭
         exact absurd h𝔭 (Multiset.notMem_zero _)
       · rw [Ideal.absNorm_top]; exact hN1
-    · -- any bad-supported `𝔟` equals `⊤` (no bad primes).
-      rw [Set.Finite.mem_toFinset] at h𝔟
+    · rw [Set.Finite.mem_toFinset] at h𝔟
       obtain ⟨h0, hfac, _⟩ := h𝔟
       by_contra htop
       have hfac0 : normalizedFactors 𝔟 ≠ 0 := by
@@ -1793,13 +1748,10 @@ private theorem card_fibre_bound_eq_one {ζ : L} (hζ : IsPrimitiveRoot ζ m)
       obtain ⟨𝔭, h𝔭⟩ := Multiset.exists_mem_of_ne_zero hfac0
       have hprime := prime_of_normalized_factor 𝔭 h𝔭
       haveI : 𝔭.IsPrime := Ideal.isPrime_of_prime hprime
-      -- `𝔭` is unramified with non-coprime norm — impossible at `d = 1`.
       exact (hfac 𝔭 h𝔭).2 (coprime_absNorm_of_unramified_of_finrank_eq_one K L m hd1 𝔭
         hprime.ne_zero (hfac 𝔭 h𝔭).1 hm)
-  -- the count is a single good-fibre residue count `RC(autToPow g, N)`.
-  rw [card_L2_eq_sum_residue K L m hζ g N, hbadtop, Finset.sum_singleton]
-  -- `frobeniusIdeal ⊤ = 1`, so the residue is `autToPow g`; `N/N⊤ = N`.
-  rw [frobeniusIdeal_one, inv_one, mul_one, Ideal.absNorm_top, Nat.div_one]
+  rw [card_L2_eq_sum_residue K L m hζ g N, hbadtop, Finset.sum_singleton,
+    frobeniusIdeal_one, inv_one, mul_one, Ideal.absNorm_top, Nat.div_one]
   exact hunif (hζ.autToPow K g) ⟨g, rfl⟩ N hN1
 
 end L2Assembly
@@ -1844,15 +1796,54 @@ theorem exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le
                 frobeniusIdeal K L 𝔞 = g} : ℝ)
           - κ * (N : ℝ)|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-  -- A primitive `m`-th root of unity in `L = K(μ_m)`.
   obtain ⟨ζ, hζ⟩ :=
     IsCyclotomicExtension.exists_isPrimitiveRoot K L (Set.mem_singleton m) (NeZero.ne m)
-  -- Dispatch on `d = finrank ℚ K`: `d = 1` (bad set empty) or `2 ≤ d` (Euler tail converges).
   rcases Nat.lt_or_ge (Module.finrank ℚ K) 2 with hlt | hge
-  · -- `finrank ℚ K < 2`, hence `= 1` (degree is positive).
-    have hd1 : Module.finrank ℚ K = 1 := le_antisymm (by omega) Module.finrank_pos
+  · have hd1 : Module.finrank ℚ K = 1 := le_antisymm (by lia) Module.finrank_pos
     exact card_fibre_bound_eq_one K L m hζ hd1 hm
   · exact card_fibre_bound_two_le K L m hζ hge
+
+/-- The unramified-supported Frobenius-value-fibre `{U 𝔞 ∧ χ(Frob_𝔞) = ζ}` partitions over the
+character fibre `S_ζ = {g : χ g = ζ}` into the per-`g` unramified-supported Frobenius fibres
+`{U 𝔞 ∧ Frob_𝔞 = g}` (drop the value `g = Frob_𝔞`). -/
+private theorem card_unramifiedSupported_frobeniusValueFibre_eq_sum
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (χ : galoisCharacter K L) (ζ : ℂ) (N : ℕ) :
+    Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+            (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+              (χ (frobeniusIdeal K L 𝔞) : ℂ) = ζ}
+        = ∑ g : {g : Gal(L/K) // (χ g : ℂ) = ζ}, Nat.card {𝔞 : Ideal (𝓞 K) //
+          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+            (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+              frobeniusIdeal K L 𝔞 = g.1} := by
+  classical
+  haveI hfinN : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N} :=
+    (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
+  haveI hfin : ∀ g : {g : Gal(L/K) // (χ g : ℂ) = ζ},
+      Finite {𝔞 : Ideal (𝓞 K) //
+        𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+          (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+            frobeniusIdeal K L 𝔞 = g.1} := fun g =>
+    Finite.of_injective
+      (fun a => (⟨a.1, a.2.2.1⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N}))
+      (fun _ _ hab => by ext1; simpa using hab)
+  rw [← Nat.card_sigma]
+  refine (Nat.card_congr (Equiv.ofBijective
+    (fun a => (⟨a.2.1, a.2.2.1, a.2.2.2.1, a.2.2.2.2.1, by rw [a.2.2.2.2.2]; exact a.1.2⟩ :
+      {𝔞 : Ideal (𝓞 K) //
+        𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
+          (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
+            (χ (frobeniusIdeal K L 𝔞) : ℂ) = ζ})) ⟨?_, ?_⟩)).symm
+  · rintro ⟨⟨g₁, hg₁⟩, ⟨𝔞, ha1, ha2, haU, ha3⟩⟩ ⟨⟨g₂, hg₂⟩, ⟨𝔟, hb1, hb2, hbU, hb3⟩⟩ hab
+    have h𝔞𝔟 : 𝔞 = 𝔟 := congrArg Subtype.val hab
+    subst h𝔞𝔟
+    have hg : g₁ = g₂ := ha3.symm.trans hb3
+    subst hg
+    rfl
+  · rintro ⟨𝔞, h1, h2, hU, h3⟩
+    exact ⟨⟨⟨frobeniusIdeal K L 𝔞, h3⟩, ⟨𝔞, h1, h2, hU, rfl⟩⟩, rfl⟩
 
 /-- **Geometry of numbers (Sharifi 7.1.19, p. 142).** For a nontrivial
 character `χ` of order `n = orderOf χ`, the number of nonzero ideals `𝔞 ⊆ 𝓞 K` with `N𝔞 ≤ N`
@@ -1889,26 +1880,19 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
           - C * (N : ℝ)|
         ≤ C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
-  -- The unramified-supported Frobenius-fibre equidistribution (L2): `κ` is the common leading
-  -- density.
   obtain ⟨κ, C₂, hL2⟩ := exists_card_frobeniusIdeal_fibre_sub_kappa_mul_le K L m hm
-  -- The constant fibre cardinality `κ₀ = |ker χ|`.
   set κ₀ : ℕ := Nat.card (MonoidHom.ker χ) with hκ₀
-  -- Leading constant `C = κ₀·κ`; error constant `C' = κ₀·C₂` (no bridge term: `A = B` exactly).
   refine ⟨(κ₀ : ℝ) * κ, (κ₀ : ℝ) * C₂, fun ζ hζ N hN => ?_⟩
   set P : ℝ := (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) with hP
-  -- `ζ` is a unit (root of unity), lift it to `ℂˣ`.
   have hord : 0 < orderOf χ := orderOf_pos_iff.mpr (isOfFinOrder_of_finite χ)
   have hζ0 : ζ ≠ 0 := by
     intro h; subst h
     rw [zero_pow hord.ne'] at hζ
     exact zero_ne_one hζ
-  set ζu : ℂˣ := Units.mk0 ζ hζ0 with hζu
+  set ζu : ℂˣ := Units.mk0 ζ hζ0
   have hζuval : (ζu : ℂ) = ζ := rfl
   have hζun : ζu ^ orderOf χ = 1 := by
     apply Units.ext; push_cast; rw [hζuval]; exact hζ
-  -- **Step (1): value-fibre = unramified-supported Frobenius-value-fibre `B` (exact set
-  -- equality, Helper 1a).**
   set B : ℝ := (Nat.card {𝔞 : Ideal (𝓞 K) //
       𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
         (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
@@ -1919,46 +1903,12 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
     exact congrArg _
       (card_valueFibre_eq_card_unramifiedSupported_frobeniusValueFibre K L m χ ζ hζ0 N)
   rw [hAB]
-  -- **Step (2): partition `B` by the value `g = frobeniusIdeal 𝔞 ∈ S_ζ`.**
-  -- `S_ζ := {g : χ g = ζ}` is a Fintype (`Gal(L/K)` finite); the fibre splits as a `Sigma`,
-  -- the unramified-support field `U` carried through unchanged.
   have hpart : B = ∑ g : {g : Gal(L/K) // (χ g : ℂ) = ζ},
       (Nat.card {𝔞 : Ideal (𝓞 K) //
         𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
           (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
             frobeniusIdeal K L 𝔞 = g.1} : ℝ) := by
-    haveI hfinN : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N} :=
-      (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
-    have hfin : ∀ g : {g : Gal(L/K) // (χ g : ℂ) = ζ},
-        Finite {𝔞 : Ideal (𝓞 K) //
-          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
-            (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
-              frobeniusIdeal K L 𝔞 = g.1} := fun g =>
-      Finite.of_injective
-        (fun a => (⟨a.1, a.2.2.1⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N}))
-        (fun _ _ hab => by ext1; simpa using hab)
-    rw [hB, ← Nat.cast_sum, ← Nat.card_sigma]
-    congr 1
-    -- Build the bijection `(Σ g : S_ζ, {U ∧ frob = g}) ≃ {U ∧ χ(frob) = ζ}` by dropping `g`.
-    -- Forward: `⟨⟨g, χg=ζ⟩, ⟨𝔞, _, _, U, frob 𝔞 = g⟩⟩ ↦ 𝔞`, `χ(frob 𝔞) = χ g = ζ`.
-    refine (Nat.card_congr (Equiv.ofBijective
-      (fun a => (⟨a.2.1, a.2.2.1, a.2.2.2.1, a.2.2.2.2.1, by rw [a.2.2.2.2.2]; exact a.1.2⟩ :
-        {𝔞 : Ideal (𝓞 K) //
-          𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧
-            (∀ 𝔭 ∈ UniqueFactorizationMonoid.normalizedFactors 𝔞, UnramifiedIn K L 𝔭) ∧
-              (χ (frobeniusIdeal K L 𝔞) : ℂ) = ζ})) ⟨?_, ?_⟩)).symm
-    · -- injective: the underlying ideals agree, and `g` is determined as `frob 𝔞`
-      rintro ⟨⟨g₁, hg₁⟩, ⟨𝔞, ha1, ha2, haU, ha3⟩⟩ ⟨⟨g₂, hg₂⟩, ⟨𝔟, hb1, hb2, hbU, hb3⟩⟩ hab
-      have h𝔞𝔟 : 𝔞 = 𝔟 := congrArg Subtype.val hab
-      subst h𝔞𝔟
-      have hg : g₁ = g₂ := ha3.symm.trans hb3
-      subst hg
-      rfl
-    · -- surjective: take `g = frob 𝔞`
-      rintro ⟨𝔞, h1, h2, hU, h3⟩
-      exact ⟨⟨⟨frobeniusIdeal K L 𝔞, h3⟩, ⟨𝔞, h1, h2, hU, rfl⟩⟩, rfl⟩
-  -- **Step (3): apply the unramified-supported L2 to each `g ∈ S_ζ`, sum over the finite fibre.**
-  -- `|B − |S_ζ|·κ·N| ≤ |S_ζ|·C₂·P` by the triangle inequality over the fibre.
+    rw [hB, card_unramifiedSupported_frobeniusValueFibre_eq_sum K L m χ ζ N, Nat.cast_sum]
   have hSκ₀ : Nat.card {g : Gal(L/K) // (χ g : ℂ) = ζ} = κ₀ := by
     rw [hκ₀]
     have heq : {g : Gal(L/K) // (χ g : ℂ) = ζ} = {g : Gal(L/K) // χ g = ζu} := by
@@ -1970,7 +1920,6 @@ theorem exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow
     exact card_charFibre_eq_card_ker χ ζu hζun
   have hcardℝ : (Fintype.card {g : Gal(L/K) // (χ g : ℂ) = ζ} : ℝ) = (κ₀ : ℝ) := by
     rw [← Nat.card_eq_fintype_card, hSκ₀]
-  -- **Combine (1)+(2)+(3):** `|B − C·N| ≤ κ₀·C₂·P`.
   rw [hpart]
   calc
     |∑ g : {g : Gal(L/K) // (χ g : ℂ) = ζ},
@@ -2001,20 +1950,20 @@ private theorem sum_nthRootsFinset_eq_zero {R : Type*} [CommRing R] [IsDomain R]
     {ζ : R} {n : ℕ} (hζ : IsPrimitiveRoot ζ n) (hn : 1 < n) :
     ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v = 0 := by
   classical
-  have hn0 : n ≠ 0 := by omega
+  have hn0 : n ≠ 0 := by lia
   have hζ0 : ζ ≠ 0 := hζ.ne_zero hn0
-  have hmem : ∀ {z : R}, z ∈ Polynomial.nthRootsFinset n (1 : R) ↔ z ^ n = 1 := fun {z} =>
+  have hmem : ∀ {z : R}, z ∈ Polynomial.nthRootsFinset n (1 : R) ↔ z ^ n = 1 := fun {z} ↦
     Polynomial.mem_nthRootsFinset (Nat.pos_of_ne_zero hn0) 1
   have himg : (Polynomial.nthRootsFinset n (1 : R)).image (ζ * ·) =
       Polynomial.nthRootsFinset n 1 := by
-    refine Finset.eq_of_subset_of_card_le (fun x hx => ?_)
+    refine Finset.eq_of_subset_of_card_le (fun x hx ↦ ?_)
       (Finset.card_image_of_injective _ (mul_right_injective₀ hζ0)).ge
     obtain ⟨v, hv, rfl⟩ := Finset.mem_image.mp hx
     exact hmem.mpr (by rw [mul_pow, hζ.pow_eq_one, one_mul, hmem.mp hv])
   have hshift : ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v =
       ζ * ∑ v ∈ Polynomial.nthRootsFinset n 1, v := by
     nth_rewrite 1 [← himg]
-    rw [Finset.sum_image fun a _ b _ h => mul_right_injective₀ hζ0 h, Finset.mul_sum]
+    rw [Finset.sum_image fun a _ b _ h ↦ mul_right_injective₀ hζ0 h, Finset.mul_sum]
   rcases mul_eq_zero.mp (by rw [sub_mul, one_mul, ← hshift, sub_self] :
       (ζ - 1) * ∑ v ∈ Polynomial.nthRootsFinset n (1 : R), v = 0) with h | h
   · exact absurd (sub_eq_zero.mp h) (hζ.ne_one hn)
@@ -2052,9 +2001,9 @@ private theorem sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul
               - C₀ * N : ℝ) : ℂ) * v := by
   classical
   obtain ⟨ζ₀, hζ₀⟩ : ∃ z : ℂ, IsPrimitiveRoot z (orderOf χ) :=
-    ⟨_, Complex.isPrimitiveRoot_exp _ (by omega)⟩
-  have h0R : (0 : ℂ) ∉ Polynomial.nthRootsFinset (orderOf χ) 1 := fun h => by
-    rw [Polynomial.mem_nthRootsFinset (by omega) 1, zero_pow (by omega)] at h
+    ⟨_, Complex.isPrimitiveRoot_exp _ (by lia)⟩
+  have h0R : (0 : ℂ) ∉ Polynomial.nthRootsFinset (orderOf χ) 1 := fun h ↦ by
+    rw [Polynomial.mem_nthRootsFinset (by lia) 1, zero_pow (by lia)] at h
     exact zero_ne_one h
   calc ∑ 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N},
         galoisCharacterOnIdeal K L χ 𝔞.1
@@ -2062,26 +2011,26 @@ private theorem sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul
           ∑ 𝔞 ∈ (Finset.univ : Finset {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N})
             with galoisCharacterOnIdeal K L χ 𝔞.1 = v, v :=
         (Finset.sum_fiberwise_of_maps_to'
-          (fun 𝔞 _ => galoisCharacterOnIdeal_mem_insert_zero_nthRootsFinset K L m χ 𝔞.1)
-          fun z : ℂ => z).symm
+          (fun 𝔞 _ ↦ galoisCharacterOnIdeal_mem_insert_zero_nthRootsFinset K L m χ 𝔞.1)
+          fun z : ℂ ↦ z).symm
     _ = ∑ v ∈ insert (0 : ℂ) (Polynomial.nthRootsFinset (orderOf χ) 1),
           (Nat.card {𝔞 : Ideal (𝓞 K) //
             𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℂ) * v := by
-        refine Finset.sum_congr rfl fun v _ => ?_
+        refine Finset.sum_congr rfl fun v _ ↦ ?_
         rw [Finset.sum_const, nsmul_eq_mul]
         refine congrArg (· * v) (congrArg (Nat.cast : ℕ → ℂ) ?_)
         rw [← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
         exact Nat.card_congr ((Equiv.subtypeSubtypeEquivSubtypeInter
-          (fun 𝔞 : Ideal (𝓞 K) => 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N)
-          (fun 𝔞 => galoisCharacterOnIdeal K L χ 𝔞 = v)).trans
-          (Equiv.subtypeEquivRight fun 𝔞 => and_assoc))
+          (fun 𝔞 : Ideal (𝓞 K) ↦ 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N)
+          (fun 𝔞 ↦ galoisCharacterOnIdeal K L χ 𝔞 = v)).trans
+          (Equiv.subtypeEquivRight fun 𝔞 ↦ and_assoc))
     _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, (Nat.card {𝔞 : Ideal (𝓞 K) //
           𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℂ) * v := by
         rw [Finset.sum_insert h0R, mul_zero, zero_add]
     _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, ((((Nat.card {𝔞 : Ideal (𝓞 K) //
           𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
             - C₀ * N : ℝ) : ℂ) * v + ((C₀ * N : ℝ) : ℂ) * v) := by
-        refine Finset.sum_congr rfl fun v _ => ?_
+        refine Finset.sum_congr rfl fun v _ ↦ ?_
         push_cast
         ring
     _ = ∑ v ∈ Polynomial.nthRootsFinset (orderOf χ) 1, (((Nat.card {𝔞 : Ideal (𝓞 K) //
@@ -2089,6 +2038,15 @@ private theorem sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul
             - C₀ * N : ℝ) : ℂ) * v := by
         rw [Finset.sum_add_distrib, ← Finset.mul_sum,
           sum_nthRootsFinset_eq_zero hζ₀ hord2, mul_zero, add_zero]
+
+/-- The nonzero ideals of `𝓞 K` of bounded norm form a finite type: they embed into the (finitely
+many) ideals of norm `≤ N`. -/
+private theorem finite_nonzeroIdeal_absNorm_le (K : Type*) [Field K] [NumberField K] (N : ℕ) :
+    Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N} :=
+  haveI : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N} :=
+    (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
+  Finite.of_injective (fun a ↦ (⟨a.1, a.2.2⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N}))
+    fun _ _ hab ↦ Subtype.ext (by simpa using hab)
 
 /-- Sharifi 7.1.19 step 1 (p. 142): geometry-of-numbers bound. The
 partial-sum character sum `Σ_{N𝔞≤N} χ(𝔞)` (with `χ(𝔞) = galoisCharacterOnIdeal K L χ 𝔞` the
@@ -2106,27 +2064,22 @@ theorem character_sum_geometry_of_numbers_bound
         ≤ C * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
   classical
   obtain ⟨C₀, C', hcount⟩ := exists_card_galoisCharacterOnIdeal_eq_const_mul_add_pow K L m hm χ _hχ
-  refine ⟨(orderOf χ : ℝ) * C', fun N => ?_⟩
+  refine ⟨(orderOf χ : ℝ) * C', fun N ↦ ?_⟩
   have hC' : 0 ≤ C' := (abs_nonneg _).trans (by simpa using hcount 1 (one_pow _) 1 le_rfl)
   rcases Nat.eq_zero_or_pos N with rfl | hN1
   · haveI : IsEmpty {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ 0} :=
-      ⟨fun 𝔞 => 𝔞.2.1 (Ideal.absNorm_eq_zero_iff.mp (Nat.le_zero.mp 𝔞.2.2))⟩
+      ⟨fun 𝔞 ↦ 𝔞.2.1 (Ideal.absNorm_eq_zero_iff.mp (Nat.le_zero.mp 𝔞.2.2))⟩
     rw [tsum_empty, norm_zero]
     positivity
   have hord0 : orderOf χ ≠ 0 := (orderOf_pos_iff.mpr (isOfFinOrder_of_finite χ)).ne'
   have hord2 : 1 < orderOf χ :=
-    lt_of_le_of_ne (Nat.one_le_iff_ne_zero.mpr hord0) fun h => _hχ (orderOf_eq_one_iff.mp h.symm)
+    lt_of_le_of_ne (Nat.one_le_iff_ne_zero.mpr hord0) fun h ↦ _hχ (orderOf_eq_one_iff.mp h.symm)
   obtain ⟨ζ₀, hζ₀⟩ : ∃ z : ℂ, IsPrimitiveRoot z (orderOf χ) :=
     ⟨_, Complex.isPrimitiveRoot_exp _ hord0⟩
   set R : Finset ℂ := Polynomial.nthRootsFinset (orderOf χ) (1 : ℂ) with hR
-  have hmemR : ∀ {z : ℂ}, z ∈ R ↔ z ^ orderOf χ = 1 := fun {z} =>
+  have hmemR : ∀ {z : ℂ}, z ∈ R ↔ z ^ orderOf χ = 1 := fun {z} ↦
     Polynomial.mem_nthRootsFinset (Nat.pos_of_ne_zero hord0) 1
-  haveI hfinN : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N} :=
-    (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) N).to_subtype
-  haveI : Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N} :=
-    Finite.of_injective
-      (fun a => (⟨a.1, a.2.2⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ N}))
-      fun _ _ hab => Subtype.ext (by simpa using hab)
+  haveI := finite_nonzeroIdeal_absNorm_le K N
   haveI := Fintype.ofFinite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N}
   rw [tsum_fintype, sum_galoisCharacterOnIdeal_eq_sum_card_sub_mul K L m χ hord2 C₀ N]
   calc ‖∑ v ∈ R, (((Nat.card {𝔞 : Ideal (𝓞 K) //
@@ -2136,7 +2089,7 @@ theorem character_sum_geometry_of_numbers_bound
           𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ N ∧ galoisCharacterOnIdeal K L χ 𝔞 = v} : ℝ)
             - C₀ * N : ℝ) : ℂ) * v‖ := norm_sum_le _ _
     _ ≤ ∑ _v ∈ R, C' * (N : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹) := by
-        refine Finset.sum_le_sum fun v hv => ?_
+        refine Finset.sum_le_sum fun v hv ↦ ?_
         rw [norm_mul, Complex.norm_eq_one_of_pow_eq_one (hmemR.mp hv) hord0, mul_one,
           Complex.norm_real, Real.norm_eq_abs]
         exact hcount v (hmemR.mp hv) N hN1
@@ -2157,16 +2110,16 @@ bounded norm), so the defining `tsum` of `galoisCharacterCoeff` is over a finite
 private theorem finite_nonzeroIdeal_absNorm_eq
     (K : Type*) [Field K] [NumberField K] (n : ℕ) :
     Finite {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n} :=
-  Set.Finite.to_subtype <| Set.Finite.of_finite_image (f := fun I : NonzeroIdeal K => I.1)
+  Set.Finite.to_subtype <| Set.Finite.of_finite_image (f := fun I : NonzeroIdeal K ↦ I.1)
     ((Ideal.finite_setOf_absNorm_eq (S := 𝓞 K) n).subset (by rintro _ ⟨⟨I, _⟩, rfl, rfl⟩; rfl))
-    (fun _ _ _ _ => Subtype.ext)
+    (fun _ _ _ _ ↦ Subtype.ext)
 
 /-- The `0`-th coefficient vanishes: no nonzero ideal has norm `0`, so the fibre is empty. -/
 @[simp] private theorem galoisCharacterCoeff_zero
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) : galoisCharacterCoeff K L χ 0 = 0 := by
   have : IsEmpty {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = 0} :=
-    ⟨fun 𝔞 => 𝔞.1.2 (Ideal.absNorm_eq_zero_iff.mp 𝔞.2)⟩
+    ⟨fun 𝔞 ↦ 𝔞.1.2 (Ideal.absNorm_eq_zero_iff.mp 𝔞.2)⟩
   rw [galoisCharacterCoeff, tsum_empty]
 
 /-- The `n`-th coefficient is bounded in norm by the ideal-norm multiplicity: each ideal character
@@ -2184,7 +2137,7 @@ private theorem norm_galoisCharacterCoeff_le
     _ = ∑ 𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n},
           ‖galoisCharacterOnIdeal K L χ 𝔞.1.1‖ := tsum_fintype _
     _ ≤ ∑ _𝔞 : {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = n}, (1 : ℝ) :=
-        Finset.sum_le_sum fun 𝔞 _ => norm_galoisCharacterOnIdeal_le_one K L χ 𝔞.1.1
+        Finset.sum_le_sum fun 𝔞 _ ↦ norm_galoisCharacterOnIdeal_le_one K L χ 𝔞.1.1
     _ = (idealNormMultiplicity K n : ℝ) := by
         rw [Finset.sum_const, nsmul_eq_mul, mul_one, idealNormMultiplicity,
           Nat.card_eq_fintype_card]
@@ -2201,30 +2154,25 @@ private theorem sum_galoisCharacterCoeff_eq_tsum_absNorm_le
       ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n},
         galoisCharacterOnIdeal K L χ 𝔞.1 := by
   classical
-  haveI hfinT : Finite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} := by
-    haveI : Finite {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ n} :=
-      (Ideal.finite_setOf_absNorm_le (S := 𝓞 K) n).to_subtype
-    exact Finite.of_injective
-      (fun a => (⟨a.1, a.2.2⟩ : {𝔞 : Ideal (𝓞 K) // Ideal.absNorm 𝔞 ≤ n}))
-      fun _ _ hab => Subtype.ext (by simpa using hab)
+  haveI := finite_nonzeroIdeal_absNorm_le K n
   haveI := Fintype.ofFinite {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n}
   rw [tsum_fintype, ← Finset.sum_fiberwise_of_maps_to (t := Finset.Icc 1 n)
-      (g := fun 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} => Ideal.absNorm 𝔞.1)
-      (fun 𝔞 _ => Finset.mem_Icc.mpr
+      (g := fun 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} ↦ Ideal.absNorm 𝔞.1)
+      (fun 𝔞 _ ↦ Finset.mem_Icc.mpr
         ⟨Nat.one_le_iff_ne_zero.mpr (mt Ideal.absNorm_eq_zero_iff.mp 𝔞.2.1), 𝔞.2.2⟩)
-      (fun 𝔞 => galoisCharacterOnIdeal K L χ 𝔞.1)]
-  refine Finset.sum_congr rfl fun k hk => ?_
+      (fun 𝔞 ↦ galoisCharacterOnIdeal K L χ 𝔞.1)]
+  refine Finset.sum_congr rfl fun k hk ↦ ?_
   rw [galoisCharacterCoeff, ← Finset.sum_subtype_eq_sum_filter, Finset.subtype_univ]
   haveI := finite_nonzeroIdeal_absNorm_eq K k
   haveI := Fintype.ofFinite {𝔞 : NonzeroIdeal K // Ideal.absNorm 𝔞.1 = k}
   rw [tsum_fintype]
   exact Fintype.sum_equiv
-    { toFun := fun ⟨⟨𝔞, h𝔞ne⟩, hnorm⟩ =>
+    { toFun := fun ⟨⟨𝔞, h𝔞ne⟩, hnorm⟩ ↦
         (⟨⟨𝔞, h𝔞ne, hnorm.le.trans (Finset.mem_Icc.mp hk).2⟩, hnorm⟩ :
           {x : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥ ∧ Ideal.absNorm 𝔞 ≤ n} // Ideal.absNorm x.1 = k})
-      invFun := fun ⟨⟨𝔞, h𝔞⟩, hnorm⟩ => ⟨⟨𝔞, h𝔞.1⟩, hnorm⟩
-      left_inv := fun _ => rfl
-      right_inv := fun _ => rfl } _ _ fun _ => rfl
+      invFun := fun ⟨⟨𝔞, h𝔞⟩, hnorm⟩ ↦ ⟨⟨𝔞, h𝔞.1⟩, hnorm⟩
+      left_inv := fun _ ↦ rfl
+      right_inv := fun _ ↦ rfl } _ _ fun _ ↦ rfl
 
 /-- **Step 1 (the LF3 input).** The partial sums of the L-series coefficients grow like
 `O(n^{1-1/d})`, `d = [K:ℚ]`. This is the geometry-of-numbers character-sum bound
@@ -2233,10 +2181,10 @@ private theorem sum_galoisCharacterCoeff_isBigO
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
     [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (_hχ : χ ≠ 1) :
-    (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)
-      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) := by
+    (fun n : ℕ ↦ ∑ k ∈ Finset.Icc 1 n, galoisCharacterCoeff K L χ k)
+      =O[Filter.atTop] (fun n : ℕ ↦ (n : ℝ) ^ (1 - (Module.finrank ℚ K : ℝ)⁻¹)) := by
   obtain ⟨C, hC⟩ := character_sum_geometry_of_numbers_bound K L m hm χ _hχ
-  refine Asymptotics.isBigO_iff.mpr ⟨C, Filter.Eventually.of_forall fun n => ?_⟩
+  refine Asymptotics.isBigO_iff.mpr ⟨C, Filter.Eventually.of_forall fun n ↦ ?_⟩
   rw [sum_galoisCharacterCoeff_eq_tsum_absNorm_le K L χ n,
     Real.norm_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n) _)]
   exact hC n
@@ -2248,13 +2196,13 @@ idealNormMultiplicity K k`, and the latter's partial sums are `O(n)` by
 private theorem sum_norm_galoisCharacterCoeff_isBigO
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) :
-    (fun n : ℕ => ∑ k ∈ Finset.Icc 1 n, ‖galoisCharacterCoeff K L χ k‖)
-      =O[Filter.atTop] (fun n : ℕ => (n : ℝ) ^ (1 : ℝ)) := by
-  refine (Asymptotics.isBigO_of_le Filter.atTop fun n => ?_).trans
+    (fun n : ℕ ↦ ∑ k ∈ Finset.Icc 1 n, ‖galoisCharacterCoeff K L χ k‖)
+      =O[Filter.atTop] (fun n : ℕ ↦ (n : ℝ) ^ (1 : ℝ)) := by
+  refine (Asymptotics.isBigO_of_le Filter.atTop fun n ↦ ?_).trans
     (sum_idealNormMultiplicity_isBigO K)
-  rw [Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ => norm_nonneg _),
-    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ => Nat.cast_nonneg _)]
-  exact Finset.sum_le_sum fun k _ => norm_galoisCharacterCoeff_le K L χ k
+  rw [Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ norm_nonneg _),
+    Real.norm_of_nonneg (Finset.sum_nonneg fun _ _ ↦ Nat.cast_nonneg _)]
+  exact Finset.sum_le_sum fun k _ ↦ norm_galoisCharacterCoeff_le K L χ k
 
 /-- **Step 3.** On `Re s > 1` the L-series of the coefficient function equals the absolutely
 convergent ideal sum `∑'_𝔞 χ̃(𝔞) N𝔞^{-s}`. The regrouping skeleton mirrors
@@ -2269,29 +2217,29 @@ private theorem lseries_galoisCharacterCoeff_eq_tsum
       ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
         galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
   classical
-  set e := Equiv.sigmaFiberEquiv (fun I : NonzeroIdeal K => Ideal.absNorm I.1) with he
-  have hsummable : Summable fun I : NonzeroIdeal K =>
+  set e := Equiv.sigmaFiberEquiv (fun I : NonzeroIdeal K ↦ Ideal.absNorm I.1) with he
+  have hsummable : Summable fun I : NonzeroIdeal K ↦
       ‖galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s)‖ := by
-    refine Summable.of_nonneg_of_le (fun _ => norm_nonneg _) (fun I => ?_)
+    refine Summable.of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun I ↦ ?_)
       (hasSum_nonzeroIdeal_absNorm_cpow K hs).summable.norm
     rw [norm_mul]
     exact mul_le_of_le_one_left (norm_nonneg _) (norm_galoisCharacterOnIdeal_le_one K L χ I.1)
-  have hsummable_sigma : Summable fun p : Σ n, {I : NonzeroIdeal K // Ideal.absNorm I.1 = n} =>
+  have hsummable_sigma : Summable fun p : Σ n, {I : NonzeroIdeal K // Ideal.absNorm I.1 = n} ↦
       galoisCharacterOnIdeal K L χ (e p).1 * (Ideal.absNorm (e p).1 : ℂ) ^ (-s) :=
-    (e.summable_iff (f := fun I : NonzeroIdeal K =>
+    (e.summable_iff (f := fun I : NonzeroIdeal K ↦
       galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s))).mpr hsummable.of_norm
   have hfiber_val : ∀ n : ℕ,
       (∑' y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
         galoisCharacterOnIdeal K L χ (y.1).1 * (Ideal.absNorm (y.1).1 : ℂ) ^ (-s))
-        = galoisCharacterCoeff K L χ n * (n : ℂ) ^ (-s) := fun n => by
+        = galoisCharacterCoeff K L χ n * (n : ℂ) ^ (-s) := fun n ↦ by
     have hconst : ∀ y : {I : NonzeroIdeal K // Ideal.absNorm I.1 = n},
         galoisCharacterOnIdeal K L χ (y.1).1 * (Ideal.absNorm (y.1).1 : ℂ) ^ (-s) =
-          galoisCharacterOnIdeal K L χ (y.1).1 * (n : ℂ) ^ (-s) := fun y => by rw [y.2]
+          galoisCharacterOnIdeal K L χ (y.1).1 * (n : ℂ) ^ (-s) := fun y ↦ by rw [y.2]
     rw [tsum_congr hconst, tsum_mul_right, galoisCharacterCoeff]
   rw [show LSeries (galoisCharacterCoeff K L χ) s =
       ∑' n, galoisCharacterCoeff K L χ n * (n : ℂ) ^ (-s) from
-    tsum_congr fun n => LSeries.term_def₀ (galoisCharacterCoeff_zero K L χ) s n,
-    ← e.tsum_eq (fun I : NonzeroIdeal K =>
+    tsum_congr fun n ↦ LSeries.term_def₀ (galoisCharacterCoeff_zero K L χ) s n,
+    ← e.tsum_eq (fun I : NonzeroIdeal K ↦
       galoisCharacterOnIdeal K L χ I.1 * (Ideal.absNorm I.1 : ℂ) ^ (-s)),
     hsummable_sigma.tsum_sigma]
   exact (tsum_congr hfiber_val).symm
@@ -2301,8 +2249,8 @@ private theorem setIntegral_Ioi_one_mul_cpow_eq_mellin (S : ℝ → ℂ) (hS : �
     ∫ t in Ioi (1 : ℝ), S t * (t : ℂ) ^ (-(s + 1)) = mellin S (-s) := by
   rw [mellin, show (∫ t in Ioi (0 : ℝ), (t : ℂ) ^ (-s - 1) • S t) =
       ∫ t in Ioi (1 : ℝ), (t : ℂ) ^ (-s - 1) • S t from ?_]
-  · refine setIntegral_congr_fun measurableSet_Ioi fun t _ => ?_
-    rw [smul_eq_mul, mul_comm]
+  · refine setIntegral_congr_fun measurableSet_Ioi fun t _ ↦ ?_
+    rw [smul_eq_mul]
     ring_nf
   · have hinter : Ioi (0 : ℝ) ∩ Ioi (1 : ℝ) = Ioi (1 : ℝ) :=
       inter_eq_right.mpr (Ioi_subset_Ioi (by norm_num))
@@ -2314,24 +2262,6 @@ private theorem setIntegral_Ioi_one_mul_cpow_eq_mellin (S : ℝ → ℂ) (hS : �
     by_cases h1 : t ∈ Ioi (1 : ℝ)
     · rw [if_pos h1]
     · rw [if_neg h1, hS t (lt_of_le_of_ne (not_lt.mp (by simpa using h1)) ht), smul_zero]
-
-open MeasureTheory Set in
-private theorem locallyIntegrableOn_Ioi_comp_nat_floor (g : ℕ → ℂ) :
-    LocallyIntegrableOn (fun t : ℝ => g ⌊t⌋₊) (Ioi (0 : ℝ)) := by
-  have hmeas : Measurable fun t : ℝ => g ⌊t⌋₊ :=
-    (measurable_from_top (f := g)).comp Nat.measurable_floor
-  rw [locallyIntegrableOn_iff isOpen_Ioi.isLocallyClosed]
-  intro k _ hkcomp
-  obtain ⟨b, hb⟩ := hkcomp.isBounded.subset_closedBall 0
-  refine Measure.integrableOn_of_bounded hkcomp.measure_lt_top.ne hmeas.aestronglyMeasurable
-    (M := (Finset.Icc 0 ⌊b⌋₊).sup' (by simp) fun n => ‖g n‖) ?_
-  rw [ae_restrict_iff' hkcomp.measurableSet]
-  filter_upwards with t ht
-  have htb : t ≤ b := (le_abs_self t).trans <| by
-    have := hb ht
-    rwa [Metric.mem_closedBall, Real.dist_eq, sub_zero] at this
-  exact Finset.le_sup' (fun n => ‖g n‖)
-    (Finset.mem_Icc.mpr ⟨Nat.zero_le _, Nat.floor_le_floor htb⟩)
 
 open Filter Topology Set MeasureTheory Asymptotics in
 /-- Sharifi 7.1.19 step 1b (p. 142) — analytic extension of `L(χ,·)`.
@@ -2376,23 +2306,24 @@ theorem artinLSeries_analytic_extension
   have hr0 : 0 ≤ r := by
     rw [hr_def, sub_nonneg, inv_le_one_iff₀]; right; exact_mod_cast Module.finrank_pos
   have hr1 : r < 1 := by rw [hr_def]; linarith
-  set S : ℝ → ℂ := fun t => ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k with hS_def
-  have hS_zero : ∀ t : ℝ, t < 1 → S t = 0 := fun t ht => by
+  set S : ℝ → ℂ := fun t ↦ ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k with hS_def
+  have hS_zero : ∀ t : ℝ, t < 1 → S t = 0 := fun t ht ↦ by
     change ∑ k ∈ Finset.Icc 1 ⌊t⌋₊, galoisCharacterCoeff K L χ k = 0
     rw [Nat.floor_eq_zero.mpr ht, Finset.Icc_eq_empty (by norm_num), Finset.sum_empty]
-  have hS_bigO : S =O[Filter.atTop] (fun t : ℝ => t ^ r) :=
+  have hS_bigO : S =O[Filter.atTop] (fun t : ℝ ↦ t ^ r) :=
     ((sum_galoisCharacterCoeff_isBigO K L m hm χ _hχ).comp_tendsto
       tendsto_nat_floor_atTop).trans <|
       isEquivalent_nat_floor.isBigO.rpow hr0 (Filter.eventually_ge_atTop 0)
-  refine ⟨fun s => s * mellin S (-s), ?_, fun s hs => ?_⟩
-  · refine DifferentiableOn.analyticOn (fun s₀ hs₀ => ?_)
+  refine ⟨fun s ↦ s * mellin S (-s), ?_, fun s hs ↦ ?_⟩
+  · refine DifferentiableOn.analyticOn (fun s₀ hs₀ ↦ ?_)
       (isOpen_lt continuous_const Complex.continuous_re)
     have hs₀' : r < s₀.re := hs₀
-    have hfc : LocallyIntegrableOn S (Ioi (0 : ℝ)) :=
-      locallyIntegrableOn_Ioi_comp_nat_floor fun n => ∑ k ∈ Finset.Icc 1 n,
-        galoisCharacterCoeff K L χ k
-    have hf_top : S =O[Filter.atTop] (fun t : ℝ => t ^ (-(-r))) := by rw [neg_neg]; exact hS_bigO
-    have hf_bot : S =O[𝓝[>] (0 : ℝ)] (fun t : ℝ => t ^ (-(-s₀.re - 1))) :=
+    have hfc : LocallyIntegrableOn S (Ioi (0 : ℝ)) := by
+      simpa only [one_mul] using (locallyIntegrableOn_mul_sum_Icc (a := 0) (m := 1)
+        (galoisCharacterCoeff K L χ) le_rfl (locallyIntegrableOn_const 1)).mono_set
+          Set.Ioi_subset_Ici_self
+    have hf_top : S =O[Filter.atTop] (fun t : ℝ ↦ t ^ (-(-r))) := by rw [neg_neg]; exact hS_bigO
+    have hf_bot : S =O[𝓝[>] (0 : ℝ)] (fun t : ℝ ↦ t ^ (-(-s₀.re - 1))) :=
       Filter.EventuallyEq.trans_isBigO
         (by filter_upwards [Ioo_mem_nhdsGT one_pos] with t ht using
           hS_zero t (Set.mem_Ioo.mp ht).2) (Asymptotics.isBigO_zero _ _)
@@ -2434,13 +2365,11 @@ private theorem logDedekindZeta_re_tendsto_atTop
     Tendsto (fun s : ℝ ↦ Real.log (NumberField.dedekindZeta L (s : ℂ)).re)
       (𝓝[>] (1 : ℝ)) atTop := by
   obtain ⟨C, hC⟩ := logDedekindZeta_sub_log_inv_sub_one_bounded L
-  -- The lower bound `log(1/(s-1)) - C` already tends to `+∞`.
   have hlog : Tendsto (fun s : ℝ ↦ Real.log (1 / (s - 1)) + -C) (𝓝[>] (1 : ℝ)) atTop :=
     tendsto_log_one_div_sub_one_atTop.atTop_add tendsto_const_nhds
   refine tendsto_atTop_mono' _ ?_ hlog
   filter_upwards [hC] with s hs
-  have := (abs_le.mp hs).1
-  linarith
+  linarith [(abs_le.mp hs).1]
 
 open Filter Topology Set in
 /-- **Ingredient C.** If `f` is analytic at `1`, has a zero there (`f 1 = 0`), and is not locally
@@ -2456,15 +2385,13 @@ private theorem analytic_log_norm_le_of_apply_eq_zero {f : ℂ → ℂ}
       Real.log ‖f (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + C := by
   obtain ⟨n, g, hg_an, hg_ne, hg_eq⟩ :=
     (AnalyticAt.exists_eventuallyEq_pow_smul_nonzero_iff hf).mpr hne
-  -- The order is `≥ 1`: at `n = 0` the factorisation would give `f 1 = g 1 ≠ 0`.
   have hn1 : 1 ≤ n := by
-    rcases Nat.eq_zero_or_pos n with h0 | h; swap; · exact h
-    exfalso
-    apply hg_ne
-    have := hg_eq.self_of_nhds
-    rw [h0, pow_zero, one_smul] at this
-    rw [← this, hf0]
-  -- `g` is continuous at `1` with `g 1 ≠ 0`: near `1`, `‖g‖` is bounded above and `g ≠ 0`.
+    rcases Nat.eq_zero_or_pos n with rfl | h
+    · refine absurd ?_ hg_ne
+      have := hg_eq.self_of_nhds
+      rw [pow_zero, one_smul] at this
+      rw [← this, hf0]
+    · exact h
   have hg_cont : ContinuousAt g 1 := hg_an.continuousAt
   have hCg : ∀ᶠ z in 𝓝 (1 : ℂ), ‖g z‖ ≤ ‖g 1‖ + 1 := by
     filter_upwards [hg_cont.norm.eventually (Metric.ball_mem_nhds ‖g 1‖ one_pos)] with z hz
@@ -2472,10 +2399,8 @@ private theorem analytic_log_norm_le_of_apply_eq_zero {f : ℂ → ℂ}
     linarith [(abs_lt.mp hz).2]
   have hg0 : ∀ᶠ z in 𝓝 (1 : ℂ), g z ≠ 0 := hg_cont.eventually_ne hg_ne
   refine ⟨‖g 1‖ + 1, ?_⟩
-  -- Pull the complex factorisation and the bounds on `g` back along `s ↦ (s : ℂ)`.
   have hmap : Tendsto (fun s : ℝ ↦ (s : ℂ)) (𝓝[>] (1 : ℝ)) (𝓝 (1 : ℂ)) :=
     (Complex.continuous_ofReal.tendsto 1).comp nhdsWithin_le_nhds
-  -- on `(1, 2)` we have `s - 1 ∈ (0, 1)`
   have hIoo : Set.Ioo (1 : ℝ) 2 ∈ 𝓝[>] (1 : ℝ) := Ioo_mem_nhdsGT (by norm_num)
   filter_upwards [hmap.eventually hg_eq, hmap.eventually hCg, hmap.eventually hg0, hIoo]
     with s hfeq hgle hgne hsmem
@@ -2483,14 +2408,12 @@ private theorem analytic_log_norm_le_of_apply_eq_zero {f : ℂ → ℂ}
   have hpos : (0 : ℝ) < s - 1 := by linarith
   have hlt1 : s - 1 < 1 := by linarith
   have hgpos : (0 : ℝ) < ‖g (s : ℂ)‖ := norm_pos_iff.mpr hgne
-  -- factor the norm: `‖f s‖ = (s-1)^n · ‖g s‖`
   have hnorm : ‖f (s : ℂ)‖ = (s - 1) ^ n * ‖g (s : ℂ)‖ := by
     rw [hfeq, norm_smul, norm_pow]
     congr 2
     rw [show ((s : ℂ) - 1) = (((s - 1 : ℝ)) : ℂ) by push_cast; ring, Complex.norm_real,
       Real.norm_of_nonneg hpos.le]
   rw [hnorm, Real.log_mul (by positivity) hgpos.ne', Real.log_pow]
-  -- `n·log(s-1) ≤ log(s-1) = -log(1/(s-1))` (since `n ≥ 1` and `log(s-1) < 0`), and `log‖g s‖ ≤ Cg`
   have hlog_neg : Real.log (s - 1) < 0 := Real.log_neg hpos hlt1
   have hn_ge : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn1
   have hn_step : (n : ℝ) * Real.log (s - 1) ≤ Real.log (s - 1) := by
@@ -2528,11 +2451,7 @@ The shift is `(1 - y)^{-1} - 1 = y · (1 - y)^{-1}`, and `‖(1 - y)^{-1}‖ ≤
 Euler product. -/
 private theorem norm_one_sub_inv_sub_one_le {y : ℂ} (hy : ‖y‖ ≤ 1 / 2) :
     ‖(1 - y)⁻¹ - 1‖ ≤ 2 * ‖y‖ := by
-  have hyne1 : (1 : ℂ) - y ≠ 0 := by
-    intro h
-    rw [sub_eq_zero] at h
-    have : ‖y‖ = 1 := by rw [← h, norm_one]
-    rw [this] at hy; norm_num at hy
+  have hyne1 : (1 : ℂ) - y ≠ 0 := sub_ne_zero.mpr (by rintro rfl; norm_num at hy)
   have heq : (1 - y)⁻¹ - 1 = y * (1 - y)⁻¹ := by field_simp; ring
   rw [heq, norm_mul]
   have hnorm_lb : (2 : ℝ)⁻¹ ≤ ‖(1 : ℂ) - y‖ :=
@@ -2551,8 +2470,8 @@ norm `0`) nor `1` (only `⊤` has norm `1`). -/
 private theorem two_le_absNorm {R : Type*} [CommRing R] [IsDedekindDomain R]
     [Module.Free ℤ R] [Module.Finite ℤ R] {𝔭 : Ideal R} (hp : 𝔭.IsPrime) (hb : 𝔭 ≠ ⊥) :
     2 ≤ Ideal.absNorm 𝔭 := by
-  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h => hb (Ideal.absNorm_eq_zero_iff.mp h)
-  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h => hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
+  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h ↦ hb (Ideal.absNorm_eq_zero_iff.mp h)
+  have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h ↦ hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
   lia
 
 /-- For a nonzero prime `𝔭` of a number ring and `Re s > 1`, `‖N𝔭^{-s}‖ ≤ 1/2` (since `N𝔭 ≥ 2`,
@@ -2564,8 +2483,8 @@ private theorem norm_absNorm_cpow_neg_le_half {R : Type*} [CommRing R] [IsDedeki
   have h2le : 2 ≤ Ideal.absNorm 𝔭.1 := two_le_absNorm 𝔭.2.1 𝔭.2.2
   have hpos : 0 < Ideal.absNorm 𝔭.1 := by lia
   rw [Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re]
-  have hb1 : (1 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := by exact_mod_cast (by lia : 1 ≤ Ideal.absNorm 𝔭.1)
   have hb2 : (2 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := by exact_mod_cast h2le
+  have hb1 : (1 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) := one_le_two.trans hb2
   calc (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s.re)
       ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-1 : ℝ) :=
         Real.rpow_le_rpow_of_exponent_le hb1 (by linarith)
@@ -2579,17 +2498,16 @@ private theorem norm_absNorm_cpow_neg_le_half {R : Type*} [CommRing R] [IsDedeki
 convergent `ζ_L`). -/
 private theorem summable_norm_primeIdeal_factor_sub_one
     (L : Type*) [Field L] [NumberField L] {s : ℂ} (hs : 1 < s.re) :
-    Summable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+    Summable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
       ‖(1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ - 1‖ := by
-  -- `∑_𝔞 ‖N𝔞^{-s}‖` over all nonzero ideals converges; restrict to nonzero primes.
-  have hsum : Summable fun 𝔞 : NonzeroIdeal L => ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ :=
+  have hsum : Summable fun 𝔞 : NonzeroIdeal L ↦ ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ :=
     (hasSum_nonzeroIdeal_absNorm_cpow L hs).summable.norm
-  have hsumP : Summable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+  have hsumP : Summable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
       ‖(Ideal.absNorm 𝔓.1 : ℂ) ^ (-s)‖ :=
-    hsum.comp_injective (i := fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+    hsum.comp_injective (i := fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
       (⟨𝔓.1, 𝔓.2.2⟩ : NonzeroIdeal L))
-      (fun a b h => by apply Subtype.ext; simpa using h)
-  refine Summable.of_nonneg_of_le (fun _ => norm_nonneg _) (fun 𝔓 => ?_) (hsumP.mul_left 2)
+      (fun a b h ↦ Subtype.ext (by simpa using h))
+  refine Summable.of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun 𝔓 ↦ ?_) (hsumP.mul_left 2)
   exact norm_one_sub_inv_sub_one_le (norm_absNorm_cpow_neg_le_half (R := 𝓞 L) hs 𝔓)
 
 /-- The prime-ideal Euler product of `ζ_L` is `Multipliable`, with `HasProd` value `ζ_L(s)`.
@@ -2600,13 +2518,12 @@ private theorem hasProd_primeIdeal_factor
     (L : Type*) [Field L] [NumberField L] {s : ℂ} (hs : 1 < s.re) :
     HasProd (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹) (NumberField.dedekindZeta L s) := by
-  have hmul : Multipliable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+  have hmul : Multipliable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
       (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ := by
-    have := multipliable_one_add_of_summable
-      (f := fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+    simpa using multipliable_one_add_of_summable
+      (f := fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ - 1)
       (summable_norm_primeIdeal_factor_sub_one L hs)
-    simpa using this
   rw [dedekindZeta_eq_tprod_primeIdeal L hs]
   exact hmul.hasProd
 
@@ -2619,12 +2536,12 @@ private theorem multipliable_primeIdeal_factor_subtype
     (p : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} → Prop) :
     Multipliable fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // p 𝔓} =>
       (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ := by
-  have hsum : Summable ((fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+  have hsum : Summable ((fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
       ‖(1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ - 1‖) ∘ (↑) :
       {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // p 𝔓} → ℝ) :=
     (summable_norm_primeIdeal_factor_sub_one L hs).subtype p
   simpa using multipliable_one_add_of_summable
-    (f := fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // p 𝔓} =>
+    (f := fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} // p 𝔓} ↦
       (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ - 1) hsum
 
 /-- The χ-twisted local Euler product `∏'_{𝔭 unram} (1 - χ(σ_𝔭) N𝔭^{-s})^{-1} = L_χ` is
@@ -2636,29 +2553,27 @@ private theorem multipliable_artinLocalFactor
     (χ : galoisCharacter K L) {s : ℂ} (hs : 1 < s.re) :
     Multipliable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
       (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
-  -- summability of `∑_{𝔭 unram} ‖N𝔭^{-s}‖`, by injecting into the nonzero ideals of `𝓞 K`
-  have hsum : Summable fun 𝔞 : NonzeroIdeal K => ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ :=
+  have hsum : Summable fun 𝔞 : NonzeroIdeal K ↦ ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ :=
     (hasSum_nonzeroIdeal_absNorm_cpow K hs).summable.norm
-  have hsumP : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+  have hsumP : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ :=
-    hsum.comp_injective (i := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+    hsum.comp_injective (i := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (⟨𝔭.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ : NonzeroIdeal K))
-      (fun a b h => by apply Subtype.ext; simpa using h)
-  have hsummable : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+      (fun _ _ h ↦ Subtype.ext (by simpa using h))
+  have hsummable : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       ‖(1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ - 1‖ := by
-    refine Summable.of_nonneg_of_le (fun _ => norm_nonneg _) (fun 𝔭 => ?_) (hsumP.mul_left 2)
+    refine Summable.of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun 𝔭 ↦ ?_) (hsumP.mul_left 2)
     set y : ℂ := (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s) with hy
     have hynorm : ‖y‖ ≤ 1 / 2 := by
-      have hpbot : 𝔭.1 ≠ ⊥ := UnramifiedIn.ne_bot K L 𝔭.2.2
       rw [hy, norm_mul, norm_galoisCharacter_out, one_mul]
-      exact norm_absNorm_cpow_neg_le_half (R := 𝓞 K) hs ⟨𝔭.1, 𝔭.2.1, hpbot⟩
+      exact norm_absNorm_cpow_neg_le_half (R := 𝓞 K) hs
+        ⟨𝔭.1, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩
     calc ‖(1 - y)⁻¹ - 1‖ ≤ 2 * ‖y‖ := norm_one_sub_inv_sub_one_le hynorm
       _ = 2 * ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ := by
           rw [hy, norm_mul, norm_galoisCharacter_out, one_mul]
-  have := multipliable_one_add_of_summable
-    (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+  simpa using multipliable_one_add_of_summable
+    (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
       (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ - 1) hsummable
-  simpa using this
 
 /-- The map sending an unramified-below `L`-prime `𝔓` to the unramified `K`-prime `𝔓.under` below
 it. -/
@@ -2731,33 +2646,30 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹)
       = ∏' χ : galoisCharacter K L, artinDirichletSeries K L χ s := by
   classical
-  -- abstract the Euler factor so the reindexing lemmas never unfold `Ideal.absNorm`
-  set F : Ideal (𝓞 L) → ℂ := fun 𝔭 => (1 - (Ideal.absNorm 𝔭 : ℂ) ^ (-s))⁻¹ with hF
+  set F : Ideal (𝓞 L) → ℂ := fun 𝔭 ↦ (1 - (Ideal.absNorm 𝔭 : ℂ) ^ (-s))⁻¹ with hF
   set G : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} → ℂ :=
-    fun c => ∏' χ : galoisCharacter K L,
+    fun c ↦ ∏' χ : galoisCharacter K L,
       (1 - (χ (frobeniusClass K L c.1).out : ℂ) * (Ideal.absNorm c.1 : ℂ) ^ (-s))⁻¹ with hG
-  -- multipliability of `F` over the unramified-below primes `U`, via absolute convergence.
-  -- (`Multipliable.subtype` is avoided — it whnf-explodes on the `Ideal (𝓞 L)` prime subtype;
-  -- instead restrict the *summable* norm via `Summable.subtype`, then rebuild multipliability.)
+  -- `Multipliable.subtype` is avoided: it whnf-explodes on the `Ideal (𝓞 L)` prime subtype.
+  -- Restrict the *summable* norm via `Summable.subtype`, then rebuild multipliability.
   have hmulU : Multipliable fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-      UnramifiedIn K L (𝔓.under (𝓞 K))} => F 𝔓.1 := by
-    have hsumU : Summable ((fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} =>
+      UnramifiedIn K L (𝔓.under (𝓞 K))} ↦ F 𝔓.1 := by
+    have hsumU : Summable ((fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} ↦
         ‖(1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ - 1‖) ∘ (↑) :
         {x : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
           UnramifiedIn K L (x.1.under (𝓞 K))} → ℝ) :=
       (summable_norm_primeIdeal_factor_sub_one L hs).subtype
-        (fun 𝔓 => UnramifiedIn K L (𝔓.1.under (𝓞 K)))
+        (fun 𝔓 ↦ UnramifiedIn K L (𝔓.1.under (𝓞 K)))
     have hmul1 : Multipliable fun 𝔓 : {x : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-        UnramifiedIn K L (x.1.under (𝓞 K))} => F 𝔓.1.1 := by
+        UnramifiedIn K L (x.1.under (𝓞 K))} ↦ F 𝔓.1.1 := by
       simpa [hF] using multipliable_one_add_of_summable
         (f := fun 𝔓 : {x : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
-            UnramifiedIn K L (x.1.under (𝓞 K))} =>
+            UnramifiedIn K L (x.1.under (𝓞 K))} ↦
           (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ - 1) hsumU
     exact (Equiv.multipliable_iff (unramifiedFlattenEquiv K L).symm).mpr hmul1
-  -- each fibre over `c` is finite (finitely many primes above `c`) and its product is `G c`
   have hfibHasProd : ∀ c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
       HasProd (fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-          UnramifiedIn K L (𝔓.under (𝓞 K))} // underUP K L 𝔓 = c} => F 𝔓.1.1) (G c) := by
+          UnramifiedIn K L (𝔓.under (𝓞 K))} // underUP K L 𝔓 = c} ↦ F 𝔓.1.1) (G c) := by
     intro c
     haveI : c.1.IsPrime := c.2.1
     haveI : c.1.IsMaximal := c.2.1.isMaximal (UnramifiedIn.ne_bot K L c.2.2)
@@ -2765,9 +2677,9 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
       (IsDedekindDomain.primesOver_finite c.1 (𝓞 L)).to_subtype
     haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} :=
       Finite.of_injective
-        (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} =>
+        (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} ↦
           (⟨𝔓.1, 𝔓.2.1, 𝔓.2.2.1⟩ : c.1.primesOver (𝓞 L)))
-        (fun _ _ hab => Subtype.ext (by simpa using hab))
+        (fun _ _ hab ↦ Subtype.ext (by simpa using hab))
     haveI : Finite {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
         UnramifiedIn K L (𝔓.under (𝓞 K))} // underUP K L 𝔓 = c} :=
       Finite.of_equiv _ (fiberUnderEquiv K L c).symm
@@ -2776,24 +2688,22 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
       simp only [hG]
       rw [← dedekindZeta_local_factor_eq_product_artin_local K L c.1 c.2.2 s hs,
         ← (fiberUnderEquiv K L c).tprod_eq
-          (fun 𝔔 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} => F 𝔔.1)]
+          (fun 𝔔 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} ↦ F 𝔔.1)]
       rfl
     rw [← hval]
     exact (Multipliable.of_finite).hasProd
-  -- regroup the unramified product fibrewise (`HasProd.sigma`), giving `∏'_c G c`
   have hsig : HasProd G (∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       UnramifiedIn K L (𝔓.under (𝓞 K))}, F 𝔓.1) :=
     ((Equiv.sigmaFiberEquiv (underUP K L)).hasProd_iff.mpr hmulU.hasProd).sigma hfibHasProd
   rw [← hsig.tprod_eq]
   simp only [hG]
-  -- the inner character product is finite, so rewrite `∏'_χ` as `∏_χ`, then swap with `∏'_c`
   simp_rw [tprod_fintype]
   rw [Multipliable.tprod_finsetProd (s := (Finset.univ : Finset (galoisCharacter K L)))
-    (f := fun χ : galoisCharacter K L =>
-      fun c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+    (f := fun χ : galoisCharacter K L ↦
+      fun c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
         (1 - (χ (frobeniusClass K L c.1).out : ℂ) * (Ideal.absNorm c.1 : ℂ) ^ (-s))⁻¹)
-    (fun χ _ => multipliable_artinLocalFactor K L χ hs)]
-  refine Finset.prod_congr rfl fun χ _ => ?_
+    (fun χ _ ↦ multipliable_artinLocalFactor K L χ hs)]
+  refine Finset.prod_congr rfl fun χ _ ↦ ?_
   rw [artinDirichletSeries, ← exists_artinLSeries_eulerProduct_abelian K L χ s hs]
 
 /-- Partition `ζ_L`'s prime-ideal Euler product into the unramified-below and ramified-below halves,
@@ -2809,17 +2719,16 @@ private theorem dedekindZeta_eq_unramifiedNested_mul_ramifiedNested
           UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹) *
         ∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
           ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ := by
-  -- pin the base function `f` and partition set `S` explicitly, so `HasProd.mul_compl` performs
-  -- no higher-order unification (`?f ∘ Subtype.val`) on the nested `Ideal (𝓞 L)` prime subtype —
-  -- that unification is the `whnf` bomb; once `f`/`S` are supplied it is a cheap defeq check.
+  -- `f`/`S` are pinned explicitly so `HasProd.mul_compl` does no higher-order unification
+  -- (`?f ∘ Subtype.val`) on the nested `Ideal (𝓞 L)` prime subtype — that is the `whnf` bomb.
   let f : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} → ℂ :=
-    fun 𝔓 => (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
+    fun 𝔓 ↦ (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
   let S : Set {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} :=
     {𝔓 | UnramifiedIn K L (𝔓.1.under (𝓞 K))}
   have hSU := (multipliable_primeIdeal_factor_subtype L hs
-    (fun 𝔓 => UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
+    (fun 𝔓 ↦ UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
   have hSUc := (multipliable_primeIdeal_factor_subtype L hs
-    (fun 𝔓 => ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
+    (fun 𝔓 ↦ ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K)))).hasProd
   exact ((hSU.mul_compl (f := f) (s := S) hSUc).unique
     (hasProd_primeIdeal_factor L hs)).symm
 
@@ -2835,7 +2744,7 @@ private theorem tprod_unramifiedNested_eq_prod_artin
       = ∏' χ : galoisCharacter K L, artinDirichletSeries K L χ s := by
   rw [← tprod_unramified_eq_prod_artinDirichletSeries K L hs]
   exact Equiv.tprod_eq (unramifiedFlattenEquiv K L)
-    (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
+    (fun 𝔔 ↦ (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
 
 /-- The ramified-below half of `ζ_L`'s prime product (in nested-subtype form) equals the same
 product indexed by the flat triply-nested ramified subtype: flatten with `ramifiedFlattenEquiv`.
@@ -2846,9 +2755,8 @@ private theorem tprod_ramifiedNested_eq_ramified
     (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥} //
         ¬ UnramifiedIn K L (𝔓.1.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹)
       = ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-            ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ := by
-  exact Equiv.tprod_eq (ramifiedFlattenEquiv K L)
-    (fun 𝔔 => (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹)
+            ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹ :=
+  Equiv.tprod_eq (ramifiedFlattenEquiv K L) fun 𝔔 ↦ (1 - (Ideal.absNorm 𝔔.1 : ℂ) ^ (-s))⁻¹
 
 /-- **The zeta factorisation** (Sharifi 7.1.16, p. 141, with the ramified factor made explicit).
 For `1 < Re s`, `ζ_L(s) = (∏_χ L_χ(s)) · R(s)`, where `L_χ = artinDirichletSeries K L χ` is the
@@ -2877,23 +2785,21 @@ private instance finite_ramifiedAbove
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L] :
     Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ ¬ UnramifiedIn K L (𝔓.under (𝓞 K))} := by
   classical
-  -- the base set of ramified `K`-primes is finite
   haveI : Finite {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭} :=
     (finite_ramifiedIn K L).to_subtype
-  -- each fibre `primesOver 𝔭` is finite, so the sigma is finite
   haveI : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭},
-      Finite (𝔭.1.primesOver (𝓞 L)) := fun 𝔭 => by
+      Finite (𝔭.1.primesOver (𝓞 L)) := fun 𝔭 ↦ by
     haveI : 𝔭.1.IsPrime := 𝔭.2.1
     haveI : 𝔭.1.IsMaximal := 𝔭.2.1.isMaximal 𝔭.2.2.1
     exact (IsDedekindDomain.primesOver_finite 𝔭.1 (𝓞 L)).to_subtype
   refine Finite.of_injective
-    (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ ¬ UnramifiedIn K L (𝔓.under (𝓞 K))} =>
+    (fun 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ ¬ UnramifiedIn K L (𝔓.under (𝓞 K))} ↦
       (show Σ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭},
-          𝔭.1.primesOver (𝓞 L) from by
+          𝔭.1.primesOver (𝓞 L) by
         haveI := 𝔓.2.1
         exact ⟨⟨𝔓.1.under (𝓞 K), inferInstance, Ideal.under_ne_bot (A := 𝓞 K) 𝔓.2.2.1, 𝔓.2.2.2⟩,
           ⟨𝔓.1, 𝔓.2.1, Ideal.over_under (A := 𝓞 K) (P := 𝔓.1)⟩⟩))
-    (fun a b hab => Subtype.ext (by simpa using congrArg (fun x => (x.2 : Ideal (𝓞 L))) hab))
+    (fun a b hab ↦ Subtype.ext (by simpa using congrArg (fun x ↦ (x.2 : Ideal (𝓞 L))) hab))
 
 /-- For real `s > 1`, `ζ_L(s)` is a (positive) **real** number: it equals the real-cast of its real
 part. This is the companion of `dedekindZeta_re_pos_of_one_lt` recording that the value, not just
@@ -2902,16 +2808,13 @@ private theorem dedekindZeta_eq_ofReal_re
     (L : Type*) [Field L] [NumberField L] {s : ℝ} (hs : 1 < s) :
     NumberField.dedekindZeta L (s : ℂ) = ((NumberField.dedekindZeta L (s : ℂ)).re : ℂ) := by
   have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
-  set g : ℕ → ℝ := fun n => (idealNormMultiplicity L n : ℝ) * (n : ℝ) ^ (-s) with hg
+  set g : ℕ → ℝ := fun n ↦ (idealNormMultiplicity L n : ℝ) * (n : ℝ) ^ (-s) with hg
   have key : ∀ n : ℕ,
       (idealNormMultiplicity L n : ℂ) * (n : ℂ) ^ (-(s : ℂ)) = ((g n : ℝ) : ℂ) := by
     intro n
     have hcast : ((n : ℝ) ^ (-s) : ℝ) = ((n : ℂ) ^ (-(s : ℂ))) := by
       rw [Complex.ofReal_cpow (Nat.cast_nonneg n) (-s)]; norm_cast
     rw [hg]; push_cast [hcast]; ring
-  have hsumC : Summable fun n : ℕ => (idealNormMultiplicity L n : ℂ) * (n : ℂ) ^ (-(s : ℂ)) :=
-    (summable_idealNormMultiplicity_mul_cpow_neg L hs').of_norm
-  have hsumR : Summable g := Complex.summable_ofReal.mp (by simpa only [key] using hsumC)
   have hval : NumberField.dedekindZeta L (s : ℂ) = ((∑' n, g n : ℝ) : ℂ) := by
     rw [dedekindZeta_eq_tsum_idealNormMultiplicity L hs', Complex.ofReal_tsum]
     exact tsum_congr key
@@ -2932,17 +2835,15 @@ private theorem log_norm_ramified_factor_bounded
   classical
   haveI : Fintype {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       ¬ UnramifiedIn K L (𝔓.under (𝓞 K))} := Fintype.ofFinite _
-  set R : ℝ → ℂ := fun s => ∏ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
+  set R : ℝ → ℂ := fun s ↦ ∏ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹ with hR
-  -- `N𝔓 ≥ 2`, hence the base is nonzero and `‖N𝔓^{-z}‖ ≤ 1/2 < 1` for `Re z ≥ 1`
   have hbase : ∀ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-      ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (Ideal.absNorm 𝔓.1 : ℂ) ≠ 0 := fun 𝔓 => by
-    have hne0 : Ideal.absNorm 𝔓.1 ≠ 0 := fun h => 𝔓.2.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
+      ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (Ideal.absNorm 𝔓.1 : ℂ) ≠ 0 := fun 𝔓 ↦ by
+    have hne0 : Ideal.absNorm 𝔓.1 ≠ 0 := fun h ↦ 𝔓.2.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
     exact_mod_cast hne0
-  -- the denominator `1 - N𝔓^{-1}` is nonzero (its `‖N𝔓^{-1}‖ = 1/N𝔓 ≤ 1/2 < 1`)
   have hden1 : ∀ 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(1 : ℂ))) ≠ 0 :=
-    fun 𝔓 => by
+    fun 𝔓 ↦ by
     have h2 : 2 ≤ Ideal.absNorm 𝔓.1 := two_le_absNorm 𝔓.2.1 𝔓.2.2.1
     have hlt : ‖(Ideal.absNorm 𝔓.1 : ℂ) ^ (-(1 : ℂ))‖ < 1 := by
       rw [Complex.cpow_neg_one, norm_inv, Complex.norm_natCast]
@@ -2951,34 +2852,27 @@ private theorem log_norm_ramified_factor_bounded
     rw [sub_eq_zero] at h
     rw [← h, norm_one] at hlt
     exact lt_irrefl _ hlt
-  -- `R` is continuous at `1` (finite product of continuous factors) and `R 1 ≠ 0`
   have hcont : ContinuousAt R 1 := by
     rw [ContinuousAt, hR]
-    refine tendsto_finsetProd _ (fun 𝔓 _ => ?_)
-    have hcpow : ContinuousAt (fun s : ℝ => (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ))) 1 :=
-      (continuousAt_const_cpow (hbase 𝔓)).comp
-        (Complex.continuous_ofReal.continuousAt.neg)
-    exact ((continuousAt_const.sub hcpow).inv₀ (by simpa using hden1 𝔓))
-  have hR1_ne : R 1 ≠ 0 := by
-    rw [hR]
-    exact Finset.prod_ne_zero_iff.mpr (fun 𝔓 _ => inv_ne_zero (by simpa using hden1 𝔓))
-  -- `log ‖R‖` is continuous at `1` with value `log ‖R 1‖`, hence eventually within `±1` of it
-  have hlogcont : ContinuousAt (fun s : ℝ => Real.log ‖R s‖) 1 :=
+    refine tendsto_finsetProd _ fun 𝔓 _ ↦ ?_
+    have hcpow : ContinuousAt (fun s : ℝ ↦ (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ))) 1 :=
+      (continuousAt_const_cpow (hbase 𝔓)).comp Complex.continuous_ofReal.continuousAt.neg
+    exact (continuousAt_const.sub hcpow).inv₀ (by simpa using hden1 𝔓)
+  have hR1_ne : R 1 ≠ 0 :=
+    hR ▸ Finset.prod_ne_zero_iff.mpr fun 𝔓 _ ↦ inv_ne_zero (by simpa using hden1 𝔓)
+  have hlogcont : ContinuousAt (fun s : ℝ ↦ Real.log ‖R s‖) 1 :=
     hcont.norm.log (norm_ne_zero_iff.mpr hR1_ne)
   refine ⟨|Real.log ‖R 1‖| + 1, ?_⟩
   have hev : ∀ᶠ s : ℝ in 𝓝 (1 : ℝ),
       |Real.log ‖R s‖ - Real.log ‖R 1‖| ≤ 1 := by
     filter_upwards [hlogcont (Metric.closedBall_mem_nhds (Real.log ‖R 1‖) one_pos)] with s hs
-    simp only [Set.mem_preimage, Metric.mem_closedBall, Real.dist_eq] at hs
-    exact hs
+    simpa only [Set.mem_preimage, Metric.mem_closedBall, Real.dist_eq] using hs
   filter_upwards [nhdsWithin_le_nhds hev] with s hs
-  -- the goal's `∏'` over the finite ramified set is the `Finset.prod` `R s`
   rw [show (∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
       ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹) = R s
-    from by rw [hR]; exact tprod_fintype _]
+    by rw [hR]; exact tprod_fintype _]
   have htri : |Real.log ‖R s‖| ≤ |Real.log ‖R s‖ - Real.log ‖R 1‖| + |Real.log ‖R 1‖| := by
-    have := abs_add_le (Real.log ‖R s‖ - Real.log ‖R 1‖) (Real.log ‖R 1‖)
-    simpa using this
+    simpa using abs_add_le (Real.log ‖R s‖ - Real.log ‖R 1‖) (Real.log ‖R 1‖)
   linarith
 
 open Filter Topology Set in
@@ -3001,31 +2895,22 @@ private theorem log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded
   have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs1
   have hpos : 0 < (NumberField.dedekindZeta L (s : ℂ)).re :=
     dedekindZeta_re_pos_of_one_lt L s hs1
-  -- the corrected factorisation, with the finite character product written as a `Finset.prod`
   have hfact : NumberField.dedekindZeta L (s : ℂ) =
       (∏ χ : galoisCharacter K L, artinDirichletSeries K L χ (s : ℂ)) *
         ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
             ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹ := by
     rw [dedekindZeta_eq_prod_artinDirichletSeries K L hs', tprod_fintype]
-  -- `‖ζ_L(s)‖ = (ζ_L(s)).re` (positive real); the two product factors are nonzero
   have hnorm : ‖NumberField.dedekindZeta L (s : ℂ)‖ = (NumberField.dedekindZeta L (s : ℂ)).re := by
     rw [dedekindZeta_eq_ofReal_re L hs1, Complex.norm_real, Real.norm_of_nonneg hpos.le,
       Complex.ofReal_re]
-  have hprodχ_ne : (∏ χ : galoisCharacter K L, artinDirichletSeries K L χ (s : ℂ)) ≠ 0 := by
-    intro h0
-    apply hpos.ne'
-    rw [hfact, h0, zero_mul, Complex.zero_re]
+  have hprodχ_ne : (∏ χ : galoisCharacter K L, artinDirichletSeries K L χ (s : ℂ)) ≠ 0 := fun h0 ↦
+    hpos.ne' (by rw [hfact, h0, zero_mul, Complex.zero_re])
   have hR_ne : (∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
-      ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹) ≠ 0 := by
-    intro h0
-    apply hpos.ne'
-    rw [hfact, h0, mul_zero, Complex.zero_re]
-  -- every character factor `‖L_χ(s)‖` is nonzero (else the finite product, hence `ζ_L(s)`, is `0`)
+      ¬ UnramifiedIn K L (𝔓.under (𝓞 K))}, (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-(s : ℂ)))⁻¹) ≠ 0 :=
+    fun h0 ↦ hpos.ne' (by rw [hfact, h0, mul_zero, Complex.zero_re])
   have hχ_ne : ∀ χ ∈ (Finset.univ : Finset (galoisCharacter K L)),
-      ‖artinDirichletSeries K L χ (s : ℂ)‖ ≠ 0 := fun χ _ =>
-    norm_ne_zero_iff.mpr (fun hχ0 =>
-      hprodχ_ne (Finset.prod_eq_zero (Finset.mem_univ χ) hχ0))
-  -- `log ζ_L.re = log‖ζ_L‖ = Σ_χ log‖L_χ‖ + log‖R‖`, so the gap is `log‖R‖`, bounded by `C`
+      ‖artinDirichletSeries K L χ (s : ℂ)‖ ≠ 0 := fun χ _ ↦
+    norm_ne_zero_iff.mpr fun hχ0 ↦ hprodχ_ne (Finset.prod_eq_zero (Finset.mem_univ χ) hχ0)
   have hsplit : Real.log (NumberField.dedekindZeta L (s : ℂ)).re =
       (∑ χ : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖) +
         Real.log ‖∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
@@ -3035,6 +2920,19 @@ private theorem log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded
       norm_prod, Real.log_prod hχ_ne]
   rw [hsplit]
   simpa using hCs
+
+/-- `1` lies in the L-function analyticity domain `{s : ℂ | 1 - [K:ℚ]⁻¹ < Re s}` (the
+geometry-of-numbers half-plane), which is open, so `AnalyticOn` there upgrades to
+`AnalyticAt ℂ Lf 1` at the interior point `1`. -/
+private theorem analyticAt_one_of_analyticOn_finrankDomain (K : Type*) [Field K] [NumberField K]
+    {Lf : ℂ → ℂ} (hLf : AnalyticOn ℂ Lf {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re}) :
+    AnalyticAt ℂ Lf 1 := by
+  have hmem : (1 : ℂ) ∈ {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} := by
+    have hdpos : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
+      have : 0 < Module.finrank ℚ K := Module.finrank_pos
+      positivity
+    simp only [Set.mem_setOf_eq, Complex.one_re]; linarith
+  exact hLf.analyticAt ((isOpen_lt continuous_const Complex.continuous_re).mem_nhds hmem)
 
 open Filter Topology Set in
 /-- **Assembly helper (ii).** For a nontrivial character `χ'`, the L-series `L_{χ'}` extends
@@ -3047,18 +2945,8 @@ private theorem artinDirichletSeries_norm_le_of_ne_one
     [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) (χ' : galoisCharacter K L) (hχ' : χ' ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤ C := by
   obtain ⟨Lf', hLf'_an, hLf'_eq⟩ := artinLSeries_analytic_extension K L m hm χ' hχ'
-  -- `1` lies in the analyticity domain `{1 - d⁻¹ < re s}` (as `d ≥ 1`, `1 - d⁻¹ < 1`).
-  have hdpos : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
-    have : 0 < Module.finrank ℚ K := Module.finrank_pos
-    positivity
-  have hmem : (1 : ℂ) ∈ {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} := by
-    simp only [Set.mem_setOf_eq, Complex.one_re]; linarith
-  -- the domain is open, so `AnalyticOn` upgrades to `AnalyticAt` at the interior point `1`.
-  have hDopen : IsOpen {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} :=
-    isOpen_lt continuous_const Complex.continuous_re
   have hcont : ContinuousAt Lf' 1 :=
-    ((hDopen.analyticOn_iff_analyticOnNhd.mp hLf'_an) 1 hmem).continuousAt
-  -- `Lf'` continuous at `1`, so `‖Lf'‖` is bounded by `‖Lf' 1‖ + 1` near `1`.
+    (analyticAt_one_of_analyticOn_finrankDomain K hLf'_an).continuousAt
   have hmap : Tendsto (fun s : ℝ ↦ (s : ℂ)) (𝓝[>] (1 : ℝ)) (𝓝 (1 : ℂ)) :=
     (Complex.continuous_ofReal.tendsto 1).comp nhdsWithin_le_nhds
   have hbdd : ∀ᶠ z in 𝓝 (1 : ℂ), ‖Lf' z‖ ≤ ‖Lf' 1‖ + 1 := by
@@ -3068,11 +2956,9 @@ private theorem artinDirichletSeries_norm_le_of_ne_one
   refine ⟨‖Lf' 1‖ + 1, ?_⟩
   filter_upwards [self_mem_nhdsWithin, hmap.eventually hbdd] with s hs1 hbdd_s
   simp only [mem_Ioi] at hs1
-  -- on `Re s > 1`, `L_{χ'}(s) = artinDirichletSeries`, so the bound transfers
   have heq : artinDirichletSeries K L χ' (s : ℂ) = Lf' (s : ℂ) := by
     rw [artinDirichletSeries, ← hLf'_eq (s : ℂ) (by simpa using hs1)]
-  rw [heq]
-  exact hbdd_s
+  rwa [heq]
 
 open Filter Topology Set in
 /-- **Assembly helper (i).** The trivial-character L-series `L_1(s) = artinDirichletSeries K L 1 s`
@@ -3094,27 +2980,21 @@ private theorem log_norm_artinDirichletSeries_one_le
   filter_upwards [hC, self_mem_nhdsWithin] with s hCs hs1
   simp only [mem_Ioi] at hs1
   have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs1
-  -- `ζ_K(s)` as the absolutely convergent ideal sum, and its positivity / `≥ 1`
   have hζ := hasSum_nonzeroIdeal_absNorm_cpow K hs'
-  have hζpos : 0 < (NumberField.dedekindZeta K (s : ℂ)).re := dedekindZeta_re_pos_of_one_lt K s hs1
-  -- `‖N𝔞^{-s}‖ = (N𝔞^{-s}).re` (real positive cpow), so `∑' ‖N𝔞^{-s}‖ = ζ_K(s).re`
   have hnorm_eq : ∀ 𝔞 : NonzeroIdeal K,
       ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ = ((Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))).re := by
     intro 𝔞
-    have hpos : 0 < Ideal.absNorm 𝔞.1 := by
-      rcases Nat.eq_zero_or_pos (Ideal.absNorm 𝔞.1) with h | h
-      · exact absurd (Ideal.absNorm_eq_zero_iff.mp h) 𝔞.2
-      · exact h
+    have hpos : 0 < Ideal.absNorm 𝔞.1 :=
+      Nat.pos_of_ne_zero fun h ↦ 𝔞.2 (Ideal.absNorm_eq_zero_iff.mp h)
     have hcast : (Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ)) =
         (((Ideal.absNorm 𝔞.1 : ℝ) ^ (-s) : ℝ) : ℂ) := by
       rw [Complex.ofReal_cpow (by positivity), Complex.ofReal_natCast]; norm_cast
     rw [hcast, Complex.norm_real, Complex.ofReal_re, Real.norm_of_nonneg (by positivity)]
-  have hsum_norm : Summable fun 𝔞 : NonzeroIdeal K => ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ :=
+  have hsum_norm : Summable fun 𝔞 : NonzeroIdeal K ↦ ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ :=
     hζ.summable.norm
   have hsum_norm_eq : (∑' 𝔞 : NonzeroIdeal K, ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖)
       = (NumberField.dedekindZeta K (s : ℂ)).re := by
     rw [tsum_congr hnorm_eq, ← Complex.re_tsum hζ.summable, hζ.tsum_eq]
-  -- `‖χ̃_1(𝔞) N𝔞^{-s}‖ ≤ ‖N𝔞^{-s}‖`, so the L-series is dominated termwise by `ζ_K`
   have hterm : ∀ 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
       ‖galoisCharacterOnIdeal K L 1 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ ≤
         ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ := by
@@ -3124,23 +3004,18 @@ private theorem log_norm_artinDirichletSeries_one_le
         ≤ 1 * ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ := by
           gcongr; exact norm_galoisCharacterOnIdeal_le_one K L 1 𝔞.1
       _ = ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ := one_mul _
-  -- the dominated summand is summable (`≤ ‖N𝔞^{-s}‖`)
-  have hsum_term : Summable fun 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥} =>
+  have hsum_term : Summable fun 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥} ↦
       ‖galoisCharacterOnIdeal K L 1 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-(s : ℂ))‖ :=
-    hsum_norm.of_nonneg_of_le (fun _ => norm_nonneg _) hterm
-  -- `‖L_1(s)‖ ≤ ∑' ‖term‖ ≤ ∑' ‖N𝔞^{-s}‖ = ζ_K(s).re`
+    hsum_norm.of_nonneg_of_le (fun _ ↦ norm_nonneg _) hterm
   have hL1_le : ‖artinDirichletSeries K L 1 (s : ℂ)‖ ≤ (NumberField.dedekindZeta K (s : ℂ)).re := by
     rw [artinDirichletSeries]
     refine (norm_tsum_le_tsum_norm hsum_term).trans ?_
     rw [← hsum_norm_eq]
     exact Summable.tsum_le_tsum hterm hsum_term hsum_norm
-  -- `ζ_K(s).re ≥ 1`: the `N(⊤)^{-s} = 1` term of the nonnegative sum `∑' ‖N𝔞^{-s}‖`
   have hζ_ge1 : (1 : ℝ) ≤ (NumberField.dedekindZeta K (s : ℂ)).re := by
     rw [← hsum_norm_eq]
-    refine le_trans ?_ (hsum_norm.le_tsum (⟨⊤, by simp⟩ : NonzeroIdeal K)
-      (fun 𝔞 _ => norm_nonneg _))
+    refine le_trans ?_ (hsum_norm.le_tsum (⟨⊤, by simp⟩ : NonzeroIdeal K) fun 𝔞 _ ↦ norm_nonneg _)
     rw [Ideal.absNorm_top, Nat.cast_one, Complex.one_cpow, norm_one]
-  -- `log ‖L_1(s)‖ ≤ log ζ_K(s).re ≤ log(1/(s-1)) + C`
   have hlog_le : Real.log ‖artinDirichletSeries K L 1 (s : ℂ)‖ ≤
       Real.log (NumberField.dedekindZeta K (s : ℂ)).re := by
     rcases eq_or_lt_of_le (norm_nonneg (artinDirichletSeries K L 1 (s : ℂ))) with h0 | h0
@@ -3156,13 +3031,100 @@ private theorem sum_ite_pole_zero_cancel
     ∑ χ' : galoisCharacter K L, (if χ' = 1 then a else if χ' = χ then -a else 0) = 0 := by
   have hsplit : ∀ χ' : galoisCharacter K L,
       (if χ' = 1 then a else if χ' = χ then -a else 0) =
-        (if χ' = 1 then a else 0) + (if χ' = χ then -a else 0) := fun χ' => by
+        (if χ' = 1 then a else 0) + (if χ' = χ then -a else 0) := fun χ' ↦ by
     by_cases h1 : χ' = 1
     · rw [if_pos h1, if_pos h1, if_neg (h1 ▸ Ne.symm hχ), add_zero]
     · rw [if_neg h1, if_neg h1]; by_cases hc : χ' = χ <;> simp [hc]
-  rw [Finset.sum_congr rfl fun χ' _ => hsplit χ', Finset.sum_add_distrib,
+  rw [Finset.sum_congr rfl fun χ' _ ↦ hsplit χ', Finset.sum_add_distrib,
     Finset.sum_ite_eq' Finset.univ (1 : galoisCharacter K L), Finset.sum_ite_eq' Finset.univ χ]
   simp
+
+open Classical Filter Topology Set in
+/-- **Per-character log bound (Dirichlet's contradiction, assembled over all characters).** Given a
+nontrivial `χ` whose χ-factor `L_χ` has an analytic-zero bound `log‖L_χ(s)‖ ≤ -log(1/(s-1)) + Cχ`
+near `s ↓ 1`, every character factor `L_{χ'}` satisfies an eventual upper bound of the matching
+shape `log‖L_{χ'}(s)‖ ≤ (pole at χ'=1) + (zero at χ'=χ) + C`: the trivial factor is the `ζ_K`-pole
+(`log_norm_artinDirichletSeries_one_le`), the `χ`-factor is the supplied zero bound, and every other
+factor is `O(1)` via its analytic extension (`artinDirichletSeries_norm_le_of_ne_one`). -/
+private theorem log_norm_artinDirichletSeries_le_pole_zero_ite
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
+    [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) {χ : galoisCharacter K L} {Cχ : ℝ}
+    (hCχ : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + Cχ)
+    (χ' : galoisCharacter K L) :
+    ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
+        (if χ' = 1 then Real.log (1 / (s - 1)) else
+          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C := by
+  by_cases h1 : χ' = 1
+  · subst h1
+    obtain ⟨C1, hC1⟩ := log_norm_artinDirichletSeries_one_le K L
+    exact ⟨C1, by filter_upwards [hC1] with s hs; rwa [if_pos rfl]⟩
+  · by_cases hc : χ' = χ
+    · subst hc
+      exact ⟨Cχ, by filter_upwards [hCχ] with s hs; rwa [if_neg h1, if_pos rfl]⟩
+    · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L m hm χ' h1
+      refine ⟨Real.log (max C 1), ?_⟩
+      filter_upwards [hC] with s hs
+      simp only [if_neg h1, if_neg hc, zero_add]
+      have hmax1 : (1 : ℝ) ≤ max C 1 := le_max_right _ _
+      rcases le_total ‖artinDirichletSeries K L χ' (s : ℂ)‖ 0 with h0 | h0
+      · have hz : ‖artinDirichletSeries K L χ' (s : ℂ)‖ = 0 := le_antisymm h0 (norm_nonneg _)
+        rw [hz, Real.log_zero]
+        exact Real.log_nonneg hmax1
+      · rcases eq_or_lt_of_le h0 with h0' | h0'
+        · rw [← h0', Real.log_zero]; exact Real.log_nonneg hmax1
+        · exact Real.log_le_log h0' (le_trans hs (le_max_left _ _))
+
+/-- For real `s > 1` the χ-factor `L_χ(s) = artinDirichletSeries K L χ s` is nonzero: it is a
+factor of the corrected factorisation `ζ_L(s) = (∏_{χ'} L_{χ'}(s)) · R(s)`, and `ζ_L(s)` is a
+positive real (`dedekindZeta_re_pos_of_one_lt`), so no factor can vanish. -/
+private theorem artinDirichletSeries_ne_zero_of_one_lt
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) {s : ℝ}
+    (hs : 1 < s) : artinDirichletSeries K L χ (s : ℂ) ≠ 0 := fun hzero ↦ by
+  have hpos : 0 < (NumberField.dedekindZeta L (s : ℂ)).re := dedekindZeta_re_pos_of_one_lt L s hs
+  have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs
+  rw [show NumberField.dedekindZeta L (s : ℂ) = 0 by
+    rw [dedekindZeta_eq_prod_artinDirichletSeries K L hs', tprod_fintype,
+      Finset.prod_eq_zero (Finset.mem_univ χ) hzero, zero_mul], Complex.zero_re] at hpos
+  exact lt_irrefl 0 hpos
+
+open Classical Filter Topology Set in
+/-- **Pole-cancellation contradiction.** If for a nontrivial `χ` every character factor obeys the
+ite-bound `log‖L_{χ'}(s)‖ ≤ (pole at χ'=1) + (zero at χ'=χ) + C χ'` near `s ↓ 1`, then summing over
+the finite character group cancels the `ζ_K`-pole (χ'=1) against the supposed zero (χ'=χ), leaving
+`log ζ_L(s).re` bounded above — contradicting its divergence to `+∞`
+(`logDedekindZeta_re_tendsto_atTop`, modulo the ramified `O(1)` slack
+`log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded`). -/
+private theorem false_of_eventually_log_norm_le_pole_zero_ite
+    (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
+    [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] {χ : galoisCharacter K L} (hχ : χ ≠ 1)
+    {C : galoisCharacter K L → ℝ} (hC : ∀ χ' : galoisCharacter K L, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
+        (if χ' = 1 then Real.log (1 / (s - 1)) else
+          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') : False := by
+  obtain ⟨CR, hCR⟩ := log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded K L
+  have hbound : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      Real.log (NumberField.dedekindZeta L (s : ℂ)).re ≤ (∑ χ', C χ') + CR := by
+    filter_upwards [Filter.eventually_all.2 hC, hCR] with s hs_all hCRs
+    have hsumle : ∑ χ' : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖
+        ≤ ∑ χ', C χ' := by
+      calc ∑ χ' : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖
+          ≤ ∑ χ' : galoisCharacter K L,
+              ((if χ' = 1 then Real.log (1 / (s - 1)) else
+                if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') :=
+            Finset.sum_le_sum fun χ' _ ↦ hs_all χ'
+        _ = ∑ χ' : galoisCharacter K L, C χ' := by
+            rw [Finset.sum_add_distrib, sum_ite_pole_zero_cancel K L hχ (Real.log (1 / (s - 1))),
+              zero_add]
+    have := abs_le.mp hCRs
+    linarith [this.1, this.2]
+  obtain ⟨s, hge, hle⟩ :=
+    (((logDedekindZeta_re_tendsto_atTop L).eventually_ge_atTop ((∑ χ', C χ') + CR + 1)).and
+      hbound).exists
+  linarith
 
 open Filter Topology Set in
 /-- Sharifi 7.1.19 step 2 (p. 142): non-vanishing of `L(χ,1)` for
@@ -3190,109 +3152,24 @@ theorem artinLSeries_one_ne_zero
       Lf 1 ≠ 0 := by
   classical
   intro Lf hLf_an hLf_eq hLf0
-  -- `Lf = L_χ` on `Re s > 1` (the χ-factor of `ζ_L`); it is `artinDirichletSeries K L χ`.
   have hLf_eq' : ∀ s : ℂ, 1 < s.re → Lf s = artinDirichletSeries K L χ s :=
-    fun s hs => by rw [hLf_eq s hs, artinDirichletSeries]
-  -- `1` is in the analyticity domain and `Lf` is analytic there.
-  have hdpos : (0 : ℝ) < (Module.finrank ℚ K : ℝ)⁻¹ := by
-    have : 0 < Module.finrank ℚ K := Module.finrank_pos
-    positivity
-  have hmem1 : (1 : ℂ) ∈ {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} := by
-    simp only [Set.mem_setOf_eq, Complex.one_re]; linarith
-  have hDopen : IsOpen {s : ℂ | 1 - (Module.finrank ℚ K : ℝ)⁻¹ < s.re} :=
-    isOpen_lt continuous_const Complex.continuous_re
-  have hLf_at : AnalyticAt ℂ Lf 1 := (hDopen.analyticOn_iff_analyticOnNhd.mp hLf_an) 1 hmem1
-  -- maps `s ↦ (s:ℂ)` and a "real `s` is in the domain near `1`" fact
+    fun s hs ↦ by rw [hLf_eq s hs, artinDirichletSeries]
+  have hLf_at : AnalyticAt ℂ Lf 1 := analyticAt_one_of_analyticOn_finrankDomain K hLf_an
   have hmap : Tendsto (fun s : ℝ ↦ (s : ℂ)) (𝓝[>] (1 : ℝ)) (𝓝 (1 : ℂ)) :=
     (Complex.continuous_ofReal.tendsto 1).comp nhdsWithin_le_nhds
-  -- **Ingredient C** for `Lf`: `Lf` is not locally `0` at `1` (else it vanishes at some real
-  -- `s > 1`, where `‖L_χ(s)‖ ≠ 0` because `ζ_L(s) = ∏_{χ'} L_{χ'}(s) > 0`).
   have hLf_ne : ¬ ∀ᶠ z in 𝓝 (1 : ℂ), Lf z = 0 := by
     intro hloc
-    -- pick a real `s > 1` close to `1` with `Lf (s:ℂ) = 0`
-    obtain ⟨s, hs0, hs1⟩ : ∃ s : ℝ, Lf (s : ℂ) = 0 ∧ 1 < s := by
-      have : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), Lf (s : ℂ) = 0 := hmap.eventually hloc
-      obtain ⟨s, hsz, hs1⟩ := ((this.and self_mem_nhdsWithin).exists)
-      exact ⟨s, hsz, hs1⟩
-    -- contradiction: `‖L_χ(s)‖ = 0`, but no factor of the positive product `ζ_L(s)` vanishes
-    have hpos : 0 < (NumberField.dedekindZeta L (s : ℂ)).re :=
-      dedekindZeta_re_pos_of_one_lt L s hs1
-    have hs' : (1 : ℝ) < ((s : ℂ)).re := by simpa using hs1
-    have hzero : artinDirichletSeries K L χ (s : ℂ) = 0 := by rw [← hLf_eq' _ hs', hs0]
-    have hprodzero : NumberField.dedekindZeta L (s : ℂ) = 0 := by
-      rw [dedekindZeta_eq_prod_artinDirichletSeries K L hs', tprod_fintype,
-        Finset.prod_eq_zero (Finset.mem_univ χ) hzero, zero_mul]
-    rw [hprodzero, Complex.zero_re] at hpos
-    exact lt_irrefl 0 hpos
+    obtain ⟨s, hs0, hs1⟩ : ∃ s : ℝ, Lf (s : ℂ) = 0 ∧ 1 < s :=
+      ((hmap.eventually hloc).and self_mem_nhdsWithin).exists
+    exact artinDirichletSeries_ne_zero_of_one_lt K L χ hs1
+      (by rw [← hLf_eq' _ (by simpa using hs1), hs0])
   obtain ⟨Cχ, hCχ⟩ := analytic_log_norm_le_of_apply_eq_zero hLf_at hLf0 hLf_ne
-  -- **Ingredient B**: `log ζ_L(s).re → +∞`.
-  have hB := logDedekindZeta_re_tendsto_atTop L
-  -- **Helper (i)**: the trivial-character factor `L_1` bound.
-  obtain ⟨C1, hC1⟩ := log_norm_artinDirichletSeries_one_le K L
-  -- **Helper (ii)** packaged per character: for every `χ'`, an eventual upper bound of the shape
-  -- `log‖L_{χ'}(s)‖ ≤ (pole at χ'=1) + (zero at χ'=χ) + C χ'`.
-  have hper : ∀ χ' : galoisCharacter K L, ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
-        (if χ' = 1 then Real.log (1 / (s - 1)) else
-          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C := by
-    intro χ'
-    by_cases h1 : χ' = 1
-    · subst h1
-      exact ⟨C1, by filter_upwards [hC1] with s hs; rw [if_pos rfl]; exact hs⟩
-    · by_cases hc : χ' = χ
-      · subst hc
-        refine ⟨Cχ, ?_⟩
-        filter_upwards [hCχ, self_mem_nhdsWithin] with s hs hs1
-        simp only [mem_Ioi] at hs1
-        rw [if_neg h1, if_pos rfl]
-        -- `log‖L_χ(s)‖ = log‖Lf(s)‖ ≤ -log(1/(s-1)) + Cχ` (Ingredient C, since `Lf = L_χ`)
-        rw [← hLf_eq' (s : ℂ) (by simpa using hs1)]
-        exact hs
-      · obtain ⟨C, hC⟩ := artinDirichletSeries_norm_le_of_ne_one K L m hm χ' h1
-        -- `log‖L_{χ'}(s)‖ ≤ log (max C 1) ≤ 0 + log (max C 1)`, using `max C 1 ≥ 1 > 0`.
-        refine ⟨Real.log (max C 1), ?_⟩
-        filter_upwards [hC] with s hs
-        simp only [if_neg h1, if_neg hc, zero_add]
-        have hmax1 : (1 : ℝ) ≤ max C 1 := le_max_right _ _
-        rcases le_total ‖artinDirichletSeries K L χ' (s : ℂ)‖ 0 with h0 | h0
-        · have hz : ‖artinDirichletSeries K L χ' (s : ℂ)‖ = 0 := le_antisymm h0 (norm_nonneg _)
-          rw [hz, Real.log_zero]
-          exact Real.log_nonneg hmax1
-        · rcases eq_or_lt_of_le h0 with h0' | h0'
-          · rw [← h0', Real.log_zero]; exact Real.log_nonneg hmax1
-          · exact Real.log_le_log h0' (le_trans hs (le_max_left _ _))
-  choose C hC using hper
-  -- combine the finitely many eventual bounds (the character group is finite)
-  have hall : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ), ∀ χ' : galoisCharacter K L,
-      Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
-        (if χ' = 1 then Real.log (1 / (s - 1)) else
-          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ' :=
-    Filter.eventually_all.2 hC
-  -- the bounded log-sum: `log ζ_L(s).re ≤ Σ_{χ'} log‖L_{χ'}(s)‖ + C_R` (the ramified `O(1)` slack)
-  obtain ⟨CR, hCR⟩ := log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded K L
-  -- on this neighbourhood, `Σ_{χ'} log‖L_{χ'}(s)‖ ≤ Σ_{χ'} (ite) + Σ C χ' = ∑ C χ'`
-  -- (the `χ'=1` pole and the `χ'=χ` zero cancel, as `1 ≠ χ`), hence `log ζ_L` is bounded above by
-  -- `∑ C χ' + C_R` — contradicting Ingredient B (`→ +∞`).
-  have hbound : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      Real.log (NumberField.dedekindZeta L (s : ℂ)).re ≤ (∑ χ', C χ') + CR := by
-    filter_upwards [hall, hCR, self_mem_nhdsWithin] with s hs_all hCRs hs1
+  have hCχ' : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
+      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + Cχ := by
+    filter_upwards [hCχ, self_mem_nhdsWithin] with s hs hs1
     simp only [mem_Ioi] at hs1
-    have hsumle : ∑ χ' : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖
-        ≤ ∑ χ', C χ' := by
-      calc ∑ χ' : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖
-          ≤ ∑ χ' : galoisCharacter K L,
-              ((if χ' = 1 then Real.log (1 / (s - 1)) else
-                if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') :=
-            Finset.sum_le_sum (fun χ' _ => hs_all χ')
-        _ = ∑ χ' : galoisCharacter K L, C χ' := by
-            rw [Finset.sum_add_distrib, sum_ite_pole_zero_cancel K L _hχ (Real.log (1 / (s - 1))),
-              zero_add]
-    -- `log ζ_L.re ≤ Σ log‖L_χ‖ + C_R ≤ (∑ C χ') + C_R`
-    have := abs_le.mp hCRs
-    linarith [this.1, this.2]
-  -- the contradiction: a function tending to `+∞` cannot be `≤` a constant on the filter
-  have hcontra := (hB.eventually_ge_atTop ((∑ χ', C χ') + CR + 1)).and hbound
-  obtain ⟨s, hge, hle⟩ := hcontra.exists
-  linarith
+    rwa [← hLf_eq' (s : ℂ) (by simpa using hs1)]
+  choose C hC using log_norm_artinDirichletSeries_le_pole_zero_ite K L m hm hCχ'
+  exact false_of_eventually_log_norm_le_pole_zero_ite K L _hχ hC
 
 end Chebotarev
