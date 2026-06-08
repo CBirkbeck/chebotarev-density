@@ -95,7 +95,7 @@ theorem ConjClasses_carrier_card_eq_one_of_comm
   have h : (ConjClasses.mk g).carrier = {g} := by
     ext a
     simp [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj, isConj_iff_eq]
-  rw [h, Nat.card_coe_set_eq, Set.ncard_singleton]
+  simp [h]
 
 /-- **Chebotarev's density theorem, abelian case.** For an abelian Galois
 extension `L/K`, the Dirichlet density of primes `𝔭` of `𝓞 K` unramified in
@@ -141,7 +141,7 @@ theorem ConjClasses_mk_one_carrier_card_eq_one
     Nat.card (ConjClasses.mk (1 : G)).carrier = 1 := by
   have h : (ConjClasses.mk (1 : G)).carrier = {1} := by
     simp [Set.ext_iff, ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj]
-  rw [h, Nat.card_coe_set_eq, Set.ncard_singleton]
+  simp [h]
 
 /-- **Density of completely split primes** (Sharifi 7.1.14, as a corollary of
 Chebotarev applied to the identity conjugacy class).
@@ -190,7 +190,8 @@ private theorem primeIdealZetaSum_eq_add_sub_sdiff {S T : Set (Ideal (𝓞 K))} 
       = primeIdealZetaSum (T ∩ S) s + primeIdealZetaSum (S \ T) s := by
     conv_lhs => rw [← inter_union_diff S T]
     rw [primeIdealZetaSum_union_of_disjoint (hdisj S T) hs, inter_comm]
-  rw [hT, hS]; ring
+  rw [hT, hS]
+  ring
 
 /-- **Density is insensitive to finite symmetric differences.** If `S ∖ T` and `T ∖ S` are
 both finite and `S` has Dirichlet density `δ`, then so does `T`: the two ratios differ by
@@ -205,7 +206,8 @@ private theorem hasDirichletDensity_of_finite_symmDiff {S T : Set (Ideal (𝓞 K
   refine (show (δ + 0 - 0 : ℝ) = δ by ring) ▸ h.congr' ?_
   filter_upwards [self_mem_nhdsWithin] with s hs
   simp only [mem_Ioi] at hs
-  rw [primeIdealZetaSum_eq_add_sub_sdiff (S := S) (T := T) hs]; ring
+  rw [primeIdealZetaSum_eq_add_sub_sdiff (S := S) (T := T) hs]
+  ring
 
 /-- **Chinese remainder injectivity.** Two elements of `ZMod (m * k)` (with `m`, `k` coprime)
 that agree under both coordinate `castHom`s are equal — `ZMod.chineseRemainder` is injective. -/
@@ -227,15 +229,18 @@ private theorem zmod_eq_of_castHom_eq {m k : ℕ} (hcop : Nat.Coprime m k) (x y 
 
 end DirichletAP
 
-/-- The absolute norm of `span {(p : 𝓞 ℚ)}` is `p`: through `𝓞 ℚ ≃+* ℤ` the norm of `(p)` is
-`(p : ℤ)`, since `rank ℤ (𝓞 ℚ) = 1`. -/
+/-- The absolute norm of `span {(p : 𝓞 ℚ)}` is `p`: `Ideal.absNorm_span_natCast` gives
+`p ^ rank ℤ (𝓞 ℚ)`, and `rank ℤ (𝓞 ℚ) = rank ℚ ℚ = 1`. -/
 private theorem absNorm_span_nat (p : ℕ) : Ideal.absNorm (Ideal.span {(p : 𝓞 ℚ)}) = p := by
-  rw [Ideal.absNorm_span_singleton]
-  have h1 : (Algebra.norm ℤ) ((p : ℕ) : 𝓞 ℚ) = (p : ℤ) := by
-    rw [show ((p : ℕ) : 𝓞 ℚ) = algebraMap ℤ (𝓞 ℚ) (p : ℤ) by push_cast; rfl,
-      Algebra.norm_algebraMap]
-    simp [NumberField.RingOfIntegers.rank]
-  rw [h1]; simp
+  rw [Ideal.absNorm_span_natCast, NumberField.RingOfIntegers.rank, Module.finrank_self, pow_one]
+
+/-- The rational prime `span {(p : 𝓞 ℚ)}` is the pullback of `span {(p : ℤ)}` along
+`Rat.ringOfIntegersEquiv : 𝓞 ℚ ≃+* ℤ`. -/
+private theorem ratSpan_eq_comap_intSpan (p : ℕ) :
+    Ideal.span {(p : 𝓞 ℚ)} = Ideal.comap Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)}) := by
+  rw [← Ideal.map_symm Rat.ringOfIntegersEquiv, Ideal.map_span, Set.image_singleton]
+  congr 2
+  simp [map_natCast]
 
 /-- **Every nonzero prime of `𝓞 ℚ` is `span {(p)}` for a rational prime `p`.** Transport the
 prime `𝔭` through `Rat.ringOfIntegersEquiv : 𝓞 ℚ ≃+* ℤ`: its image is a nonzero prime of `ℤ`,
@@ -250,22 +255,17 @@ private theorem ratPrime_eq_span (𝔭 : Ideal (𝓞 ℚ)) (hp : 𝔭.IsPrime) (
     intro h; apply hne; rw [← hcomap, h, Ideal.comap_bot_of_injective e hbij.injective]
   rcases (Ideal.isPrime_int_iff.mp hJp) with h | ⟨p, hpp, hpJ⟩
   · exact absurd h hJne
-  · refine ⟨p, hpp, ?_⟩
-    rw [← hcomap, hpJ, ← Ideal.map_symm e, Ideal.map_span, Set.image_singleton]
-    congr 2; simp [map_natCast]
+  · exact ⟨p, hpp, by rw [← hcomap, hpJ, ratSpan_eq_comap_intSpan]⟩
 
 /-- The converse classification ingredient: `span {(p : 𝓞 ℚ)}` is prime for a rational prime
 `p`, via the same `𝓞 ℚ ≃+* ℤ` transport (`comap` of the prime `span {(p : ℤ)}`). -/
 private theorem span_nat_isPrime {p : ℕ} (hpp : p.Prime) :
     (Ideal.span {(p : 𝓞 ℚ)}).IsPrime := by
-  have hz : Prime ((p : ℤ)) := Nat.prime_iff_prime_int.mp hpp
   haveI : (Ideal.span {(p : ℤ)}).IsPrime :=
-    (Ideal.span_singleton_prime (by exact_mod_cast hpp.ne_zero)).mpr hz
-  have heq : Ideal.span {(p : 𝓞 ℚ)}
-      = Ideal.comap Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)}) := by
-    rw [← Ideal.map_symm Rat.ringOfIntegersEquiv, Ideal.map_span, Set.image_singleton]
-    congr 2; simp [map_natCast]
-  rw [heq]; exact Ideal.comap_isPrime Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)})
+    (Ideal.span_singleton_prime (by exact_mod_cast hpp.ne_zero)).mpr
+      (Nat.prime_iff_prime_int.mp hpp)
+  rw [ratSpan_eq_comap_intSpan]
+  exact Ideal.comap_isPrime Rat.ringOfIntegersEquiv (Ideal.span {(p : ℤ)})
 
 /-- **A coprime-norm prime is unramified in the cyclotomic extension** `L = K(μ_m)`. A
 ramified prime divides the different, which divides `(f'(ζ))` (conductor formula); since
@@ -302,11 +302,11 @@ private theorem unramifiedIn_cyclotomic_of_coprime {K : Type*} [Field K] [Number
     simpa using hder
   have hadj : Algebra.adjoin K {algebraMap (𝓞 L) L ζ𝓞} = ⊤ := by
     have : algebraMap (𝓞 L) L ζ𝓞 = ζ := hζ.coe_toInteger
-    rw [this]; exact IsCyclotomicExtension.adjoin_primitive_root_eq_top hζ
+    rw [this]
+    exact IsCyclotomicExtension.adjoin_primitive_root_eq_top hζ
   have hdiff_dvd : differentIdeal (𝓞 K) (𝓞 L)
       ∣ Ideal.span {Polynomial.aeval ζ𝓞 (Polynomial.derivative (minpoly (𝓞 K) ζ𝓞))} :=
-    ⟨conductor (𝓞 K) ζ𝓞, by
-      rw [← conductor_mul_differentIdeal (𝓞 K) K L ζ𝓞 hadj]; ring⟩
+    ⟨conductor (𝓞 K) ζ𝓞, by rw [← conductor_mul_differentIdeal (𝓞 K) K L ζ𝓞 hadj]; ring⟩
   have hmem : (m : 𝓞 L) * ζ𝓞 ^ (m - 1) ∈ 𝔓 := by
     rw [hkey]
     exact Ideal.mul_mem_right _ _
@@ -317,15 +317,11 @@ private theorem unramifiedIn_cyclotomic_of_coprime {K : Type*} [Field K] [Number
     · exact absurd (Ideal.eq_top_of_isUnit_mem _ h
         ((IsUnit.of_pow_eq_one hpow (NeZero.ne m)).pow _)) ‹𝔓.IsPrime›.ne_top
   have hm𝔭 : ((m : ℕ) : 𝓞 K) ∈ 𝔭 := by
-    have hmap : algebraMap (𝓞 K) (𝓞 L) ((m : ℕ) : 𝓞 K) ∈ 𝔓 := by rwa [map_natCast]
-    rw [h𝔓lo.over]; exact Ideal.mem_comap.mpr hmap
-  have hdvd_norm : Ideal.absNorm 𝔭 ∣ m ^ Module.finrank ℤ (𝓞 K) := by
-    have hle : Ideal.span {((m : ℕ) : 𝓞 K)} ≤ 𝔭 :=
-      (Ideal.span_singleton_le_iff_mem _).mpr hm𝔭
-    have hd := Ideal.absNorm_dvd_absNorm_of_le hle
-    rwa [Ideal.absNorm_span_singleton, show ((m : ℕ) : 𝓞 K) = algebraMap ℤ (𝓞 K) (m : ℤ) by
-        push_cast; rfl,
-      Algebra.norm_algebraMap, Int.natAbs_pow, Int.natAbs_natCast] at hd
+    rw [h𝔓lo.over]
+    exact Ideal.mem_comap.mpr (by rwa [map_natCast])
+  have hdvd_norm : Ideal.absNorm 𝔭 ∣ m ^ Module.finrank ℤ (𝓞 K) :=
+    Ideal.absNorm_span_natCast (S := 𝓞 K) m ▸
+      Ideal.absNorm_dvd_absNorm_of_le ((Ideal.span_singleton_le_iff_mem _).mpr hm𝔭)
   exact absurd (Ideal.absNorm_eq_one_iff.mp
       (Nat.eq_one_of_dvd_coprimes (hcop.pow_right _) dvd_rfl hdvd_norm))
     ‹𝔭.IsPrime›.ne_top
@@ -356,7 +352,7 @@ private theorem frobeniusClass_eq_iff_residue
     apply hζ.autToPow_injective ℚ
     rw [hdict, hσ]
     apply Units.ext
-    rw [ZMod.coe_unitOfCoprime, IsUnit.unit_spec]; exact h
+    rwa [ZMod.coe_unitOfCoprime, IsUnit.unit_spec]
 
 /-- For `n = 2·n'` with `n'` odd and an **odd** prime `p`, the residue condition mod `n`
 matches the one mod `n'` (with `a' = a mod n'`): forward by `castHom`; backward by CRT, since
@@ -379,7 +375,7 @@ private theorem residue_iff_half (n' : ℕ) (hcop : Nat.Coprime 2 n')
       have hu : IsUnit ((ZMod.castHom (dvd_mul_right 2 n') (ZMod 2)) a) := ha.map _
       revert hu; generalize (ZMod.castHom (dvd_mul_right 2 n') (ZMod 2)) a = z
       revert z; decide
-    · rw [map_natCast]; exact h
+    · rwa [map_natCast]
 
 /-- Primes in the Frobenius fibre `F = {𝔭 | frobeniusClass 𝔭 = mk σ}` but not the AP image-set
 `I = {span p | p ≡ a [n]}` divide `n`: `F ∖ I ⊆ Bad`. A coprime-norm prime in `F` lands in `I`
@@ -403,7 +399,7 @@ private theorem dirichlet_AP_fibre_diff_image_subset_bad
     have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hcop).mp hfrob
     rwa [hnorm] at hr
   · refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
-    rw [hnorm, hqp.coprime_iff_not_dvd, not_not] at hcop; exact hcop
+    rwa [hnorm, hqp.coprime_iff_not_dvd, not_not] at hcop
 
 /-- Primes in the AP image-set `I = {span p | p ≡ a [n]}` but not the Frobenius fibre `F` divide
 `n`: `I ∖ F ⊆ Bad`. A prime `p ≡ a [n]` with `p ∤ n` is unramified with coprime norm, so its
@@ -420,17 +416,14 @@ private theorem dirichlet_AP_image_diff_fibre_subset_bad
   rintro 𝔭 ⟨⟨p, ⟨hpp, hpa⟩, rfl⟩, hnotF⟩
   have hprime : (Ideal.span {(p : 𝓞 ℚ)}).IsPrime := span_nat_isPrime hpp
   haveI := hprime
-  have hp0 : (p : 𝓞 ℚ) ≠ 0 := by
-    have h2 : (2 : ℕ) ≤ p := hpp.two_le
-    simp only [ne_eq, Nat.cast_eq_zero]
-    lia
+  have hp0 : (p : 𝓞 ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hpp.ne_zero
   by_cases hdvd : p ∣ n
   · exact ⟨p, ⟨hpp, hdvd⟩, rfl⟩
   · exfalso; apply hnotF
     have hcop : (Ideal.absNorm (Ideal.span {(p : 𝓞 ℚ)})).Coprime n := by
       rw [absNorm_span_nat]; exact (hpp.coprime_iff_not_dvd).mpr hdvd
-    have hne : Ideal.span {(p : 𝓞 ℚ)} ≠ ⊥ := by
-      rw [Ne, Ideal.span_singleton_eq_bot]; exact hp0
+    have hne : Ideal.span {(p : 𝓞 ℚ)} ≠ ⊥ :=
+      Ideal.span_singleton_eq_bot.not.mpr hp0
     have hunr := unramifiedIn_cyclotomic_of_coprime L n _ hne hcop
     refine ⟨hprime, hunr, ?_⟩
     rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hcop, absNorm_span_nat]
