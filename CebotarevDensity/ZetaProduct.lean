@@ -2382,7 +2382,7 @@ private theorem analytic_log_norm_le_of_apply_eq_zero {f : ℂ → ℂ}
     (hf : AnalyticAt ℂ f 1) (hf0 : f 1 = 0)
     (hne : ¬ ∀ᶠ z in 𝓝 (1 : ℂ), f z = 0) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      Real.log ‖f (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + C := by
+      Real.log ‖f (s : ℂ)‖ ≤ -Real.log (1 / (s - 1)) + C := by
   obtain ⟨n, g, hg_an, hg_ne, hg_eq⟩ :=
     (AnalyticAt.exists_eventuallyEq_pow_smul_nonzero_iff hf).mpr hne
   have hn1 : 1 ≤ n := by
@@ -2418,7 +2418,7 @@ private theorem analytic_log_norm_le_of_apply_eq_zero {f : ℂ → ℂ}
   have hn_ge : (1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn1
   have hn_step : (n : ℝ) * Real.log (s - 1) ≤ Real.log (s - 1) := by
     nlinarith [hn_ge, hlog_neg]
-  have hloginv : - Real.log (1 / (s - 1)) = Real.log (s - 1) := by
+  have hloginv : -Real.log (1 / (s - 1)) = Real.log (s - 1) := by
     rw [one_div, Real.log_inv, neg_neg]
   rw [hloginv]
   have hgle' : Real.log ‖g (s : ℂ)‖ ≤ ‖g 1‖ + 1 := by
@@ -3051,12 +3051,12 @@ private theorem log_norm_artinDirichletSeries_le_pole_zero_ite
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (m : ℕ) [NeZero m]
     [IsCyclotomicExtension {m} K L] (hm : m % 4 ≠ 2) {χ : galoisCharacter K L} {Cχ : ℝ}
     (hCχ : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + Cχ)
+      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ -Real.log (1 / (s - 1)) + Cχ)
     (χ' : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
         (if χ' = 1 then Real.log (1 / (s - 1)) else
-          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C := by
+          if χ' = χ then -Real.log (1 / (s - 1)) else 0) + C := by
   by_cases h1 : χ' = 1
   · subst h1
     obtain ⟨C1, hC1⟩ := log_norm_artinDirichletSeries_one_le K L
@@ -3104,7 +3104,7 @@ private theorem false_of_eventually_log_norm_le_pole_zero_ite
     {C : galoisCharacter K L → ℝ} (hC : ∀ χ' : galoisCharacter K L, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖ ≤
         (if χ' = 1 then Real.log (1 / (s - 1)) else
-          if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') : False := by
+          if χ' = χ then -Real.log (1 / (s - 1)) else 0) + C χ') : False := by
   obtain ⟨CR, hCR⟩ := log_dedekindZeta_re_sub_sum_log_norm_artinDirichlet_bounded K L
   have hbound : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
       Real.log (NumberField.dedekindZeta L (s : ℂ)).re ≤ (∑ χ', C χ') + CR := by
@@ -3114,7 +3114,7 @@ private theorem false_of_eventually_log_norm_le_pole_zero_ite
       calc ∑ χ' : galoisCharacter K L, Real.log ‖artinDirichletSeries K L χ' (s : ℂ)‖
           ≤ ∑ χ' : galoisCharacter K L,
               ((if χ' = 1 then Real.log (1 / (s - 1)) else
-                if χ' = χ then - Real.log (1 / (s - 1)) else 0) + C χ') :=
+                if χ' = χ then -Real.log (1 / (s - 1)) else 0) + C χ') :=
             Finset.sum_le_sum fun χ' _ ↦ hs_all χ'
         _ = ∑ χ' : galoisCharacter K L, C χ' := by
             rw [Finset.sum_add_distrib, sum_ite_pole_zero_cancel K L hχ (Real.log (1 / (s - 1))),
@@ -3165,7 +3165,7 @@ theorem artinLSeries_one_ne_zero
       (by rw [← hLf_eq' _ (by simpa using hs1), hs0])
   obtain ⟨Cχ, hCχ⟩ := analytic_log_norm_le_of_apply_eq_zero hLf_at hLf0 hLf_ne
   have hCχ' : ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ - Real.log (1 / (s - 1)) + Cχ := by
+      Real.log ‖artinDirichletSeries K L χ (s : ℂ)‖ ≤ -Real.log (1 / (s - 1)) + Cχ := by
     filter_upwards [hCχ, self_mem_nhdsWithin] with s hs hs1
     simp only [mem_Ioi] at hs1
     rwa [← hLf_eq' (s : ℂ) (by simpa using hs1)]
