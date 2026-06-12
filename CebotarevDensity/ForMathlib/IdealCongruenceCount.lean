@@ -841,10 +841,9 @@ private theorem frontier_signOrthant_subset {ι κ : Type*} [Finite κ] (g : κ 
     rw [interior_eq_compl_closure_compl]; exact fun hh ↦ hh hy.2
   by_contra hcon
   simp only [Set.mem_iUnion, Set.mem_setOf_eq, not_exists] at hcon
-  apply hyni
-  exact mem_interior.mpr ⟨Os, hsub, hOsopen,
+  exact hyni (mem_interior.mpr ⟨Os, hsub, hOsopen,
     ⟨fun k hk ↦ lt_of_le_of_ne (hyO.1 k hk) (hcon k),
-     fun k hk ↦ lt_of_le_of_ne (hyO.2 k hk) (Ne.symm (hcon k))⟩⟩
+     fun k hk ↦ lt_of_le_of_ne (hyO.2 k hk) (Ne.symm (hcon k))⟩⟩)
 
 /-- **Lipschitz frontier cover of an orthant-cut region.** If `D₀` is bounded with a Lipschitz cube
 cover of its frontier, then `D₀ ∩ orthant` (orthant cutting the coordinates `g k`) also has a

@@ -257,9 +257,7 @@ private theorem differentiableAt_logSum_of_two_le
       Complex.neg_re, Complex.ofReal_re]
   have hN2s : ∀ i, ∀ s : ℝ, 1 ≤ s → (2 : ℝ) ≤ (N i : ℝ) ^ s := fun i s hs ↦ by
     have h2N : (2 : ℝ) ≤ N i := by have := hN i; exact_mod_cast this
-    calc (2 : ℝ) ≤ (N i : ℝ) := h2N
-      _ = (N i : ℝ) ^ (1 : ℝ) := (Real.rpow_one _).symm
-      _ ≤ (N i : ℝ) ^ s := Real.rpow_le_rpow_of_exponent_le (by linarith) hs
+    exact h2N.trans (Real.self_le_rpow_of_one_le (by linarith) hs)
   have hwle : ∀ i, ∀ s ∈ t, ‖c i * (N i : ℂ) ^ (-(s : ℂ))‖ ≤ 1 / 2 := by
     intro i s hst
     simp only [ht, Set.mem_Ioi] at hst

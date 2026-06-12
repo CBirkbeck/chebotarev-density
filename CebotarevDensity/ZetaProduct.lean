@@ -2462,8 +2462,8 @@ private theorem norm_one_sub_inv_sub_one_le {y : ℂ} (hy : ‖y‖ ≤ 1 / 2) :
   have hinv : ‖(1 - y)⁻¹‖ ≤ 2 := by
     rw [norm_inv, show (2 : ℝ) = (2⁻¹ : ℝ)⁻¹ by norm_num]
     exact inv_anti₀ (by norm_num) hnorm_lb
-  calc ‖y‖ * ‖(1 - y)⁻¹‖ ≤ ‖y‖ * 2 := by gcongr
-    _ = 2 * ‖y‖ := by ring
+  rw [mul_comm 2 ‖y‖]
+  gcongr
 
 /-- A nonzero prime ideal `𝔭` of a number ring has `2 ≤ N𝔭`: its norm is neither `0` (only `⊥` has
 norm `0`) nor `1` (only `⊤` has norm `1`). -/

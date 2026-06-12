@@ -420,17 +420,13 @@ private theorem compositum_isCyclotomic_over_fixedField
   set Kμ : IntermediateField K M := IntermediateField.adjoin K {b : M | b ^ m = 1}
   obtain ⟨ζ, hζ⟩ : ∃ r : M, IsPrimitiveRoot r m :=
     IsCyclotomicExtension.exists_isPrimitiveRoot (S := {m}) L M (Set.mem_singleton m) (NeZero.ne m)
-  have hadjζ : IntermediateField.adjoin K {ζ} = Kμ := by
-    apply le_antisymm
-    · apply IntermediateField.adjoin_le_iff.mpr
-      intro x hx
-      rw [Set.mem_singleton_iff] at hx
-      subst hx
-      exact IntermediateField.subset_adjoin K _ hζ.pow_eq_one
-    · apply IntermediateField.adjoin_le_iff.mpr
-      intro x hx
-      obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one (Set.mem_setOf_eq ▸ hx)
-      exact pow_mem (IntermediateField.subset_adjoin K _ (Set.mem_singleton ζ)) i
+  have hadjζ : IntermediateField.adjoin K {ζ} = Kμ :=
+    le_antisymm
+      (IntermediateField.adjoin_le_iff.mpr (Set.singleton_subset_iff.mpr
+        (IntermediateField.subset_adjoin K _ hζ.pow_eq_one)))
+      (IntermediateField.adjoin_le_iff.mpr fun x hx ↦ by
+        obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one (Set.mem_setOf_eq ▸ hx)
+        exact pow_mem (IntermediateField.subset_adjoin K _ (Set.mem_singleton ζ)) i)
   have hsup : (F ⊔ Kμ).fixingSubgroup = ⊥ := by
     rw [IntermediateField.fixingSubgroup_sup, IntermediateField.fixingSubgroup_fixedField, _hmeet]
   have htop : F ⊔ Kμ = ⊤ := by
@@ -672,8 +668,7 @@ private theorem autToPow_eq_one_of_fixes
     have h' : z ^ (u : ZMod m).val = z ^ (1 : ℕ) := by
       apply Units.ext
       push_cast
-      rw [pow_one]
-      exact hspec
+      rwa [pow_one]
     rwa [pow_eq_pow_iff_modEq, hord] at h'
   have hu1 : (u : ZMod m) = 1 := by
     have hcast : ((u : ZMod m).val : ZMod m) = (1 : ZMod m) := by
