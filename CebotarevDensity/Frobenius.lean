@@ -1,15 +1,9 @@
 module
 
-public import Mathlib.Algebra.Group.Conj
-public import Mathlib.FieldTheory.Finite.GaloisField
-public import Mathlib.FieldTheory.Galois.Basic
-public import Mathlib.NumberTheory.RamificationInertia.Galois
-public import Mathlib.NumberTheory.RamificationInertia.Unramified
+public import Mathlib.FieldTheory.Galois.IsGaloisGroup
 public import Mathlib.RingTheory.DedekindDomain.Different
 public import Mathlib.RingTheory.DedekindDomain.Factorization
 public import Mathlib.RingTheory.Frobenius
-public import Mathlib.RingTheory.Ideal.Pointwise
-public import Mathlib.RingTheory.RamificationInertia.Inertia
 
 public import CebotarevDensity.Density
 
@@ -128,17 +122,12 @@ theorem inertiaGroup_trivial_of_unramified [IsGalois K L]
       Ideal.card_inertia_eq_ramificationIdxIn (𝔓.under (𝓞 K)) hpbot 𝔓,
       Ideal.ramificationIdxIn_eq_ramificationIdx (𝔓.under (𝓞 K)) 𝔓 Gal(L/K)]
 
-/-- The Galois group acts faithfully on `𝓞 L`. The action factors through the faithful
-action on `L` — an automorphism of `L` is determined by its values on `𝓞 L`, since
-`L = Frac(𝓞 L)` (`IsFractionRing.ringHom_ext`). Needed so that the uniqueness of the
-Frobenius `AlgHom` (`eq_of_isUnramifiedAt`) transfers to the group `Gal(L/K)`. -/
-private instance faithfulSMul_galois [IsGalois K L] : FaithfulSMul Gal(L/K) (𝓞 L) := by
-  refine ⟨fun {σ τ} h ↦ eq_of_smul_eq_smul (α := L) fun y ↦ ?_⟩
-  have hL : ∀ x : 𝓞 L, σ • (x : L) = τ • (x : L) := fun x ↦ by
-    simpa only [algebraMap.coe_smul'] using congrArg (algebraMap (𝓞 L) L) (h x)
-  have heq : (σ : L →+* L) = (τ : L →+* L) :=
-    IsFractionRing.ringHom_ext (A := 𝓞 L) (K := L) (L := L) (by simpa using hL)
-  exact congrFun (congrArg DFunLike.coe heq) y
+/-- The Galois group acts faithfully on `𝓞 L`, via mathlib's `IsGaloisGroup` for the ring
+extension `(𝓞 K, 𝓞 L)`. Pinning the base `𝓞 K` here lets instance search find this at every
+call site. Needed so that the uniqueness of the Frobenius `AlgHom` (`eq_of_isUnramifiedAt`)
+transfers to the group `Gal(L/K)`. -/
+private instance faithfulSMul_galois [IsGalois K L] : FaithfulSMul Gal(L/K) (𝓞 L) :=
+  IsGaloisGroup.faithful (𝓞 K)
 
 /-- Any arithmetic Frobenius element at an unramified prime `𝔓` equals the canonical
 `arithFrobAt 𝔓`: the residue-field characterisation pins it down uniquely. -/
