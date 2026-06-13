@@ -1926,9 +1926,9 @@ private theorem exists_tendsto_cardNormLeResidue_div (K : Type*) [Field K] [Numb
 open scoped Classical in
 /-- **κ-uniformity over the realized-residue subgroup.** Under Fourier-decay `hF` (all nontrivial
 `S`-character twists of the residue counts have vanishing density), the residue-count densities
-`κ, κ'` of any `a, a' ∈ S` coincide. Proof by finite-abelian Fourier inversion: `hF` says every
-nontrivial Fourier coefficient of `s ↦ κ_s` on `S` vanishes, so column orthogonality
-(`sum_char_apply_eq_zero_of_ne_one`) makes `κ_·` constant on `S`. -/
+`κ, κ'` of any `a, a' ∈ S` coincide. Proof: `hF` says every nontrivial Fourier coefficient of
+`s ↦ κ_s` on `S` vanishes, so `eq_of_sum_char_mul_eq_zero` (finite-abelian Fourier inversion)
+makes `κ_·` constant on `S`. -/
 private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field K] [NumberField K]
     {c : ℕ} [NeZero c] {S : Subgroup (ZMod c)ˣ}
     (hF : ∀ χ : S →* ℂˣ, χ ≠ 1 →
@@ -1941,7 +1941,6 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
     (hκ' : Filter.Tendsto (fun N : ℕ ↦ (cardNormLeResidue K c (a' : ZMod c) N : ℝ) / (N : ℝ))
       Filter.atTop (nhds κ')) :
     κ = κ' := by
-  have : Fintype (S →* ℂˣ) := Fintype.ofFinite _
   choose κf hκf using fun s : S ↦
     exists_tendsto_cardNormLeResidue_div K c ((s : (ZMod c)ˣ) : ZMod c)
   have hκa : κ = κf ⟨a, ha⟩ := tendsto_nhds_unique hκ (hκf ⟨a, ha⟩)
@@ -1958,38 +1957,8 @@ private theorem cardNormLeResidue_density_eq_of_mem_subgroup {K : Type*} [Field 
     simp only [Function.comp_apply]
     push_cast
     ring
-  have hinv : ∀ u : S, (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ) = ∑ s : S, (κf s : ℂ) := by
-    intro u
-    have horth : ∀ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ))
-        = if s = u then (Fintype.card (S →* ℂˣ) : ℂ) else 0 := by
-      intro s
-      by_cases hs : s = u
-      · subst hs
-        simp
-      · rw [if_neg hs]
-        exact sum_char_apply_eq_zero_of_ne_one fun h ↦ hs (inv_mul_eq_one.mp h).symm
-    calc (Fintype.card (S →* ℂˣ) : ℂ) * (κf u : ℂ)
-        = ∑ s : S, (if s = u then (Fintype.card (S →* ℂˣ) : ℂ) else 0) * (κf s : ℂ) := by
-          simp [ite_mul]
-      _ = ∑ s : S, (∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ)) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun s _ ↦ ?_
-          rw [horth s]
-      _ = ∑ s : S, ∑ χ : S →* ℂˣ, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun s _ ↦ ?_
-          rw [Finset.sum_mul]
-      _ = ∑ χ : S →* ℂˣ, ∑ s : S, ((χ (u⁻¹ * s) : ℂˣ) : ℂ) * (κf s : ℂ) := Finset.sum_comm
-      _ = ∑ χ : S →* ℂˣ, ((χ u⁻¹ : ℂˣ) : ℂ) * ∑ s : S, ((χ s : ℂˣ) : ℂ) * (κf s : ℂ) := by
-          refine Finset.sum_congr rfl fun χ _ ↦ ?_
-          rw [Finset.mul_sum]
-          refine Finset.sum_congr rfl fun s _ ↦ ?_
-          rw [map_mul, Units.val_mul, mul_assoc]
-      _ = ∑ s : S, (κf s : ℂ) := by
-          rw [Finset.sum_eq_single_of_mem (1 : S →* ℂˣ) (Finset.mem_univ _)
-            fun χ _ hχ ↦ by rw [hhat χ hχ, mul_zero]]
-          simp
-  have hcard0 : (Fintype.card (S →* ℂˣ) : ℂ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
   have hfc : (κf ⟨a, ha⟩ : ℂ) = (κf ⟨a', ha'⟩ : ℂ) :=
-    mul_left_cancel₀ hcard0 ((hinv ⟨a, ha⟩).trans (hinv ⟨a', ha'⟩).symm)
+    eq_of_sum_char_mul_eq_zero (fun s ↦ (κf s : ℂ)) hhat ⟨a, ha⟩ ⟨a', ha'⟩
   rw [hκa, hκa']
   exact_mod_cast hfc
 
