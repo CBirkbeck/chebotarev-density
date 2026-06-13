@@ -1301,6 +1301,30 @@ private theorem mem_smul_cell_iff_norm_le_and_filter_eq {K : Type*} [Field K] [N
         rwa [horth] at this)
       nlinarith [not_lt.mp hxw, htinv]
 
+open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone Classical in
+/-- **Cone-membership backward step** shared by `card_fibre_eq_card_cell` and
+`exists_card_fibre_dvd_eq_card_cell`. If the chart `Φ z = y` of an `I`-lattice point `z` lies in the
+dilated cell `t • (Φ '' normLeOne K ∩ Os)`, then `z` is a cone point of `idealSet K I`: it lies in
+`t • normLeOne K`, hence (homogeneity of the cone) in the fundamental cone. -/
+private theorem mem_idealSet_of_chart_mem_smul_cell {K : Type*} [Field K] [NumberField K]
+    (I : (Ideal (𝓞 K))⁰) {t : ℝ} (ht0 : t ≠ 0) {Os : Set (index K → ℝ)}
+    {y : index K → ℝ} {z : mixedSpace K}
+    (hzlat : z ∈ mixedEmbedding.idealLattice K (FractionalIdeal.mk0 K I))
+    (hzeq : (mixedEmbedding.stdBasis K).equivFunL z = y)
+    (hregion : y ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os)) :
+    z ∈ idealSet K I := by
+  classical
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
+  have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
+    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
+  obtain ⟨hmem, _⟩ := (by rwa [Set.smul_set_inter₀ ht0, Set.mem_inter_iff] at hregion :
+    y ∈ t • (Φ '' normLeOne K) ∧ y ∈ t • Os)
+  rw [← himg, Set.mem_image] at hmem
+  obtain ⟨z', hz', hz'eq⟩ := hmem
+  have hzn : z ∈ t • normLeOne K := by
+    rw [show z = z' from Φ.injective (by rw [hz'eq, hzeq])]; exact hz'
+  exact ⟨(by obtain ⟨z'', hz'', rfl⟩ := hzn; exact smul_mem_of_mem hz''.1 ht0), hzlat⟩
+
 open NumberField.mixedEmbedding NumberField.mixedEmbedding.fundamentalCone
   NumberField.InfinitePlace Classical in
 /-- **Cone points in a cell ⟷ lattice points in the dilated orthant cell.** Transport by the chart
@@ -1337,8 +1361,6 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
     fun a ↦ Φ (a.1 : mixedSpace K) with hf
   have hfinj : Function.Injective f := fun _ _ h ↦ Subtype.ext (Subtype.ext (Φ.injective h))
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
-  have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
-    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
   set Os : Set (index K → ℝ) :=
     {y : index K → ℝ | (∀ w ∈ s, y (Sum.inl w) ≤ 0) ∧ (∀ w ∉ s, 0 ≤ y (Sum.inl w))} with hOs
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
@@ -1371,14 +1393,8 @@ private theorem card_fibre_eq_card_cell {K : Type*} [Field K] [NumberField K]
       exact hreg a ha |>.mpr ⟨hP.1, hP.2.1⟩
     · rintro ⟨hcoset, hregion⟩
       obtain ⟨z, hzlat, hzeq⟩ := hsub hcoset
-      have hzcone : z ∈ idealSet K J := by
-        obtain ⟨hmem, _⟩ := (by rwa [Set.smul_set_inter₀ ht0, Set.mem_inter_iff] at hregion :
-          y ∈ t • (Φ '' normLeOne K) ∧ y ∈ t • Os)
-        rw [← himg, Set.mem_image] at hmem
-        obtain ⟨z', hz', hz'eq⟩ := hmem
-        have hzn : z ∈ t • normLeOne K := by
-          rw [show z = z' from Φ.injective (by rw [hz'eq, hzeq])]; exact hz'
-        exact ⟨(by obtain ⟨z'', hz'', rfl⟩ := hzn; exact smul_mem_of_mem hz''.1 ht0), hzlat⟩
+      have hzcone : z ∈ idealSet K J :=
+        mem_idealSet_of_chart_mem_smul_cell J ht0 hzlat hzeq hregion
       refine ⟨z, hzcone, ⟨?_, ?_, ?_⟩, hzeq⟩
       · exact (hreg z hzcone |>.mp (by rw [hzeq]; exact hregion)).1
       · exact (hreg z hzcone |>.mp (by rw [hzeq]; exact hregion)).2
@@ -2625,8 +2641,6 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
     intro x hx
     exact ⟨hx.1, idealLattice_mul_le J 𝔟 hx.2⟩
   have ht0 : t ≠ 0 := (lt_of_lt_of_le one_pos ht).ne'
-  have himg : Φ '' (t • normLeOne K) = t • (Φ '' normLeOne K) :=
-    Set.image_smul_comm Φ t _ (fun b ↦ map_smul Φ t b)
   have hreg : ∀ x : mixedSpace K, x ∈ idealSet K J →
       (Φ x ∈ t • ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K) ∩ Os) ↔
         (mixedEmbedding.norm x ≤ t ^ d ∧
@@ -2668,14 +2682,8 @@ private theorem exists_card_fibre_dvd_eq_card_cell {K : Type*} [Field K] [Number
       have hyΛ' : y ∈ ((mixedEmbedding.stdBasis K).equivFunL '' (mixedEmbedding.idealLattice K
           (FractionalIdeal.mk0 K (𝔟 * J))) : Set (index K → ℝ)) := by rw [hΦΛ']; exact hyL'
       obtain ⟨z, hzlat, hzeq⟩ := hyΛ'
-      have hzcone : z ∈ idealSet K (𝔟 * J) := by
-        obtain ⟨hmem, _⟩ := (by rwa [Set.smul_set_inter₀ ht0, Set.mem_inter_iff] at hregion :
-          y ∈ t • (Φ '' normLeOne K) ∧ y ∈ t • Os)
-        rw [← himg, Set.mem_image] at hmem
-        obtain ⟨z', hz', hz'eq⟩ := hmem
-        have hzn : z ∈ t • normLeOne K := by
-          rw [show z = z' from Φ.injective (by rw [hz'eq, hzeq])]; exact hz'
-        exact ⟨(by obtain ⟨z'', hz'', rfl⟩ := hzn; exact smul_mem_of_mem hz''.1 ht0), hzlat⟩
+      have hzcone : z ∈ idealSet K (𝔟 * J) :=
+        mem_idealSet_of_chart_mem_smul_cell (𝔟 * J) ht0 hzlat hzeq hregion
       have hzJ : z ∈ idealSet K J := hincl hzcone
       have hcosetz : Φ z ∈ (T (fun i ↦ ((k i).val : ℝ)) : index K → ℝ) +ᵥ
           (((LinearEquiv.smulOfNeZero ℝ (index K → ℝ) (m : ℝ) hm).trans T) ''
