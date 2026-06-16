@@ -323,21 +323,12 @@ theorem card_primesAbove_mul_orderOf_eq
 /-- Only finitely many nonzero primes of `K` ramify in `L`. -/
 theorem finite_ramifiedIn [IsGalois K L] :
     {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ UnramifiedIn K L 𝔭}.Finite := by
-  let : Algebra (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
-    FractionRing.liftAlgebra (𝓞 K) (FractionRing (𝓞 L))
-  have : IsScalarTower (𝓞 K) (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) :=
-    FractionRing.isScalarTower_liftAlgebra (𝓞 K) (FractionRing (𝓞 L))
-  have : Algebra.IsSeparable (FractionRing (𝓞 K)) (FractionRing (𝓞 L)) := inferInstance
   have hbot : differentIdeal (𝓞 K) (𝓞 L) ≠ 0 := by
-    rw [Ideal.zero_eq_bot]
-    exact differentIdeal_ne_bot
-  apply Set.Finite.subset
-    ((Ideal.finite_factors hbot).image (fun v ↦ (v.asIdeal).under (𝓞 K)))
+    rw [Ideal.zero_eq_bot]; exact differentIdeal_ne_bot
+  apply Set.Finite.subset ((Ideal.finite_factors hbot).image (fun v ↦ (v.asIdeal).under (𝓞 K)))
   rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
   simp only [UnramifiedIn, not_and, not_forall] at hnunr
   obtain ⟨𝔓, h𝔓max, h𝔓lo, h𝔓nu⟩ := hnunr h𝔭bot
-  have := h𝔓max.isPrime
-  have := h𝔓lo
   have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭bot 𝔓
   have hdvd : 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
     by_contra h
