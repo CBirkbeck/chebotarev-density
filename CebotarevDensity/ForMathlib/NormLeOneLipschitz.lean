@@ -166,4 +166,56 @@ theorem contDiff_faceMapSide (i : {w : InfinitePlace K // w ≠ w₀}) (a : ℝ)
     · simpa only [if_pos hi] using contDiff_const
     · simpa only [if_neg hi] using contDiff_apply ℝ ℝ _
 
+/-- **Topological reduction.** Since `expMapBasis` is open and injective with source `univ`,
+the frontier of `expMapBasis '' paramSet K` is contained in the image of the box boundary
+`closure (paramSet K) \ interior (paramSet K)`, together with `{0}` (the escape to norm `0`):
+`closure (expMapBasis '' paramSet K) ⊆ compactSet K = expMapBasis '' closure (paramSet K) ∪ {0}`
+while `expMapBasis '' interior (paramSet K)` is open, hence inside the interior. -/
+theorem frontier_image_paramSet_subset :
+    frontier (expMapBasis '' paramSet K) ⊆
+      expMapBasis '' (closure (paramSet K) \ interior (paramSet K)) ∪ {0} := by
+  have hcl : closure (expMapBasis '' paramSet K) ⊆ compactSet K :=
+    (isCompact_compactSet K).isClosed.closure_subset_iff.mpr
+      ((Set.image_mono subset_closure).trans (expMapBasis_closure_subset_compactSet K))
+  have hint : expMapBasis '' interior (paramSet K) ⊆ interior (expMapBasis '' paramSet K) :=
+    (expMapBasis.isOpen_image_of_subset_source isOpen_interior
+      (by simp [expMapBasis_source])).subset_interior_iff.mpr (Set.image_mono interior_subset)
+  refine (Set.diff_subset_diff hcl hint).trans ?_
+  rw [compactSet_eq_union, Set.union_diff_distrib,
+    ← Set.image_diff (injective_expMapBasis K)]
+  exact Set.union_subset_union_right _ Set.diff_subset
+
+open scoped Classical in
+private theorem expMapBasis_mem_iUnion_faceMapSide
+    {y : realSpace K} {w : InfinitePlace K} (hwe : w ≠ w₀) (hw₀ : y w₀ ≤ 0)
+    (hIcc : ∀ v : InfinitePlace K, v ≠ w₀ → y v ∈ Icc (0 : ℝ) 1) (ha : y w = 0 ∨ y w = 1) :
+    (expMapBasis y : realSpace K) ∈
+      ⋃ i : {w : InfinitePlace K // w ≠ w₀}, ⋃ a ∈ ({0, 1} : Set ℝ),
+        faceMapSide K i a '' Icc 0 1 := by
+  set i : {w : InfinitePlace K // w ≠ w₀} := ⟨w, hwe⟩ with hi
+  set c : {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+    fun j ↦ if j = i then Real.exp (y w₀) else y j.1 with hc
+  have hcmem : c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 := by
+    refine ⟨fun j ↦ ?_, fun j ↦ ?_⟩ <;> simp only [hc] <;> split_ifs
+    · exact Real.exp_nonneg _
+    · exact (hIcc j.1 j.2).1
+    · exact Real.exp_le_one_iff.mpr hw₀
+    · exact (hIcc j.1 j.2).2
+  have hkey : faceMapSide K i (y w) c = expMapBasis y := by
+    have hci : c i = Real.exp (y w₀) := by simp [hc]
+    have hfun : (fun w' ↦ if hw' : w' = w₀ then (0 : ℝ) else
+        if (⟨w', hw'⟩ : {w // w ≠ w₀}) = i then y w else c ⟨w', hw'⟩) =
+        fun w' ↦ if w' = w₀ then 0 else y w' := by
+      funext w'
+      by_cases hw'₀ : w' = w₀
+      · simp only [dif_pos hw'₀, if_pos hw'₀]
+      · simp only [dif_neg hw'₀, if_neg hw'₀]
+        by_cases hw'w : (⟨w', hw'₀⟩ : {w // w ≠ w₀}) = i
+        · obtain rfl : w' = w := by rw [hi, Subtype.mk_eq_mk] at hw'w; exact hw'w
+          simp only [if_pos hw'w]
+        · simp only [hc, if_neg hw'w]
+    rw [faceMapSide, expMapBasis_apply'' y, hci, hfun]
+  refine Set.mem_iUnion.mpr ⟨i, Set.mem_iUnion₂.mpr ⟨y w, ?_, ⟨c, hcmem, hkey⟩⟩⟩
+  rcases ha with h | h <;> simp [h]
+
 end Chebotarev
