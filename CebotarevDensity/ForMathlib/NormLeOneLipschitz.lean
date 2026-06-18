@@ -590,4 +590,84 @@ theorem mem_iUnion_image_liftToMixed_of_eq
     · simp only [hcph w, hmodcplx w]
       exact hθeq w
 
+/-- The frontier of `normLeOne K` in `mixedSpace K` is contained in the `normAtAllPlaces`-preimage
+of the frontier of its `realSpace` image: `normLeOne K` is the preimage of its image
+(`normLeOne_eq_preimage_image`), and `normAtAllPlaces` is continuous, so
+`frontier (f ⁻¹' s) ⊆ f ⁻¹' (frontier s)` (`Continuous.frontier_preimage_subset`). -/
+theorem frontier_normLeOne_subset_preimage :
+    frontier (normLeOne K) ⊆
+      normAtAllPlaces ⁻¹' frontier (normAtAllPlaces '' normLeOne K) := by
+  conv_lhs => rw [normLeOne_eq_preimage_image K]
+  exact (continuous_normAtAllPlaces K).frontier_preimage_subset _
+
+open scoped Classical in
+private theorem frontier_normLeOne_subset_iUnion_image_liftToMixed_aux :
+    frontier (normLeOne K) ⊆
+      ⋃ p : (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) ×
+        ({w : InfinitePlace K // IsReal w} → Bool),
+        liftToMixed K (frontierCoverFamily K p.1) p.2 '' Icc 0 1 := by
+  refine (frontier_normLeOne_subset_preimage K).trans ?_
+  refine (Set.preimage_mono (frontier_subset_frontierCoverFamily K)).trans ?_
+  rw [Set.preimage_iUnion]
+  refine Set.iUnion_subset fun s ↦ ?_
+  rintro x ⟨c', hc', hxeq⟩
+  obtain ⟨ε, hε⟩ := Set.mem_iUnion.mp
+    (mem_iUnion_image_liftToMixed_of_eq (ψ := frontierCoverFamily K s) (c' := c')
+      (hc' := hc') (x := x) (hx := hxeq.symm))
+  exact Set.mem_iUnion.mpr ⟨(s, ε), hε⟩
+
+open scoped Classical in
+/-- **The Lipschitz cover of the frontier of `normLeOne K` in `mixedSpace K`.** Lifting the
+`realSpace` frontier cover (`normLeOne_frontier_lipschitz_cover`) along the fibres of
+`normAtAllPlaces`: the real-place signs are folded into a finite index together with the existing
+faces, and the complex-place phases supply the extra `r₂` cube coordinates, giving
+`(r − 1) + r₂ = d − 1` coordinates (`d = finrank ℚ K`). This is the `mixedSpace`-level boundary
+regularity needed for the lattice-point count in the mixed embedding. -/
+theorem normLeOne_frontier_lipschitz_cover_mixedSpace :
+    ∃ (m : ℕ) (M : ℝ≥0)
+      (φ : Fin m → (Fin (Module.finrank ℚ K - 1) → ℝ) → mixedSpace K),
+      (∀ j, LipschitzWith M (φ j)) ∧
+        frontier (normLeOne K) ⊆ ⋃ j, φ j '' Icc 0 1 := by
+  obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_frontierCoverFamily K
+  obtain ⟨B, hB⟩ := exists_bound_frontierCoverFamily K
+  set S := (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) ×
+    ({w : InfinitePlace K // IsReal w} → Bool)
+  set Φ : S → (Fin (Module.finrank ℚ K - 1) → ℝ) → mixedSpace K :=
+    fun p ↦ liftToMixed K (frontierCoverFamily K p.1) p.2
+  set e := Fintype.equivFin S
+  refine ⟨_, M₀ + (B * (2 * Real.pi)).toNNReal, fun j ↦ Φ (e.symm j),
+    fun j ↦ lipschitzWith_liftToMixed (hψ := hM₀ _) (hB := hB _) (ε := _), ?_⟩
+  rw [e.symm.surjective.iUnion_comp fun p ↦ Φ p '' Icc 0 1]
+  exact frontier_normLeOne_subset_iUnion_image_liftToMixed_aux K
+
+open scoped Classical in
+/-- **The Lipschitz frontier cover of `normLeOne K`, transported to `index K → ℝ`.** The frontier
+of the `stdBasis`-coordinate image `Φ '' normLeOne K` (with `Φ = (stdBasis K).equivFunL`) is
+covered by finitely many Lipschitz images of the unit cube `[0,1]^{#(index K) − 1}`. This is the
+exact `hlip` regularity hypothesis of `exists_card_coset_inter_smul_sub_volume_mul_rpow_le` with
+`ι = index K`, obtained from `normLeOne_frontier_lipschitz_cover_mixedSpace` by post-composing the
+charts with the continuous-linear `Φ` (Lipschitz, frontier-preserving as a homeomorphism) and
+relabelling the cube dimension via `Fintype.card (index K) − 1 = finrank ℚ K − 1`. -/
+theorem normLeOne_frontier_lipschitz_cover_index :
+    ∃ (m : ℕ) (M : ℝ≥0)
+      (φ : Fin m → (Fin (Fintype.card (index K) - 1) → ℝ) → (index K → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧
+        frontier ((mixedEmbedding.stdBasis K).equivFunL '' (normLeOne K)) ⊆
+          ⋃ j, φ j '' Icc 0 1 := by
+  obtain ⟨m, M, φ, hφ, hcov⟩ := normLeOne_frontier_lipschitz_cover_mixedSpace K
+  set Φ : mixedSpace K ≃L[ℝ] (index K → ℝ) := (mixedEmbedding.stdBasis K).equivFunL
+  set g : Fin (Fintype.card (index K) - 1) ≃ Fin (Module.finrank ℚ K - 1) := finCongr (by
+    rw [← Module.finrank_eq_card_basis (mixedEmbedding.stdBasis K), mixedEmbedding.finrank])
+  refine ⟨m, ‖(Φ : mixedSpace K →L[ℝ] (index K → ℝ))‖₊ * (M * 1),
+    fun j c ↦ Φ (φ j (fun a ↦ c (g.symm a))),
+    fun j ↦ Φ.lipschitz.comp ((hφ j).comp
+      (IsometryEquiv.piCongrLeft' (Y := fun _ ↦ ℝ) g).isometry.lipschitz), ?_⟩
+  rw [← Φ.coe_toHomeomorph, ← Φ.toHomeomorph.image_frontier]
+  refine (Set.image_mono hcov).trans ?_
+  rw [Set.image_iUnion]
+  refine Set.iUnion_subset fun j ↦ ?_
+  rintro _ ⟨_, ⟨c, hc, rfl⟩, rfl⟩
+  exact Set.mem_iUnion.mpr ⟨j, ⟨fun a ↦ c (g a), ⟨fun a ↦ hc.1 _, fun a ↦ hc.2 _⟩, by
+    simp⟩⟩
+
 end Chebotarev
