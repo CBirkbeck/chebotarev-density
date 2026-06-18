@@ -470,4 +470,57 @@ noncomputable def liftToMixed (ψ : (Fin (Fintype.card (InfinitePlace K) - 1) �
         Complex.exp ((2 * Real.pi * c ((mixedCubeEquiv K).symm (Sum.inr w)) - Real.pi) *
           Complex.I))
 
+open scoped Classical in
+/-- If the cover map `ψ` is `M₀`-Lipschitz and uniformly bounded by `B` on the cube image, then
+its lift `liftToMixed K ψ ε` is globally Lipschitz. The real coordinates are isometric copies of
+`ψ`-coordinates (`M₀`); a complex coordinate `(ψ ·) w · exp((2π θ − π) i)` is bounded by the
+product estimate `dist (a u) (b v) ≤ ‖a‖ · dist u v + ‖v‖ · dist a b`, contributing
+`B · 2π` from the phase (`lipschitzWith_exp_ofReal_mul_I`) and `M₀` from the modulus. -/
+theorem lipschitzWith_liftToMixed {ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K}
+    {M₀ : ℝ≥0} {B : ℝ} (hψ : LipschitzWith M₀ ψ) (hB : ∀ c, ‖ψ c‖ ≤ B)
+    (ε : {w : InfinitePlace K // IsReal w} → Bool) :
+    LipschitzWith (M₀ + (B * (2 * Real.pi)).toNNReal) (liftToMixed K ψ ε) := by
+  have hBnn : 0 ≤ B := le_trans (norm_nonneg _) (hB 0)
+  set N : ℝ≥0 := M₀ + (B * (2 * Real.pi)).toNNReal with hN
+  refine LipschitzWith.of_dist_le_mul fun c d ↦ ?_
+  set yc : realSpace K := ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) with hyc
+  set yd : realSpace K := ψ (fun i ↦ d ((mixedCubeEquiv K).symm (Sum.inl i))) with hyd
+  have hmod : dist yc yd ≤ M₀ * dist c d := by
+    rw [hyc, hyd]
+    refine (hψ.dist_le_mul _ _).trans ?_
+    gcongr
+    exact (dist_pi_le_iff dist_nonneg).mpr fun i ↦ dist_le_pi_dist c d _
+  have hmodc : ∀ w : InfinitePlace K, dist (yc w) (yd w) ≤ M₀ * dist c d :=
+    fun w ↦ (dist_le_pi_dist yc yd w).trans hmod
+  have hyB : ∀ w : InfinitePlace K, ‖(yc w : ℂ)‖ ≤ B := fun w ↦ by
+    rw [Complex.norm_real]
+    exact (norm_le_pi_norm yc w).trans (hB _)
+  rw [liftToMixed, liftToMixed, Prod.dist_eq]
+  refine max_le ((dist_pi_le_iff (by positivity)).mpr fun w ↦ ?_)
+    ((dist_pi_le_iff (by positivity)).mpr fun w ↦ ?_)
+  · have hsign : dist ((if ε w then (1 : ℝ) else -1) * yc w.1)
+        ((if ε w then (1 : ℝ) else -1) * yd w.1) = dist (yc w.1) (yd w.1) := by
+      rw [Real.dist_eq, Real.dist_eq, ← mul_sub, abs_mul]
+      split_ifs <;> simp
+    rw [hsign]
+    refine (hmodc w.1).trans ?_
+    gcongr
+    rw [hN]
+    exact_mod_cast le_self_add
+  · refine (dist_mul_exp_phase_le (yc w.1) (yd w.1) _ _).trans ?_
+    have hmodcw : dist (yc w.1 : ℂ) (yd w.1 : ℂ) ≤ M₀ * dist c d := by
+      rw [Complex.dist_eq, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs,
+        ← Real.dist_eq]
+      exact hmodc w.1
+    calc ‖(yc w.1 : ℂ)‖ * (2 * Real.pi * dist (c ((mixedCubeEquiv K).symm (Sum.inr w)))
+            (d ((mixedCubeEquiv K).symm (Sum.inr w)))) + dist (yc w.1 : ℂ) (yd w.1 : ℂ)
+        ≤ B * (2 * Real.pi * dist c d) + M₀ * dist c d := by
+          gcongr
+          · exact hyB w.1
+          · exact dist_le_pi_dist c d _
+      _ = (↑M₀ + ↑(B * (2 * Real.pi)).toNNReal) * dist c d := by
+          rw [Real.coe_toNNReal _ (by positivity)]
+          ring
+      _ = ↑N * dist c d := by rw [hN, NNReal.coe_add]
+
 end Chebotarev
