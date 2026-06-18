@@ -277,4 +277,84 @@ theorem exists_cubeRelabel_eq {c' : {w : InfinitePlace K // w ≠ w₀} → ℝ}
   ⟨fun j ↦ c' (equivFinRank j), ⟨fun j ↦ hc'.1 _, fun j ↦ hc'.2 _⟩,
     funext fun j ↦ by simp [cubeRelabel]⟩
 
+/-- The finite family covering the frontier: the zero map (index `inl ()`), the `w₀`-face map
+(`inr (inl ())`), and the side-face maps `faceMapSide i a` for `i ≠ w₀`, `a ∈ {0,1}`
+(`inr (inr (i, b))`, `a = if b then 1 else 0`), each post-clamped to the unit cube and relabelled
+through `cubeRelabel`. -/
+def frontierCoverFamily :
+    (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool)) →
+      (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K :=
+  Sum.elim (fun _ _ ↦ 0)
+    (Sum.elim (fun _ ↦ faceMapZero K ∘ clampUnit _ ∘ cubeRelabel K)
+      fun p ↦ faceMapSide K p.1 (if p.2 then 1 else 0) ∘ clampUnit _ ∘ cubeRelabel K)
+
+/-- Every member of `frontierCoverFamily` is `M`-Lipschitz for a common constant `M`: each face
+map is `C¹` on the compact cube hence Lipschitz there (`exists_lipschitzWith_comp_clampUnit`), and
+pre-composing with the `1`-Lipschitz `cubeRelabel` preserves the constant; take `M` to be the
+supremum over the finitely many faces. -/
+theorem exists_lipschitzWith_frontierCoverFamily :
+    ∃ M : ℝ≥0, ∀ s, LipschitzWith M (frontierCoverFamily K s) := by
+  classical
+  obtain ⟨M₀, hM₀⟩ := exists_lipschitzWith_comp_clampUnit (contDiff_faceMapZero K)
+  choose Ms hMs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool ↦
+    exists_lipschitzWith_comp_clampUnit (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0))
+  refine ⟨M₀ ⊔ Finset.univ.sup Ms, fun s ↦ ?_⟩
+  rcases s with _ | _ | p
+  · exact (LipschitzWith.const _).weaken zero_le
+  · exact (hM₀.comp (lipschitzWith_cubeRelabel K)).weaken (by rw [mul_one]; exact le_sup_left)
+  · exact ((hMs p).comp (lipschitzWith_cubeRelabel K)).weaken
+      (by rw [mul_one]; exact le_sup_of_le_right (Finset.le_sup (Finset.mem_univ p)))
+
+/-- The frontier of `normAtAllPlaces '' normLeOne K` is covered by the cube images of
+`frontierCoverFamily`. The chain is: frontier → box-boundary image `∪ {0}`
+(`frontier_image_paramSet_subset`) → the face images (`image_boundary_subset_faces`), then each
+face image is the corresponding family member after undoing the relabelling
+(`exists_cubeRelabel_eq`) and the clamp (`clampUnit_eq_self`), with `{0}` the value of the zero
+map. -/
+theorem frontier_subset_frontierCoverFamily :
+    frontier (normAtAllPlaces '' normLeOne K) ⊆
+      ⋃ s, frontierCoverFamily K s '' Icc 0 1 := by
+  classical
+  rw [normAtAllPlaces_normLeOne_eq_image]
+  refine (frontier_image_paramSet_subset K).trans
+    (Set.union_subset ((image_boundary_subset_faces K).trans (Set.union_subset ?_ ?_)) ?_)
+  · rintro x ⟨c', hc', rfl⟩
+    obtain ⟨c, hc, rfl⟩ := exists_cubeRelabel_eq K hc'
+    refine Set.mem_iUnion.mpr ⟨Sum.inr (Sum.inl ()), c, hc, ?_⟩
+    change faceMapZero K (clampUnit _ (cubeRelabel K c)) = faceMapZero K (cubeRelabel K c)
+    rw [clampUnit_eq_self (cubeRelabel_mem_Icc K hc)]
+  · rintro x hx
+    simp only [Set.mem_iUnion] at hx
+    obtain ⟨i, a, ha, c', hc', rfl⟩ := hx
+    obtain ⟨c, hc, rfl⟩ := exists_cubeRelabel_eq K hc'
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at ha
+    obtain ⟨b, rfl⟩ : ∃ b : Bool, (if b then (1 : ℝ) else 0) = a := by
+      rcases ha with rfl | rfl
+      · exact ⟨false, rfl⟩
+      · exact ⟨true, rfl⟩
+    refine Set.mem_iUnion.mpr ⟨Sum.inr (Sum.inr (i, b)), c, hc, ?_⟩
+    change faceMapSide K i (if b then (1 : ℝ) else 0) (clampUnit _ (cubeRelabel K c)) = _
+    rw [clampUnit_eq_self (cubeRelabel_mem_Icc K hc)]
+  · rintro x hx
+    rw [Set.mem_singleton_iff] at hx
+    subst hx
+    exact Set.mem_iUnion.mpr ⟨Sum.inl (), 0, ⟨le_rfl, fun _ ↦ zero_le_one⟩, rfl⟩
+
+/-- **The Lipschitz cover of the frontier of `normAtAllPlaces '' (normLeOne K)`**
+(Gun–Ramaré–Sivaraman §3.3, after Debaene). This is the exact `hlip` regularity hypothesis of
+the effective lattice-point count `exists_card_inter_smul_lattice_sub_volume_mul_pow_le`,
+specialized to the ideal-counting region: finitely many `M`-Lipschitz maps from
+`[0,1]^{r-1}`, `r = #InfinitePlace K`, whose cube images cover the frontier. -/
+theorem normLeOne_frontier_lipschitz_cover :
+    ∃ (m : ℕ) (M : ℝ≥0)
+      (φ : Fin m → (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K),
+      (∀ j, LipschitzWith M (φ j)) ∧
+        frontier (normAtAllPlaces '' normLeOne K) ⊆ ⋃ j, φ j '' Icc 0 1 := by
+  classical
+  obtain ⟨M, hM⟩ := exists_lipschitzWith_frontierCoverFamily K
+  set e := Fintype.equivFin (Unit ⊕ Unit ⊕ ({w : InfinitePlace K // w ≠ w₀} × Bool))
+  refine ⟨_, M, fun j ↦ frontierCoverFamily K (e.symm j), fun j ↦ hM _, ?_⟩
+  rw [e.symm.surjective.iUnion_comp fun s ↦ frontierCoverFamily K s '' Icc 0 1]
+  exact frontier_subset_frontierCoverFamily K
+
 end Chebotarev
