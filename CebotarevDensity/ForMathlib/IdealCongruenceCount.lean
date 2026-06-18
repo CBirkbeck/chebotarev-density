@@ -3,8 +3,10 @@ module
 public import CebotarevDensity.ForMathlib.CharacterOrthogonality
 public import CebotarevDensity.ForMathlib.LatticePointCount
 public import CebotarevDensity.ForMathlib.NormLeOneLipschitz
+public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
 public import Mathlib.RingTheory.DedekindDomain.Factorization
+public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
 
 /-!
 # Effective counting of ideals by class and norm residue
