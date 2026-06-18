@@ -110,6 +110,71 @@ theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → �
     lia
   rw [Finset.prod_congr rfl fun i _ ↦ hcard i, Finset.prod_const, Finset.card_univ]
 
+/-- **Single-chart cell count.** For one `M`-Lipschitz map `φ : (Fin (d-1) → ℝ) → (ι → ℝ)`,
+the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the image `φ '' [0,1]ᵈ⁻¹` is at most
+`(2⌈M⌉₊ + 1)ᵈ · (n+1)ᵈ⁻¹ = O(nᵈ⁻¹)`. -/
+theorem ncard_index_image_chart_le {M : ℝ≥0} {φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)}
+    (hφ : LipschitzWith M φ) {n : ℕ} (hn : 1 ≤ n) :
+    (index n '' (φ '' Set.Icc 0 1)).ncard
+      ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * (n + 1) ^ (Fintype.card ι - 1) := by
+  classical
+  have hne : NeZero n := ⟨Nat.one_le_iff_ne_zero.mp hn⟩
+  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.pos_of_ne_zero hne.out
+  set q : (Fin (Fintype.card ι - 1) → ℝ) → (Fin (Fintype.card ι - 1) → ℤ) :=
+    fun y k ↦ ⌈(n : ℝ) * y k⌉ with hq
+  set T : Finset (Fin (Fintype.card ι - 1) → ℤ) :=
+    Finset.Icc (0 : Fin (Fintype.card ι - 1) → ℤ) (fun _ ↦ (n : ℤ)) with hT
+  have hdiam : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
+      Metric.diam (Set.Icc 0 1 ∩ q ⁻¹' {v}) ≤ 1 / n := by
+    intro v
+    refine Metric.diam_le_of_forall_dist_le (by positivity) fun y hy y' hy' ↦ ?_
+    rw [dist_pi_le_iff (by positivity)]
+    intro k
+    have hce : ⌈(n : ℝ) * y k⌉ = ⌈(n : ℝ) * y' k⌉ :=
+      (congrFun hy.2 k).trans (congrFun hy'.2 k).symm
+    rw [Real.dist_eq]
+    exact abs_sub_le_one_div_of_ceil_natCast_mul_eq hn0 hce
+  have hcover : index n '' (φ '' Set.Icc 0 1) ⊆
+      ⋃ v ∈ T, index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) := by
+    rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
+    have hyT : q y ∈ T := by
+      rw [hT, Finset.mem_Icc]
+      refine ⟨fun k ↦ ?_, fun k ↦ ?_⟩
+      · simp only [hq, Pi.zero_apply]
+        rw [Int.le_ceil_iff]
+        push_cast
+        linarith [mul_nonneg hn0.le (hy.1 k)]
+      · simp only [hq]
+        rw [Int.ceil_le]
+        have hyk : y k ≤ 1 := hy.2 k
+        push_cast
+        nlinarith [hn0]
+    exact Set.mem_biUnion hyT ⟨φ y, ⟨y, ⟨hy, rfl⟩, rfl⟩, rfl⟩
+  have hpiece : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
+      (index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v}))).ncard
+        ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι := by
+    intro v
+    have hbddφ : Bornology.IsBounded (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) :=
+      hφ.isBounded_image ((Metric.isBounded_Icc 0 1).subset Set.inter_subset_left)
+    have hdimg : Metric.diam (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v})) ≤ (M : ℝ) * (1 / n) := by
+      refine (hφ.diam_image_le _ ((Metric.isBounded_Icc 0 1).subset
+        Set.inter_subset_left)).trans ?_
+      exact mul_le_mul_of_nonneg_left (hdiam v) (by positivity)
+    refine (ncard_index_image_le_of_diam_le n (by positivity) hdimg hbddφ).trans ?_
+    rw [show (n : ℝ) * ((M : ℝ) * (1 / n)) = (M : ℝ) by field_simp]
+  have hfin : ∀ v : Fin (Fintype.card ι - 1) → ℤ,
+      (index n '' (φ '' (Set.Icc 0 1 ∩ q ⁻¹' {v}))).Finite :=
+    fun v ↦ setFinite_index_image_of_isBounded n
+      (hφ.isBounded_image ((Metric.isBounded_Icc 0 1).subset Set.inter_subset_left))
+  refine (Set.ncard_le_ncard hcover (T.finite_toSet.biUnion fun v _ ↦ hfin v)).trans ?_
+  refine (Finset.set_ncard_biUnion_le T _).trans ?_
+  refine (Finset.sum_le_sum fun v _ ↦ hpiece v).trans ?_
+  rw [Finset.sum_const, nsmul_eq_mul, mul_comm]
+  have hcardT : T.card = (n + 1) ^ (Fintype.card ι - 1) := by
+    rw [hT, Pi.card_Icc]
+    simp [Int.card_Icc]
+  rw [hcardT, Nat.cast_id]
+
 end Sublemmas
 
 end
