@@ -121,4 +121,49 @@ theorem exists_lipschitzWith_comp_clampUnit {ι κ : Type*} [Fintype ι] [Fintyp
   gcongr
   simpa using (lipschitzWith_clampUnit ι).edist_le_mul c d
 
+variable (K : Type*) [Field K] [NumberField K]
+
+theorem contDiff_expMapBasis : ContDiff ℝ 1 (⇑(expMapBasis (K := K))) := by
+  classical
+  rw [show ⇑(expMapBasis (K := K)) = fun x : realSpace K ↦
+      Real.exp (x w₀) • fun w : InfinitePlace K ↦
+        ∏ i : {w // w ≠ w₀}, w (fundSystem K (equivFinRank.symm i)) ^ x i from
+    funext expMapBasis_apply']
+  fun_prop (disch := exact fun x ↦ (InfinitePlace.pos_iff.mpr (by simp)).ne')
+
+open scoped Classical in
+/-- Parametrization of the `expMapBasis`-image of the `w₀`-face `{x | x w₀ = 0}` of
+`paramSet K`: plug `0` in the `w₀`-slot and the cube coordinates in the remaining slots. -/
+def faceMapZero (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : realSpace K :=
+  expMapBasis fun w ↦ if hw : w = w₀ then 0 else c ⟨w, hw⟩
+
+open scoped Classical in
+/-- Parametrization of the `expMapBasis`-image of a side face `{x | x i = a}` (`i ≠ w₀`,
+`a ∈ {0,1}`) of `paramSet K`. The `w₀`-direction of the face is the unbounded `Iic 0`; the
+substitution `t = exp (x w₀) ∈ (0,1]` (`expMapBasis_apply''`) turns it into the cube coordinate
+`c i` — the slot freed by pinning `x i = a`:
+`faceMapSide i a c = (c i) • expMapBasis (x [w₀ => 0, i => a, w => c w])`. -/
+def faceMapSide (i : {w : InfinitePlace K // w ≠ w₀}) (a : ℝ)
+    (c : {w : InfinitePlace K // w ≠ w₀} → ℝ) : realSpace K :=
+  c i • expMapBasis fun w ↦ if hw : w = w₀ then 0 else if (⟨w, hw⟩ : {w // w ≠ w₀}) = i then a
+    else c ⟨w, hw⟩
+
+open scoped Classical in
+theorem contDiff_faceMapZero : ContDiff ℝ 1 (faceMapZero K) := by
+  refine (contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w ↦ ?_)
+  by_cases hw : w = w₀
+  · simpa only [dif_pos hw] using contDiff_const
+  · simpa only [dif_neg hw] using contDiff_apply ℝ ℝ _
+
+open scoped Classical in
+theorem contDiff_faceMapSide (i : {w : InfinitePlace K // w ≠ w₀}) (a : ℝ) :
+    ContDiff ℝ 1 (faceMapSide K i a) := by
+  refine (contDiff_apply ℝ ℝ i).smul ((contDiff_expMapBasis K).comp (contDiff_pi.mpr fun w ↦ ?_))
+  by_cases hw : w = w₀
+  · simpa only [dif_pos hw] using contDiff_const
+  · simp only [dif_neg hw]
+    by_cases hi : (⟨w, hw⟩ : {w // w ≠ w₀}) = i
+    · simpa only [if_pos hi] using contDiff_const
+    · simpa only [if_neg hi] using contDiff_apply ℝ ℝ _
+
 end Chebotarev
