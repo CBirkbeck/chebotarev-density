@@ -1,3 +1,4 @@
 import CebotarevDensity.Density
+import CebotarevDensity.ForMathlib.LatticePointCount
 import CebotarevDensity.ForMathlib.LogOneDivSubOne
 import CebotarevDensity.Main
