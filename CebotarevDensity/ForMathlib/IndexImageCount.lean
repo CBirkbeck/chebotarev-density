@@ -74,6 +74,42 @@ theorem setFinite_index_image_of_isBounded (n : ℕ) {T : Set (ι → ℝ)}
   exact ⟨sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1,
     sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1⟩
 
+/-- **Bounded-diameter cell incidence.** A set `T ⊆ ι → ℝ` of diameter `≤ r` meets at most
+`(2⌈n·r⌉₊ + 1)ᵈ` cells of the `n⁻¹ℤ^ι` grid, i.e. its `index n`-image has at most that many
+points. (Here `ι → ℝ` carries the sup metric, so a cube of side `1/n` has diameter `1/n`.) -/
+theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → ℝ)} {r : ℝ}
+    (hr : 0 ≤ r) (hdiam : Metric.diam T ≤ r) (hbdd : Bornology.IsBounded T) :
+    (index n '' T).ncard ≤ (2 * ⌈(n : ℝ) * r⌉₊ + 1) ^ Fintype.card ι := by
+  classical
+  rcases T.eq_empty_or_nonempty with rfl | ⟨x₀, hx₀⟩
+  · simp
+  set K : ℕ := ⌈(n : ℝ) * r⌉₊ with hK
+  set c : ι → ℤ := index n x₀ with hc
+  set F : Finset (ι → ℤ) := Fintype.piFinset fun i ↦ Finset.Icc (c i - K) (c i + K) with hF
+  have hsub : index n '' T ⊆ ↑F := by
+    rintro _ ⟨x, hx, rfl⟩
+    simp only [hF, Finset.mem_coe, Fintype.mem_piFinset, Finset.mem_Icc]
+    intro i
+    have hdx : |x i - x₀ i| ≤ r := by
+      have h1 : dist (x i) (x₀ i) ≤ dist x x₀ := dist_le_pi_dist x x₀ i
+      rw [Real.dist_eq] at h1
+      exact h1.trans ((Metric.dist_le_diam_of_mem hbdd hx hx₀).trans hdiam)
+    rcases abs_le.mp hdx with ⟨hlo, hhi⟩
+    have hKeq : (K : ℤ) = ⌈(n : ℝ) * r⌉ := hK ▸ Int.natCast_ceil_eq_ceil (by positivity)
+    have hub :=
+      ceil_natCast_mul_le_ceil_natCast_mul_add n (a := x i) (b := x₀ i) (r := r) (by linarith)
+    have hlb :=
+      ceil_natCast_mul_le_ceil_natCast_mul_add n (a := x₀ i) (b := x i) (r := r) (by linarith)
+    simp only [index_apply, hc]
+    constructor <;> lia
+  refine (Set.ncard_le_ncard hsub F.finite_toSet).trans ?_
+  rw [Set.ncard_coe_finset, hF, Fintype.card_piFinset]
+  have hcard : ∀ i, (Finset.Icc (c i - K) (c i + K)).card = 2 * K + 1 := by
+    intro i
+    rw [Int.card_Icc]
+    lia
+  rw [Finset.prod_congr rfl fun i _ ↦ hcard i, Finset.prod_const, Finset.card_univ]
+
 end Sublemmas
 
 end
