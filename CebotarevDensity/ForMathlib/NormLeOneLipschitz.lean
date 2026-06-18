@@ -357,4 +357,82 @@ theorem normLeOne_frontier_lipschitz_cover :
   rw [e.symm.surjective.iUnion_comp fun s ↦ frontierCoverFamily K s '' Icc 0 1]
   exact frontier_subset_frontierCoverFamily K
 
+/-- The product distance estimate `dist (a u) (b v) ≤ ‖a‖ · dist u v + ‖v‖ · dist a b` in a
+normed field, splitting `a u − b v = a (u − v) + (a − b) v`. -/
+theorem dist_mul_le_norm_mul_dist {α : Type*} [NormedField α] (a b u v : α) :
+    dist (a * u) (b * v) ≤ ‖a‖ * dist u v + ‖v‖ * dist a b := by
+  rw [dist_eq_norm, dist_eq_norm, dist_eq_norm,
+    show a * u - b * v = a * (u - v) + (a - b) * v by ring]
+  refine (norm_add_le _ _).trans ?_
+  rw [norm_mul, norm_mul, mul_comm ‖a - b‖ ‖v‖]
+
+/-- The unit-circle exponential `t ↦ exp(t i)` is globally `1`-Lipschitz: it is `circleMap 0 1`,
+which is `|R| = 1`-Lipschitz by `lipschitzWith_circleMap`. -/
+theorem lipschitzWith_exp_ofReal_mul_I :
+    LipschitzWith 1 (fun t : ℝ ↦ Complex.exp ((t : ℂ) * Complex.I)) := by
+  rw [show (fun t : ℝ ↦ Complex.exp ((t : ℂ) * Complex.I)) = circleMap 0 1 from
+    funext fun t ↦ by simp [circleMap]]
+  simpa using lipschitzWith_circleMap 0 1
+
+/-- The phase reparametrization `θ ↦ exp((2π θ − π) i)` is `2π`-Lipschitz: it is the
+unit-circle exponential (`1`-Lipschitz) composed with the `2π`-Lipschitz affine map
+`θ ↦ 2π θ − π`. -/
+theorem lipschitzWith_phase :
+    LipschitzWith (2 * Real.pi).toNNReal
+      (fun t : ℝ ↦
+        Complex.exp ((2 * (Real.pi : ℂ) * (t : ℂ) - (Real.pi : ℂ)) * Complex.I)) := by
+  have haff : LipschitzWith (2 * Real.pi).toNNReal (fun t : ℝ ↦ 2 * Real.pi * t - Real.pi) := by
+    refine LipschitzWith.of_dist_le_mul fun x y ↦ ?_
+    rw [Real.dist_eq, Real.dist_eq, Real.coe_toNNReal _ (by positivity),
+      show 2 * Real.pi * x - Real.pi - (2 * Real.pi * y - Real.pi) = 2 * Real.pi * (x - y) by
+        ring, abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ 2 * Real.pi)]
+  have hcomp : (fun t : ℝ ↦
+        Complex.exp ((2 * (Real.pi : ℂ) * (t : ℂ) - (Real.pi : ℂ)) * Complex.I))
+      = (fun s : ℝ ↦ Complex.exp ((s : ℂ) * Complex.I))
+        ∘ (fun t : ℝ ↦ 2 * Real.pi * t - Real.pi) := by
+    funext t
+    simp only [Function.comp_apply]
+    push_cast
+    ring_nf
+  rw [hcomp, ← one_mul (2 * Real.pi).toNNReal]
+  exact lipschitzWith_exp_ofReal_mul_I.comp haff
+
+/-- The per-place phase-modulus distance bound: with `uθ = exp((2π θ − π) i)`,
+`dist (a uθc) (b uθd) ≤ ‖a‖ · (2π · dist θc θd) + dist a b`, using `‖uθd‖ = 1` and the
+`2π`-Lipschitz phase. -/
+theorem dist_mul_exp_phase_le (a b θc θd : ℝ) :
+    dist ((a : ℂ) * Complex.exp ((2 * (Real.pi : ℂ) * (θc : ℂ) - (Real.pi : ℂ)) * Complex.I))
+        ((b : ℂ) * Complex.exp ((2 * (Real.pi : ℂ) * (θd : ℂ) - (Real.pi : ℂ)) * Complex.I))
+      ≤ ‖(a : ℂ)‖ * (2 * Real.pi * dist θc θd) + dist (a : ℂ) (b : ℂ) := by
+  set ud := Complex.exp ((2 * (Real.pi : ℂ) * (θd : ℂ) - (Real.pi : ℂ)) * Complex.I) with hud
+  refine (dist_mul_le_norm_mul_dist _ _ _ _).trans ?_
+  have hav : ‖ud‖ = 1 := by
+    rw [hud, Complex.norm_exp, show ((2 * (Real.pi : ℂ) * (θd : ℂ) - (Real.pi : ℂ)) *
+      Complex.I).re = 0 by simp, Real.exp_zero]
+  have hphase : dist (Complex.exp ((2 * (Real.pi : ℂ) * (θc : ℂ) - (Real.pi : ℂ)) * Complex.I)) ud
+      ≤ 2 * Real.pi * dist θc θd := by
+    have h := lipschitzWith_phase.dist_le_mul θc θd
+    rwa [Real.coe_toNNReal _ (by positivity)] at h
+  rw [hav, one_mul]
+  gcongr
+
+/-- Polar parametrization of a complex coordinate by a phase in the unit interval: every
+`z : ℂ` equals `‖z‖ · exp((2π θ − π) i)` for some `θ ∈ [0,1]` (`θ = (arg z + π)/(2π)`, lying in
+`(0,1]` since `arg z ∈ (−π, π]`). -/
+theorem exists_phase_mem_Icc_mul_exp (z : ℂ) :
+    ∃ θ : ℝ, θ ∈ Icc (0 : ℝ) 1 ∧
+      (‖z‖ : ℂ) * Complex.exp ((2 * Real.pi * θ - Real.pi) * Complex.I) = z := by
+  refine ⟨(z.arg + Real.pi) / (2 * Real.pi), ⟨?_, ?_⟩, ?_⟩
+  · exact div_nonneg (by linarith [Complex.neg_pi_lt_arg z]) (by positivity)
+  · rw [div_le_one (by positivity)]
+    linarith [Complex.arg_le_pi z]
+  · have hreal : (2 * Real.pi * ((z.arg + Real.pi) / (2 * Real.pi)) - Real.pi : ℝ) = z.arg := by
+      field_simp
+      ring
+    rw [show ((2 : ℂ) * (Real.pi : ℂ) * (((z.arg + Real.pi) / (2 * Real.pi) : ℝ) : ℂ)
+          - (Real.pi : ℂ))
+        = ((2 * Real.pi * ((z.arg + Real.pi) / (2 * Real.pi)) - Real.pi : ℝ) : ℂ) by
+          push_cast; ring, hreal]
+    exact Complex.norm_mul_exp_arg_mul_I z
+
 end Chebotarev
