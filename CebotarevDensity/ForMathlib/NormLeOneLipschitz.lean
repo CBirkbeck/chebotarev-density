@@ -218,4 +218,63 @@ private theorem expMapBasis_mem_iUnion_faceMapSide
   refine Set.mem_iUnion.mpr ⟨i, Set.mem_iUnion₂.mpr ⟨y w, ?_, ⟨c, hcmem, hkey⟩⟩⟩
   rcases ha with h | h <;> simp [h]
 
+/-- **Face covering.** Every point of the image of the box boundary, together with `0`, lies in
+a face-parametrization image of the unit cube: a boundary point has `x w₀ = 0` (the `w₀`-face,
+covered by `faceMapZero`) or `x i ∈ {0,1}` for some `i ≠ w₀` (a side face, covered by
+`faceMapSide i a` via `t = exp (x w₀)`); `0` itself is the `t = 0` slice of any side face, or
+the value of the (degenerate, `r = 1`) zero map handled in the final assembly. -/
+theorem image_boundary_subset_faces :
+    expMapBasis '' (closure (paramSet K) \ interior (paramSet K)) ⊆
+      faceMapZero K '' Icc 0 1 ∪
+        ⋃ i : {w : InfinitePlace K // w ≠ w₀}, ⋃ a ∈ ({0, 1} : Set ℝ),
+          faceMapSide K i a '' Icc 0 1 := by
+  classical
+  rintro _ ⟨y, ⟨hyc, hyni⟩, rfl⟩
+  rw [closure_paramSet, Set.mem_univ_pi] at hyc
+  rw [interior_paramSet, Set.mem_univ_pi] at hyni
+  push Not at hyni
+  obtain ⟨w, hw⟩ := hyni
+  have hw₀ : y w₀ ≤ 0 := by simpa using hyc w₀
+  have hIcc : ∀ v : InfinitePlace K, v ≠ w₀ → y v ∈ Icc (0 : ℝ) 1 := fun v hv ↦ by
+    simpa [hv] using hyc v
+  by_cases hwe : w = w₀
+  · rw [if_pos hwe, Set.mem_Iio, not_lt, hwe] at hw
+    have hy0 : y w₀ = 0 := le_antisymm hw₀ hw
+    refine Or.inl ⟨fun i ↦ y i.1, ⟨fun i ↦ (hIcc i.1 i.2).1, fun i ↦ (hIcc i.1 i.2).2⟩, ?_⟩
+    rw [faceMapZero]
+    congr 1
+    funext v
+    by_cases hv : v = w₀
+    · rw [dif_pos hv, hv, hy0]
+    · simp only [dif_neg hv]
+  · rw [if_neg hwe] at hw
+    have h1 := hIcc w hwe
+    rw [Set.mem_Ioo, not_and_or, not_lt, not_lt] at hw
+    refine Or.inr (expMapBasis_mem_iUnion_faceMapSide K hwe hw₀ hIcc ?_)
+    rcases hw with h | h
+    · exact Or.inl (le_antisymm h h1.1)
+    · exact Or.inr (le_antisymm h1.2 h)
+
+/-- Relabel cube coordinates `Fin (#InfinitePlace K - 1) → ℝ` by the non-distinguished places
+`{w ≠ w₀}` via `equivFinRank`. -/
+def cubeRelabel (c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) :
+    {w : InfinitePlace K // w ≠ w₀} → ℝ :=
+  fun j ↦ c (equivFinRank.symm j)
+
+open scoped Classical in
+theorem lipschitzWith_cubeRelabel : LipschitzWith 1 (cubeRelabel K) :=
+  lipschitzWith_one_of_edist_apply_le (F := cubeRelabel K)
+    fun c d j ↦ edist_le_pi_edist c d (equivFinRank.symm j)
+
+theorem cubeRelabel_mem_Icc {c : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ}
+    (hc : c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1) :
+    cubeRelabel K c ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1 :=
+  ⟨fun _ ↦ hc.1 _, fun _ ↦ hc.2 _⟩
+
+theorem exists_cubeRelabel_eq {c' : {w : InfinitePlace K // w ≠ w₀} → ℝ}
+    (hc' : c' ∈ Icc (0 : {w : InfinitePlace K // w ≠ w₀} → ℝ) 1) :
+    ∃ c ∈ Icc (0 : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) 1, cubeRelabel K c = c' :=
+  ⟨fun j ↦ c' (equivFinRank j), ⟨fun j ↦ hc'.1 _, fun j ↦ hc'.2 _⟩,
+    funext fun j ↦ by simp [cubeRelabel]⟩
+
 end Chebotarev
