@@ -435,4 +435,39 @@ theorem exists_phase_mem_Icc_mul_exp (z : ℂ) :
           push_cast; ring, hreal]
     exact Complex.norm_mul_exp_arg_mul_I z
 
+open scoped Classical in
+/-- The lift splits the `d − 1` cube coordinates into the `r − 1 = #InfinitePlace K − 1`
+"modulus" coordinates (fed to a `realSpace`-valued cover map) and the `r₂` "phase" coordinates
+(one per complex place). The cardinalities match: `(d − 1) = (r − 1) + r₂` follows from
+`r₁ + 2 r₂ = d` (`card_add_two_mul_card_eq_rank`) and `r = r₁ + r₂`
+(`card_eq_nrRealPlaces_add_nrComplexPlaces`), with `r ≥ 1` (`Fintype.card_pos`). -/
+noncomputable def mixedCubeEquiv : Fin (Module.finrank ℚ K - 1)
+    ≃ Fin (Fintype.card (InfinitePlace K) - 1) ⊕ {w : InfinitePlace K // IsComplex w} := by
+  apply Fintype.equivOfCardEq
+  rw [Fintype.card_sum, Fintype.card_fin, Fintype.card_fin]
+  have h1 : Fintype.card (InfinitePlace K) = nrRealPlaces K + nrComplexPlaces K :=
+    card_eq_nrRealPlaces_add_nrComplexPlaces K
+  have h2 : nrRealPlaces K + 2 * nrComplexPlaces K = Module.finrank ℚ K :=
+    card_add_two_mul_card_eq_rank K
+  have hpos : 1 ≤ Fintype.card (InfinitePlace K) := Fintype.card_pos
+  have h3 : nrComplexPlaces K = Fintype.card {w : InfinitePlace K // IsComplex w} := rfl
+  lia
+
+/-- Lift a `realSpace`-valued cover map `ψ` to a `mixedSpace`-valued map, using the first
+`r − 1` cube coordinates as the modulus input to `ψ` and the last `r₂` coordinates as the phases
+of the complex places, with the real places carrying the sign pattern `ε`.
+
+At a real place `w` the coordinate is `± (ψ ·) w`; at a complex place `w` it is
+`(ψ ·) w · exp((2π θ_w − π) i)`. By construction `normAtAllPlaces (liftToMixed ψ ε c) = ψ (…)`
+whenever the modulus values `(ψ ·) w` are nonnegative. -/
+noncomputable def liftToMixed (ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K)
+    (ε : {w : InfinitePlace K // IsReal w} → Bool)
+    (c : Fin (Module.finrank ℚ K - 1) → ℝ) : mixedSpace K :=
+  (fun w : {w : InfinitePlace K // IsReal w} ↦
+      (if ε w then (1 : ℝ) else -1) * ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1,
+    fun w : {w : InfinitePlace K // IsComplex w} ↦
+      (ψ (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) w.1 : ℂ) *
+        Complex.exp ((2 * Real.pi * c ((mixedCubeEquiv K).symm (Sum.inr w)) - Real.pi) *
+          Complex.I))
+
 end Chebotarev
