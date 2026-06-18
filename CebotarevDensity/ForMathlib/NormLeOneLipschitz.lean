@@ -523,4 +523,71 @@ theorem lipschitzWith_liftToMixed {ψ : (Fin (Fintype.card (InfinitePlace K) - 1
           ring
       _ = ↑N * dist c d := by rw [hN, NNReal.coe_add]
 
+/-- Every member of `frontierCoverFamily` is **globally bounded** by a single constant `B`:
+each face map is continuous and is only ever evaluated on the compact cube (the clamp
+`clampUnit` lands in `Icc 0 1`), so its range is bounded; take the supremum over the finitely
+many faces. This is the boundedness hypothesis feeding `lipschitzWith_liftToMixed`. -/
+theorem exists_bound_frontierCoverFamily :
+    ∃ B : ℝ, ∀ s c, ‖frontierCoverFamily K s c‖ ≤ B := by
+  classical
+  have hbd : ∀ (g : ({w : InfinitePlace K // w ≠ w₀} → ℝ) → realSpace K),
+      Continuous g → ∃ B : ℝ, ∀ c, ‖g (clampUnit _ (cubeRelabel K c))‖ ≤ B := by
+    intro g hg
+    obtain ⟨B, hB⟩ := (isCompact_Icc.image hg).isBounded.subset_closedBall 0
+    refine ⟨B, fun c ↦ ?_⟩
+    have := hB (mem_image_of_mem g (clampUnit_mem_Icc _ (cubeRelabel K c)))
+    rwa [Metric.mem_closedBall, dist_zero_right] at this
+  obtain ⟨B₀, hB₀⟩ := hbd _ (contDiff_faceMapZero K).continuous
+  choose Bs hBs using fun p : {w : InfinitePlace K // w ≠ w₀} × Bool ↦
+    hbd _ (contDiff_faceMapSide K p.1 (if p.2 then 1 else 0)).continuous
+  refine ⟨↑(B₀.toNNReal ⊔ Finset.univ.sup fun p ↦ (Bs p).toNNReal), fun s c ↦ ?_⟩
+  rcases s with _ | _ | p
+  · simp only [frontierCoverFamily, Sum.elim_inl, norm_zero]
+    positivity
+  · refine (hB₀ c).trans <| (Real.le_coe_toNNReal B₀).trans ?_
+    exact_mod_cast le_sup_left
+  · refine (hBs p c).trans <| (Real.le_coe_toNNReal (Bs p)).trans ?_
+    exact_mod_cast le_sup_of_le_right (Finset.le_sup (f := fun q ↦ (Bs q).toNNReal)
+      (Finset.mem_univ p))
+
+/-- **Fibre covering.** If a point `y` of the `realSpace` frontier cover is `normAtAllPlaces x`,
+then `x` lies in the cube image of `liftToMixed K ψ ε` for the sign pattern `ε` reading off the
+signs of the real coordinates of `x`: the modulus coordinates `(ψ ·) w = normAtPlace w x` are the
+absolute values / norms of the coordinates of `x`, and the phases come from the polar form of the
+complex coordinates (`exists_phase_mem_Icc_mul_exp`). -/
+theorem mem_iUnion_image_liftToMixed_of_eq
+    {ψ : (Fin (Fintype.card (InfinitePlace K) - 1) → ℝ) → realSpace K}
+    {c' : Fin (Fintype.card (InfinitePlace K) - 1) → ℝ} (hc' : c' ∈ Icc (0 : _) 1)
+    {x : mixedSpace K} (hx : normAtAllPlaces x = ψ c') :
+    x ∈ ⋃ ε : {w : InfinitePlace K // IsReal w} → Bool, liftToMixed K ψ ε '' Icc 0 1 := by
+  choose θ hθmem hθeq using fun w : {w : InfinitePlace K // IsComplex w} ↦
+    exists_phase_mem_Icc_mul_exp (x.2 w)
+  set ε : {w : InfinitePlace K // IsReal w} → Bool := fun w ↦ decide (0 ≤ x.1 w) with hε
+  set c : Fin (Module.finrank ℚ K - 1) → ℝ :=
+    fun k ↦ Sum.elim c' θ (mixedCubeEquiv K k) with hc
+  have hproj : (fun i ↦ c ((mixedCubeEquiv K).symm (Sum.inl i))) = c' := by
+    funext i
+    simp [hc]
+  have hck : ∀ k, c k ∈ Icc (0 : ℝ) 1 := fun k ↦ by
+    change Sum.elim c' θ (mixedCubeEquiv K k) ∈ Icc (0 : ℝ) 1
+    rcases mixedCubeEquiv K k with i | w
+    · exact ⟨hc'.1 i, hc'.2 i⟩
+    · exact hθmem w
+  refine Set.mem_iUnion.mpr ⟨ε, c, ⟨fun k ↦ (hck k).1, fun k ↦ (hck k).2⟩, ?_⟩
+  · rw [liftToMixed, hproj]
+    have hcph : ∀ w : {w : InfinitePlace K // IsComplex w},
+        c ((mixedCubeEquiv K).symm (Sum.inr w)) = θ w := fun w ↦ by rw [hc]; simp
+    have hmodreal : ∀ w : {w : InfinitePlace K // IsReal w}, ψ c' w.1 = |x.1 w| := fun w ↦ by
+      rw [← hx, normAtAllPlaces_apply, normAtPlace_apply_of_isReal w.2, ← Real.norm_eq_abs]
+    have hmodcplx : ∀ w : {w : InfinitePlace K // IsComplex w}, ψ c' w.1 = ‖x.2 w‖ :=
+      fun w ↦ by rw [← hx, normAtAllPlaces_apply, normAtPlace_apply_of_isComplex w.2]
+    refine Prod.ext (funext fun w ↦ ?_) (funext fun w ↦ ?_)
+    · simp only [hε, hmodreal w]
+      by_cases hpos : 0 ≤ x.1 w
+      · rw [decide_eq_true hpos, if_pos rfl, one_mul, abs_of_nonneg hpos]
+      · rw [decide_eq_false hpos, if_neg (by simp), abs_of_neg (not_le.mp hpos)]
+        ring
+    · simp only [hcph w, hmodcplx w]
+      exact hθeq w
+
 end Chebotarev
