@@ -56,17 +56,17 @@ variable (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
 -- `rfl`, so `Injective.tsum_eq` / `comp_injective` go through without the coercion whnf-explosion.
 omit [NumberField K] [NumberField L] in
 private theorem unramifiedPrime_toPrimeNeBot_injective :
-    Function.Injective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
-      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+    Function.Injective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
+      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2.2⟩, 𝔭.2.1, 𝔭.2.2.1⟩ :
         {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
   fun _ _ hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
 
 omit [NumberField K] [NumberField L] in
 private theorem unramifiedPrime_toPrimeNeBot_surjective :
-    Function.Surjective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
-      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ :
+    Function.Surjective (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
+      (⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2.2⟩, 𝔭.2.1, 𝔭.2.2.1⟩ :
         {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥})) :=
-  fun 𝔮 ↦ ⟨⟨𝔮.1, 𝔮.2.1.1, 𝔮.2.1.2⟩, Subtype.ext rfl⟩
+  fun 𝔮 ↦ ⟨⟨𝔮.1, 𝔮.2.1.1, 𝔮.2.2.2, 𝔮.2.1.2⟩, Subtype.ext rfl⟩
 
 /-! ### Sub-lemmas for `chebotarev_cyclotomic`
 
@@ -97,7 +97,7 @@ theorem log_artinLSeries_asymp_character_sum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) *
             (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
         ≤ C * Real.log (1 / (s - 1)) + C := by
@@ -116,22 +116,22 @@ theorem log_artinLSeries_asymp_character_sum
     exact Real.log_nonneg ((one_le_div₀ hpos).2 (by linarith))
   filter_upwards [hC, hlogpos, self_mem_nhdsWithin] with s hCs hlog hs1
   simp only [Set.mem_Ioi] at hs1
-  have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ =
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ by
     have hpos : 0 < Ideal.absNorm 𝔭.1 := by
       have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h ↦
-        UnramifiedIn.ne_bot K L 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
+        𝔭.2.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
       lia
     rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
       Complex.ofReal_re]
   set U : Set (Ideal (𝓞 K)) := {𝔭 | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
-  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
     ((summable_prime_absNorm_rpow U hs1).comp_injective
       (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
   have hUtsum : primeIdealZetaSum U s =
-      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := by
     rw [primeIdealZetaSum_def]
     refine ((unramifiedPrime_toPrimeNeBot_injective K L).tsum_eq
@@ -139,19 +139,19 @@ theorem log_artinLSeries_asymp_character_sum
         (Ideal.absNorm 𝔮.1 : ℝ) ^ (-s)) ?_).symm
     rw [(unramifiedPrime_toPrimeNeBot_surjective K L).range_eq]
     exact Set.subset_univ _
-  have hsumnorm : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+  have hsumnorm : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖) :=
     hs0.congr fun 𝔭 ↦ (hnormterm 𝔭).symm
-  have hle : (∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hle : (∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := by
     rw [← hUtsum]
     exact primeIdealZetaSum_le_of_subset (Set.subset_univ U) hs1
-  calc ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  calc ‖(∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))‖
-      ≤ ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ≤ ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ :=
         norm_tsum_le_tsum_norm hsumnorm
-    _ = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+    _ = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := tsum_congr hnormterm
     _ ≤ primeIdealZetaSum (Set.univ : Set (Ideal (𝓞 K))) s := hle
     _ ≤ Real.log (1 / (s - 1)) + C := hCs
@@ -403,7 +403,7 @@ private theorem norm_bounded_nhdsGT_of_deriv_continuousOn
 private noncomputable def twistedPrimeSum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) (s : ℝ) : ℂ :=
-  ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
     (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))
 
 /-- Each summand of `twistedPrimeSum` has norm `N𝔭⁻ˢ` (since `‖χ(Frob)‖ = 1`), so the family is
@@ -411,20 +411,20 @@ summable: it is dominated by the summable real prime sum `Σ_𝔭 N𝔭^{-s}` (f
 private theorem summable_twistedPrimeSum
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) {s : ℝ} (hs : 1 < s) :
-    Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+    Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))) := by
-  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+  have hs0 : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
     ((summable_prime_absNorm_rpow _ hs).comp_injective
       (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
   have hnorm1 : ∀ c : ConjClasses Gal(L/K), ‖(χ c.out : ℂ)‖ = 1 := fun c ↦
     (((Units.coeHom ℂ).comp χ).isOfFinOrder (isOfFinOrder_of_finite c.out)).norm_eq_one
-  have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hnormterm : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       ‖(χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ =
         (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ by
     have hpos : 0 < Ideal.absNorm 𝔭.1 := by
       have hne : Ideal.absNorm 𝔭.1 ≠ 0 := fun h ↦
-        UnramifiedIn.ne_bot K L 𝔭.2.2 (Ideal.absNorm_eq_zero_iff.mp h)
+        𝔭.2.2.1 (Ideal.absNorm_eq_zero_iff.mp h)
       lia
     rw [norm_mul, hnorm1, one_mul, Complex.norm_natCast_cpow_of_pos hpos, Complex.neg_re,
       Complex.ofReal_re]
@@ -574,10 +574,10 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
         galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s))
     (hLf0 : Lf 1 ≠ 0) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
   classical
-  set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}
+  set ι := {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭}
   set N : ι → ℕ := fun 𝔭 ↦ Ideal.absNorm 𝔭.1
   set c : ι → ℂ := fun 𝔭 ↦ (χ (frobeniusClass K L 𝔭.1).out : ℂ) with hc
   set G : ℝ → ℂ := fun s ↦ ∑' 𝔭 : ι, -Complex.log (1 - c 𝔭 * (N 𝔭 : ℂ) ^ (-(s : ℂ))) with hGdef
@@ -585,7 +585,7 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
     (((Units.coeHom ℂ).comp χ).isOfFinOrder
       (isOfFinOrder_of_finite (frobeniusClass K L 𝔭.1).out)).norm_eq_one
   have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 ↦
-    two_le_absNorm_prime K 𝔭.1 𝔭.2.1 (UnramifiedIn.ne_bot K L 𝔭.2.2)
+    two_le_absNorm_prime K 𝔭.1 𝔭.2.1 𝔭.2.2.1
   have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι ↦ (N 𝔭 : ℝ) ^ (-r)) := fun r hr ↦
     ((summable_prime_absNorm_rpow _ hr).comp_injective
       (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl
@@ -634,7 +634,7 @@ private theorem artinLSeries_prime_sum_bounded_of_ne_one
     (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
     [hAb : IsMulCommutative Gal(L/K)] (hm : m % 4 ≠ 2) (χ : galoisCharacter K L) (hχ : χ ≠ 1) :
     ∃ C : ℝ, ∀ᶠ s : ℝ in 𝓝[>] (1 : ℝ),
-      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ‖∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))‖ ≤ C := by
   obtain ⟨Lf, hLf_an, hLf_eq⟩ := artinLSeries_analytic_extension K L m hm χ hχ
   exact artinLSeries_prime_sum_bounded_of_analytic_extension K L χ hχ Lf hLf_an hLf_eq
@@ -741,15 +741,17 @@ private theorem twistedPrimeSum_one_eq
   have hinj : Function.Injective
       (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧
           𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
+        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.2.2, 𝔭.2.1.2⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭})) :=
     fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
   have hsurj : Function.Surjective
       (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ∧
           𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
-    fun 𝔭 ↦ ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩, rfl⟩
+        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.2.2, 𝔭.2.1.2⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭})) :=
+    fun 𝔭 ↦ ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2.2⟩, 𝔭.2.1, 𝔭.2.2.1⟩, rfl⟩
   rw [twistedPrimeSum, primeIdealZetaSum_def, Complex.ofReal_tsum,
-    ← hinj.tsum_eq (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+    ← hinj.tsum_eq (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       ((1 : galoisCharacter K L) (frobeniusClass K L 𝔭.1).out : ℂ)
         * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)))
       (by rw [hsurj.range_eq]; exact Set.subset_univ _)]
@@ -771,16 +773,16 @@ private theorem sum_charTwist_mul_twistedPrimeSum_eq
         (primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
           frobeniusClass K L 𝔭 = ConjClasses.mk σ} s : ℂ) := by
   classical
-  have hfreal : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hfreal : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) = ((Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) : ℝ) := fun 𝔭 ↦ by
     rw [show (-(s : ℂ)) = ((-s : ℝ) : ℂ) by push_cast; ring,
       Complex.ofReal_cpow (by positivity), Complex.ofReal_natCast]
   have hinterchange : (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s)
-      = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ))
             * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) := by
     have hstep : ∀ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * twistedPrimeSum K L χ s
-        = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+        = ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
             ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ)
               * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) := fun χ ↦ by
       rw [twistedPrimeSum, ← tsum_mul_left]
@@ -789,27 +791,28 @@ private theorem sum_charTwist_mul_twistedPrimeSum_eq
       ← Summable.tsum_finsetSum (fun χ _ ↦
         ((summable_twistedPrimeSum K L χ hs).mul_left ((χ σ : ℂ))⁻¹).congr fun 𝔭 ↦ by ring)]
     exact tsum_congr fun 𝔭 ↦ (Finset.sum_mul _ _ _).symm
-  have hcollapse : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hcollapse : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       (∑ χ : galoisCharacter K L, ((χ σ : ℂ))⁻¹ * (χ (frobeniusClass K L 𝔭.1).out : ℂ))
           * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ))
         = if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then
             (Nat.card Gal(L/K) : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-(s : ℂ)) else 0 := fun 𝔭 ↦ by
     have := 𝔭.2.1
     by_cases h : frobeniusClass K L 𝔭.1 = ConjClasses.mk σ
-    · rw [sum_charTwist_eq K L m σ 𝔭.1 𝔭.2.2 h, if_pos h]
-    · rw [sum_charTwist_ne K L m σ 𝔭.1 𝔭.2.2 h, if_neg h, zero_mul]
+    · rw [sum_charTwist_eq K L m σ 𝔭.1 𝔭.2.2.2 h, if_pos h]
+    · rw [sum_charTwist_ne K L m σ 𝔭.1 𝔭.2.2.2 h, if_neg h, zero_mul]
   have hfinj : Function.Injective
       (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭 ∈ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
           frobeniusClass K L 𝔭 = ConjClasses.mk σ} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
-        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.1.2.1⟩ : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭})) :=
+        (⟨𝔭.1, 𝔭.2.1.1, 𝔭.2.2.2, 𝔭.2.1.2.1⟩ :
+          {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭})) :=
     fun a b hab ↦ Subtype.ext (Subtype.mk_eq_mk.mp hab)
   have hfibre : primeIdealZetaSum {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭 ∧
         frobeniusClass K L 𝔭 = ConjClasses.mk σ} s =
-      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      ∑' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
         (if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) else 0) :=
     by
     rw [primeIdealZetaSum_def, ← hfinj.tsum_eq
-      (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+      (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
         if frobeniusClass K L 𝔭.1 = ConjClasses.mk σ then (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) else 0)
       ?_]
     · exact tsum_congr fun 𝔭 ↦ (if_pos 𝔭.2.1.2.2).symm
@@ -817,7 +820,7 @@ private theorem sum_charTwist_mul_twistedPrimeSum_eq
       have h : frobeniusClass K L 𝔭.1 = ConjClasses.mk σ := by
         by_contra hne
         exact h𝔭 (if_neg hne)
-      exact ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2, h⟩, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩, rfl⟩
+      exact ⟨⟨𝔭.1, ⟨𝔭.2.1, 𝔭.2.2.2, h⟩, 𝔭.2.1, 𝔭.2.2.1⟩, rfl⟩
   rw [hinterchange, tsum_congr hcollapse, hfibre, Complex.ofReal_tsum, ← tsum_mul_left]
   refine tsum_congr fun 𝔭 ↦ ?_
   rw [apply_ite (Complex.ofReal), mul_ite, Complex.ofReal_zero, mul_zero, hfreal 𝔭]

@@ -20,9 +20,11 @@ a given prime $`\fp` of $`\OK`.
 
 :::definition "unramified-in" (lean := "Chebotarev.UnramifiedIn")
 
-A nonzero prime ideal $`\fp` of $`\OK` is *unramified in $`L`* if
-every prime $`\fP` of $`\Ocirc_L` lying over $`\fp` has ramification
-index $`1`, i.e. $`\fp\Ocirc_L` factors into distinct primes.
+A prime ideal $`\fp` of $`\OK` is *unramified in $`L`* if every maximal
+prime $`\fP` of $`\Ocirc_L` lying over $`\fp` is unramified over $`\OK`
+(for nonzero $`\fp`: ramification index $`1`, i.e. $`\fp\Ocirc_L`
+factors into distinct primes). Nonzeroness of $`\fp` is not part of the
+predicate; it is imposed separately by the lemmas that need it.
 
 :::
 

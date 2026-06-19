@@ -491,20 +491,22 @@ private theorem frobeniusClass_proj_isPrime_aux
     [IsGalois K L] [IsGalois K M]
     (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
     (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
+    (h𝔭 : 𝔭 ≠ ⊥)
     (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
     frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
-  obtain ⟨𝔓, h𝔓p, h𝔓lo, -⟩ := exists_prime_liesOver K M 𝔭 (UnramifiedIn.ne_bot K M _hunrM)
+  obtain ⟨𝔓, h𝔓p, h𝔓lo, -⟩ := exists_prime_liesOver K M 𝔭 h𝔭
   haveI := h𝔓p
   haveI := h𝔓lo
   haveI : Finite (𝓞 M ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
-    (ne_bot_of_ramificationIdx_eq_one K M (UnramifiedIn.ramificationIdx_eq_one K M _hunrM 𝔓 h𝔓lo))
+    (ne_bot_of_ramificationIdx_eq_one K M
+      (UnramifiedIn.ramificationIdx_eq_one K M _hunrM h𝔭 𝔓 h𝔓lo))
   set σM : Gal(M/K) := arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hMfrobσM : IsArithFrobAt (𝓞 K) σM 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hconjM : IsConj σM τM := ConjClasses.mk_eq_mk_iff_isConj.mp
-    ((frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM σM 𝔓 hMfrobσM h𝔓lo).symm.trans _hfr)
+    ((frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM h𝔭 σM 𝔓 hMfrobσM h𝔓lo).symm.trans _hfr)
   haveI : (𝔓.under (𝓞 L)).IsPrime := Ideal.IsPrime.under (𝓞 L) 𝔓
   haveI : (𝔓.under (𝓞 L)).LiesOver 𝔭 := ⟨((Ideal.under_under 𝔓).trans h𝔓lo.over.symm).symm⟩
-  rw [frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 _hunrL (σM.restrictNormal L) (𝔓.under (𝓞 L))
+  rw [frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 _hunrL h𝔭 (σM.restrictNormal L) (𝔓.under (𝓞 L))
     (isArithFrobAt_restrictNormal_repl K L M σM 𝔓 hMfrobσM) inferInstance]
   refine ConjClasses.mk_eq_mk_iff_isConj.mpr ?_
   have hconjL := MonoidHom.map_isConj (AlgEquiv.restrictNormalHom L) hconjM
@@ -522,12 +524,12 @@ private theorem frobeniusClass_proj
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
     [IsGalois K L] [IsGalois K M]
     (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
-    (𝔭 : Ideal (𝓞 K)) (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
+    (𝔭 : Ideal (𝓞 K)) (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭) (h𝔭 : 𝔭 ≠ ⊥)
     (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
     frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
   by_cases hp : 𝔭.IsPrime
   · haveI := hp
-    exact frobeniusClass_proj_isPrime_aux K L M σ τM _hτM 𝔭 _hunrM _hunrL _hfr
+    exact frobeniusClass_proj_isPrime_aux K L M σ τM _hτM 𝔭 _hunrM _hunrL h𝔭 _hfr
   · have hMjunk : frobeniusClass K M 𝔭 = ConjClasses.mk 1 := by
       rw [frobeniusClass, dif_neg fun h ↦ hp h.1]
     have hLjunk : frobeniusClass K L 𝔭 = ConjClasses.mk 1 := by
@@ -619,13 +621,13 @@ hypothesis) factors as `e(𝔮/𝔭)·e(𝔓/𝔮)` (`Ideal.ramificationIdx_alge
 private theorem unramifiedIn_tower_descend
     (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M] [IsGalois K L] [IsGalois K M]
-    (𝔭 : Ideal (𝓞 K)) (hunr : UnramifiedIn K M 𝔭) : UnramifiedIn K L 𝔭 := by
+    (𝔭 : Ideal (𝓞 K)) (hunr : UnramifiedIn K M 𝔭) (h𝔭 : 𝔭 ≠ ⊥) : UnramifiedIn K L 𝔭 := by
   haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
-  refine ⟨hunr.1, fun 𝔮 h𝔮max h𝔮lo ↦ ?_⟩
+  refine fun 𝔮 h𝔮max h𝔮lo ↦ ?_
   haveI := h𝔮max
   haveI := h𝔮lo
   haveI h𝔮p : 𝔮.IsPrime := h𝔮max.isPrime
-  have h𝔮bot : 𝔮 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot hunr.1 𝔮
+  have h𝔮bot : 𝔮 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭 𝔮
   obtain ⟨𝔓, _, h𝔓p, h𝔓comap⟩ :=
     Ideal.exists_ideal_over_prime_of_isIntegral (S := 𝓞 M) 𝔮 ⊥ (by simp)
   haveI := h𝔓p
@@ -638,11 +640,11 @@ private theorem unramifiedIn_tower_descend
   have hunderP : Ideal.under (𝓞 K) 𝔓 = 𝔭 := h𝔓lo𝔭.over.symm
   have hP1 : (Ideal.under (𝓞 K) 𝔓).ramificationIdx 𝔓 = 1 :=
     (Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := 𝓞 K) (S := 𝓞 M) h𝔓bot).mp
-      (hunr.2 𝔓 h𝔓max h𝔓lo𝔭)
+      (hunr 𝔓 h𝔓max h𝔓lo𝔭)
   rw [hunderP] at hP1
   have htower := Ideal.ramificationIdx_algebra_tower (R := 𝓞 K) (S := 𝓞 L) (T := 𝓞 M)
     (p := 𝔭) (P := 𝔮) (Q := 𝔓) (Ideal.map_ne_bot_of_ne_bot h𝔮bot)
-    (Ideal.map_ne_bot_of_ne_bot hunr.1) (by rw [Ideal.map_le_iff_le_comap, h𝔓comap])
+    (Ideal.map_ne_bot_of_ne_bot h𝔭) (by rw [Ideal.map_le_iff_le_comap, h𝔓comap])
   rw [hP1] at htower
   have he𝔮 : 𝔭.ramificationIdx 𝔮 = 1 := Nat.eq_one_of_mul_eq_one_right htower.symm
   rw [Algebra.isUnramifiedAt_iff_of_isDedekindDomain (R := 𝓞 K) (S := 𝓞 L) h𝔮bot, h𝔭under]
@@ -809,22 +811,40 @@ private theorem exists_crossing_family_tagged
   have hσMchar : ∀ τ, χK (σM τ) = τ :=
     fun τ ↦ congrArg Prod.snd (hσMpair τ)
   refine ⟨fun 𝔭 ↦ χK (frobeniusClass K M 𝔭).out,
-    fun τ ↦ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+    fun τ ↦ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K M 𝔭 ∧
       frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)}, ?_, ?_, ?_⟩
-  · rintro τ 𝔭 ⟨hp, hunrM, hfr⟩
-    have hunrL : UnramifiedIn K L 𝔭 := unramifiedIn_tower_descend K L M 𝔭 hunrM
+  · rintro τ 𝔭 ⟨hp, hbot, hunrM, hfr⟩
+    have hunrL : UnramifiedIn K L 𝔭 := unramifiedIn_tower_descend K L M 𝔭 hunrM hbot
     exact ⟨hp, hunrL,
-      frobeniusClass_proj K L M σ (σM τ) (hσMrestr τ) 𝔭 hunrM hunrL hfr⟩
-  · rintro τ 𝔭 ⟨-, -, hfr⟩
+      frobeniusClass_proj K L M σ (σM τ) (hσMrestr τ) 𝔭 hunrM hunrL hbot hfr⟩
+  · rintro τ 𝔭 ⟨-, -, -, hfr⟩
     have hconj : IsConj (frobeniusClass K M 𝔭).out (σM (τ : (ZMod m)ˣ)) := by
       rw [hfr]
       exact ConjClasses.mk_eq_mk_iff_isConj.mp (Quotient.out_eq _)
     change χK (frobeniusClass K M 𝔭).out = (τ : (ZMod m)ˣ)
     rw [isConj_iff_eq.mp (χK.map_isConj hconj), hσMchar]
   · rintro ⟨τ, hτ⟩
-    exact density_crossing_fibre_aux K L M m hm4 hcop (σM τ)
+    have hzeta : ∀ s : ℝ, primeIdealZetaSum
+        {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K M 𝔭 ∧
+          frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)} s
+        = primeIdealZetaSum
+          {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+            frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)} s := fun s ↦ by
+      rw [primeIdealZetaSum_def, primeIdealZetaSum_def]
+      refine (Equiv.subtypeEquivRight
+        (p := fun 𝔭 ↦ 𝔭 ∈ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K M 𝔭 ∧
+            frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥)
+        (q := fun 𝔭 ↦ 𝔭 ∈ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ UnramifiedIn K M 𝔭 ∧
+            frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥)
+        (fun 𝔭 ↦ ?_)).tsum_eq (fun 𝔭 ↦ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))
+      simp only [Set.mem_setOf_eq]
+      exact ⟨fun ⟨⟨hp, _, hu, hf⟩, hp', hb⟩ ↦ ⟨⟨hp, hu, hf⟩, hp', hb⟩,
+        fun ⟨⟨hp, hu, hf⟩, hp', hb⟩ ↦ ⟨⟨hp, hb, hu, hf⟩, hp', hb⟩⟩
+    have hdens := density_crossing_fibre_aux K L M m hm4 hcop (σM τ)
       (zpowers_inf_fixingSubgroup_eq_bot_aux K L M m ζ hζ σ τ hτ (σM τ) (hσMrestr τ)
         (hσMchar τ) hΦbij)
+    rw [HasDirichletDensity] at hdens ⊢
+    exact hdens.congr fun s ↦ by rw [hzeta]
 
 private theorem exists_cyclotomicCrossing_fibres
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]

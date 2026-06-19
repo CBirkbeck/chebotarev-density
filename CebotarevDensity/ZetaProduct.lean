@@ -194,7 +194,7 @@ theorem exists_artinLSeries_eulerProduct_abelian
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [_hAb : IsMulCommutative Gal(L/K)] (χ : galoisCharacter K L) :
     ∀ s : ℂ, 1 < s.re →
-      (∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+      (∏' 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
           (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹)
         = ∑' 𝔞 : {𝔞 : Ideal (𝓞 K) // 𝔞 ≠ ⊥},
             galoisCharacterOnIdeal K L χ 𝔞.1 * (Ideal.absNorm 𝔞.1 : ℂ) ^ (-s) := by
@@ -203,8 +203,8 @@ theorem exists_artinLSeries_eulerProduct_abelian
   rw [← weighted_eulerProduct_eq_tsum K (s := s) hs w (galoisCharacterOnIdeal_one K L χ)
     (fun {𝔞 𝔟} h𝔞 h𝔟 ↦ galoisCharacterOnIdeal_mul K L χ h𝔞 h𝔟)
     (norm_galoisCharacterOnIdeal_le_one K L χ)]
-  set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} →
-      {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := fun 𝔭 ↦ ⟨𝔭.1, 𝔭.2.1, 𝔭.2.2.ne_bot⟩ with hg
+  set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} →
+      {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} := fun 𝔭 ↦ ⟨𝔭.1, 𝔭.2.1, 𝔭.2.2.1⟩ with hg
   set f : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℂ :=
     fun 𝔭 ↦ (1 - w 𝔭.1 * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ with hf
   have hg_inj : Function.Injective g := fun _ _ hab ↦
@@ -218,12 +218,12 @@ theorem exists_artinLSeries_eulerProduct_abelian
       apply hmem
       rw [hw, galoisCharacterOnIdeal_apply_prime K L χ 𝔭.1 𝔭.2.2, if_neg hnr, zero_mul, sub_zero,
         inv_one]
-    exact ⟨⟨𝔭.1, 𝔭.2.1, hunr⟩, rfl⟩
+    exact ⟨⟨𝔭.1, 𝔭.2.1, 𝔭.2.2, hunr⟩, rfl⟩
   rw [← hg_inj.tprod_eq hsupp]
   refine tprod_congr fun 𝔭 ↦ ?_
   simp only [hf, hg, hw]
   haveI := 𝔭.2.1
-  rw [galoisCharacterOnIdeal_apply_prime K L χ 𝔭.1 𝔭.2.2.ne_bot, if_pos 𝔭.2.2]
+  rw [galoisCharacterOnIdeal_apply_prime K L χ 𝔭.1 𝔭.2.2.1, if_pos 𝔭.2.2.2]
 
 /-! ### Sub-lemmas for `dedekindZeta_local_factor_eq_product_artin_local`
 
@@ -356,7 +356,7 @@ Source quote (paraphrased identity): the local factor
 theorem dedekindZeta_local_factor_eq_product_artin_local
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     [FiniteDimensional K L] [hAb : IsMulCommutative Gal(L/K)] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    (_hunr : UnramifiedIn K L 𝔭) (s : ℂ) (_hs : 1 < s.re) :
+    (_hunr : UnramifiedIn K L 𝔭) (h𝔭 : 𝔭 ≠ ⊥) (s : ℂ) (_hs : 1 < s.re) :
     ∏' 𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥},
         (1 - (Ideal.absNorm 𝔓.1 : ℂ) ^ (-s))⁻¹
       = ∏' χ : galoisCharacter K L,
@@ -373,14 +373,14 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
   have hcount : Nat.card {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥}
       = Nat.card Gal(L/K) / f := by
     have hmul := card_primesAbove_mul_orderOf_eq K L σ (frobeniusClass K L 𝔭)
-      (Quotient.out_eq _) 𝔭 _hunr rfl
+      (Quotient.out_eq _) 𝔭 _hunr h𝔭 rfl
     rw [← hf] at hmul
     exact (Nat.div_eq_of_eq_mul_left hfpos hmul.symm).symm
   have hRHS : (∏' χ : galoisCharacter K L,
         (1 - ((χ σ : ℂˣ) : ℂ) * Y)⁻¹)
       = ((1 - Y ^ f) ^ (Nat.card Gal(L/K) / f))⁻¹ := by
     rw [tprod_fintype, Finset.prod_inv_distrib, prod_galoisCharacter_one_sub σ Y, hf]
-  have hpbot : 𝔭 ≠ ⊥ := UnramifiedIn.ne_bot K L _hunr
+  have hpbot : 𝔭 ≠ ⊥ := h𝔭
   haveI : 𝔭.IsMaximal := ‹𝔭.IsPrime›.isMaximal hpbot
   haveI : Finite (𝔭.primesOver (𝓞 L)) := (IsDedekindDomain.primesOver_finite 𝔭 (𝓞 L)).to_subtype
   haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver 𝔭 ∧ 𝔓 ≠ ⊥} :=
@@ -397,7 +397,7 @@ theorem dedekindZeta_local_factor_eq_product_artin_local
     have hdeg : (𝔓.1.under (𝓞 K)).inertiaDeg 𝔓.1 = f := by
       rw [Ideal.inertiaDeg_algebraMap, hf]
       exact finrank_residue_eq_orderOf K L σ (frobeniusClass K L 𝔭) (Quotient.out_eq _)
-        𝔭 _hunr rfl 𝔓.1 hlo
+        𝔭 _hunr h𝔭 rfl 𝔓.1 hlo
     haveI : 𝔓.1.LiesOver (𝔓.1.under (𝓞 K)) := Ideal.over_under (A := 𝓞 K) (P := 𝔓.1)
     have hpubot : 𝔓.1.under (𝓞 K) ≠ ⊥ := hlo.over ▸ hpbot
     haveI : (𝔓.1.under (𝓞 K)).IsPrime := hlo.over ▸ ‹𝔭.IsPrime›
@@ -614,10 +614,10 @@ that derivative value divides `m·ζ^{m−1}`, so `m ∈ 𝔓`, hence `(m) ≤ �
 private theorem unramifiedIn_of_coprime_absNorm
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L]
     [IsGalois K L] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hcop : (Ideal.absNorm 𝔭).Coprime m) :
     UnramifiedIn K L 𝔭 := by
   classical
-  refine ⟨h𝔭, fun 𝔓 h𝔓max h𝔓lo ↦ ?_⟩
+  refine fun 𝔓 h𝔓max h𝔓lo ↦ ?_
   haveI := h𝔓lo
   haveI : 𝔓.IsPrime := h𝔓max.isPrime
   rw [← not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
@@ -705,7 +705,7 @@ private theorem autToPow_frobeniusIdeal
       rw [frobeniusIdeal_mul K L hp' ha', map_mul,
         frobeniusIdeal_apply_prime K L p hp',
         autToPow_frobeniusClass_out K L m hζ p
-          (unramifiedIn_of_coprime_absNorm K L m p hp' hcp) hcp,
+          (unramifiedIn_of_coprime_absNorm K L m p hcp) hp' hcp,
         ih ha' hca]
       exact Units.ext (by push_cast [ZMod.coe_unitOfCoprime, hsplit]; ring)
 
@@ -885,7 +885,6 @@ private theorem card_fibre_eq_card_good_fibre
     rcases h𝔭 with h𝔭 | h𝔭
     · haveI : 𝔭.IsPrime := Ideal.isPrime_of_prime (prime_of_normalized_factor _ h𝔭)
       exact unramifiedIn_of_coprime_absNorm K L m 𝔭
-        (prime_of_normalized_factor _ h𝔭).ne_zero
         (coprime_absNorm_of_mem_factors_of_coprime K m hcop h𝔭)
     · exact hbU 𝔭 h𝔭
   · obtain ⟨𝔠, h0, _, _, hfr⟩ := 𝔠
@@ -1053,7 +1052,7 @@ private theorem autToPow_range_le_realizedResidues
     refine subgroup_eq_top_of_forall_frobenius_mem_of_coprime K L m H
       (fun 𝔭 h𝔭p h𝔭ne h𝔭unr h𝔭cop ↦ ?_)
     haveI := h𝔭p
-    rw [hH, Subgroup.mem_comap, autToPow_frobeniusClass_out K L m hζ 𝔭 h𝔭unr h𝔭cop]
+    rw [hH, Subgroup.mem_comap, autToPow_frobeniusClass_out K L m hζ 𝔭 h𝔭unr h𝔭ne h𝔭cop]
     exact ⟨⟨𝔭, mem_nonZeroDivisors_of_ne_zero h𝔭ne⟩, by rw [ZMod.coe_unitOfCoprime]⟩
   intro a ha
   obtain ⟨g, rfl⟩ := ha
@@ -1691,7 +1690,7 @@ private theorem coprime_absNorm_of_unramified_of_finrank_eq_one
   haveI := h𝔓lo
   have hnotdvd : ¬ 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
     rw [not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
-    exact hunr.2 𝔓 h𝔓max h𝔓lo
+    exact hunr 𝔓 h𝔓max h𝔓lo
   apply hnotdvd
   have hdvd2 : 𝔓 ^ 2 ∣ 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) := by
     have hmapeq : 𝔭.map (algebraMap (𝓞 K) (𝓞 L)) = Ideal.span {(p : 𝓞 L)} := by
@@ -2551,28 +2550,28 @@ is a sub-sum of the absolutely convergent `ζ_K`. -/
 private theorem multipliable_artinLocalFactor
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (χ : galoisCharacter K L) {s : ℂ} (hs : 1 < s.re) :
-    Multipliable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} =>
+    Multipliable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} =>
       (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ := by
   have hsum : Summable fun 𝔞 : NonzeroIdeal K ↦ ‖(Ideal.absNorm 𝔞.1 : ℂ) ^ (-s)‖ :=
     (hasSum_nonzeroIdeal_absNorm_cpow K hs).summable.norm
-  have hsumP : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+  have hsumP : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ :=
-    hsum.comp_injective (i := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
-      (⟨𝔭.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩ : NonzeroIdeal K))
+    hsum.comp_injective (i := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
+      (⟨𝔭.1, 𝔭.2.2.1⟩ : NonzeroIdeal K))
       (fun _ _ h ↦ Subtype.ext (by simpa using h))
-  have hsummable : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+  have hsummable : Summable fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       ‖(1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ - 1‖ := by
     refine Summable.of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun 𝔭 ↦ ?_) (hsumP.mul_left 2)
     set y : ℂ := (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s) with hy
     have hynorm : ‖y‖ ≤ 1 / 2 := by
       rw [hy, norm_mul, norm_galoisCharacter_out, one_mul]
       exact norm_absNorm_cpow_neg_le_half (R := 𝓞 K) hs
-        ⟨𝔭.1, 𝔭.2.1, UnramifiedIn.ne_bot K L 𝔭.2.2⟩
+        ⟨𝔭.1, 𝔭.2.1, 𝔭.2.2.1⟩
     calc ‖(1 - y)⁻¹ - 1‖ ≤ 2 * ‖y‖ := norm_one_sub_inv_sub_one_le hynorm
       _ = 2 * ‖(Ideal.absNorm 𝔭.1 : ℂ) ^ (-s)‖ := by
           rw [hy, norm_mul, norm_galoisCharacter_out, one_mul]
   simpa using multipliable_one_add_of_summable
-    (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+    (f := fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
       (1 - (χ (frobeniusClass K L 𝔭.1).out : ℂ) * (Ideal.absNorm 𝔭.1 : ℂ) ^ (-s))⁻¹ - 1) hsummable
 
 /-- The map sending an unramified-below `L`-prime `𝔓` to the unramified `K`-prime `𝔓.under` below
@@ -2580,8 +2579,9 @@ it. -/
 private def underUP
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ UnramifiedIn K L (𝔓.under (𝓞 K))}) :
-    {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} :=
-  ⟨𝔓.1.under (𝓞 K), by haveI := 𝔓.2.1; exact inferInstance, 𝔓.2.2.2⟩
+    {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} :=
+  ⟨𝔓.1.under (𝓞 K), by haveI := 𝔓.2.1; exact inferInstance,
+    Ideal.IsIntegral.comap_ne_bot (𝓞 K) 𝔓.2.2.1, 𝔓.2.2.2⟩
 
 @[simp] private theorem underUP_val
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
@@ -2593,14 +2593,14 @@ private def underUP
 `dedekindZeta_local_factor_eq_product_artin_local`. -/
 private def fiberUnderEquiv
     (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
-    (c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭}) :
+    (c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭}) :
     {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧ UnramifiedIn K L (𝔓.under (𝓞 K))} //
         underUP K L 𝔓 = c} ≃
       {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} where
   toFun 𝔓 := ⟨𝔓.1.1, 𝔓.1.2.1, ⟨by
     have h := congrArg Subtype.val 𝔓.2; rw [underUP_val] at h; rw [← h]⟩, 𝔓.1.2.2.1⟩
   invFun 𝔔 := ⟨⟨𝔔.1, 𝔔.2.1, 𝔔.2.2.2, by
-      haveI := 𝔔.2.1; haveI := 𝔔.2.2.1; rw [← 𝔔.2.2.1.over]; exact c.2.2⟩, by
+      haveI := 𝔔.2.1; haveI := 𝔔.2.2.1; rw [← 𝔔.2.2.1.over]; exact c.2.2.2⟩, by
     haveI := 𝔔.2.1; haveI := 𝔔.2.2.1
     exact Subtype.ext (by rw [underUP_val]; exact 𝔔.2.2.1.over.symm)⟩
   left_inv 𝔓 := by ext; rfl
@@ -2647,7 +2647,7 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
       = ∏' χ : galoisCharacter K L, artinDirichletSeries K L χ s := by
   classical
   set F : Ideal (𝓞 L) → ℂ := fun 𝔭 ↦ (1 - (Ideal.absNorm 𝔭 : ℂ) ^ (-s))⁻¹ with hF
-  set G : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} → ℂ :=
+  set G : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} → ℂ :=
     fun c ↦ ∏' χ : galoisCharacter K L,
       (1 - (χ (frobeniusClass K L c.1).out : ℂ) * (Ideal.absNorm c.1 : ℂ) ^ (-s))⁻¹ with hG
   -- `Multipliable.subtype` is avoided: it whnf-explodes on the `Ideal (𝓞 L)` prime subtype.
@@ -2667,12 +2667,12 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
             UnramifiedIn K L (x.1.under (𝓞 K))} ↦
           (1 - (Ideal.absNorm 𝔓.1.1 : ℂ) ^ (-s))⁻¹ - 1) hsumU
     exact (Equiv.multipliable_iff (unramifiedFlattenEquiv K L).symm).mpr hmul1
-  have hfibHasProd : ∀ c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭},
+  have hfibHasProd : ∀ c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭},
       HasProd (fun 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
           UnramifiedIn K L (𝔓.under (𝓞 K))} // underUP K L 𝔓 = c} ↦ F 𝔓.1.1) (G c) := by
     intro c
     haveI : c.1.IsPrime := c.2.1
-    haveI : c.1.IsMaximal := c.2.1.isMaximal (UnramifiedIn.ne_bot K L c.2.2)
+    haveI : c.1.IsMaximal := c.2.1.isMaximal c.2.2.1
     haveI : Finite (c.1.primesOver (𝓞 L)) :=
       (IsDedekindDomain.primesOver_finite c.1 (𝓞 L)).to_subtype
     haveI : Finite {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} :=
@@ -2686,7 +2686,7 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
     have hval : (∏' 𝔓 : {𝔓 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓 ≠ ⊥ ∧
           UnramifiedIn K L (𝔓.under (𝓞 K))} // underUP K L 𝔓 = c}, F 𝔓.1.1) = G c := by
       simp only [hG]
-      rw [← dedekindZeta_local_factor_eq_product_artin_local K L c.1 c.2.2 s hs,
+      rw [← dedekindZeta_local_factor_eq_product_artin_local K L c.1 c.2.2.2 c.2.2.1 s hs,
         ← (fiberUnderEquiv K L c).tprod_eq
           (fun 𝔔 : {𝔓 : Ideal (𝓞 L) // 𝔓.IsPrime ∧ 𝔓.LiesOver c.1 ∧ 𝔓 ≠ ⊥} ↦ F 𝔔.1)]
       rfl
@@ -2700,7 +2700,7 @@ private theorem tprod_unramified_eq_prod_artinDirichletSeries
   simp_rw [tprod_fintype]
   rw [Multipliable.tprod_finsetProd (s := (Finset.univ : Finset (galoisCharacter K L)))
     (f := fun χ : galoisCharacter K L ↦
-      fun c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ UnramifiedIn K L 𝔭} ↦
+      fun c : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K L 𝔭} ↦
         (1 - (χ (frobeniusClass K L c.1).out : ℂ) * (Ideal.absNorm c.1 : ℂ) ^ (-s))⁻¹)
     (fun χ _ ↦ multipliable_artinLocalFactor K L χ hs)]
   refine Finset.prod_congr rfl fun χ _ ↦ ?_

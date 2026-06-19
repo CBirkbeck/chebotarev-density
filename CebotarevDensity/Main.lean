@@ -275,10 +275,10 @@ contradicting coprimality. (Replica of the private `unramifiedIn_of_coprime_absN
 private theorem unramifiedIn_cyclotomic_of_coprime {K : Type*} [Field K] [NumberField K]
     (L : Type*) [Field L] [NumberField L] [Algebra K L]
     [IsGalois K L] (m : ℕ) [NeZero m] [IsCyclotomicExtension {m} K L]
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (h𝔭 : 𝔭 ≠ ⊥) (hcop : (Ideal.absNorm 𝔭).Coprime m) :
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (hcop : (Ideal.absNorm 𝔭).Coprime m) :
     UnramifiedIn K L 𝔭 := by
   classical
-  refine ⟨h𝔭, fun 𝔓 h𝔓max h𝔓lo ↦ ?_⟩
+  refine fun 𝔓 h𝔓max h𝔓lo ↦ ?_
   haveI := h𝔓lo
   haveI : 𝔓.IsPrime := h𝔓max.isPrime
   rw [← not_dvd_differentIdeal_iff (A := 𝓞 K) (B := 𝓞 L)]
@@ -335,11 +335,11 @@ private theorem frobeniusClass_eq_iff_residue
     [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit)
-    (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] (hunr : UnramifiedIn ℚ L 𝔭)
+    (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] (hunr : UnramifiedIn ℚ L 𝔭) (h𝔭 : 𝔭 ≠ ⊥)
     (hcop : (Ideal.absNorm 𝔭).Coprime n) :
     frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ ↔ (Ideal.absNorm 𝔭 : ZMod n) = a := by
   letI : CommMonoid (L ≃ₐ[ℚ] L) := IsMulCommutative.instCommMonoid
-  have hdict := autToPow_frobeniusClass_out ℚ L n hζ 𝔭 hunr hcop
+  have hdict := autToPow_frobeniusClass_out ℚ L n hζ 𝔭 hunr h𝔭 hcop
   rw [show frobeniusClass ℚ L 𝔭 = ConjClasses.mk (frobeniusClass ℚ L 𝔭).out from
     (Quotient.out_eq _).symm, ConjClasses.mk_eq_mk_iff_isConj, isConj_iff_eq]
   constructor
@@ -385,18 +385,18 @@ private theorem dirichlet_AP_fibre_diff_image_subset_bad
     [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit) :
-    {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
+    {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn ℚ L 𝔭 ∧
         frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} \
       (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) '' {p : ℕ | p.Prime ∧ (p : ZMod n) = a} ⊆
       (fun q : ℕ ↦ Ideal.span {(q : 𝓞 ℚ)}) '' {q : ℕ | q.Prime ∧ q ∣ n} := by
-  rintro 𝔭 ⟨⟨hpr, hunr, hfrob⟩, hnotI⟩
+  rintro 𝔭 ⟨⟨hpr, hbot, hunr, hfrob⟩, hnotI⟩
   haveI := hpr
-  obtain ⟨q, hqp, hqeq⟩ := ratPrime_eq_span 𝔭 hpr (UnramifiedIn.ne_bot ℚ L hunr)
+  obtain ⟨q, hqp, hqeq⟩ := ratPrime_eq_span 𝔭 hpr hbot
   have hnorm : Ideal.absNorm 𝔭 = q := by rw [hqeq, absNorm_span_nat]
   by_cases hcop : (Ideal.absNorm 𝔭).Coprime n
   · exfalso; apply hnotI
     refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
-    have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hcop).mp hfrob
+    have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hbot hcop).mp hfrob
     rwa [hnorm] at hr
   · refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
     rwa [hnorm, hqp.coprime_iff_not_dvd, not_not] at hcop
@@ -410,7 +410,7 @@ private theorem dirichlet_AP_image_diff_fibre_subset_bad
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit) :
     (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) '' {p : ℕ | p.Prime ∧ (p : ZMod n) = a} \
-      {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
+      {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn ℚ L 𝔭 ∧
         frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} ⊆
       (fun q : ℕ ↦ Ideal.span {(q : 𝓞 ℚ)}) '' {q : ℕ | q.Prime ∧ q ∣ n} := by
   rintro 𝔭 ⟨⟨p, ⟨hpp, hpa⟩, rfl⟩, hnotF⟩
@@ -424,9 +424,9 @@ private theorem dirichlet_AP_image_diff_fibre_subset_bad
       rw [absNorm_span_nat]; exact (hpp.coprime_iff_not_dvd).mpr hdvd
     have hne : Ideal.span {(p : 𝓞 ℚ)} ≠ ⊥ :=
       Ideal.span_singleton_eq_bot.not.mpr hp0
-    have hunr := unramifiedIn_cyclotomic_of_coprime L n _ hne hcop
-    refine ⟨hprime, hunr, ?_⟩
-    rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hcop, absNorm_span_nat]
+    have hunr := unramifiedIn_cyclotomic_of_coprime L n _ hcop
+    refine ⟨hprime, hne, hunr, ?_⟩
+    rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hne hcop, absNorm_span_nat]
     exact hpa
 
 /-- The main case of Dirichlet's AP theorem (`n ≢ 2 [4]`, so `chebotarev_cyclotomic` applies):
@@ -458,13 +458,27 @@ private theorem dirichlet_AP_main (n : ℕ) (hn4 : n % 4 ≠ 2) (hn : 1 ≤ n)
       rw [IsPrimitiveRoot.autToPow_eq_modularCyclotomicCharacter,
         IsPrimitiveRoot.autToPow_eq_modularCyclotomicCharacter]
     rw [← h1, hσdef, E.apply_symm_apply]
-  have hfib := chebotarev_cyclotomic ℚ L n hn4 σ
+  have hfib0 := chebotarev_cyclotomic ℚ L n hn4 σ
   have hcard : (Nat.card (L ≃ₐ[ℚ] L) : ℝ)⁻¹ = (Nat.totient n : ℝ)⁻¹ := by
     congr 1
     rw [Nat.card_congr E.toEquiv, Nat.card_eq_fintype_card, ZMod.card_units_eq_totient]
-  rw [hcard] at hfib
-  set F := {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
-    frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ}
+  rw [hcard] at hfib0
+  set F := {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn ℚ L 𝔭 ∧
+    frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} with hFdef
+  have hfib : HasDirichletDensity F ((Nat.totient n : ℝ)⁻¹) := by
+    rw [HasDirichletDensity] at hfib0 ⊢
+    refine hfib0.congr fun s ↦ ?_
+    congr 1
+    rw [hFdef, primeIdealZetaSum_def, primeIdealZetaSum_def]
+    refine (Equiv.subtypeEquivRight
+      (p := fun 𝔭 ↦ 𝔭 ∈ {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ UnramifiedIn ℚ L 𝔭 ∧
+          frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥)
+      (q := fun 𝔭 ↦ 𝔭 ∈ {𝔭 : Ideal (𝓞 ℚ) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn ℚ L 𝔭 ∧
+          frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ} ∧ 𝔭.IsPrime ∧ 𝔭 ≠ ⊥)
+      (fun 𝔭 ↦ ?_)).tsum_eq (fun 𝔭 ↦ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))
+    simp only [Set.mem_setOf_eq]
+    exact ⟨fun ⟨⟨hp, hu, hf⟩, hp', hb⟩ ↦ ⟨⟨hp, hb, hu, hf⟩, hp', hb⟩,
+      fun ⟨⟨hp, _, hu, hf⟩, hp', hb⟩ ↦ ⟨⟨hp, hu, hf⟩, hp', hb⟩⟩
   set I := (fun p : ℕ ↦ Ideal.span {(p : 𝓞 ℚ)}) ''
     {p : ℕ | p.Prime ∧ (p : ZMod n) = a}
   set Bad := (fun q : ℕ ↦ Ideal.span {(q : 𝓞 ℚ)}) '' {q : ℕ | q.Prime ∧ q ∣ n}
