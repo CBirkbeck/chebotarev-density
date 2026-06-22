@@ -290,26 +290,26 @@ private theorem summable_prime2_absNorm_rpow {s : ℝ} (hs : 1 < s) :
     fun _ ↦ rfl
 
 /-- A nonzero prime ideal of `𝓞 K` has absolute norm at least `2`. -/
-private theorem two_le_absNorm_of_prime {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+private theorem two_le_absNorm_of_prime {𝔭 : Ideal (𝓞 K)} [NeZero 𝔭] (hp : 𝔭.IsPrime) :
     (2 : ℝ) ≤ (Ideal.absNorm 𝔭 : ℝ) :=
   have : (2 : ℕ) ≤ Ideal.absNorm 𝔭 := Nat.two_le_iff _ |>.2
-    ⟨mt Ideal.absNorm_eq_zero_iff.1 hne, mt Ideal.absNorm_eq_one_iff.1 hp.ne_top⟩
+    ⟨mt Ideal.absNorm_eq_zero_iff.1 (NeZero.ne 𝔭), mt Ideal.absNorm_eq_one_iff.1 hp.ne_top⟩
   mod_cast this
 
 /-- For a nonzero prime `𝔭` and `1 < s`, the Euler factor `N𝔭^{-s}` is strictly less than `1`. -/
-private theorem absNorm_rpow_neg_lt_one {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) {s : ℝ}
+private theorem absNorm_rpow_neg_lt_one {𝔭 : Ideal (𝓞 K)} [NeZero 𝔭] (hp : 𝔭.IsPrime) {s : ℝ}
     (hs : 1 < s) : (Ideal.absNorm 𝔭 : ℝ) ^ (-s) < 1 :=
   Real.rpow_lt_one_of_one_lt_of_neg
-    (by have := two_le_absNorm_of_prime K hp hne; linarith) (by linarith)
+    (by have := two_le_absNorm_of_prime K hp; linarith) (by linarith)
 
 /-- Per-prime termwise bound for the higher-power tail. For `1 < s` and a nonzero prime `𝔭`, the
 geometric term `N𝔭^{-2s}/(1 - N𝔭^{-s})` is dominated by `2·N𝔭^{-2}`. -/
-private theorem primeIdealHigherTail_term_le {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥)
+private theorem primeIdealHigherTail_term_le {𝔭 : Ideal (𝓞 K)} [NeZero 𝔭] (hp : 𝔭.IsPrime)
     {s : ℝ} (hs : 1 < s) :
     (Ideal.absNorm 𝔭 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭 : ℝ) ^ (-s)) ≤
       2 * (Ideal.absNorm 𝔭 : ℝ) ^ (-(2 : ℝ)) := by
   set x : ℝ := (Ideal.absNorm 𝔭 : ℝ)
-  have hx : (2 : ℝ) ≤ x := two_le_absNorm_of_prime K hp hne
+  have hx : (2 : ℝ) ≤ x := two_le_absNorm_of_prime K hp
   have hxs_half : x ^ (-s) ≤ 1 / 2 :=
     calc x ^ (-s) ≤ (2 : ℝ) ^ (-s) := Real.rpow_le_rpow_of_nonpos zero_lt_two hx (by linarith)
       _ ≤ (2 : ℝ) ^ (-(1 : ℝ)) := Real.rpow_le_rpow_of_exponent_le one_le_two (by linarith)
@@ -337,12 +337,15 @@ theorem primeIdealZetaHigherTail_bounded :
   simp only [mem_Ioi] at hs
   have hbound : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) ≤
-        2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 ↦
-    primeIdealHigherTail_term_le K 𝔭.2.1 𝔭.2.2 hs
+        2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ)) := fun 𝔭 ↦ by
+    haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
+    exact primeIdealHigherTail_term_le K 𝔭.2.1 hs
   have hnonneg : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) :=
-    fun 𝔭 ↦ div_nonneg (Real.rpow_nonneg (by positivity) _)
-      (by have := absNorm_rpow_neg_lt_one K 𝔭.2.1 𝔭.2.2 hs; linarith)
+    fun 𝔭 ↦ by
+      haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
+      exact div_nonneg (Real.rpow_nonneg (by positivity) _)
+        (by have := absNorm_rpow_neg_lt_one K 𝔭.2.1 hs; linarith)
   have hsummable_rhs : Summable (fun 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} ↦
       2 * (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ))) :=
     (summable_prime2_absNorm_rpow K one_lt_two).mul_left 2
@@ -364,9 +367,9 @@ private theorem primeIdealZetaSum_univ_eq_tsum_prime2 (s : ℝ) :
   rfl
 
 /-- For a nonzero prime `𝔭` and `1 < s`, the Euler-factor denominator `1 - N𝔭^{-s}` is positive. -/
-private theorem one_sub_absNorm_rpow_pos {𝔭 : Ideal (𝓞 K)} (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥)
+private theorem one_sub_absNorm_rpow_pos {𝔭 : Ideal (𝓞 K)} [NeZero 𝔭] (hp : 𝔭.IsPrime)
     {s : ℝ} (hs : 1 < s) : (0 : ℝ) < 1 - (Ideal.absNorm 𝔭 : ℝ) ^ (-s) := by
-  have := absNorm_rpow_neg_lt_one K hp hne hs
+  have := absNorm_rpow_neg_lt_one K hp hs
   linarith
 
 /-- For `0 ≤ x < 1`, `0 ≤ -log(1 - x) - x ≤ x²/(1 - x)`. -/
@@ -395,8 +398,9 @@ private theorem log_dedekindZeta_re_eq_tsum_neg_log_one_sub {s : ℝ} (hs : 1 < 
         (- Real.log (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))) := by
   set g : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
     fun 𝔭 ↦ (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s))⁻¹ with hg
-  have hgpos : ∀ 𝔭, 0 < g 𝔭 :=
-    fun 𝔭 ↦ inv_pos.mpr (one_sub_absNorm_rpow_pos K 𝔭.2.1 𝔭.2.2 hs)
+  have hgpos : ∀ 𝔭, 0 < g 𝔭 := fun 𝔭 ↦ by
+    haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
+    exact inv_pos.mpr (one_sub_absNorm_rpow_pos K 𝔭.2.1 hs)
   have hlogsum : Summable (fun 𝔭 ↦ Real.log (g 𝔭)) := by
     refine (summable_neg_log_one_sub_absNorm_rpow K hs).congr (fun 𝔭 ↦ ?_)
     rw [hg, Real.log_inv]
@@ -429,7 +433,9 @@ private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
   set h : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥} → ℝ :=
     fun 𝔭 ↦ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-(2 : ℝ) * s) / (1 - (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s)) with hh
   have hxbound : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
-      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) < 1 := fun 𝔭 ↦ absNorm_rpow_neg_lt_one K 𝔭.2.1 𝔭.2.2 hs1
+      (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) < 1 := fun 𝔭 ↦ by
+    haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
+    exact absNorm_rpow_neg_lt_one K 𝔭.2.1 hs1
   have hxnn : ∀ 𝔭 : {𝔭 : Ideal (𝓞 K) // 𝔭.IsPrime ∧ 𝔭 ≠ ⊥},
       (0 : ℝ) ≤ (Ideal.absNorm 𝔭.1 : ℝ) ^ (-s) := fun 𝔭 ↦ Real.rpow_nonneg (by positivity) _
   have hfnn : ∀ 𝔭, 0 ≤ f 𝔭 := fun 𝔭 ↦ (neg_log_one_sub_sub_le (hxnn 𝔭) (hxbound 𝔭)).1
@@ -441,11 +447,14 @@ private theorem abs_tsum_neg_log_one_sub_sub_rpow_le :
     ring_nf
   have hsummh : Summable h := by
     have hnn : ∀ 𝔭, 0 ≤ h 𝔭 := fun 𝔭 ↦ by
+      haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
       rw [hh]
       exact div_nonneg (Real.rpow_nonneg (by positivity) _)
-        (one_sub_absNorm_rpow_pos K 𝔭.2.1 𝔭.2.2 hs1).le
-    refine Summable.of_nonneg_of_le hnn (fun 𝔭 ↦ primeIdealHigherTail_term_le K 𝔭.2.1 𝔭.2.2 hs1)
+        (one_sub_absNorm_rpow_pos K 𝔭.2.1 hs1).le
+    refine Summable.of_nonneg_of_le hnn (fun 𝔭 ↦ ?_)
       ((summable_prime2_absNorm_rpow K one_lt_two).mul_left 2)
+    haveI : NeZero 𝔭.1 := ⟨𝔭.2.2⟩
+    exact primeIdealHigherTail_term_le K 𝔭.2.1 hs1
   have hsummf : Summable f := Summable.of_nonneg_of_le hfnn hfle hsummh
   rw [abs_of_nonneg (tsum_nonneg hfnn)]
   calc ∑' 𝔭, f 𝔭 ≤ ∑' 𝔭, h 𝔭 := hsummf.tsum_le_tsum hfle hsummh

@@ -432,9 +432,9 @@ private theorem summable_twistedPrimeSum
 
 /-- For nonzero prime ideals `𝔭` (so `𝔭 ≠ ⊤` and `N𝔭 ≠ 0`), the absolute norm is `≥ 2`. -/
 private theorem two_le_absNorm_prime
-    (K : Type*) [Field K] [NumberField K] (𝔭 : Ideal (𝓞 K)) (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+    (K : Type*) [Field K] [NumberField K] (𝔭 : Ideal (𝓞 K)) [NeZero 𝔭] (hp : 𝔭.IsPrime) :
     2 ≤ Ideal.absNorm 𝔭 := by
-  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h ↦ hne (Ideal.absNorm_eq_zero_iff.mp h)
+  have hne0 : Ideal.absNorm 𝔭 ≠ 0 := fun h ↦ NeZero.ne 𝔭 (Ideal.absNorm_eq_zero_iff.mp h)
   have hne1 : Ideal.absNorm 𝔭 ≠ 1 := fun h ↦ hp.ne_top (Ideal.absNorm_eq_one_iff.mp h)
   lia
 
@@ -584,8 +584,9 @@ private theorem artinLSeries_prime_sum_bounded_of_analytic_extension
   have hc1 : ∀ 𝔭 : ι, ‖c 𝔭‖ = 1 := fun 𝔭 ↦
     (((Units.coeHom ℂ).comp χ).isOfFinOrder
       (isOfFinOrder_of_finite (frobeniusClass K L 𝔭.1).out)).norm_eq_one
-  have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 ↦
-    two_le_absNorm_prime K 𝔭.1 𝔭.2.1 𝔭.2.2.1
+  have hN2 : ∀ 𝔭 : ι, 2 ≤ N 𝔭 := fun 𝔭 ↦ by
+    haveI : NeZero 𝔭.1 := ⟨𝔭.2.2.1⟩
+    exact two_le_absNorm_prime K 𝔭.1 𝔭.2.1
   have hsummr : ∀ r : ℝ, 1 < r → Summable (fun 𝔭 : ι ↦ (N 𝔭 : ℝ) ^ (-r)) := fun r hr ↦
     ((summable_prime_absNorm_rpow _ hr).comp_injective
       (unramifiedPrime_toPrimeNeBot_injective K L)).congr fun 𝔭 ↦ rfl

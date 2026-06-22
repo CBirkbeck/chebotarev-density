@@ -245,8 +245,9 @@ private theorem ratSpan_eq_comap_intSpan (p : ℕ) :
 /-- **Every nonzero prime of `𝓞 ℚ` is `span {(p)}` for a rational prime `p`.** Transport the
 prime `𝔭` through `Rat.ringOfIntegersEquiv : 𝓞 ℚ ≃+* ℤ`: its image is a nonzero prime of `ℤ`,
 hence `span {(p : ℤ)}` for a prime `p` (`Ideal.isPrime_int_iff`); pull back. -/
-private theorem ratPrime_eq_span (𝔭 : Ideal (𝓞 ℚ)) (hp : 𝔭.IsPrime) (hne : 𝔭 ≠ ⊥) :
+private theorem ratPrime_eq_span (𝔭 : Ideal (𝓞 ℚ)) [NeZero 𝔭] (hp : 𝔭.IsPrime) :
     ∃ p : ℕ, p.Prime ∧ 𝔭 = Ideal.span {(p : 𝓞 ℚ)} := by
+  have hne : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
   set e := Rat.ringOfIntegersEquiv
   have hbij : Function.Bijective e := e.bijective
   have hJp : (Ideal.map e 𝔭).IsPrime := Ideal.map_isPrime_of_equiv e
@@ -335,11 +336,11 @@ private theorem frobeniusClass_eq_iff_residue
     [IsCyclotomicExtension {n} ℚ L] [IsMulCommutative (L ≃ₐ[ℚ] L)]
     {ζ : L} (hζ : IsPrimitiveRoot ζ n) (a : ZMod n) (ha : IsUnit a)
     (σ : L ≃ₐ[ℚ] L) (hσ : hζ.autToPow ℚ σ = ha.unit)
-    (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] (hunr : UnramifiedIn ℚ L 𝔭) (h𝔭 : 𝔭 ≠ ⊥)
+    (𝔭 : Ideal (𝓞 ℚ)) [𝔭.IsPrime] [NeZero 𝔭] (hunr : UnramifiedIn ℚ L 𝔭)
     (hcop : (Ideal.absNorm 𝔭).Coprime n) :
     frobeniusClass ℚ L 𝔭 = ConjClasses.mk σ ↔ (Ideal.absNorm 𝔭 : ZMod n) = a := by
   letI : CommMonoid (L ≃ₐ[ℚ] L) := IsMulCommutative.instCommMonoid
-  have hdict := autToPow_frobeniusClass_out ℚ L n hζ 𝔭 hunr h𝔭 hcop
+  have hdict := autToPow_frobeniusClass_out ℚ L n hζ 𝔭 hunr hcop
   rw [show frobeniusClass ℚ L 𝔭 = ConjClasses.mk (frobeniusClass ℚ L 𝔭).out from
     (Quotient.out_eq _).symm, ConjClasses.mk_eq_mk_iff_isConj, isConj_iff_eq]
   constructor
@@ -391,12 +392,13 @@ private theorem dirichlet_AP_fibre_diff_image_subset_bad
       (fun q : ℕ ↦ Ideal.span {(q : 𝓞 ℚ)}) '' {q : ℕ | q.Prime ∧ q ∣ n} := by
   rintro 𝔭 ⟨⟨hpr, hbot, hunr, hfrob⟩, hnotI⟩
   haveI := hpr
-  obtain ⟨q, hqp, hqeq⟩ := ratPrime_eq_span 𝔭 hpr hbot
+  haveI : NeZero 𝔭 := ⟨hbot⟩
+  obtain ⟨q, hqp, hqeq⟩ := ratPrime_eq_span 𝔭 hpr
   have hnorm : Ideal.absNorm 𝔭 = q := by rw [hqeq, absNorm_span_nat]
   by_cases hcop : (Ideal.absNorm 𝔭).Coprime n
   · exfalso; apply hnotI
     refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
-    have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hbot hcop).mp hfrob
+    have hr := (frobeniusClass_eq_iff_residue n L hζ a ha σ hσ 𝔭 hunr hcop).mp hfrob
     rwa [hnorm] at hr
   · refine ⟨q, ⟨hqp, ?_⟩, hqeq.symm⟩
     rwa [hnorm, hqp.coprime_iff_not_dvd, not_not] at hcop
@@ -424,9 +426,10 @@ private theorem dirichlet_AP_image_diff_fibre_subset_bad
       rw [absNorm_span_nat]; exact (hpp.coprime_iff_not_dvd).mpr hdvd
     have hne : Ideal.span {(p : 𝓞 ℚ)} ≠ ⊥ :=
       Ideal.span_singleton_eq_bot.not.mpr hp0
+    haveI : NeZero (Ideal.span {(p : 𝓞 ℚ)}) := ⟨hne⟩
     have hunr := unramifiedIn_cyclotomic_of_coprime L n _ hcop
     refine ⟨hprime, hne, hunr, ?_⟩
-    rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hne hcop, absNorm_span_nat]
+    rw [frobeniusClass_eq_iff_residue n L hζ a ha σ hσ _ hunr hcop, absNorm_span_nat]
     exact hpa
 
 /-- The main case of Dirichlet's AP theorem (`n ≢ 2 [4]`, so `chebotarev_cyclotomic` applies):

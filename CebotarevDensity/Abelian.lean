@@ -490,23 +490,24 @@ private theorem frobeniusClass_proj_isPrime_aux
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
     [IsGalois K L] [IsGalois K M]
     (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
-    (h𝔭 : 𝔭 ≠ ⊥)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [NeZero 𝔭]
+    (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
     (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
     frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
+  have h𝔭 : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
   obtain ⟨𝔓, h𝔓p, h𝔓lo, -⟩ := exists_prime_liesOver K M 𝔭 h𝔭
   haveI := h𝔓p
   haveI := h𝔓lo
   haveI : Finite (𝓞 M ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K M
-      (UnramifiedIn.ramificationIdx_eq_one K M _hunrM h𝔭 𝔓 h𝔓lo))
+      (UnramifiedIn.ramificationIdx_eq_one K M _hunrM 𝔓 h𝔓lo))
   set σM : Gal(M/K) := arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hMfrobσM : IsArithFrobAt (𝓞 K) σM 𝔓 := IsArithFrobAt.arithFrobAt (𝓞 K) Gal(M/K) 𝔓
   have hconjM : IsConj σM τM := ConjClasses.mk_eq_mk_iff_isConj.mp
-    ((frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM h𝔭 σM 𝔓 hMfrobσM h𝔓lo).symm.trans _hfr)
+    ((frobeniusClass_eq_mk_of_isArithFrobAt K M 𝔭 _hunrM σM 𝔓 hMfrobσM h𝔓lo).symm.trans _hfr)
   haveI : (𝔓.under (𝓞 L)).IsPrime := Ideal.IsPrime.under (𝓞 L) 𝔓
   haveI : (𝔓.under (𝓞 L)).LiesOver 𝔭 := ⟨((Ideal.under_under 𝔓).trans h𝔓lo.over.symm).symm⟩
-  rw [frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 _hunrL h𝔭 (σM.restrictNormal L) (𝔓.under (𝓞 L))
+  rw [frobeniusClass_eq_mk_of_isArithFrobAt K L 𝔭 _hunrL (σM.restrictNormal L) (𝔓.under (𝓞 L))
     (isArithFrobAt_restrictNormal_repl K L M σM 𝔓 hMfrobσM) inferInstance]
   refine ConjClasses.mk_eq_mk_iff_isConj.mpr ?_
   have hconjL := MonoidHom.map_isConj (AlgEquiv.restrictNormalHom L) hconjM
@@ -524,12 +525,12 @@ private theorem frobeniusClass_proj
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
     [IsGalois K L] [IsGalois K M]
     (σ : Gal(L/K)) (τM : Gal(M/K)) (_hτM : AlgEquiv.restrictNormalHom L τM = σ)
-    (𝔭 : Ideal (𝓞 K)) (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭) (h𝔭 : 𝔭 ≠ ⊥)
+    (𝔭 : Ideal (𝓞 K)) [NeZero 𝔭] (_hunrM : UnramifiedIn K M 𝔭) (_hunrL : UnramifiedIn K L 𝔭)
     (_hfr : frobeniusClass K M 𝔭 = ConjClasses.mk τM) :
     frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
   by_cases hp : 𝔭.IsPrime
   · haveI := hp
-    exact frobeniusClass_proj_isPrime_aux K L M σ τM _hτM 𝔭 _hunrM _hunrL h𝔭 _hfr
+    exact frobeniusClass_proj_isPrime_aux K L M σ τM _hτM 𝔭 _hunrM _hunrL _hfr
   · have hMjunk : frobeniusClass K M 𝔭 = ConjClasses.mk 1 := by
       rw [frobeniusClass, dif_neg fun h ↦ hp h.1]
     have hLjunk : frobeniusClass K L 𝔭 = ConjClasses.mk 1 := by
@@ -621,7 +622,8 @@ hypothesis) factors as `e(𝔮/𝔭)·e(𝔓/𝔮)` (`Ideal.ramificationIdx_alge
 private theorem unramifiedIn_tower_descend
     (K L M : Type*) [Field K] [NumberField K] [Field L] [NumberField L] [Field M] [NumberField M]
     [Algebra K L] [Algebra K M] [Algebra L M] [IsScalarTower K L M] [IsGalois K L] [IsGalois K M]
-    (𝔭 : Ideal (𝓞 K)) (hunr : UnramifiedIn K M 𝔭) (h𝔭 : 𝔭 ≠ ⊥) : UnramifiedIn K L 𝔭 := by
+    (𝔭 : Ideal (𝓞 K)) [NeZero 𝔭] (hunr : UnramifiedIn K M 𝔭) : UnramifiedIn K L 𝔭 := by
+  have h𝔭 : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
   haveI : IsScalarTower (𝓞 K) (𝓞 L) (𝓞 M) := inferInstance
   refine fun 𝔮 h𝔮max h𝔮lo ↦ ?_
   haveI := h𝔮max
@@ -814,9 +816,10 @@ private theorem exists_crossing_family_tagged
     fun τ ↦ {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ UnramifiedIn K M 𝔭 ∧
       frobeniusClass K M 𝔭 = ConjClasses.mk (σM τ)}, ?_, ?_, ?_⟩
   · rintro τ 𝔭 ⟨hp, hbot, hunrM, hfr⟩
-    have hunrL : UnramifiedIn K L 𝔭 := unramifiedIn_tower_descend K L M 𝔭 hunrM hbot
+    haveI : NeZero 𝔭 := ⟨hbot⟩
+    have hunrL : UnramifiedIn K L 𝔭 := unramifiedIn_tower_descend K L M 𝔭 hunrM
     exact ⟨hp, hunrL,
-      frobeniusClass_proj K L M σ (σM τ) (hσMrestr τ) 𝔭 hunrM hunrL hbot hfr⟩
+      frobeniusClass_proj K L M σ (σM τ) (hσMrestr τ) 𝔭 hunrM hunrL hfr⟩
   · rintro τ 𝔭 ⟨-, -, -, hfr⟩
     have hconj : IsConj (frobeniusClass K M 𝔭).out (σM (τ : (ZMod m)ˣ)) := by
       rw [hfr]
