@@ -91,7 +91,7 @@ private theorem eq_arithFrobAt_of_isArithFrobAt [IsGalois K L] (𝔓 : Ideal (�
     [Finite (𝓞 L ⧸ 𝔓)] [Algebra.IsUnramifiedAt (𝓞 K) 𝔓] (σ : Gal(L/K))
     (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) :
     σ = arithFrobAt (𝓞 K) Gal(L/K) 𝔓 := by
-  haveI : FaithfulSMul Gal(L/K) (𝓞 L) := IsGaloisGroup.faithful (𝓞 K)
+  have : FaithfulSMul Gal(L/K) (𝓞 L) := IsGaloisGroup.faithful (𝓞 K)
   apply MulSemiringAction.toAlgHom_injective (𝓞 K) (𝓞 L)
   exact AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt hσ
     (IsArithFrobAt.arithFrobAt (𝓞 K) Gal(L/K) 𝔓) 𝔓.primeCompl_le_nonZeroDivisors
