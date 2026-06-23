@@ -1,3 +1,4 @@
 import CebotarevDensity.Density
+import CebotarevDensity.ForMathlib.IndexImageCount
 import CebotarevDensity.ForMathlib.LogOneDivSubOne
 import CebotarevDensity.Main
