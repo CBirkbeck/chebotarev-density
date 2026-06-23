@@ -4,6 +4,7 @@ public import Mathlib.FieldTheory.Galois.IsGaloisGroup
 public import Mathlib.RingTheory.DedekindDomain.Different
 public import Mathlib.RingTheory.DedekindDomain.Factorization
 public import Mathlib.RingTheory.Frobenius
+public import Mathlib.NumberTheory.RamificationInertia.Unramified
 
 public import CebotarevDensity.Density
 
@@ -52,16 +53,13 @@ namespace Chebotarev
 
 variable (K L : Type*) [Field K] [Field L] [Algebra K L]
 
-/-- A prime `𝔭` of `𝓞 K` is unramified in `L` if every **maximal** prime `𝔓` of `𝓞 L`
-lying over `𝔭` is unramified over `𝓞 K` (`Algebra.IsUnramifiedAt`). The `∀ 𝔓` clause has the
-same shape as the unramified condition in mathlib's
-`NumberField.not_dvd_discr_iff_forall_liesOver`. Nonzeroness of `𝔭` is **not** part of this
-predicate: lemmas that need a finite residue field `𝓞 L ⧸ 𝔓` (e.g. for the Frobenius
-`arithFrobAt 𝔓`) take `𝔭 ≠ ⊥` as a separate hypothesis. For nonzero `𝔭` the maximal primes
-over `𝔭` are exactly its prime divisors, so each has `e(𝔓 ∣ 𝔭) = 1`
-(`Algebra.isUnramifiedAt_iff_of_isDedekindDomain`). -/
+/-- A prime `𝔭` of `𝓞 K` is unramified in `L`: every prime `𝔓` of `𝓞 L` lying over `𝔭` is
+unramified over `𝓞 K` (`Algebra.IsUnramifiedAt`). This is mathlib's `Algebra.IsUnramifiedIn`
+for the ring extension `𝓞 K → 𝓞 L`. Nonzeroness of `𝔭` is **not** part of the predicate:
+lemmas that need a finite residue field `𝓞 L ⧸ 𝔓` (e.g. for the Frobenius `arithFrobAt 𝔓`)
+take `𝔭 ≠ ⊥` (as `[NeZero 𝔭]`) separately. -/
 def UnramifiedIn [IsGalois K L] (𝔭 : Ideal (𝓞 K)) : Prop :=
-  ∀ (𝔓 : Ideal (𝓞 L)) (_ : 𝔓.IsMaximal), 𝔓.LiesOver 𝔭 → Algebra.IsUnramifiedAt (𝓞 K) 𝔓
+  Algebra.IsUnramifiedIn (𝓞 L) 𝔭
 
 /-- A prime of `𝓞 L` with ramification index `1` over its image in `𝓞 K` is nonzero:
 the zero ideal has ramification index `0` (`Ideal.ramificationIdx_bot`). -/
@@ -78,10 +76,8 @@ theorem UnramifiedIn.ramificationIdx_eq_one [IsGalois K L] {𝔭 : Ideal (𝓞 K
     (hunr : UnramifiedIn K L 𝔭) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hP : 𝔓.LiesOver 𝔭) :
     Ideal.ramificationIdx (𝔓.under (𝓞 K)) 𝔓 = 1 := by
-  have h𝔭 : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
-  have h𝔓 : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭 𝔓
-  exact (Algebra.isUnramifiedAt_iff_of_isDedekindDomain h𝔓).mp
-    (hunr 𝔓 (‹𝔓.IsPrime›.isMaximal h𝔓) hP)
+  rw [hP.over.symm]
+  exact Algebra.IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hP
 
 /-- A Frobenius element at an unramified prime `𝔓` is the canonical `arithFrobAt 𝔓`: the
 residue-field characterisation pins it down uniquely
@@ -106,15 +102,12 @@ theorem isConj_of_isArithFrobAt [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsP
     (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) (hσ' : IsArithFrobAt (𝓞 K) σ' 𝔓') (hP : 𝔓.LiesOver 𝔭)
     (hP' : 𝔓'.LiesOver 𝔭) :
     IsConj σ σ' := by
-  have h𝔭 : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
   have : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓 hP))
   have : Finite (𝓞 L ⧸ 𝔓') := Ideal.finiteQuotientOfFreeOfNeBot 𝔓'
     (ne_bot_of_ramificationIdx_eq_one K L (UnramifiedIn.ramificationIdx_eq_one K L hunr 𝔓' hP'))
-  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓 :=
-    hunr 𝔓 (‹𝔓.IsPrime›.isMaximal (Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭 𝔓)) hP
-  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓' :=
-    hunr 𝔓' (‹𝔓'.IsPrime›.isMaximal (Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭 𝔓')) hP'
+  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓 := hunr 𝔓 ‹𝔓.IsPrime› hP
+  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓' := hunr 𝔓' ‹𝔓'.IsPrime› hP'
   rw [eq_arithFrobAt_of_isArithFrobAt K L 𝔓 σ hσ,
     eq_arithFrobAt_of_isArithFrobAt K L 𝔓' σ' hσ']
   exact isConj_arithFrobAt (𝓞 K) Gal(L/K) 𝔓 𝔓' (hP.over.symm.trans hP'.over)
@@ -172,16 +165,12 @@ theorem finite_ramifiedIn [IsGalois K L] :
     rw [Ideal.zero_eq_bot]; exact differentIdeal_ne_bot
   apply Set.Finite.subset ((Ideal.finite_factors hbot).image (fun v ↦ (v.asIdeal).under (𝓞 K)))
   rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
-  rw [UnramifiedIn, not_forall] at hnunr
-  obtain ⟨𝔓, h𝔓⟩ := hnunr
-  rw [not_forall] at h𝔓
-  obtain ⟨h𝔓max, h𝔓⟩ := h𝔓
-  rw [not_forall] at h𝔓
-  obtain ⟨h𝔓lo, h𝔓nu⟩ := h𝔓
+  simp only [UnramifiedIn, Algebra.IsUnramifiedIn, not_forall] at hnunr
+  obtain ⟨𝔓, h𝔓prime, h𝔓lo, h𝔓nu⟩ := hnunr
   have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭bot 𝔓
   have hdvd : 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
     by_contra h
     exact h𝔓nu (not_dvd_differentIdeal_iff.mp h)
-  exact ⟨⟨𝔓, h𝔓max.isPrime, h𝔓bot⟩, hdvd, h𝔓lo.over.symm⟩
+  exact ⟨⟨𝔓, h𝔓prime, h𝔓bot⟩, hdvd, h𝔓lo.over.symm⟩
 
 end Chebotarev
