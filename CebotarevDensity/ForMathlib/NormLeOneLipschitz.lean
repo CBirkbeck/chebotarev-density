@@ -83,15 +83,18 @@ open NumberField NumberField.InfinitePlace NumberField.mixedEmbedding
 
 open scoped NNReal
 
+variable (ι : Type*) {c : ι → ℝ}
+
+variable (c) in
 /-- The coordinatewise retraction of `ι → ℝ` onto the unit cube `Set.Icc 0 1`, given by
 `Set.projIcc` in each coordinate. -/
-def clampUnit (ι : Type*) (c : ι → ℝ) : ι → ℝ := fun i ↦ (Set.projIcc 0 1 zero_le_one (c i) : ℝ)
+def clampUnit : ι → ℝ := fun i ↦ (Set.projIcc 0 1 zero_le_one (c i) : ℝ)
 
-theorem clampUnit_mem_Icc (ι : Type*) (c : ι → ℝ) : clampUnit ι c ∈ Icc (0 : ι → ℝ) 1 :=
+theorem clampUnit_mem_Icc : clampUnit ι c ∈ Icc (0 : ι → ℝ) 1 :=
   ⟨fun i ↦ (Set.projIcc 0 1 zero_le_one (c i)).2.1,
     fun i ↦ (Set.projIcc 0 1 zero_le_one (c i)).2.2⟩
 
-theorem clampUnit_eq_self {ι : Type*} {c : ι → ℝ} (hc : c ∈ Icc (0 : ι → ℝ) 1) :
+theorem clampUnit_eq_self (hc : c ∈ Icc (0 : ι → ℝ) 1) :
     clampUnit ι c = c :=
   funext fun i ↦ congrArg _ (Set.projIcc_of_mem _ ⟨hc.1 i, hc.2 i⟩)
 
@@ -104,7 +107,7 @@ private theorem lipschitzWith_one_of_edist_apply_le {α κ : Type*} {β : κ →
     rw [edist_pi_def]
     exact Finset.sup_le fun j _ ↦ h c d j
 
-theorem lipschitzWith_clampUnit (ι : Type*) [Fintype ι] : LipschitzWith 1 (clampUnit ι) :=
+theorem lipschitzWith_clampUnit [Fintype ι] : LipschitzWith 1 (clampUnit ι) :=
   lipschitzWith_one_of_edist_apply_le fun c d i ↦ (Subtype.edist_eq _ _).symm.trans_le <|
     (((LipschitzWith.projIcc zero_le_one).edist_le_mul (c i) (d i)).trans_eq
       (one_mul _)).trans (edist_le_pi_edist c d i)
@@ -112,13 +115,13 @@ theorem lipschitzWith_clampUnit (ι : Type*) [Fintype ι] : LipschitzWith 1 (cla
 /-- A globally `C¹` map into `κ → ℝ`, pre-composed with the cube clamp, is globally Lipschitz;
 its image of the unit cube is unchanged. The Lipschitz constant comes from compactness of the
 cube (`LocallyLipschitzOn.exists_lipschitzOnWith_of_compact`). -/
-theorem exists_lipschitzWith_comp_clampUnit {ι κ : Type*} [Fintype ι] [Fintype κ]
+theorem exists_lipschitzWith_comp_clampUnit {κ : Type*} [Fintype ι] [Fintype κ]
     {f : (ι → ℝ) → κ → ℝ} (hf : ContDiff ℝ 1 f) :
     ∃ M : ℝ≥0, LipschitzWith M (f ∘ clampUnit ι) := by
   have hl := hf.locallyLipschitz.locallyLipschitzOn (s := Icc (0 : ι → ℝ) 1)
   obtain ⟨M, hM⟩ := hl.exists_lipschitzOnWith_of_compact isCompact_Icc
-  refine ⟨M, fun c d ↦ (hM (clampUnit_mem_Icc ι c) (clampUnit_mem_Icc ι d)).trans ?_⟩
+  refine ⟨M, fun x y ↦ (hM (clampUnit_mem_Icc ι (c := x)) (clampUnit_mem_Icc ι (c := y))).trans ?_⟩
   gcongr
-  simpa using (lipschitzWith_clampUnit ι).edist_le_mul c d
+  simpa using (lipschitzWith_clampUnit ι).edist_le_mul x y
 
 end Chebotarev
