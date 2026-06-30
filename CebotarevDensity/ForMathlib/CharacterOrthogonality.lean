@@ -80,7 +80,7 @@ theorem sum_eq_card_mul_of_sum_char_mul_eq_zero (f : G → M)
       = if s = u then (Fintype.card (G →* Mˣ) : M) else 0 := by
     intro s
     by_cases hs : s = u
-    · subst hs; simp
+    · simp [hs]
     · rw [if_neg hs]
       exact sum_char_apply_eq_zero_of_ne_one fun h ↦ hs (inv_mul_eq_one.mp h).symm
   calc (Fintype.card (G →* Mˣ) : M) * f u
@@ -107,9 +107,7 @@ domain, if every nontrivial character moment of `f : G → M` vanishes (`∑ s, 
 theorem exists_const_of_sum_char_mul_eq_zero [CharZero M] (f : G → M)
     (hf : ∀ χ : G →* Mˣ, χ ≠ 1 → ∑ s : G, ((χ s : Mˣ) : M) * f s = 0) :
     ∃ c, f = Function.const G c := by
-  have : Fintype (G →* Mˣ) := Fintype.ofFinite _
-  have hcard0 : (Nat.card (G →* Mˣ) : M) ≠ 0 := by
-    rw [Nat.card_eq_fintype_card]; exact_mod_cast Fintype.card_ne_zero
+  have hcard0 : (Nat.card (G →* Mˣ) : M) ≠ 0 := Nat.cast_ne_zero.mpr Nat.card_pos.ne'
   refine ⟨f 1, funext fun u ↦ ?_⟩
   exact mul_left_cancel₀ hcard0
     ((sum_eq_card_mul_of_sum_char_mul_eq_zero f hf u).symm.trans
