@@ -111,7 +111,6 @@ theorem exists_const_of_sum_char_mul_eq_zero [CharZero M] (f : G → M)
   have hcard0 : (Nat.card (G →* Mˣ) : M) ≠ 0 := by
     rw [Nat.card_eq_fintype_card]; exact_mod_cast Fintype.card_ne_zero
   refine ⟨f 1, funext fun u ↦ ?_⟩
-  change f u = f 1
   exact mul_left_cancel₀ hcard0
     ((sum_eq_card_mul_of_sum_char_mul_eq_zero f hf u).symm.trans
       (sum_eq_card_mul_of_sum_char_mul_eq_zero f hf 1))
