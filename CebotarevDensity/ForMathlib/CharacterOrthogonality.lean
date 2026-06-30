@@ -24,8 +24,8 @@ From column orthogonality we package the standard **Fourier-inversion** conseque
 
 * `sum_eq_card_mul_of_sum_char_mul_eq_zero` — a function `f : G → M` whose nontrivial character
   moments `∑ s, χ s · f s` all vanish equals its average, `∑ s, f s = (#(G →* Mˣ)) · f u`.
-* `eq_of_sum_char_mul_eq_zero` — over a characteristic-zero domain the same hypothesis forces `f`
-  to be constant on `G`.
+* `exists_const_of_sum_char_mul_eq_zero` — over a characteristic-zero domain the same hypothesis
+  forces `f` to be constant on `G` (`∃ c, f = Function.const G c`).
 
 None of these lemmas mention number fields or Dirichlet density.
 -/
@@ -73,7 +73,7 @@ theorem sum_eq_card_mul_of_sum_char_mul_eq_zero (f : G → M)
     (hf : ∀ χ : G →* Mˣ, χ ≠ 1 → ∑ s : G, ((χ s : Mˣ) : M) * f s = 0) (u : G) :
     ∑ s : G, f s = (Nat.card (G →* Mˣ) : M) * f u := by
   classical
-  haveI : Fintype (G →* Mˣ) := Fintype.ofFinite _
+  have : Fintype (G →* Mˣ) := Fintype.ofFinite _
   rw [Nat.card_eq_fintype_card]
   symm
   have horth : ∀ s : G, (∑ χ : G →* Mˣ, ((χ (u⁻¹ * s) : Mˣ) : M))
@@ -102,17 +102,18 @@ theorem sum_eq_card_mul_of_sum_char_mul_eq_zero (f : G → M)
 
 /-- **Vanishing nontrivial Fourier coefficients force a constant.** Over a characteristic-zero
 domain, if every nontrivial character moment of `f : G → M` vanishes (`∑ s, χ s · f s = 0` for
-`χ ≠ 1`), then `f` takes the same value at every pair of points. Immediate from
-`sum_eq_card_mul_of_sum_char_mul_eq_zero` (both values equal the common average) after cancelling
-the nonzero dual cardinality. -/
-theorem eq_of_sum_char_mul_eq_zero [CharZero M] (f : G → M)
-    (hf : ∀ χ : G →* Mˣ, χ ≠ 1 → ∑ s : G, ((χ s : Mˣ) : M) * f s = 0) (u u' : G) :
-    f u = f u' := by
-  haveI : Fintype (G →* Mˣ) := Fintype.ofFinite _
+`χ ≠ 1`), then `f` is constant. Immediate from `sum_eq_card_mul_of_sum_char_mul_eq_zero`
+(every value equals the common average) after cancelling the nonzero dual cardinality. -/
+theorem exists_const_of_sum_char_mul_eq_zero [CharZero M] (f : G → M)
+    (hf : ∀ χ : G →* Mˣ, χ ≠ 1 → ∑ s : G, ((χ s : Mˣ) : M) * f s = 0) :
+    ∃ c, f = Function.const G c := by
+  have : Fintype (G →* Mˣ) := Fintype.ofFinite _
   have hcard0 : (Nat.card (G →* Mˣ) : M) ≠ 0 := by
     rw [Nat.card_eq_fintype_card]; exact_mod_cast Fintype.card_ne_zero
+  refine ⟨f 1, funext fun u ↦ ?_⟩
+  change f u = f 1
   exact mul_left_cancel₀ hcard0
     ((sum_eq_card_mul_of_sum_char_mul_eq_zero f hf u).symm.trans
-      (sum_eq_card_mul_of_sum_char_mul_eq_zero f hf u'))
+      (sum_eq_card_mul_of_sum_char_mul_eq_zero f hf 1))
 
 end
