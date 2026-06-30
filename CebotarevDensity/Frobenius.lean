@@ -45,7 +45,7 @@ file does not wrap it.
 
 noncomputable section
 
-open NumberField
+open Algebra NumberField
 open scoped Pointwise
 
 namespace Chebotarev
@@ -66,7 +66,7 @@ residue-field characterisation pins it down uniquely
 (`AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt`, transferred to `Gal(L/K)` via the faithful
 action on `𝓞 L`). -/
 private theorem eq_arithFrobAt_of_isArithFrobAt [IsGalois K L] (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
-    [Finite (𝓞 L ⧸ 𝔓)] [Algebra.IsUnramifiedAt (𝓞 K) 𝔓] (σ : Gal(L/K))
+    [Finite (𝓞 L ⧸ 𝔓)] [IsUnramifiedAt (𝓞 K) 𝔓] (σ : Gal(L/K))
     (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) :
     σ = arithFrobAt (𝓞 K) Gal(L/K) 𝔓 := by
   have : FaithfulSMul Gal(L/K) (𝓞 L) := IsGaloisGroup.faithful (𝓞 K)
@@ -79,19 +79,19 @@ that are arithmetic Frobenius elements (`IsArithFrobAt`) at primes `𝔓`, `𝔓
 conjugate: each equals `arithFrobAt` at its prime (`eq_arithFrobAt_of_isArithFrobAt`), and
 the two `arithFrobAt`s lie over the same `𝔭`, so `isConj_arithFrobAt` applies. -/
 theorem isConj_of_isArithFrobAt [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [NeZero 𝔭]
-    (hunr : Algebra.IsUnramifiedIn (𝓞 L) 𝔭) (σ σ' : Gal(L/K))
+    (hunr : IsUnramifiedIn (𝓞 L) 𝔭) (σ σ' : Gal(L/K))
     (𝔓 𝔓' : Ideal (𝓞 L)) [𝔓.IsPrime] [𝔓'.IsPrime]
     (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) (hσ' : IsArithFrobAt (𝓞 K) σ' 𝔓') (hP : 𝔓.LiesOver 𝔭)
     (hP' : 𝔓'.LiesOver 𝔭) :
     IsConj σ σ' := by
   have : Finite (𝓞 L ⧸ 𝔓) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓
     (ne_bot_of_ramificationIdx_eq_one K L
-      (hP.over ▸ Algebra.IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hP))
+      (hP.over ▸ IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hP))
   have : Finite (𝓞 L ⧸ 𝔓') := Ideal.finiteQuotientOfFreeOfNeBot 𝔓'
     (ne_bot_of_ramificationIdx_eq_one K L
-      (hP'.over ▸ Algebra.IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hP'))
-  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓 := hunr 𝔓 ‹𝔓.IsPrime› hP
-  have : Algebra.IsUnramifiedAt (𝓞 K) 𝔓' := hunr 𝔓' ‹𝔓'.IsPrime› hP'
+      (hP'.over ▸ IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hP'))
+  have : IsUnramifiedAt (𝓞 K) 𝔓 := hunr 𝔓 ‹𝔓.IsPrime› hP
+  have : IsUnramifiedAt (𝓞 K) 𝔓' := hunr 𝔓' ‹𝔓'.IsPrime› hP'
   rw [eq_arithFrobAt_of_isArithFrobAt K L 𝔓 σ hσ,
     eq_arithFrobAt_of_isArithFrobAt K L 𝔓' σ' hσ']
   exact isConj_arithFrobAt (𝓞 K) Gal(L/K) 𝔓 𝔓' (hP.over.symm.trans hP'.over)
@@ -102,7 +102,7 @@ for every `σ` that is an arithmetic Frobenius (`IsArithFrobAt`) at some prime `
 `𝓞 L` above `𝔭`.
 Sharifi §7.2 + SL Appendix paragraph 1. -/
 theorem exists_frobeniusClass [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime] [NeZero 𝔭]
-    (hunr : Algebra.IsUnramifiedIn (𝓞 L) 𝔭) :
+    (hunr : IsUnramifiedIn (𝓞 L) 𝔭) :
     ∃ C : ConjClasses Gal(L/K),
       ∀ (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime] (_ : IsArithFrobAt (𝓞 K) σ 𝔓)
         (_ : 𝔓.LiesOver 𝔭), C = ConjClasses.mk σ := by
@@ -111,7 +111,7 @@ theorem exists_frobeniusClass [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPri
   have hlo₀ : 𝔓₀.LiesOver 𝔭 := ⟨hcomap₀.symm⟩
   have : Finite (𝓞 L ⧸ 𝔓₀) := Ideal.finiteQuotientOfFreeOfNeBot 𝔓₀
     (ne_bot_of_ramificationIdx_eq_one K L
-      (hlo₀.over ▸ Algebra.IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hlo₀))
+      (hlo₀.over ▸ IsUnramifiedIn.ramificationIdx_eq_one hunr (NeZero.ne 𝔭) hlo₀))
   refine ⟨ConjClasses.mk (arithFrobAt (𝓞 K) Gal(L/K) 𝔓₀), fun σ 𝔓 _ hσ hP => ?_⟩
   exact ConjClasses.mk_eq_mk_iff_isConj.mpr (isConj_of_isArithFrobAt K L 𝔭 hunr
     (arithFrobAt (𝓞 K) Gal(L/K) 𝔓₀) σ 𝔓₀ 𝔓
@@ -125,7 +125,7 @@ a junk value never used in the Chebotarev statement (which always restricts
 to unramified nonzero primes). -/
 def frobeniusClass [IsGalois K L] (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K) :=
   open Classical in
-  if h : 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ Algebra.IsUnramifiedIn (𝓞 L) 𝔭 then
+  if h : 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ IsUnramifiedIn (𝓞 L) 𝔭 then
     haveI := h.1
     haveI : NeZero 𝔭 := ⟨h.2.1⟩
     (exists_frobeniusClass K L 𝔭 h.2.2).choose
@@ -135,7 +135,7 @@ def frobeniusClass [IsGalois K L] (𝔭 : Ideal (𝓞 K)) : ConjClasses Gal(L/K)
 /-- `frobeniusClass K L 𝔭` is the conjugacy class of any arithmetic Frobenius `σ`
 (`IsArithFrobAt (𝓞 K) σ 𝔓`) at any prime `𝔓` of `𝓞 L` above `𝔭`. -/
 theorem frobeniusClass_eq_mk_of_isArithFrobAt [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    [NeZero 𝔭] (hunr : Algebra.IsUnramifiedIn (𝓞 L) 𝔭) (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
+    [NeZero 𝔭] (hunr : IsUnramifiedIn (𝓞 L) 𝔭) (σ : Gal(L/K)) (𝔓 : Ideal (𝓞 L)) [𝔓.IsPrime]
     (hσ : IsArithFrobAt (𝓞 K) σ 𝔓) (hP : 𝔓.LiesOver 𝔭) :
     frobeniusClass K L 𝔭 = ConjClasses.mk σ := by
   have h𝔭 : 𝔭 ≠ ⊥ := NeZero.ne 𝔭
@@ -144,12 +144,12 @@ theorem frobeniusClass_eq_mk_of_isArithFrobAt [IsGalois K L] (𝔭 : Ideal (𝓞
 
 /-- Only finitely many nonzero primes of `K` ramify in `L`. -/
 theorem finite_ramifiedIn [IsGalois K L] :
-    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ Algebra.IsUnramifiedIn (𝓞 L) 𝔭}.Finite := by
+    {𝔭 : Ideal (𝓞 K) | 𝔭.IsPrime ∧ 𝔭 ≠ ⊥ ∧ ¬ IsUnramifiedIn (𝓞 L) 𝔭}.Finite := by
   have hbot : differentIdeal (𝓞 K) (𝓞 L) ≠ 0 := by
     rw [Ideal.zero_eq_bot]; exact differentIdeal_ne_bot
   apply Set.Finite.subset ((Ideal.finite_factors hbot).image (fun v ↦ (v.asIdeal).under (𝓞 K)))
   rintro 𝔭 ⟨-, h𝔭bot, hnunr⟩
-  simp only [Algebra.IsUnramifiedIn, not_forall] at hnunr
+  simp only [IsUnramifiedIn, not_forall] at hnunr
   obtain ⟨𝔓, h𝔓prime, h𝔓lo, h𝔓nu⟩ := hnunr
   have h𝔓bot : 𝔓 ≠ ⊥ := Ideal.ne_bot_of_liesOver_of_ne_bot h𝔭bot 𝔓
   have hdvd : 𝔓 ∣ differentIdeal (𝓞 K) (𝓞 L) := by
