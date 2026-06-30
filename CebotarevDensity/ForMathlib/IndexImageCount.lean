@@ -34,30 +34,13 @@ section Sublemmas
 
 variable {ι : Type*} [Fintype ι]
 
-private lemma ceil_natCast_mul_le_ceil_natCast_mul_add (n : ℕ) {a b r : ℝ} (h : a ≤ b + r) :
-    (⌈(n : ℝ) * a⌉ : ℤ) ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ :=
-  calc (⌈(n : ℝ) * a⌉ : ℤ)
-      ≤ ⌈(n : ℝ) * b + (n : ℝ) * r⌉ :=
-        Int.ceil_le_ceil (by nlinarith [Nat.cast_nonneg (α := ℝ) n])
-    _ ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ := Int.ceil_add_le _ _
-
-private lemma abs_sub_le_one_div_of_ceil_natCast_mul_eq {n : ℕ} (hn : 0 < (n : ℝ)) {a b : ℝ}
-    (h : ⌈(n : ℝ) * a⌉ = ⌈(n : ℝ) * b⌉) : |a - b| ≤ 1 / n := by
-  have hr : (⌈(n : ℝ) * a⌉ : ℝ) = ⌈(n : ℝ) * b⌉ := by exact_mod_cast h
-  rw [show a - b = ((n : ℝ) * a - (n : ℝ) * b) / n by field_simp, abs_div, abs_of_pos hn,
-    div_le_div_iff_of_pos_right hn, abs_le]
-  constructor <;>
-    nlinarith [Int.le_ceil ((n : ℝ) * a), Int.le_ceil ((n : ℝ) * b),
-      Int.ceil_lt_add_one ((n : ℝ) * a), Int.ceil_lt_add_one ((n : ℝ) * b), hr]
-
--- The `Fintype ι` instance is needed for the `sup`-metric on `ι → ℝ`, so the
--- `unusedFintypeInType` linter (which only inspects the conclusion) is a false positive here.
-set_option linter.unusedFintypeInType false in
+omit [Fintype ι] in
 /-- The `index n`-image of a bounded set is finite: only finitely many cells of the `n⁻¹ℤ^ι`
 grid meet a bounded set. -/
-theorem setFinite_index_image_of_isBounded (n : ℕ) {T : Set (ι → ℝ)}
+theorem setFinite_index_image_of_isBounded [Finite ι] (n : ℕ) {T : Set (ι → ℝ)}
     (hbdd : Bornology.IsBounded T) : (index n '' T).Finite := by
   classical
+  haveI : Fintype ι := Fintype.ofFinite ι
   obtain ⟨R, hR⟩ := hbdd.subset_closedBall (0 : ι → ℝ)
   set F : Finset (ι → ℤ) :=
     Fintype.piFinset fun _ : ι ↦ Finset.Icc (⌈-((n : ℝ) * R)⌉ - 1) (⌈(n : ℝ) * R⌉ - 1) with hF
@@ -73,6 +56,13 @@ theorem setFinite_index_image_of_isBounded (n : ℕ) {T : Set (ι → ℝ)}
   have hn0 : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
   exact ⟨sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1,
     sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1⟩
+
+private lemma ceil_natCast_mul_le_ceil_natCast_mul_add (n : ℕ) {a b r : ℝ} (h : a ≤ b + r) :
+    (⌈(n : ℝ) * a⌉ : ℤ) ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ :=
+  calc (⌈(n : ℝ) * a⌉ : ℤ)
+      ≤ ⌈(n : ℝ) * b + (n : ℝ) * r⌉ :=
+        Int.ceil_le_ceil (by nlinarith [Nat.cast_nonneg (α := ℝ) n])
+    _ ≤ ⌈(n : ℝ) * b⌉ + ⌈(n : ℝ) * r⌉ := Int.ceil_add_le _ _
 
 /-- **Bounded-diameter cell incidence.** A set `T ⊆ ι → ℝ` of diameter `≤ r` meets at most
 `(2⌈n·r⌉₊ + 1)ᵈ` cells of the `n⁻¹ℤ^ι` grid, i.e. its `index n`-image has at most that many
@@ -109,6 +99,15 @@ theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → �
     rw [Int.card_Icc]
     lia
   rw [Finset.prod_congr rfl fun i _ ↦ hcard i, Finset.prod_const, Finset.card_univ]
+
+private lemma abs_sub_le_one_div_of_ceil_natCast_mul_eq {n : ℕ} (hn : 0 < (n : ℝ)) {a b : ℝ}
+    (h : ⌈(n : ℝ) * a⌉ = ⌈(n : ℝ) * b⌉) : |a - b| ≤ 1 / n := by
+  have hr : (⌈(n : ℝ) * a⌉ : ℝ) = ⌈(n : ℝ) * b⌉ := by exact_mod_cast h
+  rw [show a - b = ((n : ℝ) * a - (n : ℝ) * b) / n by field_simp, abs_div, abs_of_pos hn,
+    div_le_div_iff_of_pos_right hn, abs_le]
+  constructor <;>
+    nlinarith [Int.le_ceil ((n : ℝ) * a), Int.le_ceil ((n : ℝ) * b),
+      Int.ceil_lt_add_one ((n : ℝ) * a), Int.ceil_lt_add_one ((n : ℝ) * b), hr]
 
 /-- **Single-chart cell count.** For one `M`-Lipschitz map `φ : (Fin (d-1) → ℝ) → (ι → ℝ)`,
 the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the image `φ '' [0,1]ᵈ⁻¹` is at most
