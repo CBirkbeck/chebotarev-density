@@ -32,19 +32,18 @@ namespace Chebotarev
 
 section Sublemmas
 
-variable {ι : Type*} [Fintype ι]
+variable {ι : Type*}
 
-omit [Fintype ι] in
 /-- The `index n`-image of a bounded set is finite: only finitely many cells of the `n⁻¹ℤ^ι`
 grid meet a bounded set. -/
 theorem setFinite_index_image_of_isBounded [Finite ι] (n : ℕ) {T : Set (ι → ℝ)}
     (hbdd : Bornology.IsBounded T) : (index n '' T).Finite := by
   classical
-  haveI : Fintype ι := Fintype.ofFinite ι
+  have : Fintype ι := Fintype.ofFinite ι
   obtain ⟨R, hR⟩ := hbdd.subset_closedBall (0 : ι → ℝ)
   set F : Finset (ι → ℤ) :=
     Fintype.piFinset fun _ : ι ↦ Finset.Icc (⌈-((n : ℝ) * R)⌉ - 1) (⌈(n : ℝ) * R⌉ - 1) with hF
-  refine Set.Finite.subset (Finset.finite_toSet F) ?_
+  refine (Finset.finite_toSet F).subset  ?_
   rintro _ ⟨x, hx, rfl⟩
   simp only [hF, Finset.mem_coe, Fintype.mem_piFinset, Finset.mem_Icc, index_apply]
   intro i
@@ -53,7 +52,6 @@ theorem setFinite_index_image_of_isBounded [Finite ι] (n : ℕ) {T : Set (ι �
     rw [Real.dist_eq, Pi.zero_apply, sub_zero] at hd
     exact hd.trans (by simpa [Real.dist_eq] using hR hx)
   rcases abs_le.mp hxi with ⟨hlo, hhi⟩
-  have hn0 : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
   exact ⟨sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1,
     sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1⟩
 
@@ -67,12 +65,13 @@ private lemma ceil_natCast_mul_le_ceil_natCast_mul_add (n : ℕ) {a b r : ℝ} (
 /-- **Bounded-diameter cell incidence.** A set `T ⊆ ι → ℝ` of diameter `≤ r` meets at most
 `(2⌈n·r⌉₊ + 1)ᵈ` cells of the `n⁻¹ℤ^ι` grid, i.e. its `index n`-image has at most that many
 points. (Here `ι → ℝ` carries the sup metric, so a cube of side `1/n` has diameter `1/n`.) -/
-theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → ℝ)} {r : ℝ}
-    (hr : 0 ≤ r) (hdiam : Metric.diam T ≤ r) (hbdd : Bornology.IsBounded T) :
+theorem ncard_index_image_le_of_diam_le [Fintype ι] (n : ℕ) {T : Set (ι → ℝ)} {r : ℝ}
+    (hdiam : Metric.diam T ≤ r) (hbdd : Bornology.IsBounded T) :
     (index n '' T).ncard ≤ (2 * ⌈(n : ℝ) * r⌉₊ + 1) ^ Fintype.card ι := by
   classical
   rcases T.eq_empty_or_nonempty with rfl | ⟨x₀, hx₀⟩
   · simp
+  have hr : 0 ≤ r := Metric.diam_nonneg.trans hdiam
   set K : ℕ := ⌈(n : ℝ) * r⌉₊ with hK
   set c : ι → ℤ := index n x₀ with hc
   set F : Finset (ι → ℤ) := Fintype.piFinset fun i ↦ Finset.Icc (c i - K) (c i + K) with hF
