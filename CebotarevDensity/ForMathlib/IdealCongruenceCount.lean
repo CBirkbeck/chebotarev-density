@@ -186,7 +186,7 @@ private theorem ncard_index1_image_smul_chart_le {M : ℝ≥0}
         rw [mul_one_div, mul_div_assoc', div_le_iff₀ hN0]
         nlinarith [hcN, M.coe_nonneg]
       exact le_trans (mul_le_mul_of_nonneg_left hφd hcpos.le) hfin
-    refine (ncard_index_image_le_of_diam_le 1 M.coe_nonneg ?_ hbddφ).trans ?_
+    refine (ncard_index_image_le_of_diam_le 1 (r := (M : ℝ)) ?_ hbddφ).trans ?_
     · simpa using hdimg
     · simp
   have hfin : ∀ w : Fin (Fintype.card ι - 1) → ℤ,
