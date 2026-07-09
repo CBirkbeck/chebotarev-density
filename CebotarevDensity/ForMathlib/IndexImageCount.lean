@@ -65,12 +65,13 @@ private lemma ceil_natCast_mul_le_ceil_natCast_mul_add (n : ℕ) {a b r : ℝ} (
 /-- **Bounded-diameter cell incidence.** A set `T ⊆ ι → ℝ` of diameter `≤ r` meets at most
 `(2⌈n·r⌉₊ + 1)ᵈ` cells of the `n⁻¹ℤ^ι` grid, i.e. its `index n`-image has at most that many
 points. (Here `ι → ℝ` carries the sup metric, so a cube of side `1/n` has diameter `1/n`.) -/
-theorem ncard_index_image_le_of_diam_le (n : ℕ) [NeZero n] {T : Set (ι → ℝ)} {r : ℝ}
-    (hr : 0 ≤ r) (hdiam : Metric.diam T ≤ r) (hbdd : Bornology.IsBounded T) :
+theorem ncard_index_image_le_of_diam_le [Fintype ι] (n : ℕ) {T : Set (ι → ℝ)} {r : ℝ}
+    (hdiam : Metric.diam T ≤ r) (hbdd : Bornology.IsBounded T) :
     (index n '' T).ncard ≤ (2 * ⌈(n : ℝ) * r⌉₊ + 1) ^ Fintype.card ι := by
   classical
   rcases T.eq_empty_or_nonempty with rfl | ⟨x₀, hx₀⟩
   · simp
+  have hr : 0 ≤ r := Metric.diam_nonneg.trans hdiam
   set K : ℕ := ⌈(n : ℝ) * r⌉₊ with hK
   set c : ι → ℤ := index n x₀ with hc
   set F : Finset (ι → ℤ) := Fintype.piFinset fun i ↦ Finset.Icc (c i - K) (c i + K) with hF
