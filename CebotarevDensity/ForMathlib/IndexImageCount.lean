@@ -32,19 +32,18 @@ namespace Chebotarev
 
 section Sublemmas
 
-variable {ι : Type*} [Fintype ι]
+variable {ι : Type*}
 
-omit [Fintype ι] in
 /-- The `index n`-image of a bounded set is finite: only finitely many cells of the `n⁻¹ℤ^ι`
 grid meet a bounded set. -/
 theorem setFinite_index_image_of_isBounded [Finite ι] (n : ℕ) {T : Set (ι → ℝ)}
     (hbdd : Bornology.IsBounded T) : (index n '' T).Finite := by
   classical
-  haveI : Fintype ι := Fintype.ofFinite ι
+  have : Fintype ι := Fintype.ofFinite ι
   obtain ⟨R, hR⟩ := hbdd.subset_closedBall (0 : ι → ℝ)
   set F : Finset (ι → ℤ) :=
     Fintype.piFinset fun _ : ι ↦ Finset.Icc (⌈-((n : ℝ) * R)⌉ - 1) (⌈(n : ℝ) * R⌉ - 1) with hF
-  refine Set.Finite.subset (Finset.finite_toSet F) ?_
+  refine (Finset.finite_toSet F).subset  ?_
   rintro _ ⟨x, hx, rfl⟩
   simp only [hF, Finset.mem_coe, Fintype.mem_piFinset, Finset.mem_Icc, index_apply]
   intro i
@@ -53,7 +52,6 @@ theorem setFinite_index_image_of_isBounded [Finite ι] (n : ℕ) {T : Set (ι �
     rw [Real.dist_eq, Pi.zero_apply, sub_zero] at hd
     exact hd.trans (by simpa [Real.dist_eq] using hR hx)
   rcases abs_le.mp hxi with ⟨hlo, hhi⟩
-  have hn0 : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
   exact ⟨sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1,
     sub_le_sub_right (Int.ceil_le_ceil (by nlinarith)) 1⟩
 
