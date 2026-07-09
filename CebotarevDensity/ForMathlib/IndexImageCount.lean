@@ -125,22 +125,22 @@ private lemma diam_Icc_inter_ceil_preimage_le {κ : Type*} [Fintype κ] {n : ℕ
 /-- The `index n`-image of a Lipschitz image of a set of diameter `≤ 1/n` meets at most
 `(2⌈M⌉₊ + 1)ᵈ` cells: the image has diameter `≤ M/n`, so this is `ncard_index_image_le_of_diam_le`
 with `r = M·(1/n)`. -/
-private lemma ncard_index_image_le_of_diam_le_lipschitz {κ : Type*} [Fintype κ] {M : ℝ≥0}
-    {n : ℕ} [NeZero n] {φ : (κ → ℝ) → (ι → ℝ)} (hφ : LipschitzWith M φ) {S : Set (κ → ℝ)}
-    (hbdd : Bornology.IsBounded S) (hdiam : Metric.diam S ≤ 1 / n) :
+private lemma ncard_index_image_le_of_diam_le_lipschitz [Fintype ι] {κ : Type*} [Fintype κ]
+    {M : ℝ≥0} {n : ℕ} [NeZero n] {φ : (κ → ℝ) → (ι → ℝ)} (hφ : LipschitzWith M φ)
+    {S : Set (κ → ℝ)} (hbdd : Bornology.IsBounded S) (hdiam : Metric.diam S ≤ 1 / n) :
     (index n '' (φ '' S)).ncard ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι := by
   have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne n)
   have hdimg : Metric.diam (φ '' S) ≤ (M : ℝ) * (1 / n) :=
     (hφ.diam_image_le S hbdd).trans (mul_le_mul_of_nonneg_left hdiam (by positivity))
-  refine (ncard_index_image_le_of_diam_le n (by positivity) hdimg
+  refine (ncard_index_image_le_of_diam_le n hdimg
     (hφ.isBounded_image hbdd)).trans ?_
   rw [show (n : ℝ) * ((M : ℝ) * (1 / n)) = (M : ℝ) by field_simp]
 
 /-- **Single-chart cell count.** For one `M`-Lipschitz map `φ : (Fin (d-1) → ℝ) → (ι → ℝ)`,
 the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the image `φ '' [0,1]ᵈ⁻¹` is at most
 `(2⌈M⌉₊ + 1)ᵈ · (n+1)ᵈ⁻¹ = O(nᵈ⁻¹)`. -/
-theorem ncard_index_image_chart_le {M : ℝ≥0} {φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)}
-    (hφ : LipschitzWith M φ) {n : ℕ} (hn : 1 ≤ n) :
+theorem ncard_index_image_chart_le [Fintype ι] {M : ℝ≥0}
+    {φ : (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)} (hφ : LipschitzWith M φ) {n : ℕ} (hn : 1 ≤ n) :
     (index n '' (φ '' Set.Icc 0 1)).ncard
       ≤ (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * (n + 1) ^ (Fintype.card ι - 1) := by
   classical
