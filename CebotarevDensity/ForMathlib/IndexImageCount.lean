@@ -198,18 +198,10 @@ theorem ncard_index_image_frontier_le {s : Set (ι → ℝ)} {m : ℕ} {M : ℝ�
   refine (Set.ncard_le_ncard hsub (Set.finite_iUnion hfin)).trans ?_
   refine (Set.ncard_iUnion_le_of_fintype _).trans ?_
   refine (Finset.sum_le_sum fun j _ ↦ ncard_index_image_chart_le (hφ j) hn).trans ?_
-  rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-  simp only [Fintype.card_fin]
-  have hpow : (n + 1) ^ (Fintype.card ι - 1) ≤
-      2 ^ (Fintype.card ι - 1) * n ^ (Fintype.card ι - 1) := by
-    rw [← mul_pow]
-    exact Nat.pow_le_pow_left (by lia) _
-  calc
-    (m : ℕ) * ((2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * (n + 1) ^ (Fintype.card ι - 1))
-      ≤ m * ((2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι
-          * (2 ^ (Fintype.card ι - 1) * n ^ (Fintype.card ι - 1))) := by gcongr
-    _ = m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * 2 ^ (Fintype.card ι - 1)
-          * n ^ (Fintype.card ι - 1) := by ring
+  rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Nat.cast_id,
+    Fintype.card_fin, mul_assoc, ← mul_pow, ← mul_assoc]
+  gcongr
+  lia
 
 
 end Sublemmas
