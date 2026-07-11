@@ -187,7 +187,6 @@ theorem ncard_index_image_frontier_le {s : Set (ι → ℝ)} {m : ℕ} {M : ℝ�
       ≤ (m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * 2 ^ (Fintype.card ι - 1))
           * n ^ (Fintype.card ι - 1) := by
   classical
-  have hne : NeZero n := ⟨Nat.one_le_iff_ne_zero.mp hn⟩
   have hbddφ : ∀ j, Bornology.IsBounded (φ j '' Set.Icc 0 1) := fun j ↦
     (hφ j).isBounded_image (Metric.isBounded_Icc 0 1)
   have hfin : ∀ j : Fin m, (index n '' (φ j '' Set.Icc 0 1)).Finite := fun j ↦
