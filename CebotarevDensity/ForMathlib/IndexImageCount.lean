@@ -188,6 +188,32 @@ theorem ncard_index_image_chart_le [Fintype ι] {κ : Type*} [Fintype κ] {M : �
     simp [Int.card_Icc]
   rw [hcardT, Nat.cast_id]
 
+/-- **Boundary-cell count.** If `∂s` is covered by `m` images `φⱼ '' [0,1]ᵈ⁻¹` of
+`M`-Lipschitz maps, the number of grid cells meeting `∂s` is `O(nᵈ⁻¹)`, with constant
+`m · (2⌈M⌉₊+1)ᵈ · 2ᵈ⁻¹`. -/
+theorem ncard_index_image_frontier_le [Fintype ι] {s : Set (ι → ℝ)} {m : ℕ} {M : ℝ≥0}
+    {φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)}
+    (hφ : ∀ j, LipschitzWith M (φ j)) (hcov : frontier s ⊆ ⋃ j, φ j '' Set.Icc 0 1)
+    {n : ℕ} (hn : 1 ≤ n) :
+    (index n '' frontier s).ncard
+      ≤ (m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * 2 ^ (Fintype.card ι - 1))
+          * n ^ (Fintype.card ι - 1) := by
+  have hbddφ : ∀ j, Bornology.IsBounded (φ j '' Set.Icc 0 1) := fun j ↦
+    (hφ j).isBounded_image (Metric.isBounded_Icc 0 1)
+  have hfin : ∀ j : Fin m, (index n '' (φ j '' Set.Icc 0 1)).Finite := fun j ↦
+    setFinite_index_image_of_isBounded n (hbddφ j)
+  have hsub : index n '' frontier s ⊆ ⋃ j, index n '' (φ j '' Set.Icc 0 1) := by
+    rw [← Set.image_iUnion]
+    exact Set.image_mono hcov
+  refine (Set.ncard_le_ncard hsub (Set.finite_iUnion hfin)).trans ?_
+  refine (Set.ncard_iUnion_le_of_fintype _).trans ?_
+  refine (Finset.sum_le_sum fun j _ ↦ ncard_index_image_chart_le (hφ j) hn).trans ?_
+  rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, Nat.cast_id,
+    Fintype.card_fin, mul_assoc, ← mul_pow, ← mul_assoc]
+  gcongr
+  lia
+
+
 end Sublemmas
 
 end
