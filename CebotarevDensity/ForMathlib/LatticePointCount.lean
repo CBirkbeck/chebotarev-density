@@ -3,23 +3,22 @@ module
 public import CebotarevDensity.ForMathlib.IndexImageCount
 
 /-!
-# Effective lattice-point count with a Lipschitz-boundary error term
+# Effective lattice-point count: the per-scale count↔volume bridge
 
-The effective (with explicit `O(tᵈ⁻¹)` rate) strengthening of `tendsto_card_div_pow_atTop_volume`:
-for a bounded measurable region whose boundary is covered by finitely many Lipschitz images of the
-unit cube, the number of points of the scaled integer lattice inside the region equals the volume
-times `nᵈ` up to `O(nᵈ⁻¹)`.
-
-Following Lang, GTM 110 Ch. VI §3 Theorem 3 (p. 129) and Widmer / Gun–Ramaré–Sivaraman: the count
+First half (1/2) of the effective, `O(nᵈ⁻¹)`-rate strengthening of
+`tendsto_card_div_pow_atTop_volume`. This file supplies the per-scale bridge: for a bounded
+measurable `s ⊆ ι → ℝ`, the number of points of the scaled integer lattice `n⁻¹·ℤ^ι` in `s`
 differs from `vol(s)·nᵈ` by at most the number of grid cells of the `n⁻¹ℤ^ι` grid meeting the
-frontier `∂s` (`abs_card_inter_sub_volume_mul_pow_le`); that count is `O(nᵈ⁻¹)` because `∂s` is a
-finite union of Lipschitz images of `[0,1]ᵈ⁻¹` (`ncard_index_image_frontier_le`, in
-`IndexImageCount.lean`).
+frontier `∂s`.
+
+Following Lang, GTM 110 Ch. VI §3 Theorem 3 (p. 129) and Widmer / Gun–Ramaré–Sivaraman. The
+follow-up (part 2/2) bounds that boundary-cell count by `O(nᵈ⁻¹)` — because `∂s` is a finite
+union of Lipschitz images of `[0,1]ᵈ⁻¹` (`ncard_index_image_frontier_le`, in
+`IndexImageCount.lean`) — to assemble the rate-effective count.
 
 ## Main results
 
-* `Chebotarev.exists_card_inter_smul_lattice_sub_volume_mul_pow_le`: the terminal export.
-* `Chebotarev.abs_card_inter_sub_volume_mul_pow_le`: the per-scale boundary-cell estimate.
+* `Chebotarev.abs_card_inter_sub_volume_mul_pow_le`: the per-scale count↔volume bridge.
 
 ## References
 
@@ -88,13 +87,11 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     |(Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) : ℝ)
         - volume.real s * (n : ℝ) ^ Fintype.card ι|
       ≤ (index n '' frontier s).ncard := by
-  classical
   have hne : NeZero n := ⟨Nat.one_le_iff_ne_zero.mp hn⟩
-  have hn0 : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.pos_of_ne_zero hne.out
   have hvs : volume s ≠ ⊤ := hbdd.measure_lt_top.ne
-  set Inside : Set (ι → ℤ) := {ν | (box n ν : Set (ι → ℝ)) ⊆ s} with hInside
-  set Meet : Set (ι → ℤ) := {ν | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty} with hMeet
-  set Bd : Set (ι → ℤ) := index n '' frontier s with hBd
+  set Inside : Set (ι → ℤ) := {ν | (box n ν : Set (ι → ℝ)) ⊆ s}
+  set Meet : Set (ι → ℤ) := {ν | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty}
+  set Bd : Set (ι → ℤ) := index n '' frontier s
   have hInsideFin : Inside.Finite := setFinite_index n hmeas.nullMeasurableSet hvs
   have hBdFin : Bd.Finite :=
     setFinite_index_image_of_isBounded n (hbdd.closure.subset frontier_subset_closure)
