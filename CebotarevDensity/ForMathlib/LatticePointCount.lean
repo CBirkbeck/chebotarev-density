@@ -80,6 +80,70 @@ private lemma measureReal_biUnion_box (n : ℕ) [NeZero n] (t : Finset (ι → �
   rw [Finset.sum_const, nsmul_eq_mul]
   ring
 
+omit [Fintype ι] in
+/-- The number of scaled-lattice points `n⁻¹·ℤ^ι` lying in `s` equals the number of grid
+indices `ν` whose box-tag `tag n ν` lands in `s`. -/
+lemma natCard_inter_smul_span_eq_ncard_setOf_tag_mem [Finite ι] {n : ℕ} [NeZero n]
+    (s : Set (ι → ℝ)) :
+    Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+      = {ν : ι → ℤ | tag n ν ∈ s}.ncard := by
+  have : Fintype ι := Fintype.ofFinite ι
+  have himg : index n '' (s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι)))
+      = {ν : ι → ℤ | tag n ν ∈ s} := by
+    ext ν
+    simp only [Set.mem_image, Set.mem_inter_iff, Set.mem_setOf_eq]
+    constructor
+    · rintro ⟨x, ⟨hxs, hxL⟩, rfl⟩
+      rwa [tag_index_eq_self_of_mem_smul_span n hxL]
+    · intro hν
+      exact ⟨tag n ν, ⟨hν, tag_mem_smul_span n ν⟩, index_tag n ν⟩
+  rw [Nat.card_coe_set_eq, ← himg]
+  refine (Set.InjOn.ncard_image ?_).symm
+  intro x hx y hy h
+  exact eq_of_mem_smul_span_of_index_eq_index n hx.2 hy.2 h
+
+/-- Lower bound in the count↔volume sandwich: the grid cells whose closed box lies entirely
+inside a measurable finite-volume `s` number at most `vol(s)·nᵈ`. -/
+lemma ncard_setOf_box_subset_le_measureReal_mul_pow {n : ℕ} [NeZero n] {s : Set (ι → ℝ)}
+    (hmeas : MeasurableSet s) (hvs : volume s ≠ ⊤) :
+    ({ν : ι → ℤ | (box n ν : Set (ι → ℝ)) ⊆ s}.ncard : ℝ)
+      ≤ volume.real s * (n : ℝ) ^ Fintype.card ι := by
+  have hnpow : (0 : ℝ) < (n : ℝ) ^ Fintype.card ι :=
+    pow_pos (by exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne n)) _
+  have hFin : {ν : ι → ℤ | (box n ν : Set (ι → ℝ)) ⊆ s}.Finite :=
+    setFinite_index n hmeas.nullMeasurableSet hvs
+  have hsub : (⋃ ν ∈ hFin.toFinset, (box n ν : Set (ι → ℝ))) ⊆ s :=
+    Set.iUnion₂_subset fun ν hν ↦ hFin.mem_toFinset.mp hν
+  have hle := measureReal_mono hsub hvs
+  rw [measureReal_biUnion_box n hFin.toFinset, (Set.ncard_eq_toFinset_card _ hFin).symm,
+    div_le_iff₀ hnpow] at hle
+  exact hle
+
+/-- Upper bound in the count↔volume sandwich: the grid cells whose closed box meets a bounded
+`s` number at least `vol(s)·nᵈ`. -/
+lemma measureReal_mul_pow_le_ncard_setOf_box_meet {n : ℕ} [NeZero n] {s : Set (ι → ℝ)}
+    (hbdd : Bornology.IsBounded s) :
+    volume.real s * (n : ℝ) ^ Fintype.card ι
+      ≤ ({ν : ι → ℤ | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty}.ncard : ℝ) := by
+  have hnpow : (0 : ℝ) < (n : ℝ) ^ Fintype.card ι :=
+    pow_pos (by exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne n)) _
+  have hMeetSub : {ν : ι → ℤ | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty} ⊆ index n '' s := by
+    rintro ν ⟨x, hxb, hxs⟩
+    exact ⟨x, hxs, mem_box_iff_index.mp hxb⟩
+  have hFin : {ν : ι → ℤ | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty}.Finite :=
+    (setFinite_index_image_of_isBounded n hbdd).subset hMeetSub
+  have hsub : s ⊆ ⋃ ν ∈ hFin.toFinset, (box n ν : Set (ι → ℝ)) := by
+    intro x hxs
+    refine Set.mem_iUnion₂.mpr ⟨index n x, hFin.mem_toFinset.mpr ?_, mem_box_iff_index.mpr rfl⟩
+    exact ⟨x, mem_box_iff_index.mpr rfl, hxs⟩
+  have hfinU : volume (⋃ ν ∈ hFin.toFinset, (box n ν : Set (ι → ℝ))) ≠ ⊤ :=
+    ((measure_biUnion_finset_le _ _).trans_lt
+      (ENNReal.sum_lt_top.mpr fun ν _ ↦ (box n ν).isBounded.measure_lt_top)).ne
+  have hle := measureReal_mono hsub hfinU
+  rw [measureReal_biUnion_box n hFin.toFinset, (Set.ncard_eq_toFinset_card _ hFin).symm,
+    le_div_iff₀ hnpow] at hle
+  exact hle
+
 /-- **Count ↔ volume bridge.** The number of points of `n⁻¹ℤ^ι` in a bounded measurable `s`
 differs from `vol(s)·nᵈ` by at most the number of grid cells meeting `∂s`. This is the
 effective form of the sandwich behind `tendsto_card_div_pow_atTop_volume`. -/
@@ -93,28 +157,22 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
   set Inside : Set (ι → ℤ) := {ν | (box n ν : Set (ι → ℝ)) ⊆ s}
   set Meet : Set (ι → ℤ) := {ν | ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty}
   set Bd : Set (ι → ℤ) := index n '' frontier s
+  set Tag : Set (ι → ℤ) := {ν | tag n ν ∈ s}
+  -- the three inputs, each now its own lemma
+  have hcount : Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) = Tag.ncard :=
+    natCard_inter_smul_span_eq_ncard_setOf_tag_mem s
+  have hvol_lower : (Inside.ncard : ℝ) ≤ volume.real s * (n : ℝ) ^ Fintype.card ι :=
+    ncard_setOf_box_subset_le_measureReal_mul_pow hmeas hvs
+  have hvol_upper : volume.real s * (n : ℝ) ^ Fintype.card ι ≤ (Meet.ncard : ℝ) :=
+    measureReal_mul_pow_le_ncard_setOf_box_meet hbdd
+  -- the combinatorial sandwich `Inside ⊆ Tag ⊆ Meet ⊆ Inside ∪ Bd`
   have hInsideFin : Inside.Finite := setFinite_index n hmeas.nullMeasurableSet hvs
   have hBdFin : Bd.Finite :=
     setFinite_index_image_of_isBounded n (hbdd.closure.subset frontier_subset_closure)
-  have hMeetSub : Meet ⊆ index n '' s := by
+  have hMeetFin : Meet.Finite := by
+    refine (setFinite_index_image_of_isBounded n hbdd).subset ?_
     rintro ν ⟨x, hxb, hxs⟩
     exact ⟨x, hxs, mem_box_iff_index.mp hxb⟩
-  have hMeetFin : Meet.Finite :=
-    (setFinite_index_image_of_isBounded n hbdd).subset hMeetSub
-  set Tag : Set (ι → ℤ) := {ν | tag n ν ∈ s} with hTag
-  have himg : index n '' (s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) = Tag := by
-    ext ν
-    simp only [hTag, Set.mem_image, Set.mem_inter_iff, Set.mem_setOf_eq]
-    constructor
-    · rintro ⟨x, ⟨hxs, hxL⟩, rfl⟩
-      rwa [tag_index_eq_self_of_mem_smul_span n hxL]
-    · intro hν
-      exact ⟨tag n ν, ⟨hν, tag_mem_smul_span n ν⟩, index_tag n ν⟩
-  have hNeq : Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) = Tag.ncard := by
-    rw [Nat.card_coe_set_eq, ← himg]
-    refine (Set.InjOn.ncard_image ?_).symm
-    intro x hx y hy h
-    exact eq_of_mem_smul_span_of_index_eq_index n hx.2 hy.2 h
   have hIT : Inside ⊆ Tag := fun ν hν ↦ hν (tag_mem n ν)
   have hTM : Tag ⊆ Meet := fun ν hν ↦ ⟨tag n ν, tag_mem n ν, hν⟩
   have hMIB : Meet ⊆ Inside ∪ Bd := by
@@ -122,43 +180,14 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
     by_cases hsub : (box n ν : Set (ι → ℝ)) ⊆ s
     · exact Or.inl hsub
     · exact Or.inr (index_mem_image_frontier_of_box_meet_not_subset hν hsub)
-  have hcard_IT : Inside.ncard ≤ Tag.ncard :=
-    Set.ncard_le_ncard hIT (hMeetFin.subset hTM)
-  have hcard_TM : Tag.ncard ≤ Meet.ncard := Set.ncard_le_ncard hTM hMeetFin
-  have hcard_MIB : Meet.ncard ≤ Inside.ncard + Bd.ncard :=
-    (Set.ncard_le_ncard hMIB (hInsideFin.union hBdFin)).trans (Set.ncard_union_le _ _)
-  set V : ℝ := volume.real s * (n : ℝ) ^ Fintype.card ι with hV
-  have hnpow : (0 : ℝ) < (n : ℝ) ^ Fintype.card ι := by positivity
-  have hcardI : (hInsideFin.toFinset).card = Inside.ncard :=
-    (Set.ncard_eq_toFinset_card _ hInsideFin).symm
-  have hcardM : (hMeetFin.toFinset).card = Meet.ncard :=
-    (Set.ncard_eq_toFinset_card _ hMeetFin).symm
-  have hvol_lower : (Inside.ncard : ℝ) ≤ V := by
-    have hsub : (⋃ ν ∈ hInsideFin.toFinset, (box n ν : Set (ι → ℝ))) ⊆ s :=
-      Set.iUnion₂_subset fun ν hν ↦ hInsideFin.mem_toFinset.mp hν
-    have hle := measureReal_mono hsub hvs
-    rw [measureReal_biUnion_box n hInsideFin.toFinset, hcardI, div_le_iff₀ hnpow] at hle
-    rw [hV]
-    linarith
-  have hvol_upper : V ≤ (Meet.ncard : ℝ) := by
-    have hsub : s ⊆ ⋃ ν ∈ hMeetFin.toFinset, (box n ν : Set (ι → ℝ)) := by
-      intro x hxs
-      refine Set.mem_iUnion₂.mpr ⟨index n x, hMeetFin.mem_toFinset.mpr ?_,
-        mem_box_iff_index.mpr rfl⟩
-      exact ⟨x, mem_box_iff_index.mpr rfl, hxs⟩
-    have hfinU : volume (⋃ ν ∈ hMeetFin.toFinset, (box n ν : Set (ι → ℝ))) ≠ ⊤ :=
-      (measure_biUnion_finset_le _ _).trans_lt (by
-        simp only [volume_box]
-        exact ENNReal.sum_lt_top.mpr fun _ _ ↦ by finiteness) |>.ne
-    have hle := measureReal_mono hsub hfinU
-    rw [measureReal_biUnion_box n hMeetFin.toFinset, hcardM, le_div_iff₀ hnpow] at hle
-    rw [hV]
-    linarith
-  have hITr : (Inside.ncard : ℝ) ≤ (Tag.ncard : ℝ) := by exact_mod_cast hcard_IT
+  have hITr : (Inside.ncard : ℝ) ≤ (Tag.ncard : ℝ) := by
+    exact_mod_cast Set.ncard_le_ncard hIT (hMeetFin.subset hTM)
+  have hTMr : (Tag.ncard : ℝ) ≤ (Meet.ncard : ℝ) := by
+    exact_mod_cast Set.ncard_le_ncard hTM hMeetFin
   have hMIBr : (Meet.ncard : ℝ) ≤ (Inside.ncard : ℝ) + (Bd.ncard : ℝ) := by
-    exact_mod_cast hcard_MIB
-  have hTMr : (Tag.ncard : ℝ) ≤ (Meet.ncard : ℝ) := by exact_mod_cast hcard_TM
-  rw [hNeq, abs_le]
+    exact_mod_cast (Set.ncard_le_ncard hMIB (hInsideFin.union hBdFin)).trans
+      (Set.ncard_union_le _ _)
+  rw [hcount, abs_le]
   exact ⟨by linarith, by linarith⟩
 
 end Sublemmas
