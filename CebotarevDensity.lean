@@ -2,4 +2,5 @@ import CebotarevDensity.Density
 import CebotarevDensity.ForMathlib.CharacterOrthogonality
 import CebotarevDensity.ForMathlib.IndexImageCount
 import CebotarevDensity.ForMathlib.LogOneDivSubOne
+import CebotarevDensity.ForMathlib.NormLeOneLipschitz
 import CebotarevDensity.Main
