@@ -38,18 +38,16 @@ namespace Chebotarev
 
 section Sublemmas
 
-variable {ι : Type*} [Fintype ι]
+variable {ι : Type*}
 
-omit [Fintype ι] in
 private lemma index_mem_image_frontier_of_box_meet_not_subset {n : ℕ} [NeZero n]
     {s : Set (ι → ℝ)} {ν : ι → ℤ} (hmeet : ((box n ν : Set (ι → ℝ)) ∩ s).Nonempty)
     (hnsub : ¬ (box n ν : Set (ι → ℝ)) ⊆ s) : ν ∈ index n '' frontier s := by
   have hconn : IsPreconnected (box n ν : Set (ι → ℝ)) := by
     rw [BoxIntegral.Box.coe_eq_pi]
     exact (convex_pi fun _ _ ↦ convex_Ioc _ _).isPreconnected
-  obtain ⟨xc, hxcb, hxcs⟩ : ((box n ν : Set (ι → ℝ)) ∩ sᶜ).Nonempty := by
-    rw [Set.not_subset] at hnsub
-    exact hnsub.imp fun _ ⟨hx, hxs⟩ ↦ ⟨hx, hxs⟩
+  rw [Set.not_subset] at hnsub
+  obtain ⟨xc, hxcb, hxcs⟩ := hnsub
   by_contra hcon
   have hcon' : (box n ν : Set (ι → ℝ)) ∩ frontier s = ∅ := by
     rw [Set.eq_empty_iff_forall_notMem]
@@ -67,20 +65,6 @@ private lemma index_mem_image_frontier_of_box_meet_not_subset {n : ℕ} [NeZero 
   · obtain ⟨x, hxb, hxs⟩ := hmeet
     exact (hsub hxb) (subset_closure hxs)
 
-private lemma measureReal_biUnion_box (n : ℕ) [NeZero n] (t : Finset (ι → ℤ)) :
-    volume.real (⋃ ν ∈ t, (box n ν : Set (ι → ℝ))) = t.card / (n : ℝ) ^ Fintype.card ι := by
-  have hvol_box : ∀ ν : ι → ℤ,
-      volume.real (box n ν : Set (ι → ℝ)) = 1 / (n : ℝ) ^ Fintype.card ι := by
-    intro ν
-    rw [measureReal_def, volume_box]
-    simp
-  rw [measureReal_biUnion_finset (fun ν _ ν' _ h ↦ disjoint.mp h)
-    (fun ν _ ↦ (box n ν).measurableSet_coe) (fun ν _ ↦ (box n ν).isBounded.measure_lt_top.ne)]
-  simp_rw [hvol_box]
-  rw [Finset.sum_const, nsmul_eq_mul]
-  ring
-
-omit [Fintype ι] in
 /-- The number of scaled-lattice points `n⁻¹·ℤ^ι` lying in `s` equals the number of grid
 indices `ν` whose box-tag `tag n ν` lands in `s`. -/
 lemma natCard_inter_smul_span_eq_ncard_setOf_tag_mem [Finite ι] {n : ℕ} [NeZero n]
@@ -101,6 +85,21 @@ lemma natCard_inter_smul_span_eq_ncard_setOf_tag_mem [Finite ι] {n : ℕ} [NeZe
   refine (Set.InjOn.ncard_image ?_).symm
   intro x hx y hy h
   exact eq_of_mem_smul_span_of_index_eq_index n hx.2 hy.2 h
+
+variable [Fintype ι]
+
+private lemma measureReal_biUnion_box (n : ℕ) [NeZero n] (t : Finset (ι → ℤ)) :
+    volume.real (⋃ ν ∈ t, (box n ν : Set (ι → ℝ))) = t.card / (n : ℝ) ^ Fintype.card ι := by
+  have hvol_box : ∀ ν : ι → ℤ,
+      volume.real (box n ν : Set (ι → ℝ)) = 1 / (n : ℝ) ^ Fintype.card ι := by
+    intro ν
+    rw [measureReal_def, volume_box]
+    simp
+  rw [measureReal_biUnion_finset (fun ν _ ν' _ h ↦ disjoint.mp h)
+    (fun ν _ ↦ (box n ν).measurableSet_coe) (fun ν _ ↦ (box n ν).isBounded.measure_lt_top.ne)]
+  simp_rw [hvol_box]
+  rw [Finset.sum_const, nsmul_eq_mul]
+  ring
 
 /-- Lower bound in the count↔volume sandwich: the grid cells whose closed box lies entirely
 inside a measurable finite-volume `s` number at most `vol(s)·nᵈ`. -/
