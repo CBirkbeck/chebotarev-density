@@ -190,6 +190,30 @@ theorem abs_card_inter_sub_volume_mul_pow_le {s : Set (ι → ℝ)}
 
 end Sublemmas
 
+/-- **Effective lattice-point count (Lang GTM 110 Ch. V §2 / p. 129; Gun–Ramaré–Sivaraman,
+*Counting ideals in ray classes*, J. Number Theory 243 (2023) §3.3–3.5, after Debaene).**
+For a bounded measurable set `s ⊆ ι → ℝ` whose frontier is covered by finitely many
+Lipschitz images of the unit cube `[0,1]^{d-1}` (`d = #ι`), the number of points of the
+scaled integer lattice `n⁻¹·ℤ^ι` lying in `s` equals `vol(s)·nᵈ` up to an error `O(nᵈ⁻¹)`.
+This is the effective form of `tendsto_card_div_pow_atTop_volume` (whose conclusion is the
+rate-free limit `card / nᵈ → vol s`). -/
+theorem exists_card_inter_smul_lattice_sub_volume_mul_pow_le
+    {ι : Type*} [Fintype ι] (s : Set (ι → ℝ))
+    (hbdd : Bornology.IsBounded s) (hmeas : MeasurableSet s)
+    (hlip : ∃ (m : ℕ) (M : ℝ≥0) (φ : Fin m → (Fin (Fintype.card ι - 1) → ℝ) → (ι → ℝ)),
+      (∀ j, LipschitzWith M (φ j)) ∧ frontier s ⊆ ⋃ j, φ j '' Set.Icc 0 1) :
+    ∃ C : ℝ, ∀ n : ℕ, 1 ≤ n →
+      |(Nat.card ↑(s ∩ (n : ℝ)⁻¹ • span ℤ (Set.range (Pi.basisFun ℝ ι))) : ℝ)
+          - volume.real s * (n : ℝ) ^ Fintype.card ι|
+        ≤ C * (n : ℝ) ^ (Fintype.card ι - 1) := by
+  obtain ⟨m, M, φ, hφ, hcov⟩ := hlip
+  refine ⟨(m * (2 * ⌈(M : ℝ)⌉₊ + 1) ^ Fintype.card ι * 2 ^ (Fintype.card ι - 1) : ℕ),
+    fun n hn ↦ ?_⟩
+  refine (abs_card_inter_sub_volume_mul_pow_le hbdd hmeas hn).trans ?_
+  refine (Nat.cast_le.mpr (ncard_index_image_frontier_le hφ hcov hn)).trans ?_
+  exact le_of_eq (by push_cast; ring)
+
+
 end
 
 end Chebotarev
